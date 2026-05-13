@@ -6,7 +6,6 @@ import { ServerDetail } from './components/ServerDetail';
 import { ModDetail } from './components/ModDetail';
 import { TrendingPage } from './components/TrendingPage';
 import { SupportPage } from './components/SupportPage';
-import { HostingLanding } from './components/HostingLanding';
 import { ReforgerHosting } from './components/ReforgerHosting';
 import { Arma3Hosting } from './components/Arma3Hosting';
 import { Layout } from './components/Layout';
