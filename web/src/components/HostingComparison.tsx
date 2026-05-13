@@ -15,12 +15,14 @@ export function HostingComparison({ game }: HostingComparisonProps) {
   const gameName = isReforger ? 'Arma Reforger' : 'Arma 3';
   const maxStableSlots = isReforger ? '64' : '100+';
 
-  // RAM logic based on players AND mods
+  // Realistic RAM logic based on user telemetry
   const getRecommendedRAM = (mods: number, players: number) => {
-    const baseOverhead = isReforger ? 6 : 4;
-    const playerImpact = Math.ceil(players / 12); // ~1GB per 12 players
-    const modImpact = Math.ceil(mods / 15);     // ~1GB per 15 mods
-    const totalNeeded = baseOverhead + playerImpact + modImpact;
+    const baseOverhead = isReforger ? 3 : 2; // Base engine usage
+    const playerImpact = players / 32;       // ~1GB per 32 players
+    const modImpact = mods / 100;            // ~1GB per 100 mods (average optimization)
+    const safetyBuffer = 2;                  // OS and stability buffer
+    
+    const totalNeeded = baseOverhead + playerImpact + modImpact + safetyBuffer;
     
     if (totalNeeded <= 8) return 8;
     if (totalNeeded <= 16) return 16;
@@ -165,11 +167,11 @@ export function HostingComparison({ game }: HostingComparisonProps) {
             </div>
           </div>
 
-          {(modCount > 100 || playerCount > 64) && (
+          {(modCount > 120 || playerCount > 80) && (
             <div className="flex items-center gap-3 bg-tactical-orange/10 border border-tactical-orange/20 p-3">
               <Activity className="w-4 h-4 text-tactical-orange animate-pulse" />
               <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-relaxed">
-                Critical Load Warning: At {playerCount} players and {modCount} mods, server TPS (Ticks Per Second) will drop significantly on shared hardware. Use High-Frequency CPU nodes only.
+                Expert Note: While you have {modCount} mods, actual RAM usage depends on asset optimization. Well-tuned communities can run 200+ mods on 8GB-16GB. At {playerCount} players, focus moves from RAM to Single-Core CPU frequency to maintain stable TPS.
               </p>
             </div>
           )}
