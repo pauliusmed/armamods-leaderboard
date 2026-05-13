@@ -2,10 +2,6 @@ import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
 import { Shield, Zap, Cpu, Globe, Check, ExternalLink } from 'lucide-react';
 
-import { SEO } from './ui/SEO';
-import { Card, CardContent } from './ui/Card';
-import { Shield, Zap, Cpu, Globe, Check, ExternalLink } from 'lucide-react';
-
 interface HostingComparisonProps {
   game: 'arma3' | 'reforger';
 }
