@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
-import { Shield, Zap, Globe, ExternalLink, Database, Activity, Cpu, Users, HardDrive } from 'lucide-react';
+import { Shield, Zap, Globe, ExternalLink, Database, Activity, Cpu, Users, HardDrive, AlertCircle } from 'lucide-react';
 
 export function Arma3Hosting() {
   const [modCount, setModCount] = useState(60);
@@ -47,7 +47,8 @@ export function Arma3Hosting() {
       cpu: "i9-14900K / Ryzen 7950X",
       ddos: "Advanced L7 Filtering",
       isWinner: true,
-      url: "https://empowerservers.com/games/arma3/?aff=294"
+      url: "https://empowerservers.com/games/arma3/?aff=294",
+      included: ["Realtime Priority", "Extreme NVMe"]
     },
     {
       name: "GTXGaming",
@@ -75,7 +76,7 @@ export function Arma3Hosting() {
         64: 55.76
       },
       baseRAM: 10,
-      cpu: "Extreme CPU Priority",
+      cpu: "Standard (Upgrades Required)",
       ddos: "Standard Protection",
       isWinner: false,
       url: "https://www.gtxgaming.co.uk/server-hosting/arma-3-server-hosting/"
@@ -105,20 +106,29 @@ export function Arma3Hosting() {
   ];
 
   const calculateTotalPrice = (p: any) => {
+    let total = 0;
+    let hiddenFees = 0;
+
     if (p.name === "GTXGaming") {
       const tier = p.slotTiers.find((t: any) => t.s >= playerCount) || p.slotTiers[p.slotTiers.length - 1];
-      const slotPrice = tier.p;
+      total += tier.p;
       
       const ramKeys = Object.keys(p.ramTiers).map(Number).sort((a, b) => a - b);
       const matchedRamKey = ramKeys.find(k => k >= recRAM) || ramKeys[ramKeys.length - 1];
-      const ramPrice = p.ramTiers[matchedRamKey] || 0;
+      total += p.ramTiers[matchedRamKey] || 0;
+
+      // In Arma 3, high clock/priority is even more vital
+      if (playerCount > 30) hiddenFees += 6.32; // CPU Priority
+      if (modCount > 100) hiddenFees += 6.32;   // Extreme NVMe
       
-      return (slotPrice + ramPrice).toFixed(2);
+      total += hiddenFees;
+      return { total: total.toFixed(2), hiddenFees: hiddenFees.toFixed(2) };
     }
 
     if (p.name === "EmpowerServers") {
       const ramCost = p.ramTiers[recRAM] || 0;
-      return (p.basePrice + ramCost).toFixed(2);
+      total = p.basePrice + ramCost;
+      return { total: total.toFixed(2), hiddenFees: "0.00" };
     }
 
     // Linear estimation for others
@@ -127,7 +137,8 @@ export function Arma3Hosting() {
     const ramUnits = Math.ceil(extraRAMNeeded / 8);
     const ramCost = ramUnits * p.ramPricePer8GB;
     
-    return (p.basePrice + slotCost + ramCost).toFixed(2);
+    total = p.basePrice + slotCost + ramCost;
+    return { total: total.toFixed(2), hiddenFees: "0.00" };
   };
 
   return (
@@ -228,68 +239,76 @@ export function Arma3Hosting() {
             </tr>
           </thead>
           <tbody>
-            {providers.map((p, i) => (
-              <tr key={i} className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${p.isWinner ? 'bg-tactical-orange/[0.04]' : ''}`}>
-                <td className="p-6">
-                  <div className="flex items-center gap-4">
-                    {p.isWinner ? (
-                      <div className="bg-tactical-orange p-1.5 rounded-sm">
-                        <Zap className="w-4 h-4 text-black" />
-                      </div>
-                    ) : (
-                      <div className="bg-white/5 p-1.5 rounded-sm">
-                        <Globe className="w-4 h-4 text-gray-600" />
+            {providers.map((p, i) => {
+              const { total, hiddenFees } = calculateTotalPrice(p);
+              return (
+                <tr key={i} className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${p.isWinner ? 'bg-tactical-orange/[0.04]' : ''}`}>
+                  <td className="p-6">
+                    <div className="flex items-center gap-4">
+                      {p.isWinner ? (
+                        <div className="bg-tactical-orange p-1.5 rounded-sm">
+                          <Zap className="w-4 h-4 text-black" />
+                        </div>
+                      ) : (
+                        <div className="bg-white/5 p-1.5 rounded-sm">
+                          <Globe className="w-4 h-4 text-gray-600" />
+                        </div>
+                      )}
+                      <div className="text-white font-black uppercase tracking-widest text-sm">{p.name}</div>
+                    </div>
+                  </td>
+                  <td className="p-6 text-center">
+                    <div className={`text-xl font-black italic ${p.isWinner ? 'text-tactical-orange' : 'text-white'}`}>
+                      ${total}
+                      <span className="text-[10px] not-italic text-gray-500">/mo</span>
+                    </div>
+                    {parseFloat(hiddenFees) > 0 && (
+                      <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-red-500 uppercase tracking-widest mt-1">
+                        <AlertCircle className="w-2.5 h-2.5" />
+                        Includes ${hiddenFees} in Mandatory Upsells
                       </div>
                     )}
-                    <div className="text-white font-black uppercase tracking-widest text-sm">{p.name}</div>
-                  </div>
-                </td>
-                <td className="p-6 text-center">
-                  <div className={`text-xl font-black italic ${p.isWinner ? 'text-tactical-orange' : 'text-white'}`}>
-                    ${calculateTotalPrice(p)}
-                    <span className="text-[10px] not-italic text-gray-500">/mo</span>
-                  </div>
-                  <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-1">Configured for {playerCount}p / {modCount}m</div>
-                </td>
-                <td className="p-6 text-center">
-                  <div className="text-white font-black uppercase tracking-widest text-[9px] leading-tight">
-                    {p.pricePerSlot === 0 ? (
-                      <span className="text-emerald-500">Resource Based (Best for Milsim)</span>
-                    ) : (
-                      `Tiered Slot Fee + RAM`
-                    )}
-                  </div>
-                  <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest italic leading-none mt-1">
-                    Target: {playerCount} Slots
-                  </div>
-                </td>
-                <td className="p-6 text-center">
-                  <div className="text-white font-black uppercase tracking-widest text-xs">{p.cpu}</div>
-                  <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-none mt-1">NVMe Storage</div>
-                </td>
-                <td className="p-6 text-center">
-                  <div className="flex items-center justify-center gap-2 text-white font-black uppercase tracking-widest text-[10px]">
-                    <Shield className={`w-3 h-3 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-500'}`} />
-                    Global DDoS Shield
-                  </div>
-                </td>
-                <td className="p-6 text-right">
-                  <a 
-                    href={p.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-2 px-5 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all ${
-                      p.isWinner 
-                      ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
-                      : 'border border-white/20 text-white hover:border-white'
-                    }`}
-                  >
-                    {p.isWinner ? 'Deploy Now' : 'Visit Host'}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="p-6 text-center">
+                    <div className="text-white font-black uppercase tracking-widest text-[9px] leading-tight">
+                      {p.pricePerSlot === 0 ? (
+                        <span className="text-emerald-500">Resource Based (Best for Milsim)</span>
+                      ) : (
+                        `Tiered Slot Fee + RAM`
+                      )}
+                    </div>
+                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest italic leading-none mt-1">
+                      Target: {playerCount} Slots
+                    </div>
+                  </td>
+                  <td className="p-6 text-center">
+                    <div className="text-white font-black uppercase tracking-widest text-xs">{p.cpu}</div>
+                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-none mt-1">NVMe Storage</div>
+                  </td>
+                  <td className="p-6 text-center">
+                    <div className="flex items-center justify-center gap-2 text-white font-black uppercase tracking-widest text-[10px]">
+                      <Shield className={`w-3 h-3 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-500'}`} />
+                      Global DDoS Shield
+                    </div>
+                  </td>
+                  <td className="p-6 text-right">
+                    <a 
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-2 px-5 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all ${
+                        p.isWinner 
+                        ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
+                        : 'border border-white/20 text-white hover:border-white'
+                      }`}
+                    >
+                      {p.isWinner ? 'Deploy Now' : 'Visit Host'}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </section>
@@ -303,7 +322,7 @@ export function Arma3Hosting() {
               <p className="text-tactical-orange text-xs font-black uppercase tracking-widest underline decoration-2 underline-offset-4 decoration-white/20 italic">For High-Performance Milsim</p>
             </div>
             <p className="text-gray-400 text-sm font-bold uppercase tracking-widest leading-relaxed max-w-2xl mx-auto">
-              Arma 3's legacy engine is all about clock speeds. Don't be fooled by high core counts. <span className="text-white">EmpowerServers</span> provides the dedicated frequency needed to keep your FPS stable during intense ops.
+              Arma 3's legacy engine is all about clock speeds. Don't be fooled by high core counts. While others charge extra for "CPU Boost" and "NVMe Priority", <span className="text-white">EmpowerServers</span> provides the dedicated frequency needed to keep your FPS stable.
             </p>
             <div className="pt-4 flex flex-col items-center gap-4">
               <a 
