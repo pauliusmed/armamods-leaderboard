@@ -1,3 +1,13 @@
+## [1.5.0] - 2026-05-13
+
+### 📊 Interaktyvus hostingo palyginimo įrankis (Tactical Report)
+- **Mod Load & RAM Calculator**: Sukurtas interaktyvus slankiklis, leidžiantis vartotojams apskaičiuoti realius serverio išlaikymo kaštus pagal modifikacijų skaičių (iki 200 mods).
+- **Dinaminis kainų skaičiavimas**: Integruota logika, kuri perskaičiuoja planų kainas įvertindama būtinus RAM papildymus modifikuotiems serveriams.
+- **Žaidimui specifiniai gidai**: Sukurti atskiri SEO optimizuoti keliai `/best-arma-reforger-hosting` ir `/best-arma-3-hosting` su techniniais gido tekstais.
+- **2026 m. Rinkos duomenys**: Integruota reali lyginamoji analizė tarp EmpowerServers, GTXGaming, PingPerfect ir Nitrado, remiantis naujausiais kainų ir hardware (Ryzen 9 / i9) duomenimis.
+- **Techninės ekspertizės blokai**: Pridėtos įžvalgos apie -maxFPS (TPS) limitus, PC/Console Cross-play stabilumą ir "Hidden Costs" analizė (slotai vs resursai).
+- **Unlimited Slots**: Oficialiai įtvirtintas „Unlimited slots“ pranašumas EmpowerServers planams su ekspertine rekomendacija dėl 64-100 žaidėjų ribojimo stabilumui užtikrinti.
+
 ## [1.4.1] - 2026-05-13
 
 ### 🔍 SEO ir matomumo optimizacija
