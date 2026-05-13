@@ -18,15 +18,15 @@ export function AffiliateBanner() {
         {/* Value Proposition */}
         <div className="space-y-4 flex-1 w-full text-center md:text-left">
           <span className="inline-block px-3 py-1 bg-tactical-orange/10 border border-tactical-orange/30 text-tactical-orange font-black text-[10px] uppercase tracking-[0.3em]">
-            // Unbeatable Hosting Deal
+            // ARMA SERVER HOSTING
           </span>
           
           <div className="space-y-1">
             <h3 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tighter leading-none group-hover:text-tactical-orange transition-colors">
-              Premium Hardware.<br className="hidden md:block" /> Honest Pricing.
+              Premium Server<br className="hidden md:block" /> Hosting.
             </h3>
             <p className="text-gray-400 text-sm sm:text-base font-bold uppercase tracking-wide mt-2">
-              The ultimate infrastructure for your Arma community.
+              Host your own Arma server today. Easy setup, honest pricing.
             </p>
           </div>
 
@@ -50,7 +50,7 @@ export function AffiliateBanner() {
         {/* Pricing & CTA - Psychological Anchoring */}
         <div className="flex flex-col items-center md:items-end gap-3 min-w-[240px] w-full md:w-auto p-6 md:p-0 bg-black/60 md:bg-transparent border md:border-none border-white/5 relative">
           <div className="absolute -top-3 md:-top-6 right-1/2 md:right-0 translate-x-1/2 md:translate-x-0 bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 animate-bounce">
-            🔥 Limited Nodes Remaining
+            🔥 Limited Servers Available
           </div>
           <div className="text-center md:text-right pt-2 md:pt-0">
             <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mb-1 line-through decoration-red-500 decoration-2 opacity-70">Normally $15.00+</p>
@@ -59,10 +59,10 @@ export function AffiliateBanner() {
             </p>
           </div>
           <div className="w-full md:w-auto px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm transition-all group-hover:bg-white shadow-[0_0_25px_rgba(249,115,22,0.3)] group-hover:shadow-[0_0_35px_rgba(255,255,255,0.4)] text-center transform group-hover:-translate-y-1">
-            Claim This Deal →
+            Rent Your Server →
           </div>
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center">
-            Instant Setup • 48H Refund
+            Instant Game Server Setup • 48H Refund
           </p>
         </div>
         
