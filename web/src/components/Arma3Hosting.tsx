@@ -33,7 +33,8 @@ export function Arma3Hosting() {
 
   const providers = [
     {
-      name: "EmpowerServers",
+      name: "ArmaMods Official Partner",
+      subName: "Powered by EmpowerServers",
       basePrice: 9.99,
       ramTiers: {
         8: 0, 10: 2.50, 12: 6.00, 16: 10.50, 32: 30.00
@@ -280,7 +281,10 @@ export function Arma3Hosting() {
                           <Globe className="w-4 h-4 text-gray-600" />
                         </div>
                       )}
-                      <div className="text-white font-black uppercase tracking-widest text-sm">{p.name}</div>
+                      <div className="flex flex-col">
+                        <div className="text-white font-black uppercase tracking-widest text-sm">{p.name}</div>
+                        {p.subName && <div className="text-[8px] text-tactical-orange/60 font-bold uppercase tracking-[0.2em]">{p.subName}</div>}
+                      </div>
                     </div>
                   </td>
                   <td className="p-6 text-center">
