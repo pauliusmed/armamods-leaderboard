@@ -425,7 +425,8 @@ interface ServerMod {
 
 // Pagalbinė funkcija gauti istorijos tašką (skirta trending skaičiavimams)
 async function getFullHistoryPoint(kv: CloudflareKVClient, baseKey: string, offsetFromEnd: number): Promise<any> {
-    const history = await kv.get(baseKey, 'json');
+    // UPDATED: Now uses getChunkedData to support sharded history blocks
+    const history = await getChunkedData(kv, baseKey);
     if (!history || history.length === 0) return null;
 
     const point = history[history.length - offsetFromEnd] || history[0];
@@ -552,9 +553,15 @@ async function runTrendingSnapshot() {
         newMods.sort((a, b) => a.overallRank - b.overallRank);
 
         const result = {
-            rising: rising.slice(0, 50),
-            new: newMods.slice(0, 50),
-            falling: falling.slice(0, 50)
+            data: {
+                rising: rising.slice(0, 50),
+                new: newMods.slice(0, 50),
+                falling: falling.slice(0, 50)
+            },
+            meta: {
+                lastUpdated: new Date().toISOString(),
+                comparisonDate: prevEntry?.time || null
+            }
         };
 
         await kv.put(`${KV_KEYS.TRENDING}:${p.name}`, JSON.stringify(result));
