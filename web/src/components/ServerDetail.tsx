@@ -27,7 +27,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
   const gp = game === 'reforger' ? '' : `/${game}`;
 
-  const loadServer = useCallback(async (days: number) => {
+  const loadServer = useCallback(async (days: number, signal?: AbortSignal) => {
     if (!serverId) return;
     try {
       setLoading(true);
@@ -36,19 +36,46 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         serversApi.getHistory(serverId, days, game),
         modsApi.getGlobalStats(game)
       ]);
+
+      if (signal?.aborted) return;
+
       setServer(serverData.data);
-      setHistory(historyData.data || []);
+      
+      // Filter history: if latest data is older than 3 days, it's considered stale for servers
+      const rawHistory = historyData.data || [];
+      const now = new Date();
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const latestEntry = rawHistory.length > 0 ? new Date(rawHistory[rawHistory.length - 1].time) : null;
+      const isStale = latestEntry && latestEntry < threeDaysAgo;
+
+      let filteredHistory = isStale ? [] : rawHistory;
+
+      // Filter leading empty data for servers
+      if (filteredHistory.length > 0) {
+        const firstActiveIndex = filteredHistory.findIndex(h => (h.points || 0) > 0 || h.rank !== null);
+        if (firstActiveIndex !== -1) {
+          filteredHistory = filteredHistory.slice(firstActiveIndex);
+        }
+      }
+
+      setHistory(filteredHistory);
       setTotalServers(statsData?.totalServers || 1);
       setError(null);
     } catch (err) {
+      if (signal?.aborted) return;
       setError(err instanceof Error ? err.message : 'Failed to load server');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, [serverId, game]);
 
   useEffect(() => {
-    loadServer(selectedDays);
+    const controller = new AbortController();
+    setHistory([]);
+    loadServer(selectedDays, controller.signal);
+    return () => controller.abort();
   }, [serverId, selectedDays, loadServer]);
 
   const sortedAndFilteredMods = useMemo(() => {
@@ -164,8 +191,9 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm">
             <CardContent className="p-4 sm:p-6 lg:p-8 h-[400px]">
               {!history || history.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px]">
-                  No timeline data available
+                <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
+                  <span>No recent activity detected</span>
+                  <span className="text-[8px] opacity-50 font-medium">Server may be offline or monitoring was suspended</span>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">

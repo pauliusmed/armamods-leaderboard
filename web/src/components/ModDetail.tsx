@@ -26,7 +26,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
 
-  const loadMod = useCallback(async (days: number) => {
+  const loadMod = useCallback(async (days: number, signal?: AbortSignal) => {
     if (!modId) return;
     try {
       setLoading(true);
@@ -34,18 +34,50 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         modsApi.getById(modId, game),
         modsApi.getHistory(modId, days, game).catch(() => ({ data: [] }))
       ]);
+
+      if (signal?.aborted) return;
+
       setMod(modRes.data);
-      setHistory(historyData.data);
+      
+      // Filter history: if data is older than 7 days and mod is currently inactive,
+      // it's better to show no data than misleading stale data.
+      const rawHistory = historyData.data || [];
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      const latestEntry = rawHistory.length > 0 ? new Date(rawHistory[rawHistory.length - 1].date) : null;
+      const isStale = latestEntry && latestEntry < sevenDaysAgo && (modRes.data.totalPlayers === 0);
+
+      let filteredHistory = isStale ? [] : rawHistory;
+
+      // New logic: find the first point with activity to avoid leading zeros
+      if (filteredHistory.length > 0) {
+        const firstActiveIndex = filteredHistory.findIndex(h => (h.totalPlayers || 0) > 0 || (h.serverCount || 0) > 0);
+        if (firstActiveIndex !== -1) {
+          filteredHistory = filteredHistory.slice(firstActiveIndex);
+        } else {
+          // If no activity at all, keep it empty to show "No recent activity"
+          filteredHistory = [];
+        }
+      }
+
+      setHistory(filteredHistory);
       setError(null);
     } catch (err) {
+      if (signal?.aborted) return;
       setError(err instanceof Error ? err.message : 'Failed to load mission data');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, [modId, game]);
 
   useEffect(() => {
-    loadMod(selectedDays);
+    const controller = new AbortController();
+    setHistory([]); // Clear history immediately on mod change
+    loadMod(selectedDays, controller.signal);
+    return () => controller.abort();
   }, [modId, selectedDays, loadMod]);
 
 
@@ -128,8 +160,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm">
             <CardContent className="p-4 sm:p-6 lg:p-8 h-[400px]">
               {!history || history.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px]">
-                  No timeline data available
+                <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
+                  <span>No recent activity detected</span>
+                  <span className="text-[8px] opacity-50 font-medium">Data may be archived or module is currently inactive</span>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
