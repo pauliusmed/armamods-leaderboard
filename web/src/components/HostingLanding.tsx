@@ -43,22 +43,84 @@ export function HostingLanding({ game }: HostingLandingProps) {
               <span className="text-tactical-orange">Server Hosting</span>
             </h1>
             <p className="text-gray-500 text-lg sm:text-xl font-bold uppercase tracking-widest max-w-3xl mx-auto leading-relaxed">
-              Premium hardware, tactical performance, honest pricing. Optimized for {isReforger ? 'Enfusion Engine' : 'Real Virtuality'}.
+              We partnered with Empower Servers to bring you the best hardware at the lowest price. No per-slot fees.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
             <a 
               href={affiliateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="w-full sm:w-auto px-12 py-5 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_40px_rgba(249,115,22,0.3)]"
             >
-              View Plans & Pricing →
+              Deploy Your Server Now →
             </a>
             <div className="flex items-center gap-4 text-gray-500 font-bold uppercase tracking-widest text-xs">
               <Shield className="w-5 h-5 text-tactical-orange" />
               DDoS Protected Network
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Market Comparison - The Value Proposition */}
+      <section className="max-w-5xl mx-auto space-y-8 px-4">
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Why this is an unbeatable deal</h2>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Standard Arma hosting charges per slot. We don't.</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          {/* Average Competitor */}
+          <Card className="bg-zinc-900/40 border-red-500/20 opacity-70">
+            <CardContent className="p-8 space-y-6">
+              <h3 className="text-gray-400 font-black uppercase tracking-widest text-sm text-center">Average Market Standard</h3>
+              <div className="text-center">
+                <span className="text-4xl font-black text-gray-400 line-through decoration-red-500/50">~$50.00</span>
+                <span className="text-xs text-gray-500 uppercase tracking-widest ml-2">/mo</span>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-500">
+                  <span>Player Limit</span> <span className="text-red-400">Strict 64 Slots</span>
+                </li>
+                <li className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-500">
+                  <span>Memory</span> <span className="text-red-400">Standard 4GB</span>
+                </li>
+                <li className="flex justify-between text-xs font-bold uppercase tracking-widest text-gray-500">
+                  <span>Processor</span> <span className="text-gray-400">Shared/Unknown</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Empower Servers */}
+          <Card className="bg-zinc-900 border-tactical-orange shadow-[0_0_30px_rgba(249,115,22,0.1)] relative transform md:scale-105 z-10">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-tactical-orange text-black font-black uppercase tracking-widest text-[10px] px-4 py-1">
+              Official Partner Deal
+            </div>
+            <CardContent className="p-8 space-y-6">
+              <h3 className="text-tactical-orange font-black uppercase tracking-widest text-sm text-center">Empower Servers Infrastructure</h3>
+              <div className="text-center">
+                <span className="text-6xl font-black text-white italic shadow-black drop-shadow-md">$9.99</span>
+                <span className="text-sm text-gray-400 uppercase tracking-widest ml-2">/mo</span>
+              </div>
+              <ul className="space-y-4">
+                <li className="flex justify-between text-sm font-black uppercase tracking-widest text-white border-b border-white/5 pb-2">
+                  <span>Player Limit</span> <span className="text-tactical-orange">UNLIMITED SLOTS</span>
+                </li>
+                <li className="flex justify-between text-sm font-black uppercase tracking-widest text-white border-b border-white/5 pb-2">
+                  <span>Memory</span> <span className="text-tactical-orange">8GB+ RAM BASELINE</span>
+                </li>
+                <li className="flex justify-between text-sm font-black uppercase tracking-widest text-white border-b border-white/5 pb-2">
+                  <span>Storage</span> <span className="text-tactical-orange">UNLIMITED NVMe</span>
+                </li>
+                <li className="flex justify-between text-sm font-black uppercase tracking-widest text-white">
+                  <span>Processor</span> <span className="text-tactical-orange">Ryzen / Intel i9</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
