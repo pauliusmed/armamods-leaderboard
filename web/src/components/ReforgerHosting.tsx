@@ -54,26 +54,13 @@ export function ReforgerHosting() {
       name: "GTXGaming",
       basePrice: 0,
       slotTiers: [
-        { s: 10, p: 12.66 },
-        { s: 20, p: 15.21 },
-        { s: 30, p: 17.87 },
-        { s: 40, p: 20.28 },
-        { s: 50, p: 25.35 },
-        { s: 60, p: 28.90 },
-        { s: 70, s2: 80, p: 34.60 },
-        { s: 80, p: 39.54 },
-        { s: 100, p: 48.16 },
+        { s: 10, p: 12.66 }, { s: 20, p: 15.21 }, { s: 30, p: 17.87 },
+        { s: 40, p: 20.28 }, { s: 50, p: 25.35 }, { s: 60, p: 28.90 },
+        { s: 70, p: 34.60 }, { s: 80, p: 39.54 }, { s: 100, p: 48.16 },
         { s: 128, p: 60.84 }
       ],
       ramTiers: {
-        10: 0,
-        12: 8.86,
-        14: 11.39,
-        16: 13.93,
-        20: 19.00,
-        24: 22.80,
-        32: 30.41,
-        64: 55.76
+        10: 0, 12: 8.86, 14: 11.39, 16: 13.93, 20: 19.00, 24: 22.80, 32: 30.41, 64: 55.76
       },
       baseRAM: 10,
       cpu: "Standard (Boost Extra)",
@@ -83,11 +70,18 @@ export function ReforgerHosting() {
     },
     {
       name: "PingPerfect",
-      basePrice: 10.00,
-      ramPricePer8GB: 10.00,
-      baseRAM: 4,
-      pricePerSlot: 0.30,
-      cpu: "Enterprise Xeon",
+      basePrice: 16.33,
+      slotTiers: [
+        { s: 10, p: 0 }, { s: 20, p: 3.69 }, { s: 30, p: 7.38 },
+        { s: 40, p: 11.07 }, { s: 50, p: 14.76 }, { s: 60, p: 18.45 },
+        { s: 70, p: 22.14 }, { s: 80, p: 25.83 }, { s: 90, p: 29.53 },
+        { s: 100, p: 33.22 }, { s: 128, p: 40.60 }
+      ],
+      ramTiers: {
+        9: 0, 12: 10.99, 15: 13.99, 18: 17.99, 21: 21.99, 24: 23.99, 27: 28.99, 30: 30.99, 33: 32.66
+      },
+      baseRAM: 9,
+      cpu: "Enterprise (Upsell-Driven)",
       ddos: "Standard Protection",
       isWinner: false,
       url: "https://pingperfect.com/gameservers/arma-reforger-server-hosting.php"
@@ -109,7 +103,8 @@ export function ReforgerHosting() {
     let total = 0;
     let hiddenFees = 0;
 
-    if (p.name === "GTXGaming") {
+    if (p.name === "GTXGaming" || p.name === "PingPerfect") {
+      total = p.basePrice || 0;
       const tier = p.slotTiers.find((t: any) => t.s >= playerCount) || p.slotTiers[p.slotTiers.length - 1];
       total += tier.p;
       
@@ -117,9 +112,14 @@ export function ReforgerHosting() {
       const matchedRamKey = ramKeys.find(k => k >= recRAM) || ramKeys[ramKeys.length - 1];
       total += p.ramTiers[matchedRamKey] || 0;
 
-      // Add "Required Upgrades" for parity with Empower
-      if (playerCount > 40) hiddenFees += 6.32; // CPU Priority
-      if (modCount > 100) hiddenFees += 6.32;   // Extreme NVMe
+      // Professional performance parity check
+      if (playerCount > 40 || modCount > 100) {
+        if (p.name === "GTXGaming") {
+          hiddenFees += 6.32 + 6.32; // CPU Priority + Extreme NVMe
+        } else {
+          hiddenFees += 20.27 + 6.76; // Extreme Hardware + 60 FPS
+        }
+      }
       
       total += hiddenFees;
       return { total: total.toFixed(2), hiddenFees: hiddenFees.toFixed(2) };
@@ -131,7 +131,7 @@ export function ReforgerHosting() {
       return { total: total.toFixed(2), hiddenFees: "0.00" };
     }
 
-    // Linear estimation for others
+    // Linear estimation for others (Nitrado)
     const slotCost = playerCount * (p.pricePerSlot || 0);
     const extraRAMNeeded = Math.max(0, recRAM - p.baseRAM);
     const ramUnits = Math.ceil(extraRAMNeeded / 8);
@@ -322,7 +322,7 @@ export function ReforgerHosting() {
               <p className="text-tactical-orange text-xs font-black uppercase tracking-widest underline decoration-2 underline-offset-4 decoration-white/20 italic">For Modern Enfusion Communities</p>
             </div>
             <p className="text-gray-400 text-sm font-bold uppercase tracking-widest leading-relaxed max-w-2xl mx-auto">
-              Reforger's dynamic entity system requires fast I/O and stable RAM overhead. While others tax your player count and charge extra for "CPU Priority", <span className="text-white">EmpowerServers</span> provides elite infrastructure as standard.
+              Reforger's dynamic entity system requires fast I/O and stable RAM overhead. While others tax your player count and charge extra for "Extreme Hardware" or "Server FPS", <span className="text-white">EmpowerServers</span> provides elite infrastructure as standard.
             </p>
             <div className="pt-4 flex flex-col items-center gap-4">
               <a 
