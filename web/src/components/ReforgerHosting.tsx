@@ -66,7 +66,7 @@ export function ReforgerHosting() {
       cpu: "Standard (Boost Extra)",
       ddos: "Standard Protection",
       isWinner: false,
-      url: "https://www.gtxgaming.co.uk/server-hosting/arma-reforger-server-hosting/"
+      url: "https://www.gtxgaming.co.uk/clientarea/aff.php?aff=4282"
     },
     {
       name: "PingPerfect",

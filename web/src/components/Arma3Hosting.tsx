@@ -66,7 +66,7 @@ export function Arma3Hosting() {
       cpu: "Standard (Upgrades Required)",
       ddos: "Standard Protection",
       isWinner: false,
-      url: "https://www.gtxgaming.co.uk/server-hosting/arma-3-server-hosting/"
+      url: "https://www.gtxgaming.co.uk/clientarea/aff.php?aff=4282"
     },
     {
       name: "PingPerfect",
