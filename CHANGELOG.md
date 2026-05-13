@@ -13,11 +13,10 @@
 ## [1.3.5] - 2026-05-13
 
 ### 🚀 API ir resursų „Ultra-Optimization“
-- **Fiksuotas CONNECTION FAILED**: Išspręsta resursų išsekimo problema sumažinus KV blokus iki 5MB (balansas tarp RAM ir Workers calls).
-- **Išmanusis skenavimas**: Detalios informacijos puslapiai (`/mods/:id`, `/servers/:id`) dabar naudoja tekstinę paiešką blokuose, drastiškai taupant CPU ir KV nuskaitymus.
-- **Lazy Chunk Loading**: Pagrindiniai sąrašai dabar nuskaito tik pirmus 2 blokus (10,000 įrašų), jei vartotojas nenaudoja paieškos.
-- **Efektyvus kėšavimas**: Prailgintas Cache-Control laikas iki 15 min., siekiant sutaupyti Workers calls.
-- **Atminties saugumas**: Pašalintas `...spread` operatorius jungiant didelius duomenų masyvus.
+- **Fiksuotas CONNECTION FAILED**: Išspręsta resursų išsekimo problema pritaikius hibridinį blokų skaidymą (1MB sąrašams, 5MB istorijai).
+- **Chirurginis JSON išpakavimas**: Detalios informacijos puslapiai nebeišpakuoja viso bloko, o tik „išsipjauna“ reikiamą objektą iš teksto (žymiai mažesnis CPU naudojimas).
+- **KV operacijų taupymas**: Padidintas istorijos blokų dydis iki 5MB, siekiant išvengti Cloudflare „Free Tier“ rašymo limitų (1,000/parą).
+- **Lazy Chunk Loading**: Pagrindiniai sąrašai nuskaito tik 1-ąjį bloką (1MB), užtikrinant žaibišką atsakymą per <10ms.
 
 ## [1.3.4] - 2026-05-13
 

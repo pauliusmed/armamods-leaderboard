@@ -190,9 +190,17 @@ app.get('/mods/:modId', async (c) => {
         for (let i = 0; i < meta.chunks; i++) {
             const chunkText = await c.env.TRENDING_KV.get(`${keys.MODS}:${i}`, 'text');
             if (chunkText && chunkText.includes(`"id":"${modId}"`)) {
-                const chunk = JSON.parse(chunkText);
-                mod = chunk.find((m: any) => m.id === modId);
-                if (mod) break;
+                // Surgical extraction: find object boundaries to avoid full chunk parsing
+                const searchStr = `"id":"${modId}"`;
+                const idPos = chunkText.indexOf(searchStr);
+                const startPos = chunkText.lastIndexOf('{', idPos);
+                const endPos = chunkText.indexOf('}', idPos);
+                if (startPos !== -1 && endPos !== -1) {
+                    try {
+                        mod = JSON.parse(chunkText.slice(startPos, endPos + 1));
+                        if (mod) break;
+                    } catch (e) { /* fallback to next chunk if corrupted */ }
+                }
             }
         }
     }
@@ -474,9 +482,17 @@ app.get('/servers/:serverId', async (c) => {
         for (let i = 0; i < meta.chunks; i++) {
             const chunkText = await c.env.TRENDING_KV.get(`${keys.SERVERS}:${i}`, 'text');
             if (chunkText && chunkText.includes(`"id":"${serverId}"`)) {
-                const chunk = JSON.parse(chunkText);
-                server = chunk.find((s: any) => s.id === serverId);
-                if (server) break;
+                // Surgical extraction: find object boundaries
+                const searchStr = `"id":"${serverId}"`;
+                const idPos = chunkText.indexOf(searchStr);
+                const startPos = chunkText.lastIndexOf('{', idPos);
+                const endPos = chunkText.indexOf('}', idPos);
+                if (startPos !== -1 && endPos !== -1) {
+                    try {
+                        server = JSON.parse(chunkText.slice(startPos, endPos + 1));
+                        if (server) break;
+                    } catch (e) { /* fallback */ }
+                }
             }
         }
     }
@@ -495,23 +511,33 @@ app.get('/servers/:serverId', async (c) => {
   return response;
 });
 
-// Bayesian Trending logic
-app.get('/trending', async (c) => {
+// Trending logic (Pre-calculated by collector)
+app.get('/trending/:period?', async (c) => {
     const cache = await caches.open('armamods:trending');
     const cacheResponse = await cache.match(c.req.raw);
     if (cacheResponse) return cacheResponse;
 
     const game = getGameFromQuery(c);
     const keys = getKVKeys(game);
-    const period = (c.req.query('period') || '24h') as '24h' | '7d' | '30d';
+    
+    // Support both path param and query param, and map 24h -> daily etc.
+    let periodInput = c.req.param('period') || c.req.query('period') || 'daily';
+    
+    // Normalize naming to match collector
+    let period = 'daily';
+    if (periodInput === 'weekly' || periodInput === '7d') period = 'weekly';
+    if (periodInput === 'monthly' || periodInput === '30d') period = 'monthly';
+    if (periodInput === '24h') period = 'daily';
 
+    console.log(`[TRENDING] Fetching ${period} trending for ${game}...`);
     const trendingData = await c.env.TRENDING_KV.get(`${keys.TRENDING}:${period}`, 'json') as any;
     
     if (!trendingData) {
+        console.log(`[TRENDING] No data found for key ${keys.TRENDING}:${period}`);
         return c.json({ data: { rising: [], falling: [], new: [] }, meta: { lastUpdated: new Date().toISOString() } });
     }
 
-    const response = c.json({ data: trendingData, meta: { lastUpdated: new Date().toISOString() } });
+    const response = c.json(trendingData);
     response.headers.set('Cache-Control', 'public, max-age=3600'); // 1 hour cache
     c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
     return response;

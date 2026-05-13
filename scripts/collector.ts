@@ -86,9 +86,9 @@ class CloudflareKVClient {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Cloudflare Workers FREE plan has a strict 10ms CPU limit.
-// 512KB chunks ensure JSON.parse finishes in ~1-2ms, staying safely within limits.
-const MAX_CHUNK_BYTES = 512 * 1024; 
+// Different data types require different chunk sizes to balance KV Ops and CPU limits
+const CHUNK_SIZE_LIST = 1 * 1024 * 1024;    // 1MB for Mods/Servers (CPU safety for parsing)
+const CHUNK_SIZE_HISTORY = 5 * 1024 * 1024; // 5MB for History (Saving KV write operations)
 
 // Parse game type from CLI
 function parseGameType(): GameType {
@@ -127,14 +127,14 @@ interface ServerMod {
    * Cloudflare KV's 25MB value limit. Each chunk is calculated by actual byte length.
    * @param items Array of objects to be sharded
    */
-  function buildChunks(items: any[]): any[][] {
+  function buildChunks(items: any[], maxBytes: number): any[][] {
     const chunks: any[][] = [];
     let current: any[] = [];
     let currentSize = 2; // "[]"
 
     for (const item of items) {
       const itemBytes = Buffer.byteLength(JSON.stringify(item), 'utf8');
-      if (current.length > 0 && currentSize + itemBytes + 1 > MAX_CHUNK_BYTES) {
+      if (current.length > 0 && currentSize + itemBytes + 1 > maxBytes) {
         chunks.push(current);
         current = [];
         currentSize = 2;
@@ -272,7 +272,7 @@ interface ServerMod {
   try {
 
     // Split mods into size-safe chunks
-    const modChunks = buildChunks(modList);
+    const modChunks = buildChunks(modList, CHUNK_SIZE_LIST);
 
     console.log(`  - Writing mod chunks...`);
     for (let i = 0; i < modChunks.length; i++) {
@@ -293,7 +293,7 @@ interface ServerMod {
     serverList.sort((a, b) => (b.players || 0) - (a.players || 0));
 
     // Split servers into size-safe chunks
-    const serverChunks = buildChunks(serverList);
+    const serverChunks = buildChunks(serverList, CHUNK_SIZE_LIST);
 
     console.log(`  - Writing server chunks...`);
     for (let i = 0; i < serverChunks.length; i++) {
@@ -307,9 +307,16 @@ interface ServerMod {
     }
     await kv.put(`${KV_KEYS.SERVERS}:meta`, JSON.stringify({ total: serverList.length, chunks: serverChunks.length }));
 
-    await kv.put(KV_KEYS.STATS, JSON.stringify({ totalMods, totalPlayers: currentPlayers, totalServers }));
-    await kv.put(KV_KEYS.LAST_UPDATE, new Date().toISOString());
     console.log(`✅ KV write completed successfully`);
+
+    // 6. Update Stats and Last Update time
+    await kv.put(KV_KEYS.STATS, JSON.stringify({
+      totalMods: modList.length,
+      totalPlayers: totalPlayersCount,
+      totalServers: serverList.length,
+      lastUpdate: new Date().toISOString()
+    }));
+    await kv.put(KV_KEYS.LAST_UPDATE, new Date().toISOString());
   } catch (kvWriteErr) {
     console.error(`❌ KV Sync Error Detail:`, kvWriteErr);
     throw kvWriteErr;
@@ -387,7 +394,7 @@ interface ServerMod {
       const updated = history.slice(-period.limit);
 
       // 3. Write sharded
-      const chunks = buildChunks(updated);
+      const chunks = buildChunks(updated, CHUNK_SIZE_HISTORY);
       console.log(`    - Writing ${period.name} history in ${chunks.length} chunks...`);
       
       for (let i = 0; i < chunks.length; i++) {
@@ -410,7 +417,7 @@ interface ServerMod {
 
   // Re-write server chunks WITH SQE data included
   console.log(`[SERVER_SCORING] Re-writing server chunks with SQE data...`);
-  const serverChunks = buildChunks(serverList);
+  const serverChunks = buildChunks(serverList, CHUNK_SIZE_LIST);
   for (let i = 0; i < serverChunks.length; i++) {
     try {
       await kv.put(`${KV_KEYS.SERVERS}:${i}`, JSON.stringify(serverChunks[i]));
