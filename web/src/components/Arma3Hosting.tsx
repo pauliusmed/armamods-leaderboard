@@ -111,7 +111,7 @@ export function Arma3Hosting() {
     let total = 0;
     let details = [];
 
-    if (p.name === "EmpowerServers") {
+    if (p.name === "ArmaMods Official Partner") {
       const ramCost = p.ramTiers[recRAM] || 0;
       total = p.basePrice + ramCost;
       if (ramCost > 0) details.push(`+$${ramCost.toFixed(2)} RAM`);
