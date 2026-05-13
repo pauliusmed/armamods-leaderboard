@@ -23,13 +23,13 @@ export function Arma3Hosting() {
     else recRAM = 8;
     
     // Arma 3 base is larger (~40GB), mods average 0.4GB
-    const storageNeeded = 45 + (mods * 0.4); 
-    const recStorage = storageNeeded <= 50 ? '50GB' : (storageNeeded <= 100 ? '100GB' : '200GB+');
+    const rawStorage = 45 + (mods * 0.4); 
+    const recStorage = rawStorage <= 50 ? '50GB' : (rawStorage <= 100 ? '100GB' : '200GB+');
 
-    return { recRAM, recStorage };
+    return { recRAM, recStorage, rawStorage };
   };
 
-  const { recRAM, recStorage } = getRecs(modCount, playerCount);
+  const { recRAM, recStorage, rawStorage } = getRecs(modCount, playerCount);
 
   const providers = [
     {
@@ -44,7 +44,7 @@ export function Arma3Hosting() {
       ddos: "Advanced L7 Filtering",
       isWinner: true,
       url: "https://empowerservers.com/games/arma3/?aff=294",
-      included: ["Realtime Priority", "Extreme NVMe"]
+      included: ["Unlimited Storage", "Realtime Priority", "Extreme NVMe"]
     },
     {
       name: "GTXGaming",
@@ -57,6 +57,9 @@ export function Arma3Hosting() {
       ],
       ramTiers: {
         10: 0, 12: 8.86, 14: 11.39, 16: 13.93, 20: 19.00, 24: 22.80, 32: 30.41, 64: 55.76
+      },
+      storageTiers: {
+        100: 0, 120: 8.86, 140: 11.39, 160: 13.93, 180: 16.46, 200: 19.00
       },
       baseRAM: 10,
       cpu: "Standard (Upgrades Required)",
@@ -75,6 +78,9 @@ export function Arma3Hosting() {
       ],
       ramTiers: {
         9: 0, 12: 10.99, 15: 13.99, 18: 17.99, 21: 21.99, 24: 23.99, 27: 28.99, 30: 30.99, 33: 32.66
+      },
+      storageTiers: {
+        100: 0, 200: 20.27, 300: 40.55
       },
       baseRAM: 9,
       cpu: "Enterprise (Upsell-Driven)",
@@ -102,42 +108,63 @@ export function Arma3Hosting() {
 
   const calculateTotalPrice = (p: any) => {
     let total = 0;
-    let hiddenFees = 0;
+    let details = [];
 
     if (p.name === "EmpowerServers") {
       const ramCost = p.ramTiers[recRAM] || 0;
       total = p.basePrice + ramCost;
-      return { total: total.toFixed(2), hiddenFees: "0.00", warning: null };
+      if (ramCost > 0) details.push(`+$${ramCost.toFixed(2)} RAM`);
+      return { total: total.toFixed(2), details: details.join(", "), warning: null };
     }
 
     if (p.name === "Nitrado") {
       const tier = p.slotTiers.find((t: any) => t.s >= playerCount) || p.slotTiers[p.slotTiers.length - 1];
       total = tier.p;
-      // Arma 3 is even more RAM intensive than Reforger
       const isOOMRisk = recRAM > 8 || modCount > 50; 
       return { 
         total: total.toFixed(2), 
-        hiddenFees: "0.00", 
+        details: "", 
         warning: isOOMRisk ? "High Crash Risk (Modpack too heavy for Nitrado)" : null 
       };
     }
 
-    // GTX and PingPerfect
+    // GTX and PingPerfect logic
     total = p.basePrice || 0;
-    const tier = p.slotTiers.find((t: any) => t.s >= playerCount) || p.slotTiers[p.slotTiers.length - 1];
-    total += tier.p;
     
+    // 1. Slots
+    const slotTier = p.slotTiers.find((t: any) => t.s >= playerCount) || p.slotTiers[p.slotTiers.length - 1];
+    total += slotTier.p;
+
+    // 2. RAM
     const ramKeys = Object.keys(p.ramTiers).map(Number).sort((a, b) => a - b);
     const matchedRamKey = ramKeys.find(k => k >= recRAM) || ramKeys[ramKeys.length - 1];
-    total += p.ramTiers[matchedRamKey] || 0;
+    const ramCost = p.ramTiers[matchedRamKey] || 0;
+    total += ramCost;
+    if (ramCost > 0) details.push(`+$${ramCost.toFixed(2)} RAM`);
 
-    if (playerCount > 30 || modCount > 100) {
-      if (p.name === "GTXGaming") hiddenFees += 6.32 + 6.32;
-      else if (p.name === "PingPerfect") hiddenFees += 20.27 + 6.76;
+    // 3. Storage
+    if (p.storageTiers) {
+      const storageKeys = Object.keys(p.storageTiers).map(Number).sort((a, b) => a - b);
+      const matchedStorageKey = storageKeys.find(k => k >= rawStorage) || storageKeys[storageKeys.length - 1];
+      const storageCost = p.storageTiers[matchedStorageKey] || 0;
+      total += storageCost;
+      if (storageCost > 0) details.push(`+$${storageCost.toFixed(2)} Storage`);
     }
-    
-    total += hiddenFees;
-    return { total: total.toFixed(2), hiddenFees: hiddenFees.toFixed(2), warning: null };
+
+    // 4. Parity Upsells (CPU Priority/Extreme NVMe/60 FPS)
+    let upsellCost = 0;
+    if (playerCount > 30 || modCount > 100) {
+      if (p.name === "GTXGaming") {
+        upsellCost = 12.64; // CPU Priority ($6.32) + NVMe ($6.32)
+        details.push(`+$${upsellCost} Perf. Upsells`);
+      } else if (p.name === "PingPerfect") {
+        upsellCost = 27.03; // Extreme Hardware ($20.27) + 60 FPS ($6.76)
+        details.push(`+$${upsellCost} Perf. Upsells`);
+      }
+    }
+    total += upsellCost;
+
+    return { total: total.toFixed(2), details: details.join(" | "), warning: null };
   };
 
   return (
@@ -239,7 +266,7 @@ export function Arma3Hosting() {
           </thead>
           <tbody>
             {providers.map((p, i) => {
-              const { total, hiddenFees, warning } = calculateTotalPrice(p);
+              const { total, details, warning } = calculateTotalPrice(p);
               return (
                 <tr key={i} className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${p.isWinner ? 'bg-tactical-orange/[0.04]' : ''}`}>
                   <td className="p-6">
@@ -261,10 +288,15 @@ export function Arma3Hosting() {
                       ${total}
                       <span className="text-[10px] not-italic text-gray-500">/mo</span>
                     </div>
-                    {parseFloat(hiddenFees) > 0 && (
-                      <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-red-500 uppercase tracking-widest mt-1">
-                        <AlertCircle className="w-2.5 h-2.5" />
-                        Includes ${hiddenFees} in Mandatory Upsells
+                    {details && (
+                      <div className="flex flex-col items-center justify-center gap-0.5 mt-1">
+                        <div className="flex items-center gap-1 text-[8px] font-bold text-red-500 uppercase tracking-widest">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          Included Addons:
+                        </div>
+                        <div className="text-[8px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                          {details}
+                        </div>
                       </div>
                     )}
                     {warning && (
