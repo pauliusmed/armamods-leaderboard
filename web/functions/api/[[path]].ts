@@ -446,13 +446,13 @@ app.get('/servers', async (c) => {
   });
 
   // Cache for 5 minutes to ensure fresh SQE data after collector runs
-  finalResponse.headers.set('Cache-Control', 'public, max-age=300');
-  c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
+  response.headers.set('Cache-Control', 'public, max-age=300');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
 
   const finished = Date.now() - start;
   console.log(`[SERVERS] Prepared in ${finished}ms`);
   
-  return finalResponse;
+  return response;
 });
 
 // Get Single Server Details
