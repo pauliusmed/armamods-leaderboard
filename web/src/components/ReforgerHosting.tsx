@@ -266,9 +266,12 @@ export function ReforgerHosting() {
             </tr>
           </thead>
           <tbody>
-            {providers.map((p, i) => {
-              const { total, details, warning } = calculateTotalPrice(p);
-              return (
+            {providers
+              .map(p => ({ ...p, result: calculateTotalPrice(p) }))
+              .sort((a, b) => parseFloat(a.result.total) - parseFloat(b.result.total))
+              .map((p, i) => {
+                const { total, details, warning } = p.result;
+                return (
                 <tr key={i} className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${p.isWinner ? 'bg-tactical-orange/[0.04]' : ''}`}>
                   <td className="p-6">
                     <div className="flex items-center gap-4">
