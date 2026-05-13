@@ -30,7 +30,7 @@ export function HostingComparison({ game }: HostingComparisonProps) {
       basePrice: 9.99,
       ramPricePer8GB: 5.00,
       baseRAM: 8,
-      slots: isReforger ? "64+ Stable" : "Unlimited",
+      slots: "Unlimited",
       cpu: "Ryzen 9 / i9 High-Clock",
       ddos: "Advanced L7 Filtering",
       isWinner: true,
@@ -227,7 +227,7 @@ export function HostingComparison({ game }: HostingComparisonProps) {
         <h2 className="text-center text-xl font-black text-white uppercase tracking-tighter">Where do the costs come from?</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { label: 'Player Slots', impact: 'High', icon: <Check className="w-3 h-3 text-tactical-orange" />, desc: 'Competitors charge per player. We recommend flat-rate partners.' },
+            { label: 'Player Slots', impact: 'High', icon: <Check className="w-3 h-3 text-tactical-orange" />, desc: 'Competitors charge per player. Empower offers Unlimited, but we recommend capping Reforger at 64-100 for engine stability.' },
             { label: 'RAM Upgrades', impact: 'Moderate', icon: <Cpu className="w-3 h-3 text-tactical-orange" />, desc: 'Essential for modding. Most hosts hide fees in extra RAM.' },
             { label: 'CPU Priority', icon: <Zap className="w-3 h-3 text-tactical-orange" />, impact: 'High', desc: 'Hidden fee for "Extreme" CPU performance in many hosts.' },
             { label: 'DDoS Fees', icon: <Shield className="w-3 h-3 text-tactical-orange" />, impact: 'Low', desc: 'Often free, but premium protection can be an addon.' }
