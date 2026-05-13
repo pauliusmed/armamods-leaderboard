@@ -2,25 +2,25 @@ import { useState, useEffect } from 'react';
 
 const SLIDES = [
   {
-    tag: '// HIGH_PERFORMANCE_NODE',
-    title: 'Ryzen & Intel i9 Powered Hosting',
-    desc: 'Unmetered NVMe storage, 8GB RAM baseline. Optimized for large-scale Arma operations.',
-    price: 'From $9.99/mo',
-    cta: 'Deploy Node →'
+    tag: '// UNLIMITED_STORAGE_NODE',
+    title: 'Unmetered NVMe & i9/Ryzen CPU',
+    desc: 'Pure tactical speed. No storage limits for your mission assets. Powered by enterprise-grade processors.',
+    price: '$9.99/mo',
+    cta: 'Initialize CPU Node →'
   },
   {
-    tag: '// NO_LIMIT_ENGAGEMENT',
-    title: 'Zero Player Slot Restrictions',
-    desc: 'Host as many personnel as your mission requires. No per-slot pricing, just raw performance.',
+    tag: '// MEMORY_PRIORITY_DEPLOYMENT',
+    title: '8GB+ RAM Baseline Standard',
+    desc: 'Optimized for heavy modpacks and complex scripts. High-frequency RAM ensures smooth combat operations.',
     price: 'Start for $9.99',
-    cta: 'Get Started →'
+    cta: 'Deploy RAM Node →'
   },
   {
-    tag: '// INSTANT_PROVISIONING',
-    title: 'Ready for Deployment in Seconds',
-    desc: 'Instant setup with mod-install service. Pre-configured for Arma Reforger and Arma 3.',
+    tag: '// CORE_PERFORMANCE_METRICS',
+    title: 'High-Frequency Core Processing',
+    desc: 'Dedicated to Arma performance. Unlimited storage and high-bandwidth network priority.',
     price: '$9.99/mo USD',
-    cta: 'Initialize Now →'
+    cta: 'Get Core Access →'
   }
 ];
 
