@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { modsApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
+import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -99,6 +100,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
+      <SEO 
+        title={`${mod.name} - Statistics & Trends`}
+        description={`Track real-time player counts, server ranking, and deployment history for the Arma mod: ${mod.name} (${mod.id}).`}
+        keywords={`${mod.name}, Arma Reforger Mods, Arma 3 Mods, Mod Statistics, ${mod.author || ''}`}
+      />
       <header className="space-y-6">
         <Link to={`${gp}/`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
           ← [ Back to Registry ]

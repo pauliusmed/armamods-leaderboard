@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { trendingApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
+import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
 import type { TrendingMod, TrendPeriod } from '../types';
 
@@ -105,6 +106,10 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
+      <SEO 
+        title={`Trending ${activePeriod} - ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'}`}
+        description={`See which mods are trending in ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} over the last ${activePeriod}. Track rising stars, falling giants, and new discoveries.`}
+      />
       {/* Compact control bar */}
       <div className="border-b border-white/10 pb-4 space-y-4">
         {/* Row 1: Title + Period selector */}

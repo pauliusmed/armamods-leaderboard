@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { serversApi, modsApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
+import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -128,6 +129,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
+      <SEO 
+        title={`${server.name} - Live Status`}
+        description={`Real-time analytics for Arma server: ${server.name}. Active players: ${server.players}/${server.maxPlayers}, SQE Rank: #${server.sqeRank || 'N/A'}.`}
+        keywords={`${server.name}, Arma Reforger Server, Arma 3 Server, Server Stats, SQE Ranking, ${server.ip}`}
+      />
       <header className="space-y-6">
         <Link to={`${gp}/servers`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
           ← [ Back to Network ]

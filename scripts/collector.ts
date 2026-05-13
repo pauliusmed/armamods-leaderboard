@@ -26,7 +26,7 @@ interface CloudflareKV {
  * @description A specialized REST client for Cloudflare KV storage.
  * Designed to handle large payloads through persistence and rate-limit awareness.
  */
-class CloudflareKVClient {
+export class CloudflareKVClient {
   private apiKey: string;
   private accountId: string;
   private namespaceId = 'a8f21c595e39452e95e7e41e3d812013'; // trending_snapshots
@@ -582,21 +582,24 @@ async function runTrendingSnapshot() {
 // CLI
 const command = process.argv[2];
 
-(async () => {
-  try {
-    if (command === 'collect') {
-      await runCollector();
-    } else if (command === 'trending') {
-      await runTrendingSnapshot();
-    } else {
-      console.log('Usage: npm run collect | trending');
+// CLI Execution Wrapper
+if (process.argv[1] && (process.argv[1].endsWith('collector.ts') || process.argv[1].endsWith('collector'))) {
+  (async () => {
+    try {
+      if (command === 'collect') {
+        await runCollector();
+      } else if (command === 'trending') {
+        await runTrendingSnapshot();
+      } else {
+        console.log('Usage: npm run collect | trending');
+        process.exit(1);
+      }
+    } catch (err) {
+      console.error('❌ Error:', err);
       process.exit(1);
     }
-  } catch (err) {
-    console.error('❌ Error:', err);
-    process.exit(1);
-  }
-})();
+  })();
+}
 
 // Usage examples:
 // npm run collect              # Collect Reforger (default)

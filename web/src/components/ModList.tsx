@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useMods } from '../hooks/useMods';
 import { ModCard } from './ModCard';
 import { StatusState } from './ui/StatusState';
+import { SEO } from './ui/SEO';
 import { StatsHero } from './ui/StatsHero';
 import { DonationCard } from './DonationCard';
 import type { GameType } from '../api/client';
@@ -47,6 +48,10 @@ export function ModList({ game = 'reforger' }: ModListProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEO 
+        title={`${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Mods - Leaderboard`}
+        description={`Browse the most popular ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} mods. Compare real-time player counts, server usage, and find the best modules for your mission.`}
+      />
       <StatsHero
         title="Mod Popularity Leaderboard"
         subtitle="Discover which mods are actually being played by the community right now."
