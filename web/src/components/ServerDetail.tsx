@@ -42,7 +42,16 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       setServer(serverData.data);
       
       // Filter history: if latest data is older than 3 days, it's considered stale for servers
-      const rawHistory = historyData.data || [];
+      // 1. Sort and De-duplicate data by date
+      let rawHistory = (historyData.data || []).sort((a, b) => 
+        new Date(a.time).getTime() - new Date(b.time).getTime()
+      );
+      
+      // Remove duplicates (keep latest for each time)
+      rawHistory = rawHistory.filter((item, index, self) =>
+        index === self.findLastIndex((t) => t.time === item.time)
+      );
+
       const now = new Date();
       const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
       const latestEntry = rawHistory.length > 0 ? new Date(rawHistory[rawHistory.length - 1].time) : null;
@@ -50,9 +59,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
       let filteredHistory = isStale ? [] : rawHistory;
 
-      // Filter leading empty data for servers
+      // 2. Filter leading empty data for servers
       if (filteredHistory.length > 0) {
-        const firstActiveIndex = filteredHistory.findIndex(h => (h.points || 0) > 0 || h.rank !== null);
+        const firstActiveIndex = filteredHistory.findIndex((h, idx) => {
+          const hasActivity = (h.points || 0) > 0 || h.rank !== null;
+          const nextPoint = filteredHistory[idx + 1];
+          const isChanging = nextPoint && (nextPoint.points !== h.points || nextPoint.rank !== h.rank);
+          return hasActivity || isChanging;
+        });
+        
         if (firstActiveIndex !== -1) {
           filteredHistory = filteredHistory.slice(firstActiveIndex);
         }

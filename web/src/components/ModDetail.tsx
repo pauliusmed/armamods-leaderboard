@@ -45,18 +45,42 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       
-      const latestEntry = rawHistory.length > 0 ? new Date(rawHistory[rawHistory.length - 1].date) : null;
-      const isStale = latestEntry && latestEntry < sevenDaysAgo && (modRes.data.totalPlayers === 0);
+      // 1. Sort and De-duplicate data by date
+      let rawHistory = (historyData.data || []).sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      // Remove duplicates (keep latest for each date)
+      rawHistory = rawHistory.filter((item, index, self) =>
+        index === self.findLastIndex((t) => t.date === item.date)
+      );
+
+      const latestEntry = rawHistory.length > 0 ? rawHistory[rawHistory.length - 1] : null;
+      const latestDate = latestEntry ? new Date(latestEntry.date) : null;
+      const isStale = latestDate && latestDate < sevenDaysAgo && (modRes.data.totalPlayers === 0);
 
       let filteredHistory = isStale ? [] : rawHistory;
 
-      // New logic: find the first point with activity to avoid leading zeros
+      // 2. Advanced filtering: find where "real" data starts
       if (filteredHistory.length > 0) {
-        const firstActiveIndex = filteredHistory.findIndex(h => (h.totalPlayers || 0) > 0 || (h.serverCount || 0) > 0);
-        if (firstActiveIndex !== -1) {
-          filteredHistory = filteredHistory.slice(firstActiveIndex);
+        const currentOverallRank = modRes.data.overallRank || modRes.data.stats?.overallRank || 0;
+        
+        const firstRealIndex = filteredHistory.findIndex((h, idx) => {
+          // If a mod is rank #4090, but history says #1, it's a placeholder.
+          // Real data usually has a rank > 1 OR it matches current reality.
+          const isRankPlaceholder = h.overallRank === 1 && currentOverallRank > 50;
+          const hasActivity = (h.totalPlayers || 0) > 0 || (h.serverCount || 0) > 0;
+          
+          // Check if values change in the next point (detects end of flat placeholder line)
+          const nextPoint = filteredHistory[idx + 1];
+          const isChanging = nextPoint && (nextPoint.totalPlayers !== h.totalPlayers || nextPoint.overallRank !== h.overallRank);
+
+          return (!isRankPlaceholder && hasActivity) || isChanging;
+        });
+
+        if (firstRealIndex !== -1) {
+          filteredHistory = filteredHistory.slice(firstRealIndex);
         } else {
-          // If no activity at all, keep it empty to show "No recent activity"
           filteredHistory = [];
         }
       }
