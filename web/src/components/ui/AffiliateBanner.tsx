@@ -58,7 +58,7 @@ export function AffiliateBanner() {
               $9.99<span className="text-base sm:text-xl text-gray-500 not-italic">/mo</span>
             </p>
           </div>
-          <div className="w-full md:w-auto px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-xs transition-all group-hover:bg-white shadow-[0_0_25px_rgba(249,115,22,0.3)] group-hover:shadow-[0_0_35px_rgba(255,255,255,0.4)] text-center transform group-hover:-translate-y-1">
+          <div className="w-full md:w-auto px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm transition-all group-hover:bg-white shadow-[0_0_25px_rgba(249,115,22,0.3)] group-hover:shadow-[0_0_35px_rgba(255,255,255,0.4)] text-center transform group-hover:-translate-y-1">
             Claim This Deal →
           </div>
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center">
