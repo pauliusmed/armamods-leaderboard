@@ -12,14 +12,56 @@ Siekiant maksimalaus „Anti-Limit“ saugumo ir žaibiško greičio, projektas 
 1. **Visiškas SQL atsisakymas**: Į SQL (`D1`) nebebus nei rašoma, nei skaitoma. Visi operacijų limitai dabar lygūs 0, kas leidžia projektui augti neribotai be baimės užblokuoti duomenų bazę.
 2. **KV Time-Series (History)**: Istoriniai duomenys pildomi kas valandą į „Master JSON“ paketus:
    - `history:hourly`: Paskutinės 24 valandos aukšta rezoliucija.
-   - `history:daily`: Paskutinės 90 dienų (Saugus „Sliding Window“ langas).
+   - `history:daily`: Paskutinės 31 dienos (Peak Aggregation su „Sliding Window“).
+   - `history:monthly`: Paskutiniai 12 mėnesių.
+   - `history:yearly`: Paskutiniai 5 metai.
 3. **Agreguotas Trending API**: Vietoj SQL JOIN'ų, „Trending“ logika dabar lygina du JSON taškus tiesiai KV podėlyje, sutaupydama šimtus milisekundžių užkrovimo laiko.
-4. **Resursų saugumas**: 25MB KV limito pakanka daugiau nei 120 dienų pilnai visų modų istorijai. Ateityje istorija bus skaidoma į ketvirčių (Q1, Q2) failus, jei prireiks metų vaizdo.
+4. **Resursų saugumas**: 25MB KV limito aplenkimas naudojant automatinį sharding'ą (5MB blokais).
+5. **Bendra modų ir serverių istorija** (nuo v1.6.0): Serverių SQE rank'ai saugomi tame pačiame istorijos taške kaip ir modų statistika. Tai pašalina atskirą `history:server_scores` blob'ą ir sutaupo KV operacijų.
+
+## KV Duomenų Struktūra
+
+```
+cache:mods[:0..N]          — Modų sąrašas su reitingais (shardintas, 5MB/blokas)
+cache:mods:meta            — Shard metadata { total, chunks }
+cache:servers[:0..N]       — Serverių sąrašas su SQE duomenimis (shardintas, 5MB/blokas)
+cache:servers:meta         — Shard metadata
+cache:stats                — Globalūs skaitikliai { totalMods, totalPlayers, totalServers }
+cache:lastUpdate           — Paskutinio atnaujinimo ISO timestamp
+cache:trending:daily       — 24h trending pre-calculated
+cache:trending:weekly      — 7d trending pre-calculated
+cache:trending:monthly     — 30d trending pre-calculated
+cache:ranking:servers      — TOP 200 serverių leaderboard
+
+history:hourly:game[:0..N] — Modų + serverių istorija (12 taškų, valandinė)
+history:daily:game[:0..N]  — Modų + serverių istorija (31 taškas, dienos peak)
+history:monthly:game[:0..N]— Mėnesinė agregacija (12 taškų)
+history:yearly:game[:0..N] — Metinė agregacija (5 taškai)
+```
+
+Kiekvienas istorijos taškas turi formatą:
+```json
+{
+  "time": "2026-05-14",
+  "mods": { "modId": { "p": 100, "s": 5, "r": 3 } },
+  "servers": { "serverId": 5 }
+}
+```
+
+## API Optimization Strategies
+
+1. **Chirurginis JSON išskleidimas**: Detalės puslapiuose naudojamas `findMatchingBrace` su skliaustų skaičiavimu, leidžiantis tiksliai išpjaustyti objektą iš didelio JSON teksto be pilno `JSON.parse`.
+2. **Tekstinis skenavimas**: Istorijos endpoint'ai skenuoja raw tekstą `indexOf` metodu, aplenkdami pilną JSON parse. CPU laikas išlaikomas <5ms.
+3. **Edge kėšavimas (Cache API)**: Cloudflare Cache API naudojamas visiems endpoint'ams su skirtingais TTL (5min – 1val).
+4. **Lazy Chunk Loading**: Sąrašų endpoint'ai krauna tik 1-ąjį bloką default view, pilną duomenų krūvį naudoja tik paieškai.
 
 ## Privalumai
 - **Žaibiškas greitis**: KV podėlis yra Edge lygio – vartotojas gauna duomenis iš arčiausių serverių be SQL lėtumo.
 - **Nulis „Writes“ klaidų**: Išvengta SQL „Database Locked“ problemų, būdingų D1 Beta stadijoje.
 - **Neribotas augimas**: Modų skaičiaus didėjimas nebeveikia sistemos pajėgumo.
+- **KV biudžeto optimizavimas**: Sujungus serverių ir modų istoriją, sutaupomos ~2 KV operacijos per kolektoriaus paleidimą.
 
 ## Pakeitimo Svarba
-Šis pasirinkimas buvo priimtas 2024-03-29, siekiant padaryti projektą „Serverless-native“ ir užtikrinti, kad Leaderboard'as veiktų sklandžiai be jokių priežiūros kaštų ar limitų viršijimo rizikos.
+- 2024-03-29: Pradinis SQL → KV migracijos sprendimas.
+- 2026-05-13: Peak Aggregation, sharding, chirurginis JSON išskleidimas.
+- 2026-05-14: Serverių istorijos suliejimas su modų istorija, pašalinant atskirą `history:server_scores` blob'ą.

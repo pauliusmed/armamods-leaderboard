@@ -1,3 +1,20 @@
+## [1.6.0] - 2026-05-14
+
+### 🔧 Kritiniai pataisymai ir architektūros optimizacija
+
+- **Kolektoriaus ReferenceError fix**: Pataisytas neegzistuojantis kintamasis `totalPlayersCount` → `currentPlayers`, dėl kurio kiekvienas kolektoriaus paleidimas nulūždavo neatsinaujinant stats, istorijai ir trending duomenims.
+- **Serverio detalės 503 fix**: Chirurginis JSON išskleidimas dabar teisingai apdoroja įdėtinius objektus (mod masyvus) naudojant skliaustų skaičiavimą (`findMatchingBrace`) vietoje paprasto `indexOf('}')`.
+- **Serverio istorijos 503 fix**: Perrašytas `/servers/:id/history` endpoint'as — vietoje pilno JSON parse ir brangaus rank sort'inimo, naudojamas tekstinis skenavimas (`text scanning`), neviršijantis Worker CPU limitų.
+
+### ♻️ Architektūros pakeitimai
+
+- **Sulieta serverių ir modų istorija**: Pašalintas atskiras `history:server_scores` KV blob'as. Serverių SQE rank'ai dabar saugomi bendroje istorijoje (`history:daily`) šalia modų statistikos: `{ time, mods: {...}, servers: { serverId: rank } }`.
+  - **-1 KV read** ir **-1 KV write** per kolektoriaus paleidimą
+  - Pašalintas didžiausias CPU naštos šaltinis projekte
+  - Visi duomenys viename shardintame šaltinyje
+- **Pašalintas 24h trending periodas**: Per maža imtis patikiamiems duomenims. Lieka **7d** ir **30d**.
+- **SQE skaičiavimo supaprastinimas**: `runServerScoring` nebeveda atskiros istorijos ir nebeskaičiuoja 30 dienų trailing sum. Dabar skaičiuoja tik einamojo snapshot'o reitingą ir TOP 200 leaderboard.
+
 ## [1.5.0] - 2026-05-13
 
 ### 📊 Interaktyvus hostingo palyginimo įrankis (Tactical Report)

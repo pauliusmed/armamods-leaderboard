@@ -96,10 +96,9 @@ The SQE Index is designed to rank servers not just by their instantaneous player
 To reward server owners who:
 1. **Optimize**: Achieve high player counts with minimal mod overhead (Console & performance friendly).
 2. **Innovate**: Create unique experiences using niche/original mods rather than common "copy-paste" setups.
-3. **Consistency**: Maintain activity over 30 days.
 
 ### Snapshot Formula
-Points are calculated 3 times daily (every 8 hours) to capture all regional peaks:
+Points are calculated every collector run (every 2 hours):
 
 ```
 SnapshotScore = (Players × 5) - (ModCount × 1) + UniquenessBonus
@@ -125,11 +124,11 @@ Bonus = Clamp((ServerAvgModRank - GlobalMeanRank) / ScalingFactor, -100, 100)
 - **Bonus (0 to +100)**: Applied to servers using niche, unique, or high-quality artisanal mods.
 - **Vanilla Exception**: Vanilla servers (0 mods) receive the maximum penalty of **-100** for using the default configuration without any community content.
 
-### 30-Day Trailing Leaderboard
-The final leaderboard is a **rolling 30-day sum** of all snapshots (90 points in total). 
+### Ranking Output
+All servers receive `sqePoints` and `sqeRank` fields stored in their KV data. The TOP 200 servers are saved separately to `cache:ranking:servers` for the leaderboard page.
 
-- **Long-term stability**: Servers that are active 24/7 will naturally outrank weekend-only servers.
-- **Drift Protection**: Old snapshots are automatically removed to ensure the ranking reflects current activity.
+### History
+Server rank history is stored in the shared history shards alongside mod data. Each time point includes `"servers": { "serverId": rank }`, enabling the SQE Rank chart on server detail pages without separate storage or expensive calculations.
 
 ---
 
