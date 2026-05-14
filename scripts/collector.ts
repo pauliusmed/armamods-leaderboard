@@ -317,7 +317,7 @@ interface ServerMod {
     // 6. Update Stats and Last Update time
     await kv.put(KV_KEYS.STATS, JSON.stringify({
       totalMods: modList.length,
-      totalPlayers: totalPlayersCount,
+      totalPlayers: currentPlayers,
       totalServers: serverList.length,
       lastUpdate: new Date().toISOString()
     }));
