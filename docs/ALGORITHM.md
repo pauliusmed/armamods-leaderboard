@@ -137,6 +137,44 @@ The history API supports dynamic temporal scaling:
 
 ---
 
+## Frequently Deployed Together (Co-deployment) Analytics
+
+The Co-deployment Analytics system is an advanced in-memory association algorithm designed to identify tactical synergies between different workshop modules. It computes which mods are frequently run alongside a given target mod on active servers across the global network.
+
+### Goal
+
+1. **For Mod Developers**: To discover compatibility trends, audience overlaps, and technical integration opportunities (e.g., ensuring zero conflicts with other highly popular mods used alongside theirs).
+2. **For Server Owners**: To serve as a modpack building guide, highlighting which mods are standard or highly recommended when deploying a specific map or core module.
+
+### Mathematical Algorithm
+
+During each collector cycle, the in-memory engine calculates association frequencies in $O(S \times M)$ time complexity:
+
+1. **Mapping Phase**:
+   - The engine builds a mod-to-servers index map: $M \rightarrow [S_1, S_2, ...]$ (retrieving all active server IDs where mod $M$ is running).
+   - The engine builds a server-to-mods lookup map: $S \rightarrow [M_1, M_2, ...]$ (listing all installed mods on server $S$).
+
+2. **Frequency Counting Phase**:
+   - For a target mod $M$, the algorithm fetches all active server IDs running $M$.
+   - It iterates through all other mods $O$ active on those servers (excluding $M$ itself).
+   - A frequency table tracks the occurrences of each co-deployed mod: $Freq(O) = \text{count}$.
+
+3. **Ranking & Slicing**:
+   - The association overlap percentage for a co-deployed mod $O$ relative to target mod $M$ is computed as:
+     $$\text{Overlap} = \text{Round}\left(\frac{\text{Freq}(O)}{\text{ServerCount}(M)} \times 100\right)$$
+   - The list is sorted in descending order of frequency, and the Top 5 co-deployed mods are sliced and stored.
+
+### Zero-Cost KV Architecture
+
+To strictly comply with Cloudflare KV's Free Tier constraints (1,000 write ops/day), the calculated Top 5 co-deployed objects are embedded directly inside the pre-existing mod objects within their sharded list chunks (`cache:mods:i` keys). 
+
+As a result:
+- **KV Write Operations**: Increase is exactly **0**.
+- **KV Read Operations**: Increase is exactly **0** (the client retrieves it inside the standard single mod JSON payload).
+- **Storage Overhead**: Only ~100 bytes per mod, representing $< 1\%$ increase in global cache size.
+
+---
+
 ## References
 
 - [Bayesian Statistics](https://en.wikipedia.org/wiki/Bayesian_statistics)
