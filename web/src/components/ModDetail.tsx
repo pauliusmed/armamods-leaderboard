@@ -308,6 +308,49 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           </div>
         </section>
 
+      {/* Frequently Deployed Together Section */}
+      {mod.coDeployed && mod.coDeployed.length > 0 && (
+        <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+          <div className="border-b border-white/5 pb-6">
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+              🤝 Frequently Deployed Together
+            </h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+              Tactical synergies - other modules frequently active on the same nodes
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {mod.coDeployed.map((other) => {
+              const sharePercent = mod.serverCount > 0 ? Math.round((other.count / mod.serverCount) * 100) : 0;
+              return (
+                <Link
+                  key={other.id}
+                  to={`${gp}/mod/${other.id}`}
+                  className="group relative block bg-zinc-950/60 border border-white/5 hover:border-tactical-orange/50 p-6 transition-all hover:-translate-y-1"
+                >
+                  <div className="space-y-3">
+                    <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest">// DEPLOYMENT_MATCH</span>
+                    <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
+                      {other.name}
+                    </h3>
+                    <div className="pt-2 flex items-end justify-between border-t border-white/5">
+                      <div className="space-y-0.5">
+                        <span className="text-[7px] text-gray-600 font-black uppercase tracking-wider">Overlap</span>
+                        <p className="text-lg font-black text-white">{sharePercent}%</p>
+                      </div>
+                      <span className="text-[8px] text-gray-500 font-bold uppercase group-hover:text-white transition-colors">
+                        Inspect →
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section className="space-y-6 sm:space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
           <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">

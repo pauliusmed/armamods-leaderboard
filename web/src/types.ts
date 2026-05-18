@@ -9,6 +9,7 @@ export interface Mod {
   serverRank?: number;
   overallRank: number;
   marketShare?: number;
+  coDeployed?: { id: string; name: string; count: number }[];
 }
 
 export interface ServerMod {

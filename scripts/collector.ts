@@ -249,6 +249,49 @@ interface ServerMod {
   });
   modList = modList.map((m, i) => ({ ...m, overallRank: i + 1 }));
 
+  // Calculate Frequently Deployed Together (co-deployment) for each mod
+  console.log(`📊 Calculating co-deployment frequencies for mods...`);
+  const modToServersMap = new Map<string, string[]>();
+  for (const sm of serverMods) {
+    if (!modToServersMap.has(sm.modId)) {
+      modToServersMap.set(sm.modId, []);
+    }
+    modToServersMap.get(sm.modId)!.push(sm.serverId);
+  }
+
+  const serverToModsMap = new Map<string, { id: string; name: string }[]>();
+  for (const server of serverList) {
+    serverToModsMap.set(server.id, server.mods.map((m: any) => ({ id: m.id, name: m.name })));
+  }
+
+  modList = modList.map(m => {
+    const serverIds = modToServersMap.get(m.id) || [];
+    const freq = new Map<string, { name: string; count: number }>();
+    
+    for (const serverId of serverIds) {
+      const otherMods = serverToModsMap.get(serverId) || [];
+      for (const other of otherMods) {
+        if (other.id === m.id) continue;
+        const existing = freq.get(other.id);
+        if (existing) {
+          existing.count++;
+        } else {
+          freq.set(other.id, { name: other.name, count: 1 });
+        }
+      }
+    }
+
+    const coDeployed = Array.from(freq.entries())
+      .map(([id, data]) => ({ id, name: data.name, count: data.count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      ...m,
+      coDeployed
+    };
+  });
+
   // Update server mods with ranks
   for (const server of serverList) {
     for (const mod of server.mods) {

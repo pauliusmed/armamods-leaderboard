@@ -1,3 +1,12 @@
+## [1.10.0] - 2026-05-18
+
+### 🤝 „Frequently Deployed Together“ bendrai naudojamų modifikacijų analitikos diegimas
+- **Sinergijos analitika (Co-deployment)**: Kolektoriaus operatyviojoje atmintyje (RAM) realiu laiku apskaičiuojamas top 5 modifikacijų derinys, kuris dažniausiai diegiamas kartu tuose pačiuose serveriuose. Sukurtas itin naudingas analitinis įrankis modifikacijų kūrėjams ir serverių savininkams.
+- **0 KV operacijų sąnaudų garantija**: Duomenys įterpiami tiesiai į esamus modifikacijų sharded chunks siuntimus, todėl papildomų KV Reads/Writes operacijų pokytis yra lygiai 0, visiškai neišnaudojant jūsų nemokamo Cloudflare limito.
+- **Premium atvaizdavimas (ModDetail UI)**: Modifikacijos detalių puslapyje integruotas premium dizaino blokas, rodantis sutapimo procentus (Overlap %) bei greitą navigavimą tarp susijusių modifikacijų.
+- **Unit testai**: Co-deployment logika padengta papildomais automatiniais testais `test/utils.test.ts`.
+- **UI/UX grafikų pagerinimas**: Pagal nutylėjimą abiejuose detalių puslapiuose nustatytas `7D` grafiko rėžis (vietoj `30D`), užtikrinant žymiai švaresnį ir gyvesnį pirmąjį įspūdį.
+
 ## [1.9.0] - 2026-05-18
 
 ### 📈 Eksponentinio slopinimo (EMA) ir reputacijos išlaikymo diegimas

@@ -127,3 +127,92 @@ test('calculateSQEScore - caps the uniqueness penalty at -100', () => {
   // totalScore = 30 - 100 = -70
   assert.strictEqual(score, -70);
 });
+
+/**
+ * 4. Co-deployment frequency calculation logic under test (from scripts/collector.ts)
+ */
+function calculateCoDeployment(
+  modId: string,
+  serverMods: { serverId: string; modId: string }[],
+  servers: { id: string; mods: { id: string; name: string }[] }[]
+) {
+  const modToServersMap = new Map<string, string[]>();
+  for (const sm of serverMods) {
+    if (!modToServersMap.has(sm.modId)) {
+      modToServersMap.set(sm.modId, []);
+    }
+    modToServersMap.get(sm.modId)!.push(sm.serverId);
+  }
+
+  const serverToModsMap = new Map<string, { id: string; name: string }[]>();
+  for (const server of servers) {
+    serverToModsMap.set(server.id, server.mods.map((m: any) => ({ id: m.id, name: m.name })));
+  }
+
+  const serverIds = modToServersMap.get(modId) || [];
+  const freq = new Map<string, { name: string; count: number }>();
+  
+  for (const serverId of serverIds) {
+    const otherMods = serverToModsMap.get(serverId) || [];
+    for (const other of otherMods) {
+      if (other.id === modId) continue;
+      const existing = freq.get(other.id);
+      if (existing) {
+        existing.count++;
+      } else {
+        freq.set(other.id, { name: other.name, count: 1 });
+      }
+    }
+  }
+
+  return Array.from(freq.entries())
+    .map(([id, data]) => ({ id, name: data.name, count: data.count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+}
+
+test('calculateCoDeployment - correctly aggregates other mods on same servers and excludes self', () => {
+  const serverMods = [
+    { serverId: 'srv1', modId: 'mod_a' },
+    { serverId: 'srv1', modId: 'mod_b' },
+    { serverId: 'srv1', modId: 'mod_c' },
+    { serverId: 'srv2', modId: 'mod_a' },
+    { serverId: 'srv2', modId: 'mod_b' },
+  ];
+
+  const servers = [
+    { id: 'srv1', mods: [{ id: 'mod_a', name: 'A' }, { id: 'mod_b', name: 'B' }, { id: 'mod_c', name: 'C' }] },
+    { id: 'srv2', mods: [{ id: 'mod_a', name: 'A' }, { id: 'mod_b', name: 'B' }] }
+  ];
+
+  // For mod_a, B is on 2 servers, C is on 1 server. A should not be included.
+  const coDeployed = calculateCoDeployment('mod_a', serverMods, servers);
+
+  assert.strictEqual(coDeployed.length, 2);
+  assert.strictEqual(coDeployed[0].id, 'mod_b');
+  assert.strictEqual(coDeployed[0].count, 2);
+  assert.strictEqual(coDeployed[1].id, 'mod_c');
+  assert.strictEqual(coDeployed[1].count, 1);
+  assert.ok(!coDeployed.find(x => x.id === 'mod_a'), 'Should exclude self.');
+});
+
+test('calculateCoDeployment - slices to top 5 descending', () => {
+  const serverMods: { serverId: string; modId: string }[] = [];
+  const modsOnSrv: { id: string; name: string }[] = [{ id: 'target', name: 'Target' }];
+  for (let i = 1; i <= 8; i++) {
+    modsOnSrv.push({ id: `mod_${i}`, name: `Mod ${i}` });
+  }
+
+  const servers = [{ id: 'srv1', mods: modsOnSrv }];
+
+  // associate mods on srv1
+  modsOnSrv.forEach(m => {
+    serverMods.push({ serverId: 'srv1', modId: m.id });
+  });
+
+  const coDeployed = calculateCoDeployment('target', serverMods, servers);
+
+  // Should have exactly 5 elements out of 8 potential co-deployed mods
+  assert.strictEqual(coDeployed.length, 5);
+});
+
