@@ -668,8 +668,17 @@ app.get('/servers/:serverId/history', async (c) => {
   const serversKey = '"servers":{';
   const timeKey = '"time":"';
 
-  // Scan shared history shards (same source as mod history)
-  const baseKey = `history:daily:${game}`;
+  const daysString = c.req.query('days') || '30';
+  const requestingAll = daysString === 'all';
+  const days = requestingAll ? 9999 : parseInt(daysString);
+
+  let baseKey = `history:daily:${game}`;
+  let sliceCount = -days;
+
+  if (days <= 1) { baseKey = `history:hourly:${game}`; sliceCount = -24; }
+  else if (days > 31 && days <= 365) { baseKey = `history:monthly:${game}`; sliceCount = -12; }
+  else if (days > 365 || requestingAll) { baseKey = `history:yearly:${game}`; sliceCount = -10; }
+
   const meta = await c.env.TRENDING_KV.get(`${baseKey}:meta`, 'json') as any;
   if (!meta || !meta.chunks) {
     const finalResponse = c.json({ data: [] });
@@ -722,7 +731,8 @@ app.get('/servers/:serverId/history', async (c) => {
     }
   }
 
-  const finalResponse = c.json({ data: serverHistory });
+  const finalHistory = serverHistory.slice(sliceCount);
+  const finalResponse = c.json({ data: finalHistory });
   finalResponse.headers.set('Cache-Control', 'public, max-age=300');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
   return finalResponse;

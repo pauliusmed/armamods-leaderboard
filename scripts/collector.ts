@@ -637,8 +637,42 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       const GLOBAL_AVG = modList.length / 2;
       const SCALING_FACTOR = GLOBAL_AVG / 100;
 
-      // 2. Calculate current scores for ALL servers
+      // Load previous leaderboard for Exponential Moving Average (EMA) smoothing
+      const oldScoresMap = new Map<string, number>();
+      try {
+          const oldLeaderboard = await kv.get(leaderboardKey, 'json');
+          if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
+              oldLeaderboard.forEach(item => {
+                  if (item && item.id) {
+                      oldScoresMap.set(item.id, item.points || 0);
+                  }
+              });
+          }
+          console.log(`[SERVER_SCORING] Loaded ${oldScoresMap.size} previous server scores for EMA smoothing.`);
+      } catch (err) {
+          console.log(`[SERVER_SCORING] Could not read old leaderboard for EMA, defaulting to current snapshot scores.`);
+      }
+
+      // Add missing servers from previous leaderboard to ensure they decay slowly (fadeaway)
+      const currentServerIds = new Set(serverList.map(s => s.id));
+      for (const [oldId, oldPoints] of oldScoresMap.entries()) {
+          if (!currentServerIds.has(oldId) && oldPoints > 10) {
+              serverList.push({
+                  id: oldId,
+                  name: `[OFFLINE] Server ${oldId}`,
+                  ip: null,
+                  port: null,
+                  players: 0,
+                  maxPlayers: 0,
+                  mods: []
+              });
+          }
+      }
+
+      // 2. Calculate current scores for ALL servers using EMA smoothing
       const currentScores: Record<string, number> = {};
+      const ALPHA = 0.15; // 15% new snapshot, 85% previous score
+
       for (const s of serverList) {
           const players = s.players || 0;
           const modCount = s.mods?.length || 0;
@@ -654,7 +688,14 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
           let uniquenessBonus = Math.floor((avgRank - GLOBAL_AVG) / SCALING_FACTOR);
           uniquenessBonus = Math.min(100, Math.max(-100, uniquenessBonus));
 
-          currentScores[s.id] = baseScore + uniquenessBonus;
+          const snapshotScore = Math.max(0, baseScore + uniquenessBonus);
+          const oldScore = oldScoresMap.get(s.id);
+
+          if (oldScore !== undefined) {
+              currentScores[s.id] = Math.floor(ALPHA * snapshotScore + (1 - ALPHA) * oldScore);
+          } else {
+              currentScores[s.id] = Math.floor(snapshotScore);
+          }
       }
 
       // 3. Pre-calculate ranks for this snapshot (used for history + leaderboard)

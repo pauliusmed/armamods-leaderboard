@@ -1,3 +1,22 @@
+## [1.9.0] - 2026-05-18
+
+### 📈 Eksponentinio slopinimo (EMA) ir reputacijos išlaikymo diegimas
+- **Eksponentinis slopinimas (EMA - Exponential Moving Average)**: Serverių reitingavimo skaičiavimuose įdiegtas EMA modelis su koeficientu $\alpha = 0.15$. Tai 85% reitingo taškų svorio perkelia iš sukaupto patikimumo balso, panaikinant naktinius reitingų svyravimus ir apsaugant serverius nuo staigaus nukritimo trumpų restartų metu.
+- **Tolygaus gesimo (Fadeaway) garantija**: Neaktyvūs ar visiškai išjungti serveriai nebeprapuola iškart, o gražiai ir tolygiai leidžiasi reitingų sąrašu žemyn, užtikrinant reputacinį tęstinumą.
+- **Dokumentacija**: Pilnai atnaujintas [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/docs/ALGORITHM.md) dokumentas, aprašantis naujosios formulės veikimą ir matematines savybes.
+
+## [1.8.2] - 2026-05-18
+
+### 📉 Serverio valandinės istorijos pataisymai (24H Graph Fix)
+- **Valandinio rėžio įjungimas**: Ištaisyta sisteminė klaida `/servers/:serverId/history` endpoint'e, kur valandinis rėžis (24H) klaidingai grąžindavo kasdienius taškus. Dabar sistema sėkmingai persijungia į `history:hourly` raktą ir atvaizduoja pilną 24 valandų grafiko kreivę su valandiniais taškais.
+- **Dokumentacijos atnaujinimas**: Papildytas [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/docs/ALGORITHM.md) dokumentas, aprašantis valandinio, kasdienio, mėnesinio bei metinio istorijos rėžių veikimą bei KV sharding maršrutus.
+
+## [1.8.1] - 2026-05-18
+
+### 📊 Serverio taškų telemetrijos (SQE Points) diegimas
+- **Serverio taškų atvaizdavimas**: Serverio detalių puslapyje (`ServerDetail`) įdiegtas trūkstamo `sqePoints` lauko atvaizdavimas. Vartotojams suteikta galimybė matyti tikslų reitingavimo balą, lemiantį serverio poziciją lyderių lentelėje.
+- **TypeScript ir tipų saugumas**: Integruotas saugus duomenų nuskaitymas naudojant tipizuotą `Server` sąsają, atliekant sėkmingą tipų validaciją su `npx tsc --noEmit`.
+
 ## [1.8.0] - 2026-05-18
 
 ### 🛰️ Sistemos statuso ir telemetrijos diagnostikos puslapio diegimas
