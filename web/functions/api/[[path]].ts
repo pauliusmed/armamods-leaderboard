@@ -834,7 +834,7 @@ app.get('/servers/:serverId/history', async (c) => {
 
 /**
  * POST /audit/config
- * Tik modId + name (client-side parse) arba legacy pilnas config.
+ * Tik modId (client-side parse); pavadinimai iš KV DB, ne iš config.json.
  * Config NEĮRAŠOMAS į KV / cache – tik atsakymas naršyklėje.
  */
 app.post('/audit/config', async (c) => {
@@ -861,7 +861,7 @@ app.post('/audit/config', async (c) => {
       parsedMods = body.mods
         .map((m) => ({
           modId: String(m.modId ?? '').trim().toUpperCase(),
-          name: String(m.name ?? m.modId ?? ''),
+          name: String(m.modId ?? ''),
         }))
         .filter((m) => /^[0-9A-F]{16}$/.test(m.modId));
       if (!parsedMods.length) throw new Error('Invalid modId format');
@@ -962,7 +962,7 @@ app.post('/audit/config', async (c) => {
       highlights,
       durationMs: Date.now() - start,
       privacy:
-        'Your config.json is not stored. The server only processes the mod ID list and returns a report – nothing is written to the database.',
+        'Your config.json is not stored. Only mod IDs are processed; display names come from the reforgermods database, not from your config file.',
       disclaimer:
         'Heuristic based on BattleMetrics data from all Reforger servers (reforgermods collector), not your server list alone. ' +
         'Now = only servers BM sees online today with this mod. Daily averages (before 1.7 / after update / last 7 days) aggregate every BM-indexed server seen on that day – servers that shut down or removed the mod after 1.7 lower those averages but are not listed one-by-one. ' +

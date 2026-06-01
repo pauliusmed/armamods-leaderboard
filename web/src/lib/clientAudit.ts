@@ -100,7 +100,7 @@ export async function runClientSideAudit(
       durationMs: 0,
       mode: 'client-fallback' as const,
       privacy:
-        'Your config.json is not stored. Audit ran in the browser (per mod) – only modId was sent to the server.',
+        'Your config.json is not stored. Only modId was sent; names are loaded from the reforgermods database per mod.',
       disclaimer:
         'Fallback mode: slower but works when batch audit is unavailable. Data from BattleMetrics history API. ' +
         'Now = online on BM today; daily averages include servers seen that day (including ones that later went offline).',

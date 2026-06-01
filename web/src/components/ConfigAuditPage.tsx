@@ -396,7 +396,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           cache: 'no-store',
-          body: JSON.stringify({ mods }),
+          body: JSON.stringify({ mods: mods.map((m) => ({ modId: m.modId })) }),
         });
         const json = (await parseApiJson(r)) as AuditResponse & {
           message?: string;
@@ -464,9 +464,8 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
         role="note"
       >
         <strong className="text-emerald-300">Privacy:</strong> config is parsed in your browser. Only{' '}
-        <code className="text-emerald-400">modId</code> (+ name when present) are sent to the server – no passwords,
-        IPs, or full JSON are stored. Mod ID is always <strong className="text-white">16 hex characters</strong>{' '}
-        (e.g. <code className="text-emerald-400">986617DEA6741547</code>).
+        only <code className="text-emerald-400">modId</code> list is sent – mod names come from our database, not your
+        config (names in config.json are often wrong). No passwords, IPs, or full JSON are stored.
       </div>
 
       <AuditDonateBanner />

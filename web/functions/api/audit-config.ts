@@ -547,6 +547,19 @@ export function pickAlternatives(
   return candidates.slice(0, limit);
 }
 
+/** Display name from reforgermods DB – never trust config.json names (often wrong/outdated). */
+export function resolveModDisplayName(
+  modId: string,
+  live: LiveModSnapshot | null,
+  modMap?: Map<string, LiveModSnapshot & { name?: string }>
+): string {
+  const fromLive = live?.name?.trim();
+  if (fromLive) return fromLive;
+  const fromMap = modMap?.get(modId.toUpperCase())?.name?.trim();
+  if (fromMap) return fromMap;
+  return modId;
+}
+
 export function buildModAuditRow(
   mod: ParsedConfigMod,
   history: HistoryPoint[],
@@ -574,7 +587,7 @@ export function buildModAuditRow(
 
   return withClassificationHint({
     modId: mod.modId,
-    name: mod.name,
+    name: resolveModDisplayName(mod.modId, live, opts?.modMap),
     beforeAvg,
     earlyAfterAvg,
     afterAvg,

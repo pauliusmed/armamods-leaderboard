@@ -9,6 +9,7 @@ import {
   pickAlternatives,
   sortAuditRowsWorstFirst,
   buildClassificationHint,
+  resolveModDisplayName,
 } from '../web/functions/api/audit-config.ts';
 
 describe('parseServerConfig', () => {
@@ -174,7 +175,31 @@ describe('pickAlternatives', () => {
   });
 });
 
+describe('resolveModDisplayName', () => {
+  it('prefers DB name over config paste name', () => {
+    const name = resolveModDisplayName(
+      'AAAAAAAAAAAAAAAA',
+      { totalPlayers: 1, name: 'Correct From DB' },
+      undefined
+    );
+    assert.equal(name, 'Correct From DB');
+  });
+
+  it('falls back to modId when mod not in DB', () => {
+    assert.equal(resolveModDisplayName('BBBBBBBBBBBBBBBB', null), 'BBBBBBBBBBBBBBBB');
+  });
+});
+
 describe('buildModAuditRow', () => {
+  it('uses DB name in audit row', () => {
+    const row = buildModAuditRow(
+      { modId: 'AAAAAAAAAAAAAAAA', name: 'Wrong In Config' },
+      [],
+      { totalPlayers: 0, serverCount: 0, name: 'Workshop Name' }
+    );
+    assert.equal(row.name, 'Workshop Name');
+  });
+
   it('computes drop from history', () => {
     const history = [
       { date: '2026-05-20', totalPlayers: 100 },
