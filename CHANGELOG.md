@@ -1,3 +1,19 @@
+## [1.12.0] - 2026-05-30
+
+### 🔍 Reforger serverio `config.json` auditas po 1.7 Partisan (2026-05-28)
+
+- **Naujas puslapis `/audit`**: Serverių savininkai gali įklijuoti arba įkelti `config.json` ir gauti ataskaitą naršyklėje – failas **nesaugomas** serveryje, siunčiamas tik `modId` sąrašas.
+- **POST `/api/audit/config`**: Hono endpoint su optimizuotu KV skenavimu (`scanMultipleModsHistory`, `lookupModsByIds`) – viena užklausa iki 120 modų; kliento fallback per modų istoriją, jei batch grąžina 503/HTML.
+- **1.7 klasifikacija**: Statusai `dead` / `risky` / `warning` / `ok` / `niche` pagal BM istoriją prieš ir po patch; **WARNING** tik kai prieš 1.7 buvo žaidėjų, o po update ekosistema efektyviai tuščia (0 ≈ keli žaidėjai/d.).
+- **Ecosystem dip vs declining**: Populiarūs modai nebežymimi kaip „declining“ vien dėl to, kad visas BM žaidėjų base sumažėjo po 1.7 – naudojamas **BM rank** ir atskira **„Ecosystem dip after 1.7“** tendencija.
+- **Metrikos UI**: Atskiri laukai – *Before 1.7*, *After 1.7 update* (pirmos ~4d), *Last 7 days* (trend), *Now (BM)*, *BM rank*; aiškinta, kad „Now“ = tik šiandien online serveriai, o dienos vidurkiai – visi matyti tą dieną.
+- **Rikiavimas**: Blogiausi viršuje – **0 dabar BM** → didžiausias **−%** kritimas → statuso severity.
+- **Gems vs Trash**: Apatinė sekcija populiariems rising/recovering modams ir šalinimui kandidatuojantiems modams; filtrai `0 NOW ON BM`, `gems`, `trash`.
+- **Eksportas**: *Copy text report* / *Copy JSON* su `modId` kiekvienoje eilutėje; pavadinimai iš **reforgermods DB**, ne iš config (dažnai neteisingi).
+- **Parseris**: Priima pilną `config.json`, `game.mods[]` fragmentą, tik `modId` eilutes arba `"modId": "…"` iškarpas.
+- **PayPal / privatumas**: Donate blokas ir angliškas UI/API tekstas (`i18n`).
+- **Testai**: `test/audit-config.test.ts` – parse, trend, klasifikacija, rikiavimas, ecosystem dip.
+
 ## [1.11.0] - 2026-06-01
 
 ### 📝 Techninės dokumentacijos (README.md) pertvarkymas interviu pasiruošimui
