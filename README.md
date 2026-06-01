@@ -1,22 +1,37 @@
-# 🛡️ Arma Mods Leaderboard (reforgermods.com)
+# 🛡️ Full-Stack Data Visualization & Edge-Native Leaderboard Platform
+### High-Performance Mod Tracking, Analytics & Scalable Ranking System for Arma Community
 
-[![Tech Stack](https://img.shields.io/badge/Stack-Cloudflare_Native-orange.svg)](https://reforgermods.com)
-[![Performance](https://img.shields.io/badge/Performance-%3C10ms_Edge_Response-brightgreen.svg)]()
-[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-blue.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+[![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com)
+[![Response Time](https://img.shields.io/badge/Performance-%3C10ms_Edge_Response-brightgreen.svg)]()
+[![System Type](https://img.shields.io/badge/System-Distributed_Caching-blue.svg)]()
+[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-A high-performance mod tracking and ranking platform for **Arma Reforger** and **Arma 3**. This project addresses the limitations of the official Arma Workshop by providing real-time popularity metrics based on active server and player statistics.
+A production-grade, ultra-high-performance data aggregation and visualization platform built to overcome the limitations of the official Arma Workshop. By analyzing active multiplayer server environments and player metrics, the system calculates real-time popularity index, retention, and community trends.
 
 ---
 
-## 🚀 Key Engineering Highlights
+## 🚀 Key Engineering & Architectural Highlights
 
-- **AI-First Development**: Architected and optimized using advanced LLM orchestration (Claude/Qwen), ensuring high code quality, performance-tuned logic, and rapid delivery of complex features.
-- **Ultra-Low Latency API**: Built with **Hono** and deployed on **Cloudflare Workers**, leveraging **Edge Caching** to achieve sub-10ms response times globally.
-- **Scalable Data Architecture**: Designed a custom multi-layered storage system using **Cloudflare KV**, utilizing **chunking strategies** to bypass 25MB value limits while maintaining O(1) lookup performance.
-- **Intelligent Ranking Algorithm**: Developed a hybrid scoring system that weights player counts, server adoption, and historical trends to provide a more accurate popularity index than simple "likes".
-- **Unified Multi-Game Architecture**: Support for both **Arma Reforger** and **Arma 3** within a single, context-aware dashboard, featuring a tactical game switcher for seamless cross-platform intelligence.
-- **Production-Ready Frontend**: A modern, SEO-optimized **React 19** dashboard featuring a "tactical-industrial" aesthetic, custom design system, and in-memory caching for near-instant user experience.
-- **Data Integrity & Consistency Layer**: Implemented a robust data sanitization engine that handles history de-duplication, rank anomaly detection, and linear interpolation for temporal gaps, ensuring high-fidelity analytics.
+### 1. Zero-Overhead Co-Deployment Analytics (Sinergijos Analitika)
+* **Problem**: Storing custom co-occurrence matrices for hundreds of mods in a serverless key-value store would exponentially increase Cloudflare KV transaction counts and storage costs.
+* **Solution**: Developed a memory-optimized in-memory analytics engine inside the data collector. It calculates the top 5 co-deployed mods (frequently deployed together) and injects this metadata directly into pre-existing mod data shards.
+* **Result**: Implemented complex graph-like association rule mining with **exactly zero (0) additional KV read or write operations**.
+
+### 2. Exponential Moving Average (EMA) Server Scoring
+* **Problem**: Traditional leaderboards cause rapid ranking drops during routine server restarts, leading to inaccurate metrics.
+* **Solution**: Implemented an Exponential Moving Average (EMA) smoothing algorithm ($\alpha = 0.15$) for server score calculation. This weights historical performance at 85% and live statistics at 15%.
+* **Result**: Eliminates rating fluctuations during maintenance, preventing false rank decays and providing a highly stable community index.
+
+### 3. Distributed Sharding & Surgical JSON Extraction
+* **Problem**: Cloudflare KV values are limited to 25MB and parsing huge JSON blobs on every request exceeds Worker CPU time limits (50ms).
+* **Solution**: 
+  - **Dynamic Sharding**: Mod data is distributed across multiple 1MB shards (up to 500 entries per shard).
+  - **Surgical Text Extraction**: Developed `findMatchingBrace`—a low-level string-scanning algorithm that slices target JSON objects directly out of raw text buffers.
+* **Result**: Bypasses memory-heavy `JSON.parse` overhead, reducing global edge API latency to sub-10ms response times.
+
+### 4. Enterprise-Grade SEO & OpenGraph Engine
+* **Dynamic Hydration**: Using `react-helmet-async` on React 19 to deliver context-aware Title, Description, and Rich Snippets.
+* **Metadata Integrity**: Automatic rich embeds generation for Discord, Twitter/X, and search engines.
 
 ---
 
@@ -24,20 +39,22 @@ A high-performance mod tracking and ranking platform for **Arma Reforger** and *
 
 ```mermaid
 graph TD
-    subgraph "External Data"
-        BM[BattleMetrics API]
+    subgraph "External Data Layer"
+        BM[BattleMetrics API / Game Servers]
     end
 
-    subgraph "Cloudflare Ecosystem"
-        CRON[Scheduled Trigger] --> |Every 1H| COL[Data Collector / TypeScript]
-        COL --> |Process & Chunk| KV[(Cloudflare KV Storage)]
+    subgraph "Serverless Edge Infrastructure (Cloudflare)"
+        CRON[Cloudflare Cron Trigger] --> |1-Hour Interval| COL[Data Scraper / TS Engine]
+        COL --> |Co-deployment Analytics / EMA Scoring| COL
+        COL --> |Chunking & Sharding| KV[(Cloudflare KV Store)]
         
-        API[Hono API / Workers] --> |Read Optimized JSON| KV
-        API --> |Edge Cache| User((End User))
+        API[Hono Edge API / Workers] --> |Parallel Read Promise.all| KV
+        API --> |Surgical Text Extraction| API
+        API --> |Global Edge Caching| User((End User))
     end
 
-    subgraph "Frontend"
-        WEB[React 19 / Tailwind 4] --> |Fetch| API
+    subgraph "Reactive Presentation Layer"
+        WEB[React 19 / Tailwind 4 / Recharts] --> |Optimized Axios with Cache TTL| API
     end
 ```
 
@@ -45,40 +62,80 @@ graph TD
 
 ## 🛠️ Technology Stack
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend** | React 19, Vite, Tailwind CSS 4, Recharts, TypeScript |
-| **Backend / API** | Hono, Node.js, Cloudflare Workers |
-| **Infrastructure** | Cloudflare Pages, Cloudflare KV, Cron Triggers |
-| **Data Processing** | TypeScript, Axios, BattleMetrics API |
+| Layer | Technologies | Architectural Intent |
+| :--- | :--- | :--- |
+| **Frontend** | React 19, Vite, Tailwind CSS v4, Recharts, TypeScript | Interactive telemetry, lightning-fast HMR, modular UI. |
+| **Backend & API** | Hono, Node.js, Cloudflare Workers | Edge-native API microservices, ultra-low TTFB, Serverless runtime. |
+| **Infrastructure** | Cloudflare Pages, Cloudflare KV, Cron Triggers | Multi-region edge deployment, resilient distributed storage. |
+| **Data Scraping** | TypeScript, Axios, BattleMetrics REST API | Automated hourly data pipeline, ingestion, and validation. |
 
 ---
 
-## 📈 Optimization Strategies
+## 📉 Core Performance Optimization Strategies
 
-### 1. Ultra-Optimization (Text-Targeted Search)
-To avoid the CPU overhead of parsing massive JSON objects in a serverless environment, the API utilizes a specialized string-based search strategy, ensuring the Worker stays well within the 10ms-50ms CPU execution limits.
+### ⚡ Global API Edge Caching
+Every static asset and expensive API route utilizes Cloudflare's Cache API with optimized Cache-Control headers. The browser acts as a secondary cache layer (TTL: 1-60m), ensuring navigation is instant and 0% edge CPU overhead is wasted on repeated queries.
 
-### 2. Distributed KV Storage
-Data is automatically sharded into blocks (chunks) of 500 entries. This allows the system to scale indefinitely while keeping individual KV reads fast and cost-effective.
+### ⚡ Parallel KV Batching (`Promise.all`)
+Rather than sequentially loading mod shards (which previously caused 503 gateway timeouts under heavy load), the API executes asynchronous concurrent fetches, processing massive data pools parallelly at the edge.
 
-### 3. Edge-First Delivery
-By implementing strict `Cache-Control` policies and leveraging the Cloudflare Global Network, mod data is served from the user's nearest data center, minimizing TTFB (Time To First Byte).
+### ⚡ Defensive State & Race Condition Prevention
+Implemented global `AbortController` cancellation in React. Rapid views switching instantly aborts unresolved network tasks, guaranteeing zero UI memory leaks and correct rendering of temporal data.
 
 ---
 
-## 🛠️ Local Development
+## 🛠️ Local Development & Deployment
+
+### Prerequisites
+- Node.js (v20+ recommended)
+- Cloudflare Wrangler CLI (`npm i -g wrangler`)
+
+### Step-by-Step Installation
 
 1. **Clone the repository**
-2. **Install dependencies**: `npm install && cd web && npm install`
-3. **Environment setup**: Copy `.env.example` to `.env` and fill in your BattleMetrics API Key.
-4. **Run Dev Servers**:
-   - Backend Proxy: `npm run dev`
-   - Frontend: `cd web && npm run dev`
+   ```bash
+   git clone https://github.com/GrybasTV/armamods-leaderboard.git
+   cd armamods-leaderboard
+   ```
+
+2. **Install Core & Client Dependencies**
+   ```bash
+   npm install
+   cd web && npm install
+   cd ..
+   ```
+
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory:
+   ```env
+   BATTLEMETRICS_API_KEY=your_api_key_here
+   CLOUDFLARE_ACCOUNT_ID=your_id
+   CLOUDFLARE_KV_NAMESPACE=your_namespace
+   ```
+
+4. **Launch Local Services**
+   * **Backend Proxy & Scraper Execution**:
+     ```bash
+     npm run dev
+     ```
+   * **Frontend Server**:
+     ```bash
+     cd web && npm run dev
+     ```
 
 ---
 
-## 📝 License
+## 🧪 Verification & Testing
+To ensure the integrity of the math scoring models and surgical parser:
+```bash
+npm test
+```
+*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds.*
 
-Copyright © 2026 Saulėspro. Distributed under the [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) license. For commercial inquiries, contact info@saulespro.lt.
+---
+
+## 📝 License & Enterprise Contact
+Copyright © 2026 Saulėspro. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 
+For enterprise commercial licensing or integrations, please contact `info@saulespro.lt`.
+
 

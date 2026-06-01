@@ -1,3 +1,10 @@
+## [1.11.0] - 2026-06-01
+
+### 📝 Techninės dokumentacijos (README.md) pertvarkymas interviu pasiruošimui
+- **Profesionalus inžinerinis profilis**: Perrašytas `README.md` failas akcentuojant architektūrinius, serverless ir paskirstytų sistemų iššūkius bei jų sprendimus (Edge Caching, Dynamic KV Sharding, Surgical Parser).
+- **Techninių sprendimų išryškinimas**: Pirmame plane pateikti svarbiausi projekto pasiekimai – EMA reitingavimo formulė ir in-memory co-deployment analitika su 0 KV transakcijų kaštais.
+- **Interviu pasirengimas**: Supaprastintas lokalaus paleidimo gidas bei pridėtos nuorodos į testų vykdymą (`npm test`), leidžiančios CTO ir Lead programuotojams iškart matyti kodo patikimumą.
+
 ## [1.10.0] - 2026-05-18
 
 ### 🤝 „Frequently Deployed Together“ bendrai naudojamų modifikacijų analitikos diegimas
