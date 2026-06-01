@@ -35,6 +35,8 @@ export async function runClientSideAudit(
   const modMap = new Map<string, LiveModSnapshot & { name?: string }>();
   const historyCache = new Map<string, HistoryPoint[]>();
 
+  let historyHits = 0;
+
   for (let i = 0; i < mods.length; i += BATCH) {
     const chunk = mods.slice(i, i + BATCH);
     await Promise.all(
@@ -45,7 +47,9 @@ export async function runClientSideAudit(
         ]);
         if (histRes.ok && histRes.data) {
           const h = histRes.data as { data?: HistoryPoint[] };
-          historyCache.set(m.modId, h.data || []);
+          const pts = h.data || [];
+          historyCache.set(m.modId, pts);
+          if (pts.length > 0) historyHits += 1;
         } else {
           historyCache.set(m.modId, []);
         }
@@ -62,6 +66,12 @@ export async function runClientSideAudit(
 
   const historyFor = (modId: string) => historyCache.get(modId.toUpperCase()) ?? [];
   const buildOpts = { configIds, modMap, historyFor };
+
+  if (historyHits < Math.max(3, Math.floor(mods.length * 0.05))) {
+    throw new Error(
+      'Duomenų API laikinai nepasiekiamas (503). Palauk 5–10 min. ir bandyk dar kartą – tai Cloudflare/KV apkrova, ne tavo config klaida.'
+    );
+  }
 
   const rows = mods.map((mod) =>
     buildModAuditRow(mod, historyFor(mod.modId), modMap.get(mod.modId) ?? null, REFORGER_PATCH_17, buildOpts)

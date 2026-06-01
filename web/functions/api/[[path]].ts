@@ -838,6 +838,7 @@ app.get('/servers/:serverId/history', async (c) => {
  */
 app.post('/audit/config', async (c) => {
   const start = Date.now();
+  try {
   const game = getGameFromQuery(c);
   if (game !== 'reforger') {
     return c.json(
@@ -899,12 +900,12 @@ app.post('/audit/config', async (c) => {
   const meta = (await c.env.TRENDING_KV.get(`${baseKey}:meta`, 'json')) as { chunks?: number } | null;
   const shards: string[] = [];
   if (meta?.chunks) {
-    const texts = await Promise.all(
-      Array.from({ length: meta.chunks }, (_, i) =>
-        c.env.TRENDING_KV.get(`${baseKey}:${i}`, 'text')
-      )
-    );
-    for (const t of texts) if (t) shards.push(t);
+    for (let i = 0; i < meta.chunks; i++) {
+      const chunkText = await c.env.TRENDING_KV.get(`${baseKey}:${i}`, 'text');
+      if (!chunkText) continue;
+      const hasConfigMod = [...configIds].some((id) => chunkText.includes(`"${id}":{`));
+      if (hasConfigMod) shards.push(chunkText);
+    }
   } else {
     const legacy = await c.env.TRENDING_KV.get(baseKey, 'text');
     if (legacy) shards.push(legacy);
@@ -983,6 +984,17 @@ app.post('/audit/config', async (c) => {
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   response.headers.set('Pragma', 'no-cache');
   return response;
+  } catch (err: any) {
+    console.error('[AUDIT ERROR]', err);
+    return c.json(
+      {
+        error: 'Audit failed',
+        message:
+          'Audito apdorojimas per ilgas arba KV laikinai nepasiekiamas. Pabandyk po kelių minučių – naršyklėje veiks atsarginis režimas (po modą).',
+      },
+      500
+    );
+  }
 });
 
 export const onRequest = handle(app);

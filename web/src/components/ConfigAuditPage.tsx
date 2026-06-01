@@ -227,13 +227,17 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           error?: string;
         };
         if (!r.ok) {
-          throw new Error(json.message || json.error || `HTTP ${r.status}`);
+          const errJson = json as { message?: string; error?: string };
+          throw new Error(errJson.message || errJson.error || `HTTP ${r.status}`);
         }
         auditResult = json;
       } catch (batchErr) {
         const useFallback =
           batchErr instanceof Error &&
-          (batchErr.message === 'HTML_RESPONSE' || batchErr.message.includes('ne JSON'));
+          (batchErr.message === 'HTML_RESPONSE' ||
+            batchErr.message.includes('ne JSON') ||
+            batchErr.message.includes('Audit failed') ||
+            batchErr.message.includes('503'));
         if (!useFallback) throw batchErr;
 
         setProgress('Masinis auditas neprieinamas – skenuojama po modą (lėčiau)…');
