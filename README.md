@@ -136,6 +136,6 @@ npm test
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 
-For inquiries or collaborations, please reach out via GitHub or [LinkedIn](https://www.linkedin.com/).
+For inquiries or collaborations, please reach out via GitHub or [LinkedIn](https://www.linkedin.com/in/paulius-medziukevi%C4%8Dius-003586168/).
 
 
