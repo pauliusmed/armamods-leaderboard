@@ -353,6 +353,12 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           <code className="text-tactical-orange">config.json</code> – get a report in your browser. Your file is{' '}
           <strong className="text-white">not stored</strong> on the server; only mod IDs and names are sent.
         </p>
+        <p className="text-gray-500 text-xs leading-relaxed max-w-3xl border-l-2 border-white/10 pl-3">
+          <strong className="text-gray-400">Active servers:</strong>{' '}
+          <strong className="text-white">Now</strong> = only BattleMetrics servers online today with the mod.{' '}
+          <strong className="text-white">Daily averages</strong> = all BM servers seen that day (also ones that
+          later shut down or dropped the mod after 1.7 – that is why averages fall).
+        </p>
       </header>
 
       <div

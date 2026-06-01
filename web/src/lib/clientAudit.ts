@@ -102,7 +102,8 @@ export async function runClientSideAudit(
       privacy:
         'Your config.json is not stored. Audit ran in the browser (per mod) – only modId was sent to the server.',
       disclaimer:
-        'Fallback mode: slower but works when batch audit is unavailable. Data from BattleMetrics history API.',
+        'Fallback mode: slower but works when batch audit is unavailable. Data from BattleMetrics history API. ' +
+        'Now = online on BM today; daily averages include servers seen that day (including ones that later went offline).',
     },
   };
 }

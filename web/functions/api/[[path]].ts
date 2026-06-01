@@ -964,7 +964,8 @@ app.post('/audit/config', async (c) => {
       privacy:
         'Your config.json is not stored. The server only processes the mod ID list and returns a report – nothing is written to the database.',
       disclaimer:
-        'Heuristic based on BattleMetrics data from all Reforger servers (reforgermods collector). ' +
+        'Heuristic based on BattleMetrics data from all Reforger servers (reforgermods collector), not your server list alone. ' +
+        'Now = only servers BM sees online today with this mod. Daily averages (before 1.7 / after update / last 7 days) aggregate every BM-indexed server seen on that day – servers that shut down or removed the mod after 1.7 lower those averages but are not listed one-by-one. ' +
         '“Recovering” / “rising” reflect ecosystem trends, not a guarantee they work on your server. ' +
         'Alternatives are mods often used alongside this one on other servers (co-deploy). ' +
         'Workshop gameVersion and server RPT logs are the final confirmation.',
