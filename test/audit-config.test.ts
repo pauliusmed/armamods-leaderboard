@@ -4,6 +4,7 @@ import {
   parseServerConfig,
   classifyModAudit,
   avgPlayersInRange,
+  avgRankInRange,
   buildModAuditRow,
   analyzeTrend,
   pickAlternatives,
@@ -51,6 +52,21 @@ not-a-valid-id
 });
 
 describe('analyzeTrend', () => {
+  it('labels ecosystem dip instead of declining when BM base shrank but mod stays popular', () => {
+    const history = [
+      { date: '2026-05-20', totalPlayers: 3021, overallRank: 8 },
+      { date: '2026-05-27', totalPlayers: 2980, overallRank: 9 },
+      { date: '2026-05-29', totalPlayers: 851, overallRank: 10 },
+      { date: '2026-05-30', totalPlayers: 700, overallRank: 10 },
+      { date: '2026-05-31', totalPlayers: 520, overallRank: 11 },
+      { date: '2026-06-01', totalPlayers: 489, overallRank: 11 },
+      { date: '2026-06-02', totalPlayers: 450, overallRank: 12 },
+    ];
+    const t = analyzeTrend(history);
+    assert.equal(t.label, 'Ecosystem dip after 1.7');
+    assert.equal(t.phase, 'stable');
+  });
+
   it('detects recovering after patch dip', () => {
     const history = [
       { date: '2026-05-20', totalPlayers: 200 },

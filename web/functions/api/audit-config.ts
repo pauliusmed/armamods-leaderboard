@@ -12,6 +12,9 @@ export interface HistoryPoint {
   date?: string;
   time?: string;
   totalPlayers?: number;
+  serverCount?: number;
+  /** BM popularity rank (lower = more players). 9999 = unranked. */
+  overallRank?: number;
 }
 
 export interface ParsedConfigMod {
@@ -46,6 +49,8 @@ export interface TrendInsight {
   detail: string;
   recentAvg: number | null;
   earlyAfterAvg: number | null;
+  rankBefore: number | null;
+  rankRecent: number | null;
 }
 
 export interface ModAuditRow {
@@ -68,6 +73,8 @@ export interface ModAuditRow {
   trendDetail: string;
   /** Last 7 days after patch – trend / recovery */
   recentAvg: number | null;
+  rankBefore: number | null;
+  rankRecent: number | null;
   /** Why not WARNING/dead – shown when status is ok / niche / risky */
   classificationHint: string | null;
   alternatives: ModAlternative[];
@@ -240,6 +247,23 @@ export function avgPlayersInRange(
   return Math.round(sum / pts.length);
 }
 
+/** Average BM overall rank in range (lower = more popular). */
+export function avgRankInRange(
+  history: HistoryPoint[],
+  from: string,
+  to: string
+): number | null {
+  const pts = history.filter((h) => {
+    const day = h.date || h.time || '';
+    return day >= from && day < to;
+  });
+  const ranks = pts
+    .map((h) => h.overallRank)
+    .filter((r): r is number => r != null && r > 0 && r < 9999);
+  if (!ranks.length) return null;
+  return Math.round(ranks.reduce((a, b) => a + b, 0) / ranks.length);
+}
+
 /** Paskutinės N kalendorinių dienų vidurkis (nuo paskutinės istorijos datos atgal) */
 export function recentAvgFromHistory(
   history: HistoryPoint[],
@@ -272,12 +296,18 @@ export function analyzeTrend(
   patchDate: string = REFORGER_PATCH_17
 ): TrendInsight {
   const beforeAvg = avgPlayersInRange(history, '2026-05-02', patchDate);
+  const rankBefore = avgRankInRange(history, '2026-05-02', patchDate);
   // Pirmos 4 dienos po patch – „smūgis“
   const earlyAfterAvg = avgPlayersInRange(history, patchDate, addDays(patchDate, 4));
   // Paskutinės dienos po patch (neperdengia su prieš-patch)
   const recentAvg =
     avgPlayersInRange(history, addDays(patchDate, 3), '2099-01-01') ??
     recentAvgFromHistory(history, 7, patchDate);
+  const rankRecent =
+    avgRankInRange(history, addDays(patchDate, 3), '2099-01-01') ??
+    avgRankInRange(history, patchDate, '2099-01-01');
+
+  const rankFields = { rankBefore, rankRecent };
 
   if (beforeAvg === null || recentAvg === null || history.length < 4) {
     return {
@@ -286,10 +316,14 @@ export function analyzeTrend(
       detail: 'Not enough history points for trend analysis.',
       recentAvg,
       earlyAfterAvg,
+      ...rankFields,
     };
   }
 
   const early = earlyAfterAvg ?? recentAvg;
+  const retention = beforeAvg > 0 ? recentAvg / beforeAvg : 0;
+  const rankHeld =
+    rankBefore != null && rankRecent != null && rankRecent <= rankBefore * 1.25;
 
   // Atgyja: po 1.7 smūgis, bet paskutinės dienos gerėja
   if (
@@ -304,6 +338,32 @@ export function analyzeTrend(
       detail: `After 1.7 update dipped to ~${early} players/day (first days); last 7 days ~${recentAvg} – recovering.`,
       recentAvg,
       earlyAfterAvg: early,
+      ...rankFields,
+    };
+  }
+
+  // Visas Reforger BM sumažėjo po 1.7 – modas dar populiarus, absoliutus skaičius mažesnis (ne recovering)
+  if (
+    beforeAvg >= 50 &&
+    recentAvg >= 30 &&
+    retention >= 0.1 &&
+    recentAvg < beforeAvg * 0.55 &&
+    recentAvg <= early * 1.15 &&
+    (rankHeld || retention >= 0.12)
+  ) {
+    const rankNote =
+      rankBefore != null && rankRecent != null
+        ? ` BM rank ~#${rankRecent} (was ~#${rankBefore}).`
+        : '';
+    return {
+      phase: 'stable',
+      label: 'Ecosystem dip after 1.7',
+      detail:
+        `Absolute players down (~${beforeAvg}→~${recentAvg}/day) – most servers have not returned to pre-patch levels yet;` +
+        ` this mod still has real usage, not a solo crash.${rankNote}`,
+      recentAvg,
+      earlyAfterAvg: early,
+      ...rankFields,
     };
   }
 
@@ -315,17 +375,26 @@ export function analyzeTrend(
       detail: `Usage is growing or holding steady (~${recentAvg} players/day in the last 7 days).`,
       recentAvg,
       earlyAfterAvg: early,
+      ...rankFields,
     };
   }
 
-  // Krenta toliau
-  if (recentAvg < early * 0.85 && beforeAvg > recentAvg * 1.25) {
+  // Krenta toliau – mod-specific (ne tik bendras 1.7 dip)
+  if (
+    recentAvg < early * 0.85 &&
+    beforeAvg > recentAvg * 1.25 &&
+    !(recentAvg >= 25 && rankBefore != null && rankRecent != null && rankRecent > rankBefore * 1.5)
+  ) {
     return {
       phase: 'declining',
       label: TREND_LABEL.declining,
-      detail: `Still declining: ~${early}/day right after 1.7 update → ~${recentAvg}/day last 7 days.`,
+      detail: `Losing share vs other mods: ~${early}/day after update → ~${recentAvg}/day last 7 days` +
+        (rankBefore != null && rankRecent != null
+          ? ` (rank ~#${rankBefore}→~#${rankRecent}).`
+          : '.'),
       recentAvg,
       earlyAfterAvg: early,
+      ...rankFields,
     };
   }
 
@@ -335,6 +404,7 @@ export function analyzeTrend(
     detail: 'No major change between post-1.7 update window and the last 7 days.',
     recentAvg,
     earlyAfterAvg: early,
+    ...rankFields,
   };
 }
 
@@ -424,6 +494,16 @@ export function classifyModAudit(params: {
       status: 'niche',
       title: 'Niche mod',
       detail: `Avg. <${MIN_SIGNAL_AVG} players before 1.7 – drop may be noise, not a broken mod.`,
+      dropPct,
+    };
+  }
+
+  if (trend.label === 'Ecosystem dip after 1.7' && !isEffectivelyEmpty(currentPlayers)) {
+    return {
+      status: 'ok',
+      title: 'Popular – network-wide dip after 1.7',
+      detail:
+        `${trend.detail} Absolute −${dropPct}% vs pre-patch is normal while the whole BM player base is still down; compare rank, not only raw players.`,
       dropPct,
     };
   }
@@ -597,6 +677,8 @@ export function buildModAuditRow(
     trendLabel: trend.label,
     trendDetail: trend.detail,
     recentAvg: trend.recentAvg,
+    rankBefore: trend.rankBefore,
+    rankRecent: trend.rankRecent,
     alternatives,
     ...classified,
     classificationHint: null,

@@ -36,6 +36,8 @@ interface ModAuditRow {
   trendLabel: string;
   trendDetail: string;
   recentAvg: number | null;
+  rankBefore: number | null;
+  rankRecent: number | null;
   classificationHint: string | null;
   alternatives: ModAlternative[];
 }
@@ -454,8 +456,9 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
         <p className="text-gray-500 text-xs leading-relaxed max-w-3xl border-l-2 border-white/10 pl-3">
           <strong className="text-gray-400">Active servers:</strong>{' '}
           <strong className="text-white">Now</strong> = only BattleMetrics servers online today with the mod.{' '}
-          <strong className="text-white">Daily averages</strong> = all BM servers seen that day (also ones that
-          later shut down or dropped the mod after 1.7 – that is why averages fall).
+          <strong className="text-white">Daily averages</strong> = all BM servers seen that day. After 1.7 the
+          whole network is smaller – popular mods often show <strong className="text-white">Ecosystem dip</strong>{' '}
+          (not “declining”) when rank/share is still strong.
         </p>
       </header>
 
@@ -727,6 +730,13 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       Last 7 days: <strong>{row.recentAvg ?? '—'}</strong>/day
                       <span className="text-gray-600 ml-1">· trend</span>
                     </div>
+                    {(row.rankBefore != null || row.rankRecent != null) && (
+                      <div>
+                        BM rank: <strong>#{row.rankBefore ?? '—'}</strong> →{' '}
+                        <strong>#{row.rankRecent ?? '—'}</strong>
+                        <span className="text-gray-600 ml-1">(lower = more popular)</span>
+                      </div>
+                    )}
                     <div>
                       Since patch avg: <strong>{row.afterAvg ?? '—'}</strong>/day · Now (BM):{' '}
                       {isZeroOnBm(row.currentPlayers) ? (
