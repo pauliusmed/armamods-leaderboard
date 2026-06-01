@@ -91,6 +91,23 @@ describe('classifyModAudit', () => {
     const r = classifyModAudit({ beforeAvg: 1500, afterAvg: 800, currentPlayers: 1035, trend });
     assert.equal(r.status, 'ok');
   });
+
+  it('current zero but high recent post-patch usage is ok not warning', () => {
+    const trend = {
+      phase: 'stable' as const,
+      label: 'Stable',
+      detail: 'x',
+      recentAvg: 6030,
+      earlyAfterAvg: 2000,
+    };
+    const r = classifyModAudit({
+      beforeAvg: 11040,
+      afterAvg: 6030,
+      currentPlayers: 0,
+      trend,
+    });
+    assert.equal(r.status, 'ok');
+  });
 });
 
 describe('pickAlternatives', () => {

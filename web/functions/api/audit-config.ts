@@ -241,9 +241,16 @@ const NO_PLAYERS_AFTER_MAX = 5;
 /** Recent avg players/day – recovery is real when the ecosystem is coming back */
 const MIN_RECOVERY_RECENT = 10;
 
-/** Had usage before patch, but ecosystem is empty after 1.7 (now or post-patch average) */
-function isEmptyAfterUpdate(afterAvg: number, currentPlayers: number): boolean {
-  return currentPlayers <= NO_PLAYERS_AFTER_MAX || afterAvg <= NO_PLAYERS_AFTER_MAX;
+/**
+ * Post-1.7 ecosystem is effectively empty (not “today=0” while last week still had thousands).
+ * Uses recent post-patch avg from trend, not full-period afterAvg (that mixes recovery back in).
+ */
+function isEmptyAfterUpdate(trend: TrendInsight, currentPlayers: number): boolean {
+  const recent = trend.recentAvg;
+  if (recent === null) {
+    return currentPlayers <= NO_PLAYERS_AFTER_MAX;
+  }
+  return recent <= NO_PLAYERS_AFTER_MAX && currentPlayers <= NO_PLAYERS_AFTER_MAX;
 }
 
 function isHealthyRecovery(trend: TrendInsight, currentPlayers: number): boolean {
@@ -301,10 +308,12 @@ export function classifyModAudit(params: {
     };
   }
 
+  const postPatchAvg = trend.recentAvg ?? trend.earlyAfterAvg ?? afterAvg;
+
   // Core WARNING: players before 1.7, practically none after the update
-  if (isEmptyAfterUpdate(afterAvg, currentPlayers)) {
+  if (isEmptyAfterUpdate(trend, currentPlayers)) {
     const isDead =
-      afterAvg <= DEAD_AFTER_MAX &&
+      postPatchAvg <= DEAD_AFTER_MAX &&
       currentPlayers <= DEAD_AFTER_MAX &&
       dropPct >= 70 &&
       trend.phase !== 'recovering';
@@ -314,7 +323,7 @@ export function classifyModAudit(params: {
         status: 'dead',
         title: 'Likely broken after 1.7',
         detail:
-          `Averaged ~${beforeAvg} players/day before 1.7; after the update ~${afterAvg} and now ${currentPlayers} – ecosystem removed this mod.`,
+          `Averaged ~${beforeAvg} players/day before 1.7; after the update ~${postPatchAvg} and now ${currentPlayers} – ecosystem removed this mod.`,
         dropPct,
       };
     }
@@ -323,7 +332,7 @@ export function classifyModAudit(params: {
       status: 'warning',
       title: 'Players before 1.7, empty after update',
       detail:
-        `Had ~${beforeAvg} players/day before 1.7, but after the update only ~${afterAvg} avg and ${currentPlayers} now. ` +
+        `Had ~${beforeAvg} players/day before 1.7, but after the update only ~${postPatchAvg} avg recently and ${currentPlayers} now. ` +
         'Servers likely dropped this mod – check Workshop 1.7 update and your server logs.',
       dropPct,
     };
