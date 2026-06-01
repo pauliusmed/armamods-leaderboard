@@ -40,8 +40,10 @@ const STATUS_HEADING: Record<AuditStatus, string> = {
 
 function lineForMod(r: ReportModRow): string {
   const drop = r.dropPct != null ? ` | drop ${r.dropPct}%` : '';
+  const now =
+    r.currentPlayers === 0 ? 'now 0 [ZERO ON BM TODAY]' : `now ${r.currentPlayers}`;
   const stats =
-    `before ${r.beforeAvg ?? '—'} | after 1.7 update ${r.earlyAfterAvg ?? '—'} | last 7d ${r.recentAvg ?? '—'} | since patch ${r.afterAvg ?? '—'} | now ${r.currentPlayers}`;
+    `before ${r.beforeAvg ?? '—'} | after 1.7 update ${r.earlyAfterAvg ?? '—'} | last 7d ${r.recentAvg ?? '—'} | since patch ${r.afterAvg ?? '—'} | ${now}`;
   return `${r.modId} | ${r.name} | ${r.title}${drop}\n  ${stats}\n  ${r.detail}`;
 }
 
@@ -57,6 +59,18 @@ export function formatAuditReportText(input: AuditReportInput): string {
     '--- Mod IDs (copy lines into your mod list / Workshop) ---',
     '',
   ];
+
+  const zeroNow = input.rows.filter((r) => r.currentPlayers === 0);
+  if (zeroNow.length) {
+    lines.push(`=== 0 NOW ON BATTLEMETRICS (${zeroNow.length}) ===`);
+    lines.push('Exact zero today – separate from “a few players/day” in averages.');
+    for (const r of zeroNow) {
+      lines.push(
+        `${r.modId} | ${r.name} | ${r.status.toUpperCase()} | last 7d ${r.recentAvg ?? '—'}/day | after 1.7 update ${r.earlyAfterAvg ?? '—'}/day`
+      );
+    }
+    lines.push('');
+  }
 
   for (const status of STATUS_ORDER) {
     const group = input.rows.filter((r) => r.status === status);

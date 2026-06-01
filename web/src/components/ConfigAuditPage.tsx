@@ -57,6 +57,7 @@ interface AuditResponse {
 }
 
 type InputMode = 'paste' | 'file';
+type AuditFilter = AuditStatus | 'all' | 'zero-now';
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
 const STATUS_ORDER: AuditStatus[] = ['dead', 'risky', 'warning', 'ok', 'niche', 'unknown'];
@@ -89,6 +90,10 @@ const TREND_STYLE: Record<TrendPhase, string> = {
 
 interface ConfigAuditPageProps {
   game?: GameType;
+}
+
+function isZeroOnBm(players: number): boolean {
+  return players === 0;
 }
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -167,7 +172,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AuditResponse | null>(null);
-  const [filter, setFilter] = useState<AuditStatus | 'all'>('all');
+  const [filter, setFilter] = useState<AuditFilter>('all');
   const [progress, setProgress] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -213,9 +218,15 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
     return map;
   }, [result]);
 
+  const zeroNowCount = useMemo(
+    () => result?.data.filter((r) => isZeroOnBm(r.currentPlayers)).length ?? 0,
+    [result]
+  );
+
   const visibleRows = useMemo(() => {
     if (!result) return [];
     if (filter === 'all') return result.data;
+    if (filter === 'zero-now') return result.data.filter((r) => isZeroOnBm(r.currentPlayers));
     return result.data.filter((r) => r.status === filter);
   }, [result, filter]);
 
@@ -516,6 +527,18 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                 <div className="text-2xl font-black">{result.meta.summary[st] ?? 0}</div>
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setFilter('zero-now')}
+              title="Mods with 0 players on BattleMetrics right now (may differ from last 7 days avg)"
+              className={`p-3 border text-left rounded border-red-500/50 bg-red-950/25 text-red-200 col-span-2 sm:col-span-3 ${
+                filter === 'zero-now' ? 'ring-1 ring-red-400' : ''
+              }`}
+            >
+              <div className="text-[9px] font-bold opacity-70">0 NOW ON BM</div>
+              <div className="text-2xl font-black">{zeroNowCount}</div>
+              <div className="text-[9px] opacity-60 mt-1">Exact zero today · not the same as “a few/day”</div>
+            </button>
           </div>
 
           <section className="border border-white/10 rounded-lg p-4 space-y-4 bg-white/[0.02]">
@@ -576,6 +599,11 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       >
                         {row.trendLabel}
                       </span>
+                      {isZeroOnBm(row.currentPlayers) && (
+                        <span className="text-[9px] px-1.5 py-0.5 border border-red-500/60 rounded font-black uppercase tracking-wider text-red-300 bg-red-950/50">
+                          0 now on BM
+                        </span>
+                      )}
                     </div>
                     <h3 className="font-bold text-white truncate">{row.name}</h3>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -612,9 +640,19 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       <span className="text-gray-600 ml-1">· trend</span>
                     </div>
                     <div>
-                      Since patch avg: <strong>{row.afterAvg ?? '—'}</strong>/day · Now:{' '}
-                      <strong>{row.currentPlayers}</strong>
+                      Since patch avg: <strong>{row.afterAvg ?? '—'}</strong>/day · Now (BM):{' '}
+                      {isZeroOnBm(row.currentPlayers) ? (
+                        <strong className="text-red-400">0</strong>
+                      ) : (
+                        <strong>{row.currentPlayers}</strong>
+                      )}
                     </div>
+                    {isZeroOnBm(row.currentPlayers) && (row.recentAvg ?? 0) > 10 && (
+                      <p className="text-[10px] text-amber-300/90 leading-snug">
+                        0 on BM now, but last 7 days ~{row.recentAvg}/day – may be lag or servers offline today;
+                        check trend before removing.
+                      </p>
+                    )}
                     <Link
                       to={`/mod/${row.modId}`}
                       className="inline-block mt-2 text-tactical-orange hover:underline text-[10px] uppercase tracking-widest"
@@ -663,8 +701,11 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             ))}
           </div>
 
-          {filter !== 'all' && grouped.get(filter)?.length === 0 && (
+          {filter !== 'all' && filter !== 'zero-now' && grouped.get(filter)?.length === 0 && (
             <p className="text-gray-500 text-sm">No mods in this category.</p>
+          )}
+          {filter === 'zero-now' && zeroNowCount === 0 && (
+            <p className="text-gray-500 text-sm">No mods with exactly 0 players on BattleMetrics right now.</p>
           )}
         </>
       )}
