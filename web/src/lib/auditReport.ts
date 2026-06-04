@@ -2,6 +2,7 @@
  * Exportable audit report (text + JSON) – modId first so server owners can paste into config.
  */
 import { PAYPAL_DONATE_URL } from './siteLinks';
+import { AUDIT_STATUS_SHORT, ZERO_NOW_SHORT } from './auditLabels';
 
 export type AuditStatus = 'dead' | 'risky' | 'warning' | 'ok' | 'niche' | 'unknown';
 
@@ -30,12 +31,12 @@ export interface AuditReportInput {
 const STATUS_ORDER: AuditStatus[] = ['dead', 'risky', 'warning', 'ok', 'niche', 'unknown'];
 
 const STATUS_HEADING: Record<AuditStatus, string> = {
-  dead: 'BROKEN AFTER 1.7 (remove first)',
-  risky: 'HIGH RISK',
-  warning: 'WARNING – had players before 1.7, empty after update',
-  ok: 'OK',
-  niche: 'NICHE',
-  unknown: 'UNKNOWN',
+  dead: `${AUDIT_STATUS_SHORT.dead} – remove from server first`,
+  risky: AUDIT_STATUS_SHORT.risky,
+  warning: AUDIT_STATUS_SHORT.warning,
+  ok: AUDIT_STATUS_SHORT.ok,
+  niche: AUDIT_STATUS_SHORT.niche,
+  unknown: AUDIT_STATUS_SHORT.unknown,
 };
 
 function lineForMod(r: ReportModRow): string {
@@ -62,7 +63,7 @@ export function formatAuditReportText(input: AuditReportInput): string {
 
   const zeroNow = input.rows.filter((r) => r.currentPlayers === 0);
   if (zeroNow.length) {
-    lines.push(`=== 0 NOW ON BATTLEMETRICS (${zeroNow.length}) ===`);
+    lines.push(`=== ${ZERO_NOW_SHORT.toUpperCase()} ON BATTLEMETRICS (${zeroNow.length}) ===`);
     lines.push('Exact zero today – separate from “a few players/day” in averages.');
     for (const r of zeroNow) {
       lines.push(

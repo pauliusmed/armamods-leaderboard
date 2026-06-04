@@ -1,3 +1,9 @@
+## [1.12.3] - 2026-05-30
+
+### 🏷️ Audit – aiškesni statusų pavadinimai
+- Filtrai ir ženkliukai: **Remove** / **Empty after 1.7** / **Monitor** / **Keep** / **Low traffic** vietoj DEAD/WARNING/RISKY/OK.
+- **Zero today** vietoj „0 NOW ON BM“; tooltips su vienos eilutės paaiškinimu.
+
 ## [1.12.2] - 2026-05-30
 
 ### 📈 Mod detail – 1.7 Partisan ant timeline

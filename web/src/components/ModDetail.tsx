@@ -18,6 +18,7 @@ import {
   ReferenceArea,
 } from 'recharts';
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
+import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import type { Mod, Server, ModHistory } from '../types';
 
 const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
@@ -27,15 +28,6 @@ const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
   ok: 'border-emerald-600/40 bg-emerald-950/20 text-emerald-200',
   niche: 'border-gray-600/40 bg-gray-900/40 text-gray-400',
   unknown: 'border-gray-700/40 bg-black/40 text-gray-500',
-};
-
-const PATCH_STATUS_LABEL: Record<AuditStatus, string> = {
-  dead: 'Likely broken after 1.7',
-  warning: 'Warning after 1.7',
-  risky: 'High risk after 1.7',
-  ok: 'OK after 1.7',
-  niche: 'Niche – low signal',
-  unknown: 'Insufficient history',
 };
 
 interface ModDetailData extends Mod {
@@ -218,7 +210,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               className={`flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 border rounded-lg ${PATCH_STATUS_STYLE[patchInsight.row.status]}`}
             >
               <span className="text-[10px] font-black uppercase tracking-widest">
-                {PATCH_STATUS_LABEL[patchInsight.row.status]}
+                {AUDIT_STATUS_SHORT[patchInsight.row.status]}
               </span>
               <p className="text-[11px] opacity-90 flex-1">{patchInsight.row.title}</p>
               {patchInsight.row.dropPct != null && (

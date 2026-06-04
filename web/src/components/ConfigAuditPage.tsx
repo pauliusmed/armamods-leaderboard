@@ -7,6 +7,12 @@ import { auditDiscovery, sortAuditRowsWorstFirst } from '@audit-config';
 import { parseApiJson, runClientSideAudit } from '../lib/clientAudit';
 import { formatAuditReportJson, formatAuditReportText } from '../lib/auditReport';
 import { PAYPAL_DONATE_URL } from '../lib/siteLinks';
+import {
+  AUDIT_STATUS_HINT,
+  AUDIT_STATUS_SHORT,
+  ZERO_NOW_HINT,
+  ZERO_NOW_SHORT,
+} from '../lib/auditLabels';
 
 type AuditStatus = 'dead' | 'risky' | 'warning' | 'ok' | 'niche' | 'unknown';
 type TrendPhase = 'rising' | 'recovering' | 'declining' | 'stable' | 'unknown';
@@ -78,15 +84,6 @@ const STATUS_STYLE: Record<AuditStatus, string> = {
   unknown: 'border-gray-700/40 bg-black/40 text-gray-500',
 };
 
-const STATUS_LABEL: Record<AuditStatus, string> = {
-  dead: 'BROKEN AFTER 1.7',
-  risky: 'HIGH RISK',
-  warning: 'WARNING',
-  ok: 'OK',
-  niche: 'NICHE',
-  unknown: 'UNKNOWN',
-};
-
 const TREND_STYLE: Record<TrendPhase, string> = {
   rising: 'bg-emerald-500/20 text-emerald-300 border-emerald-600/50',
   recovering: 'bg-sky-500/20 text-sky-300 border-sky-600/50',
@@ -144,7 +141,7 @@ function DiscoveryModCard({ row, tone }: { row: ModAuditRow; tone: 'gem' | 'tras
       <div className="text-[9px] font-mono text-tactical-orange break-all">{row.modId}</div>
       <div className="font-bold text-white text-sm truncate mt-0.5">{row.name}</div>
       <div className="text-[10px] text-gray-400 mt-1 font-mono">
-        {STATUS_LABEL[row.status]} · {row.trendLabel} · now {row.currentPlayers} · 7d ~
+        {AUDIT_STATUS_SHORT[row.status]} · {row.trendLabel} · now {row.currentPlayers} · 7d ~
         {row.recentAvg ?? '—'}/day
       </div>
       {row.classificationHint && tone === 'trash' && (
@@ -632,21 +629,26 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                 onClick={() => setFilter(st)}
                 className={`p-3 border text-left rounded ${STATUS_STYLE[st]} ${filter === st ? 'ring-1 ring-white' : ''}`}
               >
-                <div className="text-[9px] font-bold opacity-70">{STATUS_LABEL[st]}</div>
+                <div
+                  className="text-[9px] font-bold opacity-70"
+                  title={AUDIT_STATUS_HINT[st]}
+                >
+                  {AUDIT_STATUS_SHORT[st]}
+                </div>
                 <div className="text-2xl font-black">{result.meta.summary[st] ?? 0}</div>
               </button>
             ))}
             <button
               type="button"
               onClick={() => setFilter('zero-now')}
-              title="Mods with 0 players on BattleMetrics right now (may differ from last 7 days avg)"
+              title={ZERO_NOW_HINT}
               className={`p-3 border text-left rounded border-red-500/50 bg-red-950/25 text-red-200 col-span-2 sm:col-span-3 ${
                 filter === 'zero-now' ? 'ring-1 ring-red-400' : ''
               }`}
             >
-              <div className="text-[9px] font-bold opacity-70">0 NOW ON BM</div>
+              <div className="text-[9px] font-bold opacity-70">{ZERO_NOW_SHORT}</div>
               <div className="text-2xl font-black">{zeroNowCount}</div>
-              <div className="text-[9px] opacity-60 mt-1">Exact zero today · not the same as “a few/day”</div>
+              <div className="text-[9px] opacity-60 mt-1">{ZERO_NOW_HINT}</div>
             </button>
           </div>
 
@@ -658,8 +660,8 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             Show all ({result.meta.modCount}) · {result.meta.durationMs}ms
           </button>
           <p className="text-[10px] text-gray-600">
-            Order: <strong className="text-gray-400">0 on BM now</strong> → highest{' '}
-            <strong className="text-gray-400">−%</strong> drop → severity (dead / warning / …)
+            Order: <strong className="text-gray-400">Zero today</strong> → highest{' '}
+            <strong className="text-gray-400">−%</strong> → Remove / Empty / Monitor / Keep
           </p>
 
           <div className="text-[11px] text-gray-500 border border-white/5 p-4 rounded bg-white/2 space-y-2">
@@ -683,7 +685,12 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                 <div className="flex flex-col sm:flex-row sm:items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="text-[9px] font-black tracking-widest">{STATUS_LABEL[row.status]}</span>
+                      <span
+                        className="text-[9px] font-black tracking-widest"
+                        title={AUDIT_STATUS_HINT[row.status]}
+                      >
+                        {AUDIT_STATUS_SHORT[row.status]}
+                      </span>
                       <span
                         className={`text-[9px] px-1.5 py-0.5 border rounded font-bold ${TREND_STYLE[row.trendPhase]}`}
                       >
@@ -691,7 +698,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       </span>
                       {isZeroOnBm(row.currentPlayers) && (
                         <span className="text-[9px] px-1.5 py-0.5 border border-red-500/60 rounded font-black uppercase tracking-wider text-red-300 bg-red-950/50">
-                          0 now on BM
+                          Zero today
                         </span>
                       )}
                     </div>
