@@ -373,6 +373,15 @@ interface ServerMod {
   console.log("💾 UPDATING KV HISTORY...");
   const today = new Date().toISOString().split('T')[0];
 
+  /** ISO week bucket = Monday of that week (matches API history-query weekStartISO) */
+  const weekStart = (isoDate: string): string => {
+    const d = new Date(isoDate + 'T12:00:00Z');
+    const day = d.getUTCDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setUTCDate(d.getUTCDate() + diff);
+    return d.toISOString().slice(0, 10);
+  };
+
   try {
     const statsMap: Record<string, { p: number, s: number, r: number }> = {};
     for (const m of modList) {
@@ -388,14 +397,22 @@ interface ServerMod {
     const periods = [
       { name: 'hourly', key: `history:hourly:${game}`, limit: 12 },
       { name: 'daily', key: `history:daily:${game}`, limit: 31 },
+      { name: 'weekly', key: `history:weekly:${game}`, limit: 52 },
       { name: 'monthly', key: `history:monthly:${game}`, limit: 12 },
-      { name: 'yearly', key: `history:yearly:${game}`, limit: 5 }
+      { name: 'yearly', key: `history:yearly:${game}`, limit: 5 },
     ];
 
     for (const period of periods) {
-      const timeLabel = period.name === 'hourly' ? new Date().toISOString() :
-                        period.name === 'monthly' ? today.substring(0, 7) :
-                        period.name === 'yearly' ? today.substring(0, 4) : today;
+      const timeLabel =
+        period.name === 'hourly'
+          ? new Date().toISOString()
+          : period.name === 'weekly'
+            ? weekStart(today)
+            : period.name === 'monthly'
+              ? today.substring(0, 7)
+              : period.name === 'yearly'
+                ? today.substring(0, 4)
+                : today;
 
       console.log(`  - Processing ${period.name} history...`);
 
@@ -418,7 +435,13 @@ interface ServerMod {
       // 2. Aggregate or append new point
       const existingIndex = history.findIndex((d: any) => d.time === timeLabel);
       
-      if (existingIndex !== -1 && (period.name === 'daily' || period.name === 'monthly' || period.name === 'yearly')) {
+      if (
+        existingIndex !== -1 &&
+        (period.name === 'daily' ||
+          period.name === 'weekly' ||
+          period.name === 'monthly' ||
+          period.name === 'yearly')
+      ) {
         // PEAK AGGREGATION LOGIC:
         // Compare existing stats for the day with current stats and keep the best values
         const existingPoint = history[existingIndex];

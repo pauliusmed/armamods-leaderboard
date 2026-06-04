@@ -22,6 +22,7 @@ import {
   type AuditStatus,
   type HistoryPoint,
 } from './audit-config';
+import { resolveHistoryQuery, type GameType as HistoryGameType } from './history-query';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -481,6 +482,34 @@ function smoothHistoryData(data: any[]) {
   return smoothed;
 }
 
+async function fetchModHistoryPoints(
+  kv: KVNamespace,
+  modId: string,
+  baseKey: string
+): Promise<any[]> {
+  const modHistory: any[] = [];
+  const meta = (await kv.get(`${baseKey}:meta`, 'json')) as { chunks?: number } | null;
+
+  if (meta?.chunks) {
+    const shardPromises = [];
+    for (let i = 0; i < meta.chunks; i++) {
+      shardPromises.push(kv.get(`${baseKey}:${i}`, 'text'));
+    }
+    const shardsText = await Promise.all(shardPromises);
+
+    for (const shardText of shardsText) {
+      if (shardText?.includes(`"${modId}":{`)) {
+        modHistory.push(...scanHistoryPoints(shardText, modId));
+      }
+    }
+  } else {
+    const historyText = await kv.get(baseKey, 'text');
+    if (historyText) modHistory.push(...scanHistoryPoints(historyText, modId));
+  }
+
+  return modHistory;
+}
+
 app.get('/mods/:modId/history', async (c) => {
   const cache = await caches.open('armamods:history');
   const cacheResponse = await cache.match(c.req.raw);
@@ -492,41 +521,20 @@ app.get('/mods/:modId/history', async (c) => {
   const daysString = c.req.query('days') || '30';
   const requestingAll = daysString === 'all';
   const days = requestingAll ? 9999 : parseInt(daysString);
+  const plan = resolveHistoryQuery(days, game as HistoryGameType);
 
-  let baseKey = `history:daily:${game}`;
-  let sliceCount = -days;
+  console.log(`[HISTORY] Fetching ${plan.baseKey} shards for ${modId}...`);
 
-  if (days <= 1) { baseKey = `history:hourly:${game}`; sliceCount = -24; }
-  else if (days > 31 && days <= 365) { baseKey = `history:monthly:${game}`; sliceCount = -12; }
-  else if (days > 365 || requestingAll) { baseKey = `history:yearly:${game}`; sliceCount = -10; }
+  let modHistory = await fetchModHistoryPoints(c.env.TRENDING_KV, modId, plan.baseKey);
+  let finalHistory = smoothHistoryData(modHistory.slice(plan.sliceCount));
 
-  console.log(`[HISTORY] Fetching ${baseKey} shards for ${modId}...`);
-  
-  let modHistory: any[] = [];
-  const meta = await c.env.TRENDING_KV.get(`${baseKey}:meta`, 'json') as any;
-
-  if (meta && meta.chunks) {
-      // Lygiagretus history chunks nuskaitymas
-      const shardPromises = [];
-      for (let i = 0; i < meta.chunks; i++) {
-          shardPromises.push(c.env.TRENDING_KV.get(`${baseKey}:${i}`, 'text'));
-      }
-      const shardsText = await Promise.all(shardPromises);
-      
-      for (let i = 0; i < shardsText.length; i++) {
-          const shardText = shardsText[i];
-          if (shardText && shardText.includes(`"${modId}":{`)) {
-              const shardHistory = scanHistoryPoints(shardText, modId);
-              modHistory.push(...shardHistory);
-          }
-      }
-  } else {
-      // Legacy single-file logic
-      const historyText = await c.env.TRENDING_KV.get(baseKey, 'text');
-      if (historyText) modHistory = scanHistoryPoints(historyText, modId);
+  if (plan.fallbackKey && finalHistory.length < 4) {
+    console.log(
+      `[HISTORY] Weekly sparse (${finalHistory.length} pts), fallback ${plan.fallbackKey}`
+    );
+    modHistory = await fetchModHistoryPoints(c.env.TRENDING_KV, modId, plan.fallbackKey);
+    finalHistory = smoothHistoryData(modHistory.slice(plan.fallbackSlice ?? -12));
   }
-
-  const finalHistory = smoothHistoryData(modHistory.slice(sliceCount));
   const finished = Date.now() - start;
   console.log(`[HISTORY] Prepared ${finalHistory.length} nodes in ${finished}ms`);
   
@@ -765,15 +773,16 @@ app.get('/servers/:serverId/history', async (c) => {
   const daysString = c.req.query('days') || '30';
   const requestingAll = daysString === 'all';
   const days = requestingAll ? 9999 : parseInt(daysString);
+  let plan = resolveHistoryQuery(days, game as HistoryGameType);
 
-  let baseKey = `history:daily:${game}`;
-  let sliceCount = -days;
-
-  if (days <= 1) { baseKey = `history:hourly:${game}`; sliceCount = -24; }
-  else if (days > 31 && days <= 365) { baseKey = `history:monthly:${game}`; sliceCount = -12; }
-  else if (days > 365 || requestingAll) { baseKey = `history:yearly:${game}`; sliceCount = -10; }
-
-  const meta = await c.env.TRENDING_KV.get(`${baseKey}:meta`, 'json') as any;
+  let meta = (await c.env.TRENDING_KV.get(`${plan.baseKey}:meta`, 'json')) as { chunks?: number } | null;
+  if (!meta?.chunks && plan.fallbackKey) {
+    plan = {
+      baseKey: plan.fallbackKey,
+      sliceCount: plan.fallbackSlice ?? -12,
+    };
+    meta = (await c.env.TRENDING_KV.get(`${plan.baseKey}:meta`, 'json')) as { chunks?: number } | null;
+  }
   if (!meta || !meta.chunks) {
     const finalResponse = c.json({ data: [] });
     c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
@@ -783,7 +792,7 @@ app.get('/servers/:serverId/history', async (c) => {
   // Lygiagretus history shards nuskaitymas
   const shardPromises = [];
   for (let i = 0; i < meta.chunks; i++) {
-    shardPromises.push(c.env.TRENDING_KV.get(`${baseKey}:${i}`, 'text'));
+    shardPromises.push(c.env.TRENDING_KV.get(`${plan.baseKey}:${i}`, 'text'));
   }
   const shardsText = await Promise.all(shardPromises);
 
@@ -825,7 +834,7 @@ app.get('/servers/:serverId/history', async (c) => {
     }
   }
 
-  const finalHistory = serverHistory.slice(sliceCount);
+  const finalHistory = serverHistory.slice(plan.sliceCount);
   const finalResponse = c.json({ data: finalHistory });
   finalResponse.headers.set('Cache-Control', 'public, max-age=300');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));

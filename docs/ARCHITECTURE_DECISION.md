@@ -13,7 +13,8 @@ Siekiant maksimalaus „Anti-Limit“ saugumo ir žaibiško greičio, projektas 
 2. **KV Time-Series (History)**: Istoriniai duomenys pildomi kas valandą į „Master JSON“ paketus:
    - `history:hourly`: Paskutinės 24 valandos aukšta rezoliucija.
    - `history:daily`: Paskutinės 31 dienos (Peak Aggregation su „Sliding Window“).
-   - `history:monthly`: Paskutiniai 12 mėnesių.
+   - `history:weekly`: Paskutinės 52 savaitės (piko agregacija per savaitę, laiko žyma = pirmadienis UTC).
+   - `history:monthly`: Paskutiniai 12 mėnesių (fallback 1Y, kol weekly serija užsipildo).
    - `history:yearly`: Paskutiniai 5 metai.
 3. **Agreguotas Trending API**: Vietoj SQL JOIN'ų, „Trending“ logika dabar lygina du JSON taškus tiesiai KV podėlyje, sutaupydama šimtus milisekundžių užkrovimo laiko.
 4. **Resursų saugumas**: 25MB KV limito aplenkimas naudojant automatinį sharding'ą (5MB blokais).
@@ -35,7 +36,8 @@ cache:ranking:servers      — TOP 200 serverių leaderboard
 
 history:hourly:game[:0..N] — Modų + serverių istorija (12 taškų, valandinė)
 history:daily:game[:0..N]  — Modų + serverių istorija (31 taškas, dienos peak)
-history:monthly:game[:0..N]— Mėnesinė agregacija (12 taškų)
+history:weekly:game[:0..N] — Savaitinė agregacija (52 taškai, 1Y grafikas)
+history:monthly:game[:0..N]— Mėnesinė agregacija (12 taškų, fallback)
 history:yearly:game[:0..N] — Metinė agregacija (5 taškai)
 ```
 

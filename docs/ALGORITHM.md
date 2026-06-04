@@ -132,7 +132,7 @@ Server rank history is stored in the shared history shards alongside mod data. E
 The history API supports dynamic temporal scaling:
 - **24H (Hourly)**: Swings baseKey to `history:hourly:${game}` (slices the last 24 entries).
 - **7D / 30D (Daily)**: Reads from `history:daily:${game}` (slices the last 7 or 30 entries).
-- **1Y (Monthly)**: Swings baseKey to `history:monthly:${game}` (slices the last 12 entries).
+- **1Y (Weekly)**: Swings baseKey to `history:weekly:${game}` (52 Monday buckets, peak per week). Falls back to `history:monthly` until enough weekly points exist after deploy.
 - **All-Time (Yearly)**: Swings baseKey to `history:yearly:${game}` (slices the last 10 entries).
 
 ---

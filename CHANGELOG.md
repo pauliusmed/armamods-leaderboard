@@ -1,3 +1,10 @@
+## [1.12.4] - 2026-05-30
+
+### 📈 1Y timeline – savaitinė rezoliucija (52 taškai)
+- **Collector**: naujas `history:weekly` (52 savaitės, piko agregacija, pirmadienio UTC bucket).
+- **API** (`/mods/:id/history`, `/servers/:id/history`): `31 < days ≤ 365` skaito weekly vietoj monthly; jei weekly dar tuščias – fallback į monthly.
+- **Docs + testai**: `history-query.ts`, `test/history-query.test.ts`.
+
 ## [1.12.3] - 2026-05-30
 
 ### 🏷️ Audit – aiškesni statusų pavadinimai
