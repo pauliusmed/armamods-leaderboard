@@ -1,3 +1,10 @@
+## [1.13.0] - 2026-06-04
+
+### 🔗 Social share previews (Discord / OG)
+- **Pages middleware**: crawler'iams (`Discordbot`, `facebookexternalhit`, …) `/mod/*` ir `/server/*` grąžina HTML su dinaminiais **Open Graph** tagais (pavadinimas, aprašymas, URL).
+- **Mod thumbnail**: `/api/og/preview/mod/:id` – 302 į Bohemia/Steam workshop `og:image` (KV cache 7d), fallback `og-image.png`.
+- **Frontend SEO**: absoliutūs `og:url` / `og:image` mod ir server detail puslapiuose.
+
 ## [1.12.4] - 2026-05-30
 
 ### 📈 1Y timeline – savaitinė rezoliucija (52 taškai)

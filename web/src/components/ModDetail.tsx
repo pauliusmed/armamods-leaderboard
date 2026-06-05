@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
+import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import type { Mod, Server, ModHistory } from '../types';
 
 const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
@@ -140,8 +141,10 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
     <div className="space-y-12 animate-in fade-in duration-700">
       <SEO 
         title={`${mod.name} - Statistics & Trends`}
-        description={`Track real-time player counts, server ranking, and deployment history for the Arma mod: ${mod.name} (${mod.id}).`}
+        description={`${mod.name}: ${mod.totalPlayers?.toLocaleString() ?? 0} players on ${mod.serverCount ?? 0} BattleMetrics servers. Rank #${mod.stats?.overallRank || mod.overallRank || '—'}.`}
         keywords={`${mod.name}, Arma Reforger Mods, Arma 3 Mods, Mod Statistics, ${mod.author || ''}`}
+        url={modPageUrl(mod.id, game)}
+        image={modPreviewImageUrl(mod.id, game)}
       />
       <header className="space-y-6">
         <Link to={`${gp}/`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">

@@ -23,6 +23,11 @@ import {
   type HistoryPoint,
 } from './audit-config';
 import { resolveHistoryQuery, type GameType as HistoryGameType } from './history-query';
+import {
+  defaultOgImage,
+  resolveModPreviewImage,
+  type ShareGame,
+} from '../lib/share-meta';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -653,6 +658,18 @@ app.get('/servers/:serverId', async (c) => {
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   
   return response;
+});
+
+/** OG image redirect – Discord follows to workshop thumbnail or site default */
+app.get('/og/preview/mod/:modId', async (c) => {
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+  const image = await resolveModPreviewImage(c.env.TRENDING_KV, game, modId);
+  return c.redirect(image, 302);
+});
+
+app.get('/og/preview/server/:serverId', async (c) => {
+  return c.redirect(defaultOgImage(), 302);
 });
 
 // Trending logic (Pre-calculated by collector)
