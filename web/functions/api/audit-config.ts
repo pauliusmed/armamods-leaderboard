@@ -423,6 +423,8 @@ const EFFECTIVELY_EMPTY_MAX = 10;
 const DEAD_AFTER_MAX = 3;
 /** Mod still on N BM server configs but 0 players – likely broken / stale config after 1.7 */
 const GHOST_DEPLOYMENT_MIN_SERVERS = 3;
+/** Now on BM: 0–1 players = dead mod for server owners (same bucket as “nobody plays”) */
+const ZERO_NOW_BROKEN_MAX = 1;
 /** Recent avg players/day – recovery is real when the ecosystem is coming back */
 const MIN_RECOVERY_RECENT = 10;
 
@@ -564,18 +566,24 @@ export function classifyModAudit(params: {
   if (isDamagedAfter17Update(trend, currentPlayers)) {
     const isGhostDead = isGhostBrokenAfter17(serverCount, currentPlayers, trend);
 
-    // −70%+ and effectively empty now (0 ≈ few/day on BM) → broken, not just “empty”
+    const isZeroNowBroken =
+      currentPlayers <= ZERO_NOW_BROKEN_MAX && trend.phase !== 'recovering';
+
+    // −70%+ and effectively empty now (0 ≈ few/day on BM) → broken
     const isSevereDropBroken =
       (dropPct ?? 0) >= 70 &&
       isEffectivelyEmpty(currentPlayers) &&
       trend.phase !== 'recovering';
 
-    if (isGhostDead || isSevereDropBroken) {
+    if (isGhostDead || isZeroNowBroken || isSevereDropBroken) {
       const detail = isGhostDead
         ? `Still on ~${serverCount} BattleMetrics server configs but ${currentPlayers} players now – ` +
           'likely broken with 1.7 (stale config, no restart, or outdated Workshop build). Remove from config and check RPT.'
-        : `~${beforeAvg} players/day before 1.7 → ~${early ?? patchWindowAvg ?? 0}/day after update, ` +
-          `~${trend.recentAvg ?? 0}/day last 7 days, ${currentPlayers} now (−${dropPct}% on BM). Ecosystem no longer runs this mod.`;
+        : isZeroNowBroken && !isSevereDropBroken
+          ? `~${beforeAvg} players/day before 1.7, now ${currentPlayers} on BM after update ` +
+            `(last 7d ~${trend.recentAvg ?? '—'}/day). Nobody plays this mod – treat as broken for 1.7.`
+          : `~${beforeAvg} players/day before 1.7 → ~${early ?? patchWindowAvg ?? 0}/day after update, ` +
+            `~${trend.recentAvg ?? 0}/day last 7 days, ${currentPlayers} now (−${dropPct}% on BM). Ecosystem no longer runs this mod.`;
 
       return {
         status: 'dead',

@@ -115,7 +115,7 @@ describe('classifyModAudit', () => {
     assert.equal(r.dropPct, 98);
   });
 
-  it('warning when empty after 1.7 but drop below broken threshold', () => {
+  it('warning when empty after 1.7 but several players still on BM now', () => {
     const trend = {
       phase: 'declining' as const,
       label: 'Still declining',
@@ -128,12 +128,34 @@ describe('classifyModAudit', () => {
     const r = classifyModAudit({
       beforeAvg: 80,
       afterAvg: 4,
-      currentPlayers: 0,
+      currentPlayers: 5,
       serverCount: 1,
       trend,
     });
     assert.equal(r.status, 'warning');
     assert.match(r.title, /monitor/i);
+    assert.ok((r.dropPct ?? 0) < 70);
+  });
+
+  it('marks broken when popular before 1.7 and now 0 or 1 player on BM', () => {
+    const trend = {
+      phase: 'declining' as const,
+      label: 'Still declining',
+      detail: 'x',
+      recentAvg: 6,
+      earlyAfterAvg: 4,
+      rankBefore: 100,
+      rankRecent: 110,
+    };
+    const r = classifyModAudit({
+      beforeAvg: 80,
+      afterAvg: 4,
+      currentPlayers: 1,
+      serverCount: 1,
+      trend,
+    });
+    assert.equal(r.status, 'dead');
+    assert.match(r.title, /Broken after 1.7/i);
     assert.ok((r.dropPct ?? 0) < 70);
   });
 

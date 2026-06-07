@@ -28,6 +28,12 @@
 - **Rank-based dropPct**: Audito klasifikacijoje populiarumo kritimas skaičiuojamas pagal Zipf'o dėsnį santykinio reitingo (BM rank) pokyčiui (`1 - rankBefore / rankRecent`), o ne pagal absoliutų žaidėjų skaičių. Tai apsaugo populiarius modus nuo klaidingų neigiamų įspėjimų (pvz., populiariausias modas, likęs #1 reitinge, rodo 0% kritimą, nepaisant sumažėjusios bendros Reforger žaidėjų populiacijos).
 - **Fallback**: Jeigu reitingo duomenų nėra, automatiškai grįžtama prie absoliutaus žaidėjų skaičiaus vidurkio pokyčio skaičiavimo.
 
+## [1.13.4] - 2026-06-04
+
+### 🔍 Audit – 0–1 žaidėjų BM = Broken
+- Po 1.7 tuščia + **dabar 0 ar 1** žaidėjas BM → **Broken** (be −70% reikalavimo).
+- **Monitor** lieka tik kai dabar ≥2 žaidėjai, bet ekosistema vis dar „tuščia“.
+
 ## [1.13.3] - 2026-06-04
 
 ### 🔍 Audit – „Broken“ vietoj „Empty after 1.7“ esant −≥70%

@@ -12,7 +12,7 @@ export const AUDIT_STATUS_SHORT: Record<AuditStatus, string> = {
 
 /** One-line explanation for tooltips / report sections. */
 export const AUDIT_STATUS_HINT: Record<AuditStatus, string> = {
-  dead: 'Likely broken after 1.7 – remove from server config',
+  dead: 'Likely broken after 1.7 – 0–1 players on BM now (remove from config)',
   warning: 'Was popular before 1.7, empty-ish after – drop not yet severe enough for Broken',
   risky: 'Big drop since 1.7 but still on some BattleMetrics servers',
   ok: 'Still used on BM (or normal post-1.7 network dip)',
