@@ -30,19 +30,23 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
   const gp = game === 'reforger' ? '' : `/${game}`;
 
+  const [allServers, setAllServers] = useState<Server[]>([]);
+
   const loadServer = useCallback(async (days: number, signal?: AbortSignal) => {
     if (!serverId) return;
     try {
       setLoading(true);
-      const [serverData, historyData, statsData] = await Promise.all([
+      const [serverData, historyData, statsData, allServersData] = await Promise.all([
         serversApi.getById(serverId, game),
         serversApi.getHistory(serverId, days, game),
-        modsApi.getGlobalStats(game)
+        modsApi.getGlobalStats(game),
+        serversApi.getList(100, 0, undefined, game).catch(() => ({ data: [] }))
       ]);
 
       if (signal?.aborted) return;
 
       setServer(serverData.data);
+      setAllServers(allServersData.data || []);
       
       // Filter history: if latest data is older than 3 days, it's considered stale for servers
       const rawHistory = historyData.data || [];
@@ -80,6 +84,52 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     loadServer(selectedDays, controller.signal);
     return () => controller.abort();
   }, [serverId, selectedDays, loadServer]);
+
+  const similarServers = useMemo(() => {
+    if (!server || !allServers || allServers.length === 0) return [];
+
+    const currentModIds = new Set(server.mods?.map(m => m.id) || []);
+    if (currentModIds.size === 0) {
+      return allServers
+        .filter(s => s.id !== server.id)
+        .map(s => ({
+          server: s,
+          overlapPercent: 0,
+          score: 1 / (1 + Math.abs(s.players - server.players))
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+    }
+
+    return allServers
+      .filter(s => s.id !== server.id)
+      .map(other => {
+        const otherMods = other.mods || [];
+        let common = 0;
+        for (const m of otherMods) {
+          if (currentModIds.has(m.id)) {
+            common++;
+          }
+        }
+        
+        const union = currentModIds.size + otherMods.length - common;
+        const modSimilarity = union > 0 ? common / union : 0;
+
+        const playerDiff = Math.abs(other.players - server.players);
+        const playerSimilarity = 1 / (1 + playerDiff / Math.max(1, server.players));
+
+        const score = modSimilarity * 0.7 + playerSimilarity * 0.3;
+
+        return {
+          server: other,
+          score,
+          overlapPercent: union > 0 ? Math.round((common / union) * 100) : 0
+        };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [server, allServers]);
 
   const sortedAndFilteredMods = useMemo(() => {
     if (!server?.mods || !Array.isArray(server.mods)) return [];
@@ -281,6 +331,46 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             </div>
           </div>
         </section>
+
+      {/* Similar Servers Section */}
+      {similarServers.length > 0 && (
+        <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+          <div className="border-b border-white/5 pb-6">
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+              🖥️ Similar Deployed Servers
+            </h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+              Alternative nodes running similar mod configurations and player activity
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {similarServers.map(({ server: other, overlapPercent }) => (
+              <Link
+                key={other.id}
+                to={`${gp}/server/${other.id}`}
+                className="group relative block bg-zinc-950/60 border border-white/5 hover:border-tactical-orange/50 p-6 transition-all hover:-translate-y-1"
+              >
+                <div className="space-y-3">
+                  <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest">// ALIGNMENT: {overlapPercent}% OVERLAP</span>
+                  <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
+                    {other.name}
+                  </h3>
+                  <div className="pt-2 flex items-end justify-between border-t border-white/5">
+                    <div className="space-y-0.5">
+                      <span className="text-[7px] text-gray-600 font-black uppercase tracking-wider">Active load</span>
+                      <p className="text-lg font-black text-white font-mono">{other.players}/{other.maxPlayers}</p>
+                    </div>
+                    <span className="text-[8px] text-gray-500 font-bold uppercase group-hover:text-white transition-colors">
+                      Inspect →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">

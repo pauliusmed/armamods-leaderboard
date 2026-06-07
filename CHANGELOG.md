@@ -1,3 +1,10 @@
+## [1.14.0] - 2026-06-07
+
+### 🖥️ Panašių serverių sekcijos (Similar Deployed Servers) įdiegimas
+- **Serverių panašumo algoritmas kliento pusėje**: Sukurtas `similarServers` skaičiavimo modulis faile [ServerDetail.tsx](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/src/components/ServerDetail.tsx), kuris veikia 100% kliento naršyklėje (React aplinkoje). Algoritmas lygina esamo serverio modifikacijų sutapimą (naudojant *Jaccard similarity*) bei žaidėjų skaičiaus santykį, sujungdamas juos į bendrą balą (70% modų sutapimas, 30% žaidėjų skaičiaus panašumas).
+- **0 papildomų KV operacijų**: Kadangi serverių sąrašas parsiunčiamas lygiagrečiai su pagrindine užklausa ir yra kešuojamas, ši funkcija neišnaudoja papildomų Cloudflare KV ar Workers CPU resursų (kvotų).
+- **Premium atvaizdavimas**: Serverio detalių puslapyje pridėtas naujas vizualinis blokas „Similar Deployed Servers“, rodantis top 5 panašius serverius, jų aktyvių žaidėjų skaičių ir modifikacijų sutapimo procentą (Overlap %).
+
 ## [1.13.3] - 2026-06-07
 
 ### 🛠️ UI pataisymai (atsikratyta −0% užrašo ir CLS mažinimas)
