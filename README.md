@@ -25,7 +25,7 @@ A production-grade, ultra-high-performance data aggregation and visualization pl
 ### 3. Distributed Sharding & Surgical JSON Extraction
 * **Problem**: Cloudflare KV values are limited to 25MB and parsing huge JSON blobs on every request exceeds Worker CPU time limits (50ms).
 * **Solution**: 
-  - **Dynamic Sharding**: Mod data is distributed across multiple 1MB shards (up to 500 entries per shard).
+  - **Dynamic Sharding**: Mod data is distributed across multiple 5MB shards (sized optimized to avoid KV limits).
   - **Surgical Text Extraction**: Developed `findMatchingBrace`—a low-level string-scanning algorithm that slices target JSON objects directly out of raw text buffers.
 * **Result**: Bypasses memory-heavy `JSON.parse` overhead, reducing global edge API latency to sub-10ms response times.
 
@@ -107,11 +107,13 @@ Implemented global `AbortController` cancellation in React. Rapid views switchin
 
 3. **Configure Environment Variables**
    Create a `.env` file in the root directory:
-   ```env
-   BATTLEMETRICS_API_KEY=your_api_key_here
-   CLOUDFLARE_ACCOUNT_ID=your_id
-   CLOUDFLARE_KV_NAMESPACE=your_namespace
-   ```
+    ```env
+    PORT=3000
+    BATTLEMETRICS_API_KEY=your_api_key_here
+    CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
+    CLOUDFLARE_ACCOUNT_ID=your_id
+    WORKER_URL=https://api.reforgermods.com
+    ```
 
 4. **Launch Local Services**
    * **Backend Proxy & Scraper Execution**:

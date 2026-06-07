@@ -1,3 +1,9 @@
+## [1.14.2] - 2026-06-07
+
+### 📝 Dokumentacijos bei diagnostikos versijos atnaujinimai
+- **README aplinkos kintamųjų bei sharding parametrų tikslinimas**: Failas [README.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/README.md) atnaujintas pašalinant nenaudojamą `CLOUDFLARE_KV_NAMESPACE`, įtraukiant realiai naudojamus `CLOUDFLARE_API_TOKEN` bei `WORKER_URL` kintamuosius, ir pataisytas sharding aprašymas iš 1MB į teisingą 5MB.
+- **Diagnostikos versijos sinchronizavimas**: API Gateway [\[\[path\]\].ts](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/functions/api/[[path]].ts) faile pataisyta diagnostikos `/diagnostics` endpointo grąžinama versijos eilutė iš pasenusios `1.4.0-diag` į `1.14.1-diag` (atitinkančią dabartinę projekto būseną).
+
 ## [1.14.1] - 2026-06-07
 
 ### ⚡ API Našumo ir CPU viršijimo pataisymai (503/1102 klaidos)

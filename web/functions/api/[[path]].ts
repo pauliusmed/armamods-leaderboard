@@ -781,7 +781,7 @@ app.get('/diagnostics', async (c) => {
             },
             historyRange
         },
-        version: '1.4.0-diag'
+        version: '1.14.1-diag'
     });
 });
 
