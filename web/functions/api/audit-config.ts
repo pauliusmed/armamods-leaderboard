@@ -481,14 +481,33 @@ export function classifyModAudit(params: {
   }
 
   const early = trend.earlyAfterAvg;
-  const dropPct =
-    beforeAvg > 0 && early !== null
-      ? Math.round(((beforeAvg - early) / beforeAvg) * 100)
-      : beforeAvg > 0
-        ? Math.round(((beforeAvg - afterAvg) / beforeAvg) * 100)
-        : afterAvg === 0
-          ? 100
-          : 0;
+  const rankBefore = trend.rankBefore;
+  const rankRecent = trend.rankRecent;
+
+  let dropPct: number | null = null;
+  if (
+    rankBefore !== null &&
+    rankRecent !== null &&
+    rankBefore !== undefined &&
+    rankRecent !== undefined &&
+    rankBefore > 0 &&
+    rankRecent > 0 &&
+    rankBefore < 9999 &&
+    rankRecent < 9999
+  ) {
+    // Zipf popularity weight drop: 1 - (rankBefore / rankRecent)
+    // Capped at 0 to avoid negative percentage on popularity gain
+    dropPct = Math.max(0, Math.round((1 - rankBefore / rankRecent) * 100));
+  } else {
+    dropPct =
+      beforeAvg > 0 && early !== null
+        ? Math.round(((beforeAvg - early) / beforeAvg) * 100)
+        : beforeAvg > 0
+          ? Math.round(((beforeAvg - afterAvg) / beforeAvg) * 100)
+          : afterAvg === 0
+            ? 100
+            : 0;
+  }
 
   if (beforeAvg < MIN_SIGNAL_AVG) {
     return {
