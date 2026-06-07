@@ -86,6 +86,7 @@ describe('classifyModAudit', () => {
     const trend = { phase: 'declining' as const, label: '', detail: '', recentAvg: 0, earlyAfterAvg: 0 };
     const r = classifyModAudit({ beforeAvg: 200, afterAvg: 2, currentPlayers: 0, trend });
     assert.equal(r.status, 'dead');
+    assert.match(r.title, /Broken after 1.7/i);
   });
 
   it('marks recovering ecosystem trend as ok even after a big drop', () => {
@@ -114,13 +115,15 @@ describe('classifyModAudit', () => {
     assert.equal(r.dropPct, 98);
   });
 
-  it('warning when players before 1.7 but empty after update', () => {
+  it('warning when empty after 1.7 but drop below broken threshold', () => {
     const trend = {
       phase: 'declining' as const,
       label: 'Still declining',
       detail: 'x',
-      recentAvg: 4,
-      earlyAfterAvg: 3,
+      recentAvg: 8,
+      earlyAfterAvg: 8,
+      rankBefore: 100,
+      rankRecent: 140,
     };
     const r = classifyModAudit({
       beforeAvg: 80,
@@ -130,7 +133,28 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'warning');
-    assert.match(r.title, /empty after update/i);
+    assert.match(r.title, /monitor/i);
+    assert.ok((r.dropPct ?? 0) < 70);
+  });
+
+  it('marks severe drop empty after 1.7 as broken even when recent avg is a handful', () => {
+    const trend = {
+      phase: 'declining' as const,
+      label: 'Still declining',
+      detail: 'x',
+      recentAvg: 6,
+      earlyAfterAvg: 4,
+    };
+    const r = classifyModAudit({
+      beforeAvg: 80,
+      afterAvg: 4,
+      currentPlayers: 0,
+      serverCount: 1,
+      trend,
+    });
+    assert.equal(r.status, 'dead');
+    assert.match(r.title, /Broken after 1.7/i);
+    assert.ok((r.dropPct ?? 0) >= 70);
   });
 
   it('marks ghost deployment as dead when 0 players but mod on many BM servers', () => {
@@ -151,7 +175,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /ghost on servers/i);
+    assert.match(r.title, /Broken after 1.7/i);
     assert.match(r.detail, /12/);
   });
 
@@ -167,7 +191,7 @@ describe('classifyModAudit', () => {
     assert.equal(r.status, 'ok');
   });
 
-  it('treats a handful of players same as zero for warning', () => {
+  it('treats a handful of players same as zero for broken when drop is severe', () => {
     const trend = {
       phase: 'declining' as const,
       label: 'Still declining',
@@ -176,7 +200,8 @@ describe('classifyModAudit', () => {
       earlyAfterAvg: 4,
     };
     const r = classifyModAudit({ beforeAvg: 100, afterAvg: 8, currentPlayers: 3, trend });
-    assert.equal(r.status, 'warning');
+    assert.equal(r.status, 'dead');
+    assert.match(r.title, /Broken after 1.7/i);
   });
 
   it('current zero but high recent post-patch usage is ok not warning', () => {

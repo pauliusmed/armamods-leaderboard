@@ -560,41 +560,40 @@ export function classifyModAudit(params: {
 
   const patchWindowAvg = early ?? trend.recentAvg ?? afterAvg;
 
-  // Core WARNING: popular before 1.7, effectively empty after patch (0 ≈ a few players/day)
+  // Popular before 1.7, effectively empty after patch
   if (isDamagedAfter17Update(trend, currentPlayers)) {
     const isGhostDead = isGhostBrokenAfter17(serverCount, currentPlayers, trend);
 
-    const isClassicDead =
-      (patchWindowAvg ?? 999) <= DEAD_AFTER_MAX &&
-      (trend.recentAvg ?? 999) <= DEAD_AFTER_MAX &&
-      currentPlayers <= DEAD_AFTER_MAX &&
-      dropPct >= 70 &&
+    // −70%+ and effectively empty now (0 ≈ few/day on BM) → broken, not just “empty”
+    const isSevereDropBroken =
+      (dropPct ?? 0) >= 70 &&
+      isEffectivelyEmpty(currentPlayers) &&
       trend.phase !== 'recovering';
 
-    if (isGhostDead || isClassicDead) {
-      const ghostNote = isGhostDead
+    if (isGhostDead || isSevereDropBroken) {
+      const detail = isGhostDead
         ? `Still on ~${serverCount} BattleMetrics server configs but ${currentPlayers} players now – ` +
           'likely broken with 1.7 (stale config, no restart, or outdated Workshop build). Remove from config and check RPT.'
-        : `~${beforeAvg} players/day before 1.7 → ~${patchWindowAvg ?? 0}/day right after the update, ` +
-          `~${trend.recentAvg ?? 0}/day last 7 days, ${currentPlayers} now – ecosystem removed this mod.`;
+        : `~${beforeAvg} players/day before 1.7 → ~${early ?? patchWindowAvg ?? 0}/day after update, ` +
+          `~${trend.recentAvg ?? 0}/day last 7 days, ${currentPlayers} now (−${dropPct}% on BM). Ecosystem no longer runs this mod.`;
 
       return {
         status: 'dead',
-        title: isGhostDead ? 'Likely broken after 1.7 (ghost on servers)' : 'Likely broken after 1.7',
-        detail: ghostNote,
+        title: 'Broken after 1.7',
+        detail,
         dropPct,
       };
     }
 
     return {
       status: 'warning',
-      title: 'Players before 1.7, empty after update',
+      title: 'Empty after 1.7 – monitor',
       detail:
-        `Had ~${beforeAvg} players/day before 1.7. After the update ~${early ?? '—'}/day (first days), ` +
-        `~${trend.recentAvg ?? '—'}/day last 7 days, ${currentPlayers} now (0 and a few/day count the same on BM). ` +
+        `Had ~${beforeAvg} players/day before 1.7. After update ~${early ?? '—'}/day, ` +
+        `~${trend.recentAvg ?? '—'}/day last 7 days, ${currentPlayers} now. Drop −${dropPct}% – not conclusive yet. ` +
         (serverCount > 0
-          ? `Listed on ~${serverCount} BM servers – if still in your config, verify Workshop 1.7 version, restart, and server RPT.`
-          : 'Check Workshop 1.7 update and server logs.'),
+          ? `On ~${serverCount} BM servers – verify Workshop 1.7, restart, RPT.`
+          : 'Check Workshop 1.7 and server logs.'),
       dropPct,
     };
   }
