@@ -3,6 +3,16 @@ name = "armamods-leaderboard"
 pages_build_output_dir = "dist"
 compatibility_date = "2024-03-24"
 
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+invocation_logs = true
+head_sampling_rate = 1
+
+[observability.traces]
+
 # KV Namespace for mods, servers and history
 [[kv_namespaces]]
 binding = "TRENDING_KV"

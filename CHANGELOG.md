@@ -28,6 +28,11 @@
 - **Rank-based dropPct**: Audito klasifikacijoje populiarumo kritimas skaičiuojamas pagal Zipf'o dėsnį santykinio reitingo (BM rank) pokyčiui (`1 - rankBefore / rankRecent`), o ne pagal absoliutų žaidėjų skaičių. Tai apsaugo populiarius modus nuo klaidingų neigiamų įspėjimų (pvz., populiariausias modas, likęs #1 reitinge, rodo 0% kritimą, nepaisant sumažėjusios bendros Reforger žaidėjų populiacijos).
 - **Fallback**: Jeigu reitingo duomenų nėra, automatiškai grįžtama prie absoliutaus žaidėjų skaičiaus vidurkio pokyčio skaičiavimo.
 
+## [1.13.7] - 2026-06-04
+
+### 📊 Wrangler observability
+- `web/wrangler.toml`: įjungti Workers Logs + invocation logs (100% sampling) – logai išlieka po deploy, ne tik dashboard toggle.
+
 ## [1.13.6] - 2026-06-04
 
 ### 🔍 Serverių paieška – momentinė, visame tinkle
