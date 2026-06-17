@@ -7,7 +7,7 @@ export function matchesAllSearchTokens(text: string, query: string): boolean {
 }
 
 export function matchesServerSearch(
-  server: { name?: string; ip?: string },
+  server: { name?: string; ip?: string | null },
   query: string
 ): boolean {
   const combined = [server.name, server.ip].filter(Boolean).join(' ');

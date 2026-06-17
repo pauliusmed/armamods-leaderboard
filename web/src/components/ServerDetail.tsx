@@ -17,11 +17,12 @@ interface ServerDetailProps {
 export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const { serverId } = useParams<{ serverId: string }>();
   const [server, setServer] = useState<Server | null>(null);
-  const [history, setHistory] = useState<{ time: string; points: number; rank: number | null }[]>([]);
+  const [history, setHistory] = useState<{ time: string; points: number; rank: number | null; players: number | null }[]>([]);
   const [totalServers, setTotalServers] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
+  const [historyMode, setHistoryMode] = useState<'rank' | 'players'>('rank');
 
   const [modSearch, setModSearch] = useState('');
   const [modSort, setModSort] = useState<'rank' | 'name' | 'players'>('players');
@@ -59,7 +60,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
       // Filter leading empty data for servers
       if (filteredHistory.length > 0) {
-        const firstActiveIndex = filteredHistory.findIndex(h => (h.points || 0) > 0 || h.rank !== null);
+        const firstActiveIndex = filteredHistory.findIndex(h => (h.points || 0) > 0 || h.rank !== null || (h.players ?? 0) > 0);
         if (firstActiveIndex !== -1) {
           filteredHistory = filteredHistory.slice(firstActiveIndex);
         }
@@ -234,27 +235,46 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       <section className="space-y-6 sm:space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-              SQE Ranking History
+              Server History
             </h2>
-            <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
-              {[
-                { label: '24H', value: 1 },
-                { label: '7D', value: 7 },
-                { label: '1M', value: 30 },
-                { label: '1Y', value: 366 }
-              ].map(opt => (
-                <button
-                  key={opt.label}
-                  onClick={() => setSelectedDays(opt.value)}
-                  className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    selectedDays === opt.value
-                      ? 'bg-tactical-orange text-black'
-                      : 'text-gray-500 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
+                {[
+                  { label: 'SQE Rank', value: 'rank' as const },
+                  { label: 'Players', value: 'players' as const },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setHistoryMode(opt.value)}
+                    className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                      historyMode === opt.value
+                        ? 'bg-tactical-orange text-black'
+                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
+                {[
+                  { label: '24H', value: 1 },
+                  { label: '1M', value: 30 },
+                  { label: '1Y', value: 366 }
+                ].map(opt => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setSelectedDays(opt.value)}
+                    className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                      selectedDays === opt.value
+                        ? 'bg-tactical-orange text-black'
+                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm">
@@ -287,31 +307,65 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       axisLine={false}
                       tickLine={false}
                     />
-                    <YAxis
-                      stroke="#f97316"
-                      tick={{ fontSize: 10, fill: '#f97316', fontWeight: 'bold' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={50}
-                      reversed={true}
-                      domain={['dataMin - 1', 'dataMax + 1']}
-                      tickFormatter={(val) => `#${val}`}
-                    />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}
-                      itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                      labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
-                      formatter={(value: any) => [`#${value}`, 'SQE Rank']}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="rank"
-                      name="SQE Rank"
-                      stroke="#f97316"
-                      strokeWidth={3}
-                      dot={false}
-                      activeDot={{ r: 6, fill: '#f97316', stroke: '#18181b', strokeWidth: 2 }}
-                    />
+                    {historyMode === 'rank' ? (
+                      <>
+                        <YAxis
+                          yAxisId="rank"
+                          stroke="#f97316"
+                          tick={{ fontSize: 10, fill: '#f97316', fontWeight: 'bold' }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={50}
+                          reversed={true}
+                          domain={['dataMin - 1', 'dataMax + 1']}
+                          tickFormatter={(val) => `#${val}`}
+                        />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}
+                          itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                          labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
+                          formatter={(value: any) => [`#${value}`, 'SQE Rank']}
+                        />
+                        <Line
+                          yAxisId="rank"
+                          type="monotone"
+                          dataKey="rank"
+                          name="SQE Rank"
+                          stroke="#f97316"
+                          strokeWidth={3}
+                          dot={false}
+                          activeDot={{ r: 6, fill: '#f97316', stroke: '#18181b', strokeWidth: 2 }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <YAxis
+                          yAxisId="players"
+                          stroke="#22c55e"
+                          tick={{ fontSize: 10, fill: '#22c55e', fontWeight: 'bold' }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={50}
+                          tickFormatter={(val) => Number(val).toLocaleString()}
+                        />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}
+                          itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                          labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
+                          formatter={(value: any) => [Number(value).toLocaleString(), 'Players']}
+                        />
+                        <Line
+                          yAxisId="players"
+                          type="monotone"
+                          dataKey="players"
+                          name="Players"
+                          stroke="#22c55e"
+                          strokeWidth={3}
+                          dot={false}
+                          activeDot={{ r: 6, fill: '#22c55e', stroke: '#18181b', strokeWidth: 2 }}
+                        />
+                      </>
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -321,11 +375,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           {/* Analysis Glossary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
-              <div className="w-1 h-full bg-[#f97316]" />
+              <div className={`w-1 h-full ${historyMode === 'rank' ? 'bg-[#f97316]' : 'bg-[#22c55e]'}`} />
               <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">SQE Ranking Position</h4>
+                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">
+                  {historyMode === 'rank' ? 'SQE Ranking Position' : 'Active Player Load'}
+                </h4>
                 <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
-                  Network hierarchy. <span className="text-tactical-orange">Lower # is better</span> – determined by SQE points calculated from personnel activity, module uniqueness, and server uptime.
+                  {historyMode === 'rank'
+                    ? <>Network hierarchy. <span className="text-tactical-orange">Lower # is better</span> – determined by SQE points calculated from personnel activity, module uniqueness, and server uptime.</>
+                    : <>Raw personnel count over time. <span className="text-[#22c55e]">Higher is better</span> – direct indicator of server popularity.</>}
                 </p>
               </div>
             </div>

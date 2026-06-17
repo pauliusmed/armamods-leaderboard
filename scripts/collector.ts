@@ -388,10 +388,12 @@ interface ServerMod {
       statsMap[m.id] = { p: m.totalPlayers, s: m.serverCount, r: m.overallRank };
     }
 
-    // Server ranks for shared history (pre-calculated by runServerScoring)
-    const serverRanksMap: Record<string, number> = {};
+    // Server history snapshot (rank + players) for shared history
+    const serverHistoryMap: Record<string, { rank: number; players: number }> = {};
     for (const s of serverList) {
-      if (s.sqeRank) serverRanksMap[s.id] = s.sqeRank;
+      if (s.sqeRank) {
+        serverHistoryMap[s.id] = { rank: s.sqeRank, players: s.players || 0 };
+      }
     }
 
     const periods = [
@@ -459,23 +461,26 @@ interface ServerMod {
             mergedMods[id] = current;
           }
         }
-        // Merge server ranks (keep best rank)
-        const mergedServers: Record<string, number> = { ...(existingPoint.servers || {}) };
-        for (const [id, rank] of Object.entries(serverRanksMap)) {
+        // Merge server history (keep best rank and peak players)
+        const mergedServers: Record<string, { rank: number; players: number }> = { ...(existingPoint.servers || {}) };
+        for (const [id, data] of Object.entries(serverHistoryMap)) {
           const existing = mergedServers[id];
           if (existing) {
-            mergedServers[id] = Math.min(existing, rank); // Lower is better
+            mergedServers[id] = {
+              rank: Math.min(existing.rank, data.rank), // Lower rank is better
+              players: Math.max(existing.players, data.players), // Peak players
+            };
           } else {
-            mergedServers[id] = rank;
+            mergedServers[id] = data;
           }
         }
         history[existingIndex] = { time: timeLabel, mods: mergedMods, servers: mergedServers };
       } else if (existingIndex !== -1) {
         // Hourly or just standard overwrite
-        history[existingIndex] = { time: timeLabel, mods: statsMap, servers: serverRanksMap };
+        history[existingIndex] = { time: timeLabel, mods: statsMap, servers: serverHistoryMap };
       } else {
         // New point
-        history.push({ time: timeLabel, mods: statsMap, servers: serverRanksMap });
+        history.push({ time: timeLabel, mods: statsMap, servers: serverHistoryMap });
       }
 
       const updated = history.slice(-period.limit);

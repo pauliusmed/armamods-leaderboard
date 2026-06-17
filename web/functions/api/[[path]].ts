@@ -826,9 +826,37 @@ app.get('/servers/:serverId/history', async (c) => {
   if (cacheResponse) return cacheResponse;
 
   const serverHistory: any[] = [];
-  const serverSearchKey = `"${serverId}":`;
   const serversKey = '"servers":{';
   const timeKey = '"time":"';
+
+  function extractServerHistory(block: string, id: string): { rank: number | null; players: number | null } {
+    const serverSearchKey = `"${id}":`;
+    const serverPos = block.indexOf(serverSearchKey);
+    if (serverPos === -1) return { rank: null, players: null };
+
+    const valueStart = serverPos + serverSearchKey.length;
+    const char = block[valueStart];
+
+    if (char === '{') {
+      const endPos = findMatchingBrace(block, valueStart);
+      if (endPos === -1) return { rank: null, players: null };
+      try {
+        const obj = JSON.parse(block.slice(valueStart, endPos + 1));
+        return {
+          rank: typeof obj.rank === 'number' ? obj.rank : null,
+          players: typeof obj.players === 'number' ? obj.players : null,
+        };
+      } catch {
+        return { rank: null, players: null };
+      }
+    }
+
+    // Legacy format: serverId was stored as a plain rank number
+    let numEnd = valueStart;
+    while (numEnd < block.length && block[numEnd] !== ',' && block[numEnd] !== '}') numEnd++;
+    const parsed = parseInt(block.slice(valueStart, numEnd));
+    return { rank: parsed > 0 ? parsed : null, players: null };
+  }
 
   const daysString = c.req.query('days') || '30';
   const requestingAll = daysString === 'all';
@@ -879,17 +907,9 @@ app.get('/servers/:serverId/history', async (c) => {
       const blockEnd = nextTimeIdx === -1 ? shardText.length : nextTimeIdx;
       const block = shardText.slice(serversIdx, blockEnd);
 
-      let rank: number | null = null;
-      const serverPos = block.indexOf(serverSearchKey);
-      if (serverPos !== -1) {
-        const numStart = serverPos + serverSearchKey.length;
-        let numEnd = numStart;
-        while (numEnd < block.length && block[numEnd] !== ',' && block[numEnd] !== '}') numEnd++;
-        const parsed = parseInt(block.slice(numStart, numEnd));
-        if (parsed > 0) rank = parsed;
-      }
+      const { rank, players } = extractServerHistory(block, serverId);
 
-      serverHistory.push({ time, points: 0, rank });
+      serverHistory.push({ time, points: 0, rank, players });
       searchPos = blockEnd;
     }
   }

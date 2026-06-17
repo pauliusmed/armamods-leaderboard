@@ -14,7 +14,6 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
   const {
     filteredServers,
     totalItems,
-    loading,
     initialLoading,
     error,
     searchInput,
