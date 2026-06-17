@@ -234,7 +234,7 @@ export async function buildShareMeta(
 
   const sqe = server.sqeRank ? `#${server.sqeRank}` : 'N/A';
   const title = `${server.name} | ${gameLabel} Server`;
-  const description = `${server.players}/${server.maxPlayers} players · SQE rank ${sqe} · reforgermods.com`;
+  const description = `${server.players}/${server.maxPlayers} players · Server Rank ${sqe} · reforgermods.com`;
 
   return {
     title,
