@@ -742,7 +742,7 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
 
       // 2. Calculate current scores for ALL servers using EMA smoothing
       const currentScores: Record<string, number> = {};
-      const ALPHA = 0.15; // 15% new snapshot, 85% previous score
+      const ALPHA = 0.10; // 10% new snapshot, 90% previous score – smoother rank transitions
 
       for (const s of serverList) {
           const players = s.players || 0;
@@ -770,7 +770,22 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       }
 
       // 3. Pre-calculate ranks for this snapshot (used for history + leaderboard)
-      const sortedIds = Object.keys(currentScores).sort((a, b) => currentScores[b] - currentScores[a]);
+      // Apply elite inertia: top 3 servers from the previous leaderboard receive
+      // a small ranking cushion so #1-#3 positions don't flip on tiny score differences.
+      const ELITE_INERTIA_SIZE = 3;
+      const ELITE_INERTIA_BONUS_PCT = 0.05; // 5% score cushion for ranking only
+      const rankingScores: Record<string, number> = { ...currentScores };
+
+      if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
+          for (let i = 0; i < Math.min(ELITE_INERTIA_SIZE, oldLeaderboard.length); i++) {
+              const eliteId = oldLeaderboard[i]?.id;
+              if (eliteId && rankingScores[eliteId] !== undefined) {
+                  rankingScores[eliteId] = Math.floor(rankingScores[eliteId] * (1 + ELITE_INERTIA_BONUS_PCT));
+              }
+          }
+      }
+
+      const sortedIds = Object.keys(rankingScores).sort((a, b) => rankingScores[b] - rankingScores[a]);
       const currentRanks: Record<string, number> = {};
       sortedIds.forEach((id, idx) => { currentRanks[id] = idx + 1; });
 

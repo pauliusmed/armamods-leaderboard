@@ -100,9 +100,24 @@ NewSQEPoints = α × SnapshotScore + (1 - α) × PreviousSQEPoints
 ```
 
 **Where:**
-- **Alpha ($\alpha = 0.15$)**: The smoothing factor. New snapshots contribute 15% of the score weight, while 85% is retained from the server's accumulated historical score.
+- **Alpha ($\alpha = 0.10$)**: The smoothing factor. New snapshots contribute 10% of the score weight, while 90% is retained from the server's accumulated historical score. This high inertia prevents hourly player-count swings from instantly reshuffling the leaderboard.
 - **Fadeaway (Slow Decay)**: If a server goes offline completely, its score decays slowly by 15% every 2 hours rather than instantly plunging to zero, preserving its ranking position during restarts.
 - **Stability**: Prevents new, volatile servers from instantly overtaking highly established community nodes.
+
+### Elite Rank Inertia
+
+Because the top servers often run with similar player counts, tiny differences in the `UniquenessBonus` can cause the #1-#3 spots to flip every snapshot. To make the highest ranks feel authoritative and stable, the system applies a small **ranking-only cushion** to the previous leaderboard's top 3 servers:
+
+```
+RankingScore(top3) = SQEPoints × 1.05
+```
+
+**Rules:**
+- The 5% cushion is used **only** to determine rank order; the stored `sqePoints` remain unchanged.
+- It applies only to the **top 3** servers from the previous leaderboard.
+- If another server genuinely pulls ahead by more than ~5%, it will still overtake the cushioned elite server.
+
+This creates a "hysteresis" effect: once a server reaches the elite tier, it needs a meaningful lead by a challenger to be displaced, eliminating noisy #1-#3 swaps while still allowing true shifts in popularity.
 
 ### Uniqueness Bonus/Penalty Calculation
 
