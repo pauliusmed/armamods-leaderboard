@@ -183,8 +183,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     <div className="space-y-12 animate-in fade-in duration-700">
       <SEO 
         title={`${server.name} - Live Status`}
-        description={`${server.name}: ${server.players}/${server.maxPlayers} players · SQE rank #${server.sqeRank || 'N/A'}.`}
-        keywords={`${server.name}, Arma Reforger Server, Arma 3 Server, Server Stats, SQE Ranking, ${server.ip}`}
+        description={`${server.name}: ${server.players}/${server.maxPlayers} players · Server Rank #${server.sqeRank || 'N/A'}.`}
+        keywords={`${server.name}, Arma Reforger Server, Arma 3 Server, Server Stats, Server Ranking, ${server.ip}`}
         url={serverPageUrl(server.id, game)}
         image={serverPreviewImageUrl(server.id, game)}
       />
@@ -221,7 +221,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         stats={[
           { label: 'Personnel Present', value: `${server.players || 0} / ${server.maxPlayers || 0}` },
           { label: 'Module Count', value: server.mods?.length || 0 },
-          { label: 'Strategic Rank', value: `#${server.sqeRank || '-'}` },
+          { label: 'Server Rank', value: `#${server.sqeRank || '-'}` },
           { label: 'Capacity Used', value: `${Math.round(fillPercent)}%` }
         ]}
         title="Field Intelligence Report"
@@ -314,7 +314,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                       labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
                       formatter={(value: any, name: any) => {
-                        if (name === 'SQE Rank') return [`#${value}`, name];
+                        if (name === 'Server Rank') return [`#${value}`, name];
                         return [Number(value).toLocaleString(), name];
                       }}
                     />
@@ -322,7 +322,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       yAxisId="rank"
                       type="monotone"
                       dataKey="rank"
-                      name="SQE Rank"
+                      name="Server Rank"
                       stroke="#f97316"
                       strokeWidth={3}
                       dot={false}
@@ -349,7 +349,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
               <div className="w-1 h-full bg-[#f97316]" />
               <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">SQE Ranking Position</h4>
+                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Server Rank</h4>
                 <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
                   Network hierarchy. <span className="text-tactical-orange">Lower # is better</span> – determined by SQE points calculated from personnel activity, module uniqueness, and server uptime.
                 </p>

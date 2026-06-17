@@ -299,7 +299,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                       itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                       labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
                       formatter={(value, name) => {
-                        if (name === "Strategic Rank") return [`#${value}`, name];
+                        if (name === "Overall Rank") return [`#${value}`, name];
                         return [value, name];
                       }}
                     />
@@ -355,7 +355,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                       yAxisId="rank"
                       type="monotone" 
                       dataKey="overallRank" 
-                      name="Strategic Rank"
+                      name="Overall Rank"
                       stroke="#3b82f6" 
                       strokeWidth={1}
                       strokeDasharray="5 5"
@@ -391,7 +391,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
               <div className="w-1 h-full bg-[#3b82f6]" />
               <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Strategic Rank</h4>
+                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Overall Rank</h4>
                 <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
                   Global standing. <span className="text-blue-500">Higher visual position is better</span> – Rank #1 is at the top of the axis.
                 </p>
