@@ -26,7 +26,7 @@ export function Pagination({
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-white/10 text-[10px] font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
+          className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
         >
           ← Previous Intel
         </button>
@@ -39,7 +39,7 @@ export function Pagination({
                 key={pageNum}
                 onClick={() => onPageChange(pageNum)}
                 className={`
-                  min-w-[44px] h-11 px-3 text-[10px] font-black uppercase tracking-widest transition-all
+                  min-w-[44px] h-11 px-3 text-xs font-black uppercase tracking-widest transition-all
                   ${isCurrentPage
                     ? 'bg-tactical-orange text-black border border-tactical-orange'
                     : 'bg-black/40 text-gray-500 border border-white/5 hover:border-tactical-orange/50 hover:text-white'
@@ -55,13 +55,13 @@ export function Pagination({
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-white/10 text-[10px] font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
+          className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
         >
           Next Sector →
         </button>
       </div>
 
-      <p className="px-8 py-3 bg-black/40 border border-white/5 text-[9px] font-mono text-gray-500 uppercase tracking-widest">
+      <p className="px-8 py-3 bg-black/40 border border-white/5 text-xs font-mono text-gray-500 uppercase tracking-widest">
         Network Slice <span className="text-white font-black">{currentPage}</span> / {totalPages}
       </p>
     </div>

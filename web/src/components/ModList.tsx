@@ -161,17 +161,17 @@ export function ModList({ game = 'reforger' }: ModListProps) {
           <button
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
-            className="px-8 py-4 bg-zinc-900 border border-white/10 text-[10px] font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
+            className="px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
           >
             ← Previous Intel
           </button>
-          <span className="px-8 py-4 bg-black/40 border border-white/5 text-[9px] font-mono text-gray-500 uppercase tracking-widest">
+          <span className="px-8 py-4 bg-black/40 border border-white/5 text-xs font-mono text-gray-500 uppercase tracking-widest">
             Module Slice <span className="text-white font-black">{currentPage}</span> / {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
-            className="px-8 py-4 bg-zinc-900 border border-white/10 text-[10px] font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
+            className="px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
           >
             Next Sector →
           </button>
