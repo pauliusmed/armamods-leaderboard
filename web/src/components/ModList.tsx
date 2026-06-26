@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useMods } from '../hooks/useMods';
-import { ModCard } from './ModCard';
+import { ModRow } from './ModRow';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { StatsHero } from './ui/StatsHero';
@@ -120,17 +120,33 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         <StatusState type="empty" message="No matches found" details="No mods match your current filter settings. Try resetting them." onAction={resetFilters} actionText="Clear Filters" />
       ) : (
         <div
-          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-[600px] ${loading ? 'opacity-70' : ''}`}
+          className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}
           aria-busy={loading}
         >
-          {filteredMods.map((mod) => (
-            <ModCard
-              key={mod.id}
-              mod={mod}
-              rank={mod.overallRank}
-              game={game}
-            />
-          ))}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Rank</th>
+                  <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Module</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Personnel</th>
+                  <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Deploy</th>
+                  <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Share</th>
+                  <th className="pl-2 pr-4 py-3" aria-label="Workshop link" />
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMods.map((mod) => (
+                  <ModRow
+                    key={mod.id}
+                    mod={mod}
+                    rank={mod.overallRank}
+                    game={game}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
