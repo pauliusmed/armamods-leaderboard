@@ -101,8 +101,19 @@ NewSQEPoints = α × SnapshotScore + (1 - α) × PreviousSQEPoints
 
 **Where:**
 - **Alpha ($\alpha = 0.10$)**: The smoothing factor. New snapshots contribute 10% of the score weight, while 90% is retained from the server's accumulated historical score. This high inertia prevents hourly player-count swings from instantly reshuffling the leaderboard.
+- **Persistence (all servers)**: The running EMA score and an `age` counter are persisted for **every** server (`cache:server_ema:{game}`), not just the leaderboard. This guarantees continuity run-to-run — previously any server outside the previous top-200 re-entered at full snapshot strength, which let newcomers leapfrog to #1 on a single snapshot.
 - **Fadeaway (Slow Decay)**: If a server goes offline completely, its score decays slowly by 10% every 2 hours rather than instantly plunging to zero, preserving its ranking position during restarts.
 - **Stability**: Prevents new, volatile servers from instantly overtaking highly established community nodes.
+
+### New Entrant Seeding (Probation)
+
+A server seen for the **first time** does not enter at full strength. Its first score is seeded at a fraction of its snapshot, then ramps toward its true level via EMA over subsequent runs:
+
+```
+FirstSightingScore = SnapshotScore × 0.5
+```
+
+Combined with α = 0.10, a newcomer needs roughly **24–48 hours of sustained activity** to climb near the top. This stops launch-day player spikes or momentary surges from handing a brand-new server the #1 spot — rank is earned through consistency. On the first collector run after this change is deployed, the persisted EMA map is **warm-started** from the existing top-200 leaderboard so established servers keep their rank and age instead of resetting.
 
 ### Elite Rank Inertia
 
@@ -114,7 +125,7 @@ RankingScore(top3) = SQEPoints × 1.05
 
 **Rules:**
 - The 5% cushion is used **only** to determine rank order; the stored `sqePoints` remain unchanged.
-- It applies only to the **top 3** servers from the previous leaderboard.
+- It applies only to the **top 3** servers from the previous leaderboard **that also have `age ≥ 12`** (~24h of history). A brand-new server cannot benefit from elite inertia.
 - If another server genuinely pulls ahead by more than ~5%, it will still overtake the cushioned elite server.
 
 This creates a "hysteresis" effect: once a server reaches the elite tier, it needs a meaningful lead by a challenger to be displaced, eliminating noisy #1-#3 swaps while still allowing true shifts in popularity.
@@ -187,6 +198,10 @@ As a result:
 - **KV Write Operations**: Increase is exactly **0**.
 - **KV Read Operations**: Increase is exactly **0** (the client retrieves it inside the standard single mod JSON payload).
 - **Storage Overhead**: Only ~100 bytes per mod, representing $< 1\%$ increase in global cache size.
+
+> **Not the same as workshop dependencies.** Co-deployment is BattleMetrics statistics
+> (mods on the same server). Author-declared *required* dependencies come from the
+> Reforger workshop scrape — see [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md).
 
 ---
 

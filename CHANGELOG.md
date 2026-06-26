@@ -1,3 +1,51 @@
+## [1.15.0] - 2026-06-26
+
+### 🏆 Serverių reitingavimo stabilumas („elito" reitingas)
+- **Problema**: naujas serveris, pasirodęs pirmą kartą, gaudavo **pilną** snapshot'o balą (apeidamas EMA) ir galėdavo iš karto užimti #1 — pvz. serveris, pasirodęs tą pačią dieną, tapdavo lyderiu vienu snapshot'u. Priežastis: EMA istorija buvo saugoma tik buvusiems top-200, todėl visi kiti (ir nauji) kiekviename run'e įeidavo pilnu svoriu.
+- **Persisted EMA visiems serveriams** (`cache:server_ema:{game}`): kiekvienas serveris turi tęstinę EMA reikšmę + `age` tarp run'ų — joks serveris nebeįeina pilnu snapshot'u.
+- **Naujokų seed'inimas (probacija)**: pirmą kartą matytas serveris įeina × 0.5 snapshot'o, paskui ramp'inasi per EMA (~24–48h iki top). Vienas snapshot'as nebevainikuoja naujo serverio #1 vieta.
+- **Elito age gate**: top-3 inercijos (×1.05) cushion taikomas tik serveriams su `age ≥ 12` (~24h) — naujokai negali pasinaudoti.
+- **Warm-start migracija**: pirmas run'as po deploy seed'ina EMA map iš esamo top-200 leaderboardo, kad seni reitingai nenulūžtų.
+- **Dokumentacija**: `docs/ALGORITHM.md` atnaujinta (Persistence, New Entrant Seeding, age gate).
+
+## [1.14.9] - 2026-06-26
+
+### 📋 Server scenario + mod author
+- **Collector**: `scenarioName` iš BM — Reforger `details.reforger.scenarioName`, Arma 3 `map · mission`.
+- **Workshop**: `asset.author.username` → KV `cache:mod-author:*` (7d), vienas scrape su thumbnail/deps.
+- **API**: `GET /mods/:id` papildomas `author` (Reforger).
+- **UI**: scenario serverių sąraše ir detail; author mod detail antraštėje.
+
+## [1.14.8] - 2026-06-26
+
+### 🖼️ Workshop thumbnail našumas + dokumentacija
+- **Tiesioginis CDN load**: `GET /api/mods/:id/thumbnail` grąžina JSON su Bohemia CDN URL; `ModThumbnail` nebekrauna per 302 redirect.
+- **Vienas workshop scrape**: `workshop-fetch.ts` — `ensureReforgerWorkshopMetadata()` vienu HTML fetch užpildo ir thumbnail URL, ir dependencies KV.
+- **Client cache 7d** + in-flight dedupe `modsApi.getThumbnailUrl()`.
+- **Mod detail lentelės**: Dependencies, co-deploy ir serveriai — `ModDataTable` / `ServerDataTable` (kaip `/`).
+- **Dokumentacija**: Naujas [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md); atnaujinti PLAN, walkthrough, README.
+
+## [1.14.7] - 2026-06-26
+
+### 📦 Workshop dependencies (Reforger)
+- **`/api/mods/:id/dependencies`**: On-demand scrape iš Reforger workshop `__NEXT_DATA__` (autoriaus deklaruoti privalomi modai); KV cache 7d + edge cache.
+- **`workshop-meta.ts`**: `parseReforgerDependenciesFromHtml()` ir `resolveModDependencies()`.
+- **Mod detail**: Naujas skyrius „Required Dependencies“; co-deploy aiškiai pažymėtas kaip BM statistika, ne dependency.
+- **Arma 3**: Endpoint grąžina tuščią sąrašą (`supported: false`) — Steam scrape vėliau.
+
+## [1.14.6] - 2026-06-26
+
+### 🖼️ Workshop papildymas — thumbnail'ai ir CTA
+- **ModThumbnail komponentas**: Lazy-loaded workshop preview per `/api/og/preview/mod/:id` (KV cache 7d); raidžių fallback, kai paveikslėlio nėra.
+- **ModRow / TrendRow**: 32px thumbnail šalia mod pavadinimo — vizualus atpažinimas be katalogo UI.
+- **Mod detail**: Didesnis preview + aiškus „Open in Workshop ↗“ CTA; pozicionavimas kaip workshop **papildymas** (live telemetry), ne pakaitalas.
+- **workshop.ts**: Bendri `workshopPageUrl()` ir `modThumbnailUrl()` helperiai (Reforger + Steam Arma 3).
+- **Dokumentacija**: Atnaujinti [PLAN.md](PLAN.md) (strategija + Phase 2) ir [walkthrough.md](walkthrough.md).
+
+### 📱 Mobile overflow (anksčiau šią sesiją)
+- ModList filtrai/paginacija ir TrendingPage tabai — `flex-wrap` / stulpelis mobiliai.
+- Layout `overflow-x-hidden`; ModList sticky filtro `z-index` po headeriu.
+
 ## [1.14.5] - 2026-06-26
 
 ### 🖥️ Serverių SQE reitingų atkūrimas (API sluoksnis)

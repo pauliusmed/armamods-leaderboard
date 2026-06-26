@@ -16,6 +16,8 @@
 import 'dotenv/config';
 import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
 
+type BattleMetricsServer = Awaited<ReturnType<BattleMetricsService['fetchAllServers']>>[number];
+
 interface CloudflareKV {
   put: (key: string, value: string) => Promise<void>;
   get: (key: string, type: 'json') => Promise<any>;
@@ -109,6 +111,25 @@ function getKVKeys(game: GameType) {
   };
 }
 
+/** BattleMetrics scenario/mission label for server list and detail. */
+function extractScenarioName(
+  attributes: BattleMetricsServer['attributes'],
+  game: GameType
+): string | null {
+  if (game === 'reforger') {
+    const name = attributes.details?.reforger?.scenarioName;
+    return typeof name === 'string' && name.trim() ? name.trim() : null;
+  }
+  const map = attributes.details?.map;
+  const mission = attributes.details?.mission;
+  if (typeof map === 'string' && map.trim() && typeof mission === 'string' && mission.trim()) {
+    return `${map.trim()} · ${mission.trim()}`;
+  }
+  if (typeof mission === 'string' && mission.trim()) return mission.trim();
+  if (typeof map === 'string' && map.trim()) return map.trim();
+  return null;
+}
+
 interface ServerMod {
   serverId: string;
   modId: string;
@@ -179,6 +200,7 @@ interface ServerMod {
       port: attributes.port || 0,
       players: attributes.players,
       maxPlayers: attributes.maxPlayers,
+      scenarioName: extractScenarioName(attributes, game),
       mods: [] as any[],
     });
 
@@ -708,27 +730,55 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       const GLOBAL_AVG = modList.length / 2;
       const SCALING_FACTOR = GLOBAL_AVG / 100;
 
-      // Load previous leaderboard for Exponential Moving Average (EMA) smoothing
+      // --- Continuity for EVERY server (not just top-200) ---
+      // Persisting a running EMA score + age per server means no server re-enters at full
+      // snapshot each run. Without it, any newcomer (or any server outside the previous
+      // top-200) bypassed EMA entirely and could leapfrog to #1 on a single snapshot.
+      const emaKey = `cache:server_ema:${game}`;
+      const ALPHA = 0.10;            // 10% new snapshot, 90% history
+      const SEED_FRACTION = 0.5;      // first-time servers enter at half-strength, then ramp via EMA
+      const MIN_AGE_ELITE = 12;       // ~24h (12 runs x 2h) before a server can hold an elite top-3 rank
+
+      // Previous top-200 leaderboard — elite inertia source + EMA warm-start seed.
       const oldScoresMap = new Map<string, number>();
       let oldLeaderboard: Array<{ id?: string; points?: number }> | null = null;
       try {
           oldLeaderboard = await kv.get(leaderboardKey, 'json');
           if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
               oldLeaderboard.forEach(item => {
-                  if (item && item.id) {
-                      oldScoresMap.set(item.id, item.points || 0);
-                  }
+                  if (item && item.id) oldScoresMap.set(item.id, item.points || 0);
               });
           }
-          console.log(`[SERVER_SCORING] Loaded ${oldScoresMap.size} previous server scores for EMA smoothing.`);
       } catch (err) {
-          console.log(`[SERVER_SCORING] Could not read old leaderboard for EMA, defaulting to current snapshot scores.`);
+          console.log(`[SERVER_SCORING] Could not read previous leaderboard.`);
       }
 
-      // Add missing servers from previous leaderboard to ensure they decay slowly (fadeaway)
+      // Running EMA map persisted across runs: { id: { s: emaScore, a: age } }.
+      // age = consecutive runs the server has been seen online.
+      type EmaEntry = { s: number; a: number };
+      let emaMap: Record<string, EmaEntry> = {};
+      try {
+          const persisted = await kv.get(emaKey, 'json');
+          if (persisted && typeof persisted === 'object') emaMap = persisted as Record<string, EmaEntry>;
+      } catch (err) {
+          console.log(`[SERVER_SCORING] Could not read persisted EMA map, starting fresh.`);
+      }
+
+      // Warm-start: on first run after deploy there is no persisted EMA. Seed it from the
+      // previous top-200 so established servers keep their rank/age instead of collapsing
+      // to the new-entrant seed fraction.
+      if (Object.keys(emaMap).length === 0 && oldScoresMap.size > 0) {
+          for (const [id, points] of oldScoresMap.entries()) {
+              emaMap[id] = { s: points, a: MIN_AGE_ELITE };
+          }
+          console.log(`[SERVER_SCORING] Warm-started EMA map from ${oldScoresMap.size} previous scores.`);
+      }
+
+      // Fadeaway: re-add offline but still-relevant servers so they decay slowly instead of
+      // vanishing. Sourced from the EMA map (all seen servers), bounded by a score floor.
       const currentServerIds = new Set(serverList.map(s => s.id));
-      for (const [oldId, oldPoints] of oldScoresMap.entries()) {
-          if (!currentServerIds.has(oldId) && oldPoints > 10) {
+      for (const [oldId, entry] of Object.entries(emaMap)) {
+          if (!currentServerIds.has(oldId) && entry.s > 10) {
               serverList.push({
                   id: oldId,
                   name: `[OFFLINE] Server ${oldId}`,
@@ -741,9 +791,8 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
           }
       }
 
-      // 2. Calculate current scores for ALL servers using EMA smoothing
+      // 2. Score every server: EMA continuity for known servers, seed fraction for newcomers.
       const currentScores: Record<string, number> = {};
-      const ALPHA = 0.10; // 10% new snapshot, 90% previous score – smoother rank transitions
 
       for (const s of serverList) {
           const players = s.players || 0;
@@ -761,26 +810,47 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
           uniquenessBonus = Math.min(100, Math.max(-100, uniquenessBonus));
 
           const snapshotScore = Math.max(0, baseScore + uniquenessBonus);
-          const oldScore = oldScoresMap.get(s.id);
+          const prev = emaMap[s.id];
 
-          if (oldScore !== undefined) {
-              currentScores[s.id] = Math.floor(ALPHA * snapshotScore + (1 - ALPHA) * oldScore);
+          let newScore: number;
+          let age: number;
+          if (prev) {
+              // Known server: blend the new snapshot into history. An offline (players 0)
+              // snapshot is ~0, so the score fades ~10%/run — the slow decay.
+              newScore = ALPHA * snapshotScore + (1 - ALPHA) * prev.s;
+              age = players > 0 ? prev.a + 1 : prev.a;   // age only accrues while online
           } else {
-              currentScores[s.id] = Math.floor(snapshotScore);
+              // First sighting: seed at a fraction so one snapshot can't crown a newcomer.
+              newScore = snapshotScore * SEED_FRACTION;
+              age = 1;
           }
+
+          currentScores[s.id] = Math.floor(newScore);
+          emaMap[s.id] = { s: Math.floor(newScore), a: age };
       }
 
-      // 3. Pre-calculate ranks for this snapshot (used for history + leaderboard)
-      // Apply elite inertia: top 3 servers from the previous leaderboard receive
-      // a small ranking cushion so #1-#3 positions don't flip on tiny score differences.
+      // Persist the EMA map, pruning dead low-score offline servers to bound growth.
+      const persistedEma: Record<string, EmaEntry> = {};
+      for (const [id, entry] of Object.entries(emaMap)) {
+          if (entry.s > 10 || currentServerIds.has(id)) persistedEma[id] = entry;
+      }
+      try {
+          await kv.put(emaKey, JSON.stringify(persistedEma));
+      } catch (err) {
+          console.log(`[SERVER_SCORING] Could not persist EMA map.`);
+      }
+      console.log(`[SERVER_SCORING] Scored ${serverList.length} servers (${Object.keys(persistedEma).length} tracked in EMA map).`);
+
+      // 3. Elite inertia: a ranking-only cushion for established top servers. Age-gated so a
+      // brand-new server can't benefit; keeps #1-#3 from flipping on tiny score deltas.
       const ELITE_INERTIA_SIZE = 3;
-      const ELITE_INERTIA_BONUS_PCT = 0.05; // 5% score cushion for ranking only
+      const ELITE_INERTIA_BONUS_PCT = 0.05; // 5% cushion, ranking only
       const rankingScores: Record<string, number> = { ...currentScores };
 
       if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
           for (let i = 0; i < Math.min(ELITE_INERTIA_SIZE, oldLeaderboard.length); i++) {
               const eliteId = oldLeaderboard[i]?.id;
-              if (eliteId && rankingScores[eliteId] !== undefined) {
+              if (eliteId && rankingScores[eliteId] !== undefined && (emaMap[eliteId]?.a ?? 0) >= MIN_AGE_ELITE) {
                   rankingScores[eliteId] = Math.floor(rankingScores[eliteId] * (1 + ELITE_INERTIA_BONUS_PCT));
               }
           }
