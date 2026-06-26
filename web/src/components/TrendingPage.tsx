@@ -87,11 +87,11 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
           : currentMods
     : currentMods;
 
-  const getCategoryLabel = (cat: TrendCategory) => {
+  const getCategoryLabel = (cat: TrendCategory, short = false) => {
     switch (cat) {
-      case 'rising': return '📈 Rising Mods';
-      case 'falling': return '📉 Falling Mods';
-      case 'new': return '⭐ New Mods';
+      case 'rising': return short ? '📈 Rising' : '📈 Rising Mods';
+      case 'falling': return short ? '📉 Falling' : '📉 Falling Mods';
+      case 'new': return short ? '⭐ New' : '⭐ New Mods';
     }
   };
 
@@ -154,18 +154,19 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
         </div>
 
         {/* Row 3: Category tabs */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(['rising', 'falling', 'new'] as TrendCategory[]).map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 font-black uppercase tracking-widest text-[11px] transition-all border ${
+              className={`px-3 sm:px-4 py-2 font-black uppercase tracking-widest text-[11px] transition-all border ${
                 activeCategory === category
                   ? 'bg-tactical-orange text-black border-tactical-orange'
                   : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'
               }`}
             >
-              {getCategoryLabel(category)}
+              <span className="sm:hidden">{getCategoryLabel(category, true)}</span>
+              <span className="hidden sm:inline">{getCategoryLabel(category)}</span>
             </button>
           ))}
         </div>

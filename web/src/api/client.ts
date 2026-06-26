@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Mod, Server, ApiResponse, TrendingResponse } from '../types';
+import { modThumbnailUrl } from '../lib/workshop';
 
 export type GameType = 'reforger' | 'arma3';
 
@@ -13,6 +14,12 @@ export const api = axios.create({
 // Simple in-memory cache to prevent redundant requests
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 120000; // 2 minutes
+
+/** Dedupe concurrent thumbnail URL lookups for the same mod. */
+const thumbnailInflight = new Map<string, Promise<string | null>>();
+
+/** Dedupe concurrent author lookups for the same mod. */
+const authorInflight = new Map<string, Promise<string | null>>();
 
 async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl = CACHE_TTL): Promise<T> {
   const cached = cache.get(key);
@@ -28,11 +35,18 @@ async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl = CACHE_
 }
 
 export const modsApi = {
-  getPopular: async (limit = 50, offset = 0, search?: string, sortBy?: string, game: GameType = 'reforger') => {
-    const key = `mods:${game}:${limit}:${offset}:${search}:${sortBy}`;
+  getPopular: async (
+    limit = 50,
+    offset = 0,
+    search?: string,
+    sortBy?: string,
+    sortDir: 'asc' | 'desc' = 'asc',
+    game: GameType = 'reforger'
+  ) => {
+    const key = `mods:${game}:${limit}:${offset}:${search}:${sortBy}:${sortDir}`;
     return getCached(key, async () => {
       const response = await api.get<ApiResponse<Mod>>('mods', {
-        params: { limit, offset, search, sortBy, game },
+        params: { limit, offset, search, sortBy, sortDir, game },
       });
       return response.data;
     });
@@ -56,6 +70,68 @@ export const modsApi = {
       });
       return response.data;
     }, 3600000); // History can be cached for 1 hour
+  },
+
+  getDependencies: async (modId: string, game: GameType = 'reforger') => {
+    const key = `deps:${game}:${modId}`;
+    return getCached(key, async () => {
+      const response = await api.get<{
+        data: import('../types').ModDependency[];
+        meta: { source: string; supported: boolean; count?: number; message?: string };
+      }>(`mods/${modId}/dependencies`, { params: { game } });
+      return response.data;
+    }, 86400000); // Workshop deps change rarely — cache 24h client-side
+  },
+
+  getThumbnailUrl: async (modId: string, game: GameType = 'reforger'): Promise<string | null> => {
+    const key = `thumb:${game}:${modId}`;
+    const inflight = thumbnailInflight.get(key);
+    if (inflight) return inflight;
+
+    const request = getCached(
+      key,
+      async () => {
+        try {
+          const response = await api.get<{ data: { url: string } }>(`mods/${modId}/thumbnail`, {
+            params: { game },
+          });
+          const url = response.data.data?.url ?? null;
+          if (url && !url.includes('/og-image.png')) return url;
+        } catch {
+          // JSON endpoint missing or failing — 302 preview route still works as <img src>
+          return modThumbnailUrl(modId, game);
+        }
+        return null;
+      },
+      604800000 // 7 days — matches KV TTL for CDN URLs
+    )
+      .then((url) => url as string | null)
+      .finally(() => thumbnailInflight.delete(key));
+
+    thumbnailInflight.set(key, request);
+    return request;
+  },
+
+  getAuthor: async (modId: string, game: GameType = 'reforger'): Promise<string | null> => {
+    const key = `author:${game}:${modId}`;
+    const inflight = authorInflight.get(key);
+    if (inflight) return inflight;
+
+    const request = getCached(
+      key,
+      async () => {
+        const response = await api.get<{ data: { author: string | null } }>(`mods/${modId}/author`, {
+          params: { game },
+        });
+        return response.data.data?.author ?? null;
+      },
+      604800000 // 7 days — matches KV TTL
+    )
+      .then((author) => author as string | null)
+      .finally(() => authorInflight.delete(key));
+
+    authorInflight.set(key, request);
+    return request;
   },
 
   getGlobalStats: async (game: GameType = 'reforger') => {

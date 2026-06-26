@@ -20,7 +20,13 @@ import {
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
-import type { Mod, Server, ModHistory } from '../types';
+import { workshopPageUrl, workshopLabel } from '../lib/workshop';
+import { ModThumbnail } from './ui/ModThumbnail';
+import { ModRow } from './ModRow';
+import { ServerRow } from './ServerRow';
+import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
+import { ModDataTable, ServerDataTable, toModRow } from './ui/ModDataTable';
+import type { Mod, Server, ModHistory, ModDependency } from '../types';
 
 const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
   dead: 'border-red-500/60 bg-red-950/40 text-red-300',
@@ -46,6 +52,8 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const { modId } = useParams<{ modId: string }>();
   const [mod, setMod] = useState<ModDetailData | null>(null);
   const [history, setHistory] = useState<ModHistory[]>([]);
+  const [dependencies, setDependencies] = useState<ModDependency[]>([]);
+  const [depsLoading, setDepsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
@@ -62,6 +70,20 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       if (signal?.aborted) return;
 
       setMod(modRes.data);
+      setDependencies([]);
+      setDepsLoading(game === 'reforger');
+      if (game === 'reforger') {
+        modsApi.getDependencies(modId, game)
+          .then((depsRes) => {
+            if (!signal?.aborted) setDependencies(depsRes.data || []);
+          })
+          .catch(() => {
+            if (!signal?.aborted) setDependencies([]);
+          })
+          .finally(() => {
+            if (!signal?.aborted) setDepsLoading(false);
+          });
+      }
       
       // Filter history: if data is older than 7 days and mod is currently inactive,
       // it's better to show no data than misleading stale data.
@@ -150,19 +172,41 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         <Link to={`${gp}/`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
           ← [ Back to Registry ]
         </Link>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/10 pb-12">
-          <div className="space-y-4">
-            <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">// MODULE_IDENTIFIER: {mod.id}</span>
-            <h1 className="text-6xl font-black text-white uppercase tracking-tighter leading-none">
-              {mod.name}
-            </h1>
-            <p className="text-gray-500 font-bold uppercase tracking-[0.2em]">
-              Module ID: <span className="text-gray-300 font-mono">{mod.id}</span>
-            </p>
-          </div>
-          <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center">
-            <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-            <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 border-b border-white/10 pb-10 sm:pb-12">
+          <ModThumbnail
+            modId={mod.id}
+            modName={mod.name}
+            game={game}
+            size="lg"
+            className="self-start"
+          />
+          <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-4 min-w-0">
+              <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">// MODULE_IDENTIFIER: {mod.id}</span>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none break-words">
+                {mod.name}
+              </h1>
+              {mod.author && (
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                  Workshop author · {mod.author}
+                </p>
+              )}
+              <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
+              </p>
+              <a
+                href={workshopPageUrl(mod.id, game)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-3 bg-tactical-orange/10 border border-tactical-orange/30 text-tactical-orange hover:bg-tactical-orange hover:text-black text-[10px] font-black uppercase tracking-widest transition-all"
+              >
+                Open in {workshopLabel(game)} ↗
+              </a>
+            </div>
+            <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0">
+              <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+              <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+            </div>
           </div>
         </div>
       </header>
@@ -400,6 +444,36 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           </div>
         </section>
 
+      {/* Workshop-declared dependencies (Reforger) */}
+      {game === 'reforger' && (
+        <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+          <div className="border-b border-white/5 pb-6">
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+              📦 Required Dependencies
+            </h2>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
+              Author-declared on Reforger Workshop — technical install requirements, not popularity stats
+            </p>
+          </div>
+
+          {depsLoading ? (
+            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+              Resolving workshop dependency tree…
+            </p>
+          ) : dependencies.length === 0 ? (
+            <p className="text-sm text-gray-600 font-medium">
+              No declared dependencies for this mod (standalone module).
+            </p>
+          ) : (
+            <ModDependencyTable>
+              {dependencies.map((dep) => (
+                <DependencyRow key={dep.id} dep={dep} game={game} />
+              ))}
+            </ModDependencyTable>
+          )}
+        </section>
+      )}
+
       {/* Frequently Deployed Together Section */}
       {mod.coDeployed && mod.coDeployed.length > 0 && (
         <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
@@ -407,39 +481,22 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
               🤝 Frequently Deployed Together
             </h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
-              Tactical synergies - other modules frequently active on the same nodes
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
+              Statistical co-occurrence on BattleMetrics servers — popular pairings, not required dependencies
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {mod.coDeployed.map((other) => {
-              const sharePercent = mod.serverCount > 0 ? Math.round((other.count / mod.serverCount) * 100) : 0;
-              return (
-                <Link
-                  key={other.id}
-                  to={`${gp}/mod/${other.id}`}
-                  className="group relative block bg-zinc-950/60 border border-white/5 hover:border-tactical-orange/50 p-6 transition-all hover:-translate-y-1"
-                >
-                  <div className="space-y-3">
-                    <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest">// DEPLOYMENT_MATCH</span>
-                    <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
-                      {other.name}
-                    </h3>
-                    <div className="pt-2 flex items-end justify-between border-t border-white/5">
-                      <div className="space-y-0.5">
-                        <span className="text-[7px] text-gray-600 font-black uppercase tracking-wider">Overlap</span>
-                        <p className="text-lg font-black text-white">{sharePercent}%</p>
-                      </div>
-                      <span className="text-[8px] text-gray-500 font-bold uppercase group-hover:text-white transition-colors">
-                        Inspect →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <ModDataTable>
+            {mod.coDeployed.map((other) => (
+              <ModRow
+                key={other.id}
+                mod={toModRow(other)}
+                rank={other.overallRank || undefined}
+                game={game}
+                variant="embedded"
+              />
+            ))}
+          </ModDataTable>
         </section>
       )}
 
@@ -458,31 +515,13 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             <p className="text-lg sm:text-xl font-black text-gray-700 uppercase tracking-widest">No active deployments detected</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {(mod.servers || []).map((server) => (
-              <Card key={server.id} className="border-l-4 border-l-zinc-800 hover:border-l-tactical-orange transition-all">
-                <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-                  <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-base sm:text-lg font-black text-white uppercase truncate">{server.name}</h3>
-                    <p className="text-[8px] sm:text-[9px] font-mono text-gray-600 font-bold uppercase tracking-widest">{server.ip}:{server.port}</p>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
-                    <div className="space-y-1">
-                       <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-widest">Loadout Status</p>
-                       <p className="text-base sm:text-xl font-black text-white">{server.players} / {server.maxPlayers}</p>
-                    </div>
-                    <Link
-                      to={`${gp}/server/${server.id}`}
-                      className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-white/5 border border-white/10 text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-tactical-orange hover:text-black transition-all text-center"
-                    >
-                      Inspect →
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ServerDataTable>
+            {[...(mod.servers || [])]
+              .sort((a, b) => (b.players || 0) - (a.players || 0))
+              .map((server) => (
+                <ServerRow key={server.id} server={server} game={game} />
+              ))}
+          </ServerDataTable>
         )}
       </section>
     </div>

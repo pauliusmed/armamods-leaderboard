@@ -36,10 +36,17 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
       <td className="py-3 md:py-2.5 pr-4 align-middle">
         <Link
           to={`${gp}/server/${server.id}`}
-          className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
-          title={server.name}
+          className="block min-w-0"
+          title={server.scenarioName ? `${server.name} · ${server.scenarioName}` : server.name}
         >
-          {server.name}
+          <span className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1">
+            {server.name}
+          </span>
+          {server.scenarioName && (
+            <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-gray-600 line-clamp-1 mt-0.5">
+              {server.scenarioName}
+            </span>
+          )}
         </Link>
       </td>
 

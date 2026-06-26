@@ -33,6 +33,11 @@ A production-grade, highly-optimized data aggregation and visualization platform
 * **Dynamic Hydration**: Using `react-helmet-async` on React 19 to deliver context-aware Title, Description, and Rich Snippets.
 * **Metadata Integrity**: Automatic rich embeds generation for Discord, Twitter/X, and search engines.
 
+### 5. Workshop Metadata Supplement (not BattleMetrics)
+* **Problem**: BattleMetrics has no mod thumbnails or declared dependencies; the official workshop has no live player telemetry.
+* **Solution**: On-demand Reforger workshop scrape in Edge Workers — one HTML fetch caches thumbnail CDN URL + dependency list in KV (7d). UI loads images directly from Bohemia CDN via `/api/mods/:id/thumbnail` JSON (no redirect hop per `<img>`).
+* **Result**: Workshop recognition + install requirements without duplicating the catalog or storing image files. See [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md).
+
 ---
 
 ## 🏗️ Architecture Overview

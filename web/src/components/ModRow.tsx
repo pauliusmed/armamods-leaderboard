@@ -1,30 +1,27 @@
 import { Link } from 'react-router-dom';
 import type { Mod } from '../types';
+import type { GameType } from '../api/client';
+import { ModThumbnail } from './ui/ModThumbnail';
+import { ModAuthorCell } from './ui/ModAuthorCell';
+import { workshopPageUrl } from '../lib/workshop';
 
 interface ModRowProps {
   mod: Mod;
   rank?: number;
-  game?: string;
+  game?: GameType;
+  /** Leaderboard shows author + workshop CTA; embedded tables on mod detail stay compact. */
+  variant?: 'leaderboard' | 'embedded';
 }
 
-/**
- * Dense leaderboard row — "tactical Bloomberg" density.
- * One row per mod, right-aligned tabular-nums so a column of values scans
- * and compares at a glance. Keeps the brand (orange top-3, mono numbers,
- * dark bg) but trades hero-sized numbers for information density.
- */
-export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
+export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }: ModRowProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const isTop3 = rank != null && rank <= 3;
   const share = mod.marketShare ?? 0;
-
-  const workshopUrl = /^\d+$/.test(mod.id)
-    ? `https://steamcommunity.com/sharedfiles/filedetails/?id=${mod.id}`
-    : `https://reforger.armaplatform.com/workshop/${mod.id}`;
+  const workshopUrl = workshopPageUrl(mod.id, game);
+  const isLeaderboard = variant === 'leaderboard';
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-      {/* Rank */}
       <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
@@ -35,30 +32,42 @@ export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
         </span>
       </td>
 
-      {/* Module name — primary CTA */}
       <td className="py-3 md:py-2.5 pr-4 align-middle">
-        <Link
-          to={`${gp}/mod/${mod.id}`}
-          className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
-          title={mod.name}
-        >
-          {mod.name}
-        </Link>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <ModThumbnail modId={mod.id} modName={mod.name} game={game} size="sm" />
+          <div className="min-w-0">
+            <Link
+              to={`${gp}/mod/${mod.id}`}
+              className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
+              title={mod.name}
+            >
+              {mod.name}
+            </Link>
+            {isLeaderboard && (
+              <span className="md:hidden">
+                <ModAuthorCell modId={mod.id} game={game} className="mt-0.5" />
+              </span>
+            )}
+          </div>
+        </div>
       </td>
 
-      {/* Personnel (active players) */}
+      {isLeaderboard && (
+        <td className="hidden md:table-cell py-3 md:py-2.5 px-3 align-middle max-w-[140px]">
+          <ModAuthorCell modId={mod.id} game={game} />
+        </td>
+      )}
+
       <td className="py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-white">
           {(mod.totalPlayers || 0).toLocaleString()}
         </span>
       </td>
 
-      {/* Deployments (servers) — hidden on mobile */}
       <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">{mod.serverCount}</span>
       </td>
 
-      {/* Market share — hidden on mobile */}
       <td className="hidden md:table-cell py-3 md:py-2.5 pl-4 pr-4 align-middle">
         <div className="flex items-center justify-end gap-3">
           <span className="font-mono text-xs tabular-nums text-tactical-orange/80">
@@ -73,18 +82,18 @@ export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
         </div>
       </td>
 
-      {/* Workshop link */}
-      <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle">
-        <a
-          href={workshopUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${mod.name} on the workshop`}
-          className="inline-block px-1 text-xs font-black text-gray-600 hover:text-tactical-orange transition-colors"
-        >
-          ↗
-        </a>
-      </td>
+      {isLeaderboard && (
+        <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
+          <a
+            href={workshopUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
+          >
+            {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
+          </a>
+        </td>
+      )}
     </tr>
   );
 }

@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import type { TrendingMod } from '../types';
+import type { GameType } from '../api/client';
+import { ModThumbnail } from './ui/ModThumbnail';
+import { workshopPageUrl } from '../lib/workshop';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
 
 interface TrendRowProps {
   mod: TrendingMod;
   category: TrendCategory;
-  game?: string;
+  game?: GameType;
 }
 
 /**
@@ -24,10 +27,7 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
   const hasChange = category !== 'new' && prevRank != null && currentRank != null;
   const delta = hasChange ? (prevRank as number) - (currentRank as number) : 0; // positive = rising
   const magnitude = Math.abs(delta);
-
-  const workshopUrl = /^\d+$/.test(mod.id)
-    ? `https://steamcommunity.com/sharedfiles/filedetails/?id=${mod.id}`
-    : `https://reforger.armaplatform.com/workshop/${mod.id}`;
+  const workshopUrl = workshopPageUrl(mod.id, game);
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
@@ -42,15 +42,18 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
         </span>
       </td>
 
-      {/* Module name — primary CTA */}
+      {/* Module name — thumbnail + primary CTA */}
       <td className="py-3 md:py-2.5 pr-4 align-middle">
-        <Link
-          to={`${gp}/mod/${mod.id}`}
-          className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
-          title={mod.name}
-        >
-          {mod.name}
-        </Link>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <ModThumbnail modId={mod.id} modName={mod.name} game={game} size="sm" />
+          <Link
+            to={`${gp}/mod/${mod.id}`}
+            className="min-w-0 text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
+            title={mod.name}
+          >
+            {mod.name}
+          </Link>
+        </div>
       </td>
 
       {/* Change — the trending signal */}

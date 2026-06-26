@@ -93,7 +93,7 @@ function getKvKeys(game: ShareGame) {
   };
 }
 
-async function lookupMod(kv: KVNamespace, game: ShareGame, modId: string): Promise<any | null> {
+export async function lookupMod(kv: KVNamespace, game: ShareGame, modId: string): Promise<any | null> {
   const keys = getKvKeys(game);
   const meta = (await kv.get(`${keys.MODS}:meta`, 'json')) as { chunks?: number } | null;
   if (!meta?.chunks) return null;
@@ -165,37 +165,15 @@ function ogImageCacheKey(game: ShareGame, modId: string): string {
   return `cache:og-image:${game}:${modId.toUpperCase()}`;
 }
 
+import { resolveModThumbnailUrl } from './workshop-fetch';
+
 /** Workshop OG thumbnail with KV cache (7d). Discord follows 302 to this URL. */
 export async function resolveModPreviewImage(
   kv: KVNamespace,
   game: ShareGame,
   modId: string
 ): Promise<string> {
-  const cacheKey = ogImageCacheKey(game, modId);
-  const cached = await kv.get(cacheKey, 'text');
-  if (cached) return cached;
-
-  try {
-    const response = await fetch(workshopPageUrl(modId, game), {
-      headers: {
-        'User-Agent': 'facebookexternalhit/1.1',
-        Accept: 'text/html',
-      },
-      cf: { cacheTtl: 86400, cacheEverything: true },
-    });
-    if (response.ok) {
-      const html = await response.text();
-      const image = extractOgImageFromHtml(html);
-      if (image?.startsWith('http')) {
-        await kv.put(cacheKey, image, { expirationTtl: 604800 });
-        return image;
-      }
-    }
-  } catch (err) {
-    console.warn('[OG] Workshop preview fetch failed', modId, err);
-  }
-
-  return defaultOgImage();
+  return resolveModThumbnailUrl(kv, game, modId);
 }
 
 export async function buildShareMeta(

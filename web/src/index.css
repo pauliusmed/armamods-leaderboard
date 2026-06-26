@@ -6,11 +6,19 @@
   --color-tactical-orange: #ff6b00;
 }
 
+html,
 body {
   margin: 0;
+  overflow-x: hidden;
+}
+
+body {
   background-color: #000000;
   color: #d1d5db;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+#root {
   overflow-x: hidden;
 }
 

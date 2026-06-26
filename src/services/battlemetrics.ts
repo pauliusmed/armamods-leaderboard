@@ -9,7 +9,10 @@ interface BattleMetricsServer {
     maxPlayers: number;
     status: string;
     details?: {
+      map?: string;
+      mission?: string;
       reforger?: {
+        scenarioName?: string;
         mods?: Array<{
           modId: string;
           name: string;
@@ -23,6 +26,8 @@ interface BattleMetricsServer {
           version?: string;
         }>;
       };
+      modIds?: number[];
+      modNames?: string[];
     };
   };
 }

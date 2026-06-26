@@ -3,7 +3,8 @@ import { modsApi, type GameType } from '../api/client';
 import type { Mod } from '../types';
 
 export type PlayerFilter = 'all' | 'high' | 'medium' | 'low';
-export type ModSortBy = 'overall' | 'players' | 'servers';
+export type ModSortBy = 'overall' | 'players' | 'servers' | 'name' | 'share' | 'author';
+export type SortDir = 'asc' | 'desc';
 
 interface UseModsOptions {
   game?: GameType;
@@ -20,17 +21,19 @@ export function useMods(options: UseModsOptions = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [playerFilter, setPlayerFilter] = useState<PlayerFilter>('all');
   const [sortBy, setSortBy] = useState<ModSortBy>('overall');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
+
+  const apiSortBy = sortBy === 'author' ? 'overall' : sortBy;
 
   const loadMods = useCallback(async () => {
     try {
       setLoading(true);
       const offset = (currentPage - 1) * itemsPerPage;
 
-      // Fetch both list and global stats
       const [listData, statsData] = await Promise.all([
-        modsApi.getPopular(itemsPerPage, offset, searchQuery, sortBy, game),
+        modsApi.getPopular(itemsPerPage, offset, searchQuery, apiSortBy, sortDir, game),
         modsApi.getGlobalStats(game)
       ]);
 
@@ -43,18 +46,18 @@ export function useMods(options: UseModsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchQuery, sortBy, game]);
+  }, [currentPage, searchQuery, apiSortBy, sortDir, game]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, playerFilter, sortBy]);
+  }, [searchQuery, playerFilter, sortBy, sortDir]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadMods();
     }, 300);
     return () => clearTimeout(timer);
-  }, [currentPage, searchQuery, sortBy, loadMods]);
+  }, [currentPage, searchQuery, apiSortBy, sortDir, loadMods]);
 
   const filteredMods = useMemo(() => {
     if (!Array.isArray(mods)) return [];
@@ -78,7 +81,17 @@ export function useMods(options: UseModsOptions = {}) {
     setSearchQuery('');
     setPlayerFilter('all');
     setSortBy('overall');
+    setSortDir('asc');
     setCurrentPage(1);
+  };
+
+  const toggleSort = (column: ModSortBy) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortBy(column);
+    setSortDir(column === 'name' || column === 'author' ? 'asc' : column === 'overall' ? 'asc' : 'desc');
   };
 
   const totalPages = Math.ceil(totalMods / itemsPerPage);
@@ -102,6 +115,8 @@ export function useMods(options: UseModsOptions = {}) {
     setPlayerFilter,
     sortBy,
     setSortBy,
+    sortDir,
+    toggleSort,
     currentPage,
     setCurrentPage,
     totalPages,

@@ -10,11 +10,14 @@ math behind the rankings, see [`docs/ALGORITHM.md`](./docs/ALGORITHM.md).
 ## 1. What this project does
 
 The official Arma / Reforger Workshop ranks mods by subscription count, which says
-nothing about how many people actually play with a mod. This platform takes the
-opposite approach: it ranks mods and multiplayer servers by **observed player
-activity**, harvested every two hours from BattleMetrics. The result is a live
-leaderboard, trending view, per-mod/server history charts, and a Reforger 1.7
-config auditor.
+nothing about how many people actually play with a mod. This platform **supplements**
+the workshop: it ranks mods and servers by **observed player activity** from
+BattleMetrics (every two hours). Workshop answers *what the mod is*; we answer
+*whether anyone is running it right now*.
+
+The UI may show workshop preview thumbnails for quick recognition, but the core
+value is telemetry — leaderboard, trending deltas, history charts, and a Reforger
+1.7 config auditor.
 
 It supports two games — **Reforger** (default) and **Arma 3** — served from the same
 pipeline with game-suffixed keys.
@@ -129,7 +132,27 @@ Hono app exported as a Pages Function. Read paths follow a common pattern:
 ### 4.4 Presentation — `web/src`
 React 19 SPA. `src/api/client.ts` wraps axios with a 2-minute in-memory cache and
 uses `AbortController` to cancel in-flight requests on route change. Charts use
-Recharts; SEO/OG metadata uses `react-helmet-async`.
+Recharts.
+
+**Workshop metadata layer** — see [docs/WORKSHOP_METADATA.md](./docs/WORKSHOP_METADATA.md) for full design.
+
+**UI** (`src/lib/workshop.ts`, `src/components/ui/ModThumbnail.tsx`):
+- `workshopPageUrl()` — outbound link to Reforger workshop or Steam (Arma 3).
+- `ModThumbnail` calls `GET /api/mods/:id/thumbnail`, caches the CDN URL client-side (7d), then loads the image **directly from Bohemia CDN** (no per-image 302 through the Worker).
+- Letter fallback when no workshop preview exists.
+
+**Edge** (`web/functions/lib/workshop-fetch.ts`):
+- `ensureReforgerWorkshopMetadata()` — **one** workshop HTML fetch fills both `cache:og-image:*` (thumbnail URL) and `cache:mod-deps:*` (dependencies JSON) on cache miss.
+- KV TTL 7 days for both keys. Image **bytes are not stored** — only the CDN URL string.
+
+**Dependencies** (same module):
+- Parsed from Next.js `__NEXT_DATA__` on the workshop page.
+- `GET /api/mods/:id/dependencies` — author-declared deps, enriched with BM stats from KV.
+- Distinct from **co-deployment** (collector, BM-only) — both shown on mod detail in `ModDataTable` rows.
+
+**Social / OG**: `/api/og/preview/mod/:id` still 302-redirects crawlers to the cached CDN URL.
+
+SEO/OG metadata uses `react-helmet-async`.
 
 ---
 
@@ -160,13 +183,15 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 | GET | `/mods` | paginated/sorted/filtered mod list |
 | GET | `/mods/:id` | single mod + the servers running it |
 | GET | `/mods/:id/history` | mod time series (24h/7d/30d/1y/all) |
+| GET | `/mods/:id/thumbnail` | JSON `{ url }` — Bohemia CDN thumbnail (KV 7d) |
+| GET | `/mods/:id/dependencies` | workshop-declared required deps (Reforger; KV cache 7d) |
 | GET | `/servers` | paginated server list |
 | GET | `/servers/:id` | single server detail |
 | GET | `/servers/:id/history` | server rank/players time series |
 | GET | `/servers/ranking` | top-200 SQE leaderboard |
 | GET | `/trending/:period` | rising / falling / new |
 | GET | `/diagnostics` | system health (shard counts, history range) |
-| GET | `/og/preview/{mod,server}/:id` | 302 to OG preview image |
+| GET | `/og/preview/{mod,server}/:id` | 302 to cached workshop CDN URL (OG bots; same KV as thumbnails) |
 | POST | `/audit/config` | Reforger config.json health audit |
 
 ---
@@ -234,3 +259,7 @@ resolution, share-meta, and search matching.
   while still letting a real challenger through.
 - **Local proxy ≠ production API.** `src/index.ts` only mirrors the Worker so the
   frontend can develop against realistic data; it is intentionally logic-free.
+- **On-demand workshop metadata.** Thumbnails and declared dependencies are scraped
+  from the Reforger workshop on first request per mod (KV 7d), not by the collector.
+  One HTML fetch fills both caches; the UI resolves CDN URLs via JSON and loads images
+  directly — see [`docs/WORKSHOP_METADATA.md`](./docs/WORKSHOP_METADATA.md).

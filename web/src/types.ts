@@ -9,7 +9,25 @@ export interface Mod {
   serverRank?: number;
   overallRank: number;
   marketShare?: number;
-  coDeployed?: { id: string; name: string; count: number }[];
+  coDeployed?: {
+    id: string;
+    name: string;
+    count: number;
+    totalPlayers?: number;
+    serverCount?: number;
+    overallRank?: number;
+    marketShare?: number;
+  }[];
+}
+
+export interface ModDependency {
+  id: string;
+  name: string;
+  version?: string;
+  totalPlayers?: number;
+  serverCount?: number;
+  overallRank?: number;
+  marketShare?: number;
 }
 
 export interface ServerMod {
@@ -29,6 +47,8 @@ export interface Server {
   port: number | null;
   players: number;
   maxPlayers: number;
+  /** Active scenario/mission from BattleMetrics (Reforger scenarioName or Arma 3 map·mission). */
+  scenarioName?: string | null;
   sqePoints?: number;
   sqeRank?: number;
   mods: ServerMod[];

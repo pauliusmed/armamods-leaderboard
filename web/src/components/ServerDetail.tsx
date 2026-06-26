@@ -201,6 +201,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <p className="text-xl font-mono text-gray-500 font-bold uppercase tracking-widest">
               {server.ip}:{server.port}
             </p>
+            {server.scenarioName && (
+              <p className="text-sm font-bold uppercase tracking-[0.15em] text-gray-400 max-w-3xl">
+                Scenario · {server.scenarioName}
+              </p>
+            )}
           </div>
           <div className="flex gap-4">
             <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">

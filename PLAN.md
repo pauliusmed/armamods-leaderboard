@@ -6,7 +6,7 @@ This document outlines the strategic vision, current implementation status, and 
 
 ## 🎯 Strategic Vision
 
-**The Goal**: To provide the Arma community with a data-driven alternative to the official Steam/Reforger Workshop, ranking mods by **actual player engagement** rather than static subscription counts.
+**The Goal**: To supplement the official Reforger / Steam Workshop with **live engagement telemetry** (players, servers, trends) — not to replace workshop browsing. Workshop answers *“what does this mod look like?”*; this platform answers *“is anyone actually playing it right now?”*
 
 ---
 
@@ -34,12 +34,33 @@ This document outlines the strategic vision, current implementation status, and 
 
 ## 🚧 Phase 2: Metadata Enrichment [IN PROGRESS]
 
-- [ ] **Arma Workshop Scraper**:
-  - [ ] Automated thumbnail and image extraction.
-  - [ ] Metadata retrieval (Author, File Size, Last Update).
+- [x] **Workshop thumbnails (UI)**:
+  - [x] `ModThumbnail` → `/api/mods/:id/thumbnail` (JSON CDN URL) → direct Bohemia CDN load.
+  - [x] KV stores **URL only** (7d), not image bytes; letter fallback when missing.
+  - [x] Unified scrape with dependencies (`workshop-fetch.ts`).
+  - [x] OG/social still uses `/api/og/preview/mod/:id` (302).
+  - [ ] R2 self-hosting (only if CDN hotlink proves insufficient).
+- [x] **Workshop dependencies (Reforger, on-demand)**:
+  - [x] `/api/mods/:id/dependencies` — direct deps from workshop `__NEXT_DATA__`, KV cache 7d.
+  - [x] Mod detail UI: „Required Dependencies“ vs „Frequently Deployed Together“ (BM co-deploy).
+  - [ ] Recursive / transitive dependency tree (depth &gt; 1).
+- [ ] **Arma Workshop Scraper (batch metadata)**:
+  - [ ] Author, file size, last update (collector-side enrichment, not per-page scrape).
   - [ ] Categorization (Survival, Roleplay, PvP, MilSim).
 - [ ] **Mod Comparison Tool**: Side-by-side performance analytics for multiple mods.
 - [ ] **User Alerts**: Discord/Webhook notifications for mod developers when their mods hit "Trending".
+
+### UX principle (workshop supplement)
+
+| Workshop provides | We provide |
+|-------------------|------------|
+| Screenshots, description, subscribe | Live players & server count |
+| Static popularity (likes/subs) | Rank, trend delta, market share |
+| Download / install | “Is it deployed right now?” confirmation |
+
+Thumbnails are **recognition aids** only — telemetry remains the primary value.
+
+**Technical detail:** [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) — thumbnail pipeline, dependency scrape, cache layers, co-deploy vs dependencies.
 
 ---
 

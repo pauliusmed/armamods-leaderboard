@@ -25,9 +25,9 @@ import {
 import { resolveHistoryQuery, type GameType as HistoryGameType } from './history-query';
 import {
   defaultOgImage,
-  resolveModPreviewImage,
   type ShareGame,
 } from '../lib/share-meta';
+import { resolveModDependencies, resolveModAuthor, resolveModThumbnailUrl } from '../lib/workshop-fetch';
 import { matchesModSearch, matchesServerSearch } from '../lib/search-match';
 
 type Bindings = {
@@ -189,10 +189,11 @@ app.get('/mods', async (c) => {
   const offset = parseInt(c.req.query('offset') || '0');
   const search = c.req.query('search') || '';
   const sortBy = c.req.query('sortBy') || 'overall';
+  const sortDir = c.req.query('sortDir') === 'desc' ? 'desc' : 'asc';
 
   // OPTIMIZATION: If no search and default sort, only fetch the first few chunks
   // OPTIMIZATION: If no search and default sort, only fetch the first chunk (512KB)
-  const isDefaultView = !search && (sortBy === 'overall' || !sortBy);
+  const isDefaultView = !search && (sortBy === 'overall' || !sortBy) && sortDir === 'asc';
   const mods = await getChunkedData(c.env.TRENDING_KV, keys.MODS, isDefaultView ? 1 : undefined);
   let filtered = [...mods];
 
@@ -200,13 +201,15 @@ app.get('/mods', async (c) => {
     filtered = filtered.filter((m) => matchesModSearch(m, search));
   }
 
-  // Sort logic
-  if (sortBy === 'players') filtered.sort((a, b) => b.totalPlayers - a.totalPlayers);
-  else if (sortBy === 'servers') filtered.sort((a, b) => b.serverCount - a.serverCount);
-  else if (sortBy === 'name') filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  else {
-    filtered.sort((a, b) => (a.overallRank || 9999) - (b.overallRank || 9999));
-  }
+  const dir = sortDir === 'asc' ? 1 : -1;
+  const byNum = (a: number, b: number) => dir * (a - b);
+  const byStr = (a: string, b: string) => dir * (a || '').localeCompare(b || '');
+
+  if (sortBy === 'players') filtered.sort((a, b) => byNum(a.totalPlayers || 0, b.totalPlayers || 0));
+  else if (sortBy === 'servers') filtered.sort((a, b) => byNum(a.serverCount || 0, b.serverCount || 0));
+  else if (sortBy === 'share') filtered.sort((a, b) => byNum(a.marketShare || 0, b.marketShare || 0));
+  else if (sortBy === 'name') filtered.sort((a, b) => byStr(a.name || '', b.name || ''));
+  else filtered.sort((a, b) => byNum(a.overallRank || 9999, b.overallRank || 9999));
 
   const response = c.json({ 
     data: filtered.slice(offset, offset + limit), 
@@ -235,41 +238,44 @@ app.get('/mods/:modId', async (c) => {
   console.log(`[MODS_DETAIL] Starting optimized fetch for ${modId}...`);
   let mod = null;
   let totalModsCount = 0;
+  let modChunksText: (string | null)[] = [];
 
   try {
     const meta = await c.env.TRENDING_KV.get(`${keys.MODS}:meta`, 'json') as any;
     if (meta && meta.chunks) {
         totalModsCount = meta.total;
         
-        // Parallel retrieval of KV chunks
         const chunkPromises = [];
         for (let i = 0; i < meta.chunks; i++) {
             chunkPromises.push(c.env.TRENDING_KV.get(`${keys.MODS}:${i}`, 'text'));
         }
-        const chunksText = await Promise.all(chunkPromises);
-        
-        for (let i = 0; i < chunksText.length; i++) {
-            const chunkText = chunksText[i];
-            if (chunkText && chunkText.includes(`"id":"${modId}"`)) {
-                // Surgical extraction using findMatchingBrace for safety
-                const searchStr = `"id":"${modId}"`;
-                const idPos = chunkText.indexOf(searchStr);
-                const startPos = chunkText.lastIndexOf('{', idPos);
-                const endPos = findMatchingBrace(chunkText, startPos);
-                if (startPos !== -1 && endPos !== -1) {
-                    try {
-                        mod = JSON.parse(chunkText.slice(startPos, endPos + 1));
-                        if (mod) break;
-                    } catch (e) { /* fallback */ }
-                }
-            }
-        }
+        modChunksText = await Promise.all(chunkPromises);
+        mod = extractModFromChunks(modChunksText, modId);
     }
   } catch (err) {
       console.error('[MODS_DETAIL] KV mod lookup error:', err);
   }
 
   if (!mod) return c.json({ error: 'Not found' }, 404);
+
+  if (game === 'reforger') {
+    const author = await resolveModAuthor(c.env.TRENDING_KV, game, modId);
+    if (author) mod = { ...mod, author };
+  }
+
+  if (Array.isArray(mod.coDeployed) && mod.coDeployed.length > 0 && modChunksText.length > 0) {
+    mod.coDeployed = mod.coDeployed.map((co: { id: string; name: string; count: number }) => {
+      const full = extractModFromChunks(modChunksText, co.id);
+      if (!full) return co;
+      return {
+        ...co,
+        totalPlayers: full.totalPlayers,
+        serverCount: full.serverCount,
+        overallRank: full.overallRank,
+        marketShare: full.marketShare,
+      };
+    });
+  }
 
   /**
    * ULTRA-OPTIMIZED SERVER LOOKUP:
@@ -345,6 +351,23 @@ function findMatchingBrace(text: string, openPos: number): number {
     if (ch === '}') { depth--; if (depth === 0) return i; }
   }
   return -1;
+}
+
+function extractModFromChunks(chunksText: (string | null)[], modId: string): any | null {
+  const searchStr = `"id":"${modId}"`;
+  for (const chunkText of chunksText) {
+    if (!chunkText?.includes(searchStr)) continue;
+    const idPos = chunkText.indexOf(searchStr);
+    const startPos = chunkText.lastIndexOf('{', idPos);
+    const endPos = findMatchingBrace(chunkText, startPos);
+    if (startPos === -1 || endPos === -1) continue;
+    try {
+      return JSON.parse(chunkText.slice(startPos, endPos + 1));
+    } catch {
+      /* try next chunk */
+    }
+  }
+  return null;
 }
 
 // Splits a JSON array of objects into individual object strings without parsing it.
@@ -592,6 +615,85 @@ async function fetchModHistoryPoints(
   return modHistory;
 }
 
+app.get('/mods/:modId/author', async (c) => {
+  const cache = await caches.open('armamods:mod_authors');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+
+  if (game === 'arma3') {
+    const response = c.json({
+      data: { author: null },
+      meta: { modId, game, supported: false },
+    });
+    response.headers.set('Cache-Control', 'public, max-age=3600');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  }
+
+  const author = await resolveModAuthor(c.env.TRENDING_KV, game, modId);
+  const response = c.json({
+    data: { author },
+    meta: { modId, game },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
+app.get('/mods/:modId/thumbnail', async (c) => {
+  const cache = await caches.open('armamods:mod_thumbnails');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+  const url = await resolveModThumbnailUrl(c.env.TRENDING_KV, game, modId);
+
+  const response = c.json({
+    data: { url },
+    meta: { modId, game, direct: true },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
+app.get('/mods/:modId/dependencies', async (c) => {
+  const cache = await caches.open('armamods:mod_deps');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+
+  if (game === 'arma3') {
+    const response = c.json({
+      data: [],
+      meta: { source: 'steam_workshop', supported: false, message: 'Dependency scrape not yet supported for Arma 3' },
+    });
+    response.headers.set('Cache-Control', 'public, max-age=3600');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  }
+
+  const dependencies = await resolveModDependencies(c.env.TRENDING_KV, game, modId);
+  const response = c.json({
+    data: dependencies,
+    meta: {
+      source: 'reforger_workshop',
+      supported: true,
+      modId,
+      count: dependencies.length,
+    },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
 app.get('/mods/:modId/history', async (c) => {
   const cache = await caches.open('armamods:history');
   const cacheResponse = await cache.match(c.req.raw);
@@ -771,7 +873,7 @@ app.get('/servers/:serverId', async (c) => {
 app.get('/og/preview/mod/:modId', async (c) => {
   const game = getGameFromQuery(c) as ShareGame;
   const modId = c.req.param('modId');
-  const image = await resolveModPreviewImage(c.env.TRENDING_KV, game, modId);
+  const image = await resolveModThumbnailUrl(c.env.TRENDING_KV, game, modId);
   return c.redirect(image, 302);
 });
 
