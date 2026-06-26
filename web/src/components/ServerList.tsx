@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useServers } from '../hooks/useServers';
-import { ServerCard } from './ServerCard';
+import { ServerRow } from './ServerRow';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
@@ -92,10 +92,24 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {filteredServers.map((server) => (
-          <ServerCard key={server.id} server={server} game={game} />
-        ))}
+      <div className="border border-white/5 bg-black/40">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Rank</th>
+                <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Server</th>
+                <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Players</th>
+                <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Mods</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredServers.map((server) => (
+                <ServerRow key={server.id} server={server} game={game} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Pagination 
