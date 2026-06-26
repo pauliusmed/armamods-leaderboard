@@ -1,3 +1,14 @@
+## [1.14.5] - 2026-06-26
+
+### 🖥️ Serverių SQE reitingų atkūrimas (API sluoksnis)
+- **SQE indeksas KV**: Kolektorius rašo `cache:server_sqe:{game}` kompaktišką `{ id → rank, points }` žemėlapį visiems serveriams.
+- **API enrichment**: `/api/servers` ir `/api/servers/:id` papildo atsakymus iš SQE indekso; jei indekso dar nėra – fallback iš top-200 `cache:ranking:servers` leaderboard.
+- **API rikiavimas**: `/api/servers` numatytasis sortas pagal `sqeRank`, ne tik žaidėjų skaičių.
+
+### 🎨 Favicon patikimumas
+- Pridėti [favicon.png](web/public/favicon.png) ir [apple-touch-icon.png](web/public/apple-touch-icon.png) – PNG palaikymas Safari/iOS ir senesnėms naršyklėms.
+- [favicon.svg](web/public/favicon.svg) perrašytas su `path` geometrija (be `<text>`), kuris kai kuriose naršyklėse nerodė ikonos.
+
 ## [1.14.4] - 2026-06-26
 
 ### 🖥️ Serverių sąrašo ( /servers ) pataisymai

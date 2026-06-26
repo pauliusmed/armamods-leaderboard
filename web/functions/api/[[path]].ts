@@ -75,7 +75,47 @@ function getKVKeys(game: GameType) {
     TRENDING: `cache:trending${suffix}`,
     HISTORY_HOURLY: `history:hourly:${game}`,
     HISTORY_DAILY: `history:daily:${game}`,
+    SERVER_SQE: `cache:server_sqe:${game}`,
+    SERVER_RANKING: `cache:ranking:servers:${game}`,
   };
+}
+
+type SqeIndexEntry = { r: number; p: number };
+type SqeIndex = Record<string, SqeIndexEntry>;
+
+async function loadSqeIndex(kv: KVNamespace, game: GameType): Promise<SqeIndex | null> {
+  const keys = getKVKeys(game);
+  const index = await kv.get(keys.SERVER_SQE, 'json') as SqeIndex | null;
+  if (index && Object.keys(index).length > 0) return index;
+
+  // Fallback: top-200 leaderboard until full index is written
+  const ranking = await kv.get(keys.SERVER_RANKING, 'json') as Array<{ id?: string; rank?: number; points?: number }> | null;
+  if (!ranking?.length) return null;
+
+  const fallback: SqeIndex = {};
+  for (const item of ranking) {
+    if (item?.id && item.rank != null) {
+      fallback[item.id] = { r: item.rank, p: item.points ?? 0 };
+    }
+  }
+  return Object.keys(fallback).length > 0 ? fallback : null;
+}
+
+function enrichServersWithSqe(servers: any[], sqeIndex: SqeIndex | null): any[] {
+  if (!sqeIndex) return servers;
+  return servers.map((server) => {
+    if (server.sqeRank != null) return server;
+    const sqe = sqeIndex[server.id];
+    if (!sqe) return server;
+    return { ...server, sqeRank: sqe.r, sqePoints: sqe.p };
+  });
+}
+
+function enrichServerWithSqe(server: any, sqeIndex: SqeIndex | null): any {
+  if (!server || server.sqeRank != null || !sqeIndex) return server;
+  const sqe = sqeIndex[server.id];
+  if (!sqe) return server;
+  return { ...server, sqeRank: sqe.r, sqePoints: sqe.p };
 }
 
 /**
@@ -620,14 +660,19 @@ app.get('/servers', async (c) => {
     return c.json({ data: [], meta: { total: 0, limit, offset } });
   }
 
-  let filtered = [...servers];
+  let filtered = enrichServersWithSqe([...servers], await loadSqeIndex(c.env.TRENDING_KV, game));
 
   if (search) {
     filtered = filtered.filter((s) => matchesServerSearch(s, search));
   }
 
   try {
-    filtered.sort((a, b) => (b.players || 0) - (a.players || 0));
+    filtered.sort((a, b) => {
+      const rankA = a.sqeRank ?? Number.MAX_SAFE_INTEGER;
+      const rankB = b.sqeRank ?? Number.MAX_SAFE_INTEGER;
+      if (rankA !== rankB) return rankA - rankB;
+      return (b.players || 0) - (a.players || 0);
+    });
   } catch (sortErr) {
     console.error(`[SERVERS] Sort error:`, sortErr);
   }
@@ -709,6 +754,9 @@ app.get('/servers/:serverId', async (c) => {
   }
 
   if (!server) return c.json({ error: 'Server not found' }, 404);
+
+  const sqeIndex = await loadSqeIndex(c.env.TRENDING_KV, game);
+  server = enrichServerWithSqe(server, sqeIndex);
 
   const response = c.json({ data: server });
   

@@ -811,6 +811,16 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
           }));
 
       await kv.put(leaderboardKey, JSON.stringify(leaderboard));
+
+      // Compact SQE index for API enrichment (servers chunks can be large; this is ~300KB)
+      const sqeIndex: Record<string, { r: number; p: number }> = {};
+      for (const s of serverList) {
+        if (s.sqeRank != null) {
+          sqeIndex[s.id] = { r: s.sqeRank, p: s.sqePoints ?? 0 };
+        }
+      }
+      await kv.put(`cache:server_sqe:${game}`, JSON.stringify(sqeIndex));
+
       console.log(`[SERVER_SCORING] Leaderboard updated, ${serverList.length} servers enriched with SQE data.`);
 
       return currentRanks;
