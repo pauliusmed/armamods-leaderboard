@@ -1,3 +1,24 @@
+## [1.14.4] - 2026-06-26
+
+### 🖥️ Serverių sąrašo ( /servers ) pataisymai
+- **SQE reitingų atkūrimas kolektoriuje**: Pataisyta `runServerScoring()` klaida faile [collector.ts](scripts/collector.ts), kai `oldLeaderboard` kintamasis buvo deklaruotas vidiniame `try` bloke, bet naudojamas išorėje (`ReferenceError`). Dėl to visi serveriai KV buvo rašomi be `sqeRank` / `sqePoints`, o `/servers` puslapyje rodė `UNRANKED` ir neteisingą tvarką. Po fix'o reikia paleisti `npm run collect` (arba palaukti cron), kad KV duomenys atsinaujintų.
+- **`/api/servers/ranking` maršruto prioritetas**: Endpointas perkeltas prieš `/servers/:serverId` faile [[[path]].ts](web/functions/api/[[path]].ts), kad `"ranking"` nebebūtų interpretuojamas kaip serverio ID (anksčiau grąžindavo `404 Server not found`).
+- **Pagination dizaino suderinimas**: [Pagination.tsx](web/src/components/ui/Pagination.tsx) perrašytas taktiniu stiliumi (kaip [ModList.tsx](web/src/components/ModList.tsx)) — pašalintas baltas „rounded“ UI su violetine-rožine gradientu.
+- **Rikiavimo ir filtro patobulinimai**: [useServers.ts](web/src/hooks/useServers.ts) — SQE rank rikiavimas su žaidėjų skaičiaus tiebreaker; `resetFilters` grąžina numatytąjį `rank` sortą. [ServerCard.tsx](web/src/components/ServerCard.tsx) — `sqeRank` rodomas per `??`, ne `||`.
+
+### 🎨 Favicon
+- **Svetainės favicon**: Pridėtas [web/public/favicon.svg](web/public/favicon.svg) — oranžinis kvadratas su „AR“, atitinkantis header logotipą. `index.html` jau nurodė `/favicon.svg`, bet failo nebuvo.
+
+## [1.14.3] - 2026-06-22
+
+### 🛡️ Saugumo ir dokumentacijos klaidų ištaisymas
+- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš [[[[path]].ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/functions/api/[[path]].ts), kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
+- **Wrangler konfigūracijos išvalymas**: Iš [wrangler.toml](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/wrangler.toml) pašalintas nenaudojamas `WEBHOOK_SECRET` kintamasis.
+- **Dokumentacijos EMA alpha reikšmės sutikslinimas**: Pataisyta klaidingai nurodyta $\alpha = 0.15$ reikšmė [README.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/README.md), [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/docs/ALGORITHM.md) (15% offline decay pakeista į teisingą 10%) bei senesniuose `CHANGELOG.md` įrašuose į teisingą $\alpha = 0.10$ (90% / 10%), atitinkančią realią kolektoriaus elgseną bei algoritmo aprašymą.
+- **Komentarų vertimas į anglų kalbą**: Lietuviški komentarai bei diagnostikos pranešimai išversti į anglų kalbą visuose šaltinio failuose — core logikoje ([collector.ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/scripts/collector.ts), [[[path]].ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/functions/api/[[path]].ts), [audit-config.ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/functions/api/audit-config.ts)) bei ad-hoc diagnostikos skriptuose (`scripts/check-17-drop.mjs`, `check-config-bm.mjs`, `check-mod-gameversion.mjs`, `run-audit-local.mjs`) — siekiant užtikrinti vientisą repozitorijos toną.
+- **README marketingo tono sušvelninimas**: Sušvelninti skambūs teiginiai („hype“) faile [README.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/README.md) bei patikslintas vietinio paleidimo aprašas, aiškiai nubrėžiant ribą tarp vietinio proxy ir tikrosios edge funkcijų API architektūros.
+- **Techninė ataskaita (walkthrough)**: Sukurtas [walkthrough.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/walkthrough.md) — inžinerinis projekto pristatymas, apimantis duomenų srautą, komponentus, API paviršių bei pagrindinius architektūros sprendimus, skirtas naujam skaitytojui greitai susiorientuoti kode.
+
 ## [1.14.2] - 2026-06-07
 
 ### 📝 Dokumentacijos bei diagnostikos versijos atnaujinimai
@@ -138,7 +159,7 @@
 ## [1.9.0] - 2026-05-18
 
 ### 📈 Eksponentinio slopinimo (EMA) ir reputacijos išlaikymo diegimas
-- **Eksponentinis slopinimas (EMA - Exponential Moving Average)**: Serverių reitingavimo skaičiavimuose įdiegtas EMA modelis su koeficientu $\alpha = 0.15$. Tai 85% reitingo taškų svorio perkelia iš sukaupto patikimumo balso, panaikinant naktinius reitingų svyravimus ir apsaugant serverius nuo staigaus nukritimo trumpų restartų metu.
+- **Eksponentinis slopinimas (EMA - Exponential Moving Average)**: Serverių reitingavimo skaičiavimuose įdiegtas EMA modelis su koeficientu $\alpha = 0.10$. Tai 90% reitingo taškų svorio perkelia iš sukaupto patikimumo balso, panaikinant naktinius reitingų svyravimus ir apsaugant serverius nuo staigaus nukritimo trumpų restartų metu.
 - **Tolygaus gesimo (Fadeaway) garantija**: Neaktyvūs ar visiškai išjungti serveriai nebeprapuola iškart, o gražiai ir tolygiai leidžiasi reitingų sąrašu žemyn, užtikrinant reputacinį tęstinumą.
 - **Dokumentacija**: Pilnai atnaujintas [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/docs/ALGORITHM.md) dokumentas, aprašantis naujosios formulės veikimą ir matematines savybes.
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -26,21 +26,25 @@ export function Layout({ children }: LayoutProps) {
     }
   `;
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-[#000000] flex flex-col font-mono selection:bg-tactical-orange selection:text-black">
       {/* Top Bar - Tactical Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#000000]/80">
-        <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
-          <div className="px-4 sm:px-8 py-4 sm:py-6 border-r border-white/5 flex items-center gap-4 sm:gap-6 group">
-            <Link to={gp || '/'} className="flex items-center gap-3 sm:gap-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-tactical-orange flex items-center justify-center text-black font-black text-lg sm:text-xl tracking-tighter shadow-[0_0_15px_rgba(255,107,0,0.3)] group-hover:scale-110 transition-transform">
+        <div className="max-w-screen-2xl mx-auto flex items-stretch justify-between">
+          <div className="flex items-center flex-1 min-w-0 px-4 sm:px-8 py-4 sm:py-6 lg:border-r lg:border-white/5 group">
+            <Link to={gp || '/'} className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 bg-tactical-orange flex items-center justify-center text-black font-black text-lg sm:text-xl tracking-tighter shadow-[0_0_15px_rgba(255,107,0,0.3)] group-hover:scale-110 transition-transform">
                 {isArma3 ? 'A3' : 'AR'}
               </div>
-              <div className="space-y-0.5 sm:space-y-1">
-                <h1 className="text-base sm:text-xl font-black text-white tracking-[0.1em] uppercase leading-none">
+              <div className="min-w-0 space-y-0.5 sm:space-y-1">
+                <h1 className="text-base sm:text-xl font-black text-white tracking-[0.1em] uppercase leading-none truncate">
                   Arma <span className="text-tactical-orange">{isArma3 ? '3' : 'Mods'}</span>
                 </h1>
-                <p className="text-[7px] sm:text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] hidden xs:block">
+                <p className="text-[7px] sm:text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] hidden sm:block truncate">
                   {isArma3 ? 'Legacy Combat Intel' : 'Mission Intelligence Center'}
                 </p>
               </div>
@@ -48,7 +52,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center">
+          <nav className="hidden lg:flex items-center shrink-0">
             <Link to={gp || '/'} className={navItemClass(gp || '/')}>
               [ 📦 Mods Database ]
             </Link>
@@ -74,20 +78,35 @@ export function Layout({ children }: LayoutProps) {
             </Link>
           </nav>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden px-4 py-4 text-tactical-orange hover:bg-white/5 transition-colors"
-            aria-label="Toggle menu"
-          >
-            <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
-              <span className={`w-5 h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-              <span className={`w-5 h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
-              <span className={`w-5 h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-            </div>
-          </button>
+          <div className="flex items-stretch shrink-0">
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden flex items-center justify-center w-14 sm:w-16 border-l border-white/5 text-tactical-orange hover:bg-white/5 transition-colors"
+              aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <span className="relative block w-5 h-3.5" aria-hidden="true">
+                <span
+                  className={`absolute left-0 top-0 h-0.5 w-5 bg-current transition-transform duration-300 origin-center ${
+                    mobileMenuOpen ? 'translate-y-[6px] rotate-45' : ''
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[6px] h-0.5 w-5 bg-current transition-opacity duration-300 ${
+                    mobileMenuOpen ? 'opacity-0' : ''
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 bottom-0 h-0.5 w-5 bg-current transition-transform duration-300 origin-center ${
+                    mobileMenuOpen ? '-translate-y-[6px] -rotate-45' : ''
+                  }`}
+                />
+              </span>
+            </button>
 
-          <div className="hidden lg:flex px-8 border-l border-white/5 items-center relative group/dropdown">
+            <div className="hidden lg:flex px-8 border-l border-white/5 items-center relative group/dropdown">
             <button className="flex items-center gap-3 py-6 group">
               <span className="w-2 h-2 bg-tactical-orange animate-pulse"></span>
               <div className="text-left">
@@ -123,6 +142,7 @@ export function Layout({ children }: LayoutProps) {
               <div className="mt-2 px-4 py-2 bg-tactical-orange/5 border-t border-white/5">
                 <span className="text-[7px] text-tactical-orange/60 font-bold uppercase tracking-[0.2em]">Status: Encryption Active</span>
               </div>
+            </div>
             </div>
           </div>
         </div>

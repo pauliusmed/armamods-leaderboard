@@ -1,6 +1,6 @@
 /**
- * Lokalus config auditas (KV per reforgermods.com history API).
- * Naudojimas: node scripts/run-audit-local.mjs [kelias/iki/config.json]
+ * Local config audit (KV via reforgermods.com history API).
+ * Usage: node scripts/run-audit-local.mjs [path/to/config.json]
  */
 import { readFileSync } from 'fs';
 
@@ -12,7 +12,7 @@ const PATCH = '2026-05-28';
 function parseConfig(input) {
   const data = typeof input === 'string' ? JSON.parse(input) : input;
   const modsRaw = data?.game?.mods ?? data?.mods;
-  if (!Array.isArray(modsRaw)) throw new Error('Nerastas game.mods');
+  if (!Array.isArray(modsRaw)) throw new Error('game.mods not found');
   const seen = new Set();
   return modsRaw
     .map((m) => ({
@@ -75,7 +75,7 @@ function classify(before, after, current, trend) {
 const raw = readFileSync(configPath, 'utf8');
 const mods = parseConfig(raw);
 console.log(`\nConfig: ${configPath}`);
-console.log(`Modų: ${mods.length}\n`);
+console.log(`Mods: ${mods.length}\n`);
 
 const rows = [];
 for (const m of mods) {
@@ -127,40 +127,40 @@ for (const s of ['dead', 'risky', 'warning', 'ok', 'niche', 'unknown']) {
   summary[s] = rows.filter((r) => r.status === s).length;
 }
 
-console.log('\n\n=== SANTRAUKA ===');
+console.log('\n\n=== SUMMARY ===');
 console.log(summary);
 
-console.log('\n=== NEVEIKIA PO 1.7 (dead) – pirmiausia šalink ===');
+console.log('\n=== BROKEN AFTER 1.7 (dead) – remove these first ===');
 rows
   .filter((r) => r.status === 'dead')
   .forEach((r) =>
     console.log(`${r.modId} | ${r.name} | ${r.before}→${r.after} avg | dabar ${r.current}p | ${r.trend}`)
   );
 
-console.log('\n=== RIZIKA (risky) ===');
+console.log('\n=== AT RISK (risky) ===');
 rows
   .filter((r) => r.status === 'risky')
   .forEach((r) =>
     console.log(`${r.modId} | ${r.name} | -${r.drop}% | ${r.trend} | dabar ${r.current}p`)
   );
 
-console.log('\n=== ĮSPĖJIMAS (warning) – TOP 15 pagal kritimą ===');
+console.log('\n=== WARNING – TOP 15 by drop ===');
 rows
   .filter((r) => r.status === 'warning')
   .slice(0, 15)
   .forEach((r) =>
-    console.log(`${r.modId} | ${r.name} | -${r.drop}% | ${r.trend} | savaitė ~${r.recent}`)
+    console.log(`${r.modId} | ${r.name} | -${r.drop}% | ${r.trend} | week ~${r.recent}`)
   );
 
-console.log('\n=== OK (ekosistemoje sveiki) ===');
+console.log('\n=== OK (healthy in the ecosystem) ===');
 rows
   .filter((r) => r.status === 'ok')
   .slice(0, 12)
   .forEach((r) =>
-    console.log(`${r.name} | dabar ${r.current}p | ${r.trend}`)
+    console.log(`${r.name} | now ${r.current}p | ${r.trend}`)
   );
 
-console.log('\n=== ATGYJA / KYLIA ===');
+console.log('\n=== REVIVING / RISING ===');
 rows
   .filter((r) => r.trend === 'recovering' || r.trend === 'rising')
   .filter((r) => (r.before ?? 0) >= 10)
@@ -169,4 +169,4 @@ rows
     console.log(`${r.name} | ${r.trend} | ${r.before}→${r.recent ?? r.after} | ${r.status}`)
   );
 
-console.log('\n(Done – production /audit API dar nedeployintas; naudota history API)\n');
+console.log('\n(Done – production /audit API not deployed yet; used the history API)\n');

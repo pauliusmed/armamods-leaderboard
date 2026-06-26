@@ -18,7 +18,9 @@ export function ServerCard({ server, game = 'reforger' }: ServerCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-0.5">
               <span className="text-[7px] text-tactical-orange font-black uppercase tracking-[0.4em]">RANK</span>
-              <span className="text-lg text-white font-black font-mono tracking-tighter italic"># {server.sqeRank || 'UNRANKED'}</span>
+              <span className="text-lg text-white font-black font-mono tracking-tighter italic">
+                # {server.sqeRank ?? 'UNRANKED'}
+              </span>
             </div>
             <div className="flex flex-col items-end gap-0.5">
               <span className="text-[7px] text-gray-600 font-black uppercase tracking-[0.4em]">MODS</span>
@@ -52,10 +54,21 @@ export function ServerCard({ server, game = 'reforger' }: ServerCardProps) {
             </div>
           </div>
           <div className="relative h-2 bg-black border border-white/5 group-hover:border-white/10 transition-all overflow-hidden">
-            <div 
+            <div
               className={`absolute inset-y-0 left-0 transition-all duration-1000 ease-in-out bg-tactical-orange/40`}
               style={{ width: `${fillPercent}%` }}
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-black/40 p-4 border border-white/5 group-hover:bg-black transition-all text-center">
+            <p className="text-2xl font-black text-white group-hover:text-tactical-orange transition-colors">{server.players}</p>
+            <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em] mt-1">Deployed</p>
+          </div>
+          <div className="bg-black/40 p-4 border border-white/5 group-hover:bg-black transition-all text-center">
+            <p className="text-2xl font-black text-white group-hover:text-tactical-orange transition-colors">{server.maxPlayers}</p>
+            <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em] mt-1">Total-Cap</p>
           </div>
         </div>
 

@@ -76,9 +76,10 @@ export function useServers(options: UseServersOptions = {}) {
       })
       .sort((a, b) => {
         if (sortBy === 'rank') {
-          const rankA = a.sqeRank || 99999;
-          const rankB = b.sqeRank || 99999;
-          return rankA - rankB;
+          const rankA = a.sqeRank ?? 99999;
+          const rankB = b.sqeRank ?? 99999;
+          if (rankA !== rankB) return rankA - rankB;
+          return (b.players || 0) - (a.players || 0);
         }
         if (sortBy === 'players') return b.players - a.players;
         if (sortBy === 'name') return a.name.localeCompare(b.name);
@@ -107,7 +108,7 @@ export function useServers(options: UseServersOptions = {}) {
 
   const resetFilters = () => {
     setSearchInput('');
-    setSortBy('players');
+    setSortBy('rank');
     setCurrentPage(1);
   };
 

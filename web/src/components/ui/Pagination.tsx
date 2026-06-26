@@ -1,10 +1,7 @@
-
-
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  accentColor?: string;
   className?: string;
 }
 
@@ -12,7 +9,6 @@ export function Pagination({
   currentPage,
   totalPages,
   onPageChange,
-  accentColor = 'from-blue-600 to-blue-700',
   className = ''
 }: PaginationProps) {
   if (totalPages <= 1) return null;
@@ -25,18 +21,14 @@ export function Pagination({
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-lg p-6 border border-gray-100 ${className}`}>
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div className={`flex flex-col items-center gap-6 pb-12 ${className}`}>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className={`
-            w-full sm:w-auto px-6 py-3 bg-gradient-to-r ${accentColor} text-white rounded-xl 
-            hover:shadow-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
-            hover:-translate-x-1 active:translate-x-0
-          `}
+          className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-white/10 text-[10px] font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
         >
-          ← Previous
+          ← Previous Intel
         </button>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
@@ -47,11 +39,12 @@ export function Pagination({
                 key={pageNum}
                 onClick={() => onPageChange(pageNum)}
                 className={`
-                  min-w-[48px] h-12 rounded-xl font-bold transition-all text-sm
+                  min-w-[44px] h-11 px-3 text-[10px] font-black uppercase tracking-widest transition-all
                   ${isCurrentPage
-                    ? `bg-gradient-to-r ${accentColor} text-white shadow-xl scale-110 z-10`
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:scale-105 active:scale-95'
-                }`}
+                    ? 'bg-tactical-orange text-black border border-tactical-orange'
+                    : 'bg-black/40 text-gray-500 border border-white/5 hover:border-tactical-orange/50 hover:text-white'
+                  }
+                `}
               >
                 {pageNum}
               </button>
@@ -62,21 +55,15 @@ export function Pagination({
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className={`
-            w-full sm:w-auto px-6 py-3 bg-gradient-to-r ${accentColor} text-white rounded-xl 
-            hover:shadow-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed
-            hover:translate-x-1 active:translate-x-0
-          `}
+          className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-white/10 text-[10px] font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
         >
-          Next →
+          Next Sector →
         </button>
       </div>
 
-      <div className="text-center mt-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
-          Page {currentPage} <span className="mx-2 text-gray-200">/</span> {totalPages}
-        </p>
-      </div>
+      <p className="px-8 py-3 bg-black/40 border border-white/5 text-[9px] font-mono text-gray-500 uppercase tracking-widest">
+        Network Slice <span className="text-white font-black">{currentPage}</span> / {totalPages}
+      </p>
     </div>
   );
 }

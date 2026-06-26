@@ -101,7 +101,7 @@ NewSQEPoints = α × SnapshotScore + (1 - α) × PreviousSQEPoints
 
 **Where:**
 - **Alpha ($\alpha = 0.10$)**: The smoothing factor. New snapshots contribute 10% of the score weight, while 90% is retained from the server's accumulated historical score. This high inertia prevents hourly player-count swings from instantly reshuffling the leaderboard.
-- **Fadeaway (Slow Decay)**: If a server goes offline completely, its score decays slowly by 15% every 2 hours rather than instantly plunging to zero, preserving its ranking position during restarts.
+- **Fadeaway (Slow Decay)**: If a server goes offline completely, its score decays slowly by 10% every 2 hours rather than instantly plunging to zero, preserving its ranking position during restarts.
 - **Stability**: Prevents new, volatile servers from instantly overtaking highly established community nodes.
 
 ### Elite Rank Inertia

@@ -102,7 +102,6 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         currentPage={currentPage} 
         totalPages={totalPages} 
         onPageChange={setCurrentPage} 
-        accentColor="from-purple-600 to-pink-600"
       />
     </div>
   );

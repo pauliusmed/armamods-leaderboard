@@ -2,24 +2,24 @@
 ### High-Performance Mod Tracking, Analytics & Scalable Ranking System for Arma Community
 
 [![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com)
-[![Response Time](https://img.shields.io/badge/Performance-%3C10ms_Edge_Response-brightgreen.svg)]()
+[![Response Time](https://img.shields.io/badge/Performance-Optimized_Edge_Response-brightgreen.svg)]()
 [![System Type](https://img.shields.io/badge/System-Distributed_Caching-blue.svg)]()
 [![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-A production-grade, ultra-high-performance data aggregation and visualization platform built to overcome the limitations of the official Arma Workshop. By analyzing active multiplayer server environments and player metrics, the system calculates real-time popularity index, retention, and community trends.
+A production-grade, highly-optimized data aggregation and visualization platform built to overcome the limitations of the official Arma Workshop. By analyzing active multiplayer server environments and player metrics, the system calculates real-time popularity index, retention, and community trends.
 
 ---
 
 ## 🚀 Key Engineering & Architectural Highlights
 
-### 1. Zero-Overhead Co-Deployment Analytics
+### 1. Low-Overhead Co-Deployment Analytics
 * **Problem**: Storing custom co-occurrence matrices for hundreds of mods in a serverless key-value store would exponentially increase Cloudflare KV transaction counts and storage costs.
 * **Solution**: Developed a memory-optimized in-memory analytics engine inside the data collector. It calculates the top 5 co-deployed mods (frequently deployed together) and injects this metadata directly into pre-existing mod data shards.
 * **Result**: Implemented complex graph-like association rule mining with **exactly zero (0) additional KV read or write operations**.
 
 ### 2. Exponential Moving Average (EMA) Server Scoring
 * **Problem**: Traditional leaderboards cause rapid ranking drops during routine server restarts, leading to inaccurate metrics.
-* **Solution**: Implemented an Exponential Moving Average (EMA) smoothing algorithm ($\alpha = 0.15$) for server score calculation. This weights historical performance at 85% and live statistics at 15%.
+* **Solution**: Implemented an Exponential Moving Average (EMA) smoothing algorithm ($\alpha = 0.10$) for server score calculation. This weights historical performance at 90% and live statistics at 10%.
 * **Result**: Eliminates rating fluctuations during maintenance, preventing false rank decays and providing a highly stable community index.
 
 ### 3. Distributed Sharding & Surgical JSON Extraction
@@ -27,9 +27,9 @@ A production-grade, ultra-high-performance data aggregation and visualization pl
 * **Solution**: 
   - **Dynamic Sharding**: Mod data is distributed across multiple 5MB shards (sized optimized to avoid KV limits).
   - **Surgical Text Extraction**: Developed `findMatchingBrace`—a low-level string-scanning algorithm that slices target JSON objects directly out of raw text buffers.
-* **Result**: Bypasses memory-heavy `JSON.parse` overhead, reducing global edge API latency to sub-10ms response times.
+* **Result**: Bypasses memory-heavy `JSON.parse` overhead, reducing global edge API latency (average ~10-15ms for cached responses).
 
-### 4. Enterprise-Grade SEO & OpenGraph Engine
+### 4. Rich SEO & OpenGraph Engine
 * **Dynamic Hydration**: Using `react-helmet-async` on React 19 to deliver context-aware Title, Description, and Rich Snippets.
 * **Metadata Integrity**: Automatic rich embeds generation for Discord, Twitter/X, and search engines.
 
@@ -116,10 +116,11 @@ Implemented global `AbortController` cancellation in React. Rapid views switchin
     ```
 
 4. **Launch Local Services**
-   * **Backend Proxy & Scraper Execution**:
+   * **Backend Local Proxy Script**:
      ```bash
      npm run dev
      ```
+     *(Note: This runs the local developer proxy script. The actual API gateway is implemented using Cloudflare Pages Functions located in `web/functions/api/[[path]].ts`, which execute serverless at the edge in production or via Wrangler locally).*
    * **Frontend Server**:
      ```bash
      cd web && npm run dev

@@ -46,12 +46,12 @@ console.log(`BM pages scanned: ${pages}`);
 console.log(`Mods with players on at least 1 server: ${active.length}`);
 console.log(`Mods with 0 players (in scanned servers): ${zero.length}`);
 
-console.log('\n=== 0 ŽAIDĖJŲ (BattleMetrics, šiuo metu) ===');
+console.log('\n=== 0 PLAYERS (BattleMetrics, currently) ===');
 zero.sort((a, b) => a.name.localeCompare(b.name)).forEach((x) => {
   console.log(`${x.id} | ${x.name}`);
 });
 
-console.log('\n=== YRA ŽAIDĖJŲ (TOP 25) ===');
+console.log('\n=== HAS PLAYERS (TOP 25) ===');
 active.slice(0, 25).forEach((x) => {
   console.log(`${x.id} | ${x.players}p (across ${x.servers} server matches) | ${x.name}`);
 });

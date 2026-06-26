@@ -201,7 +201,7 @@ app.get('/mods/:modId', async (c) => {
     if (meta && meta.chunks) {
         totalModsCount = meta.total;
         
-        // Lygiagretus KV chunks nuskaitymas
+        // Parallel retrieval of KV chunks
         const chunkPromises = [];
         for (let i = 0; i < meta.chunks; i++) {
             chunkPromises.push(c.env.TRENDING_KV.get(`${keys.MODS}:${i}`, 'text'));
@@ -211,7 +211,7 @@ app.get('/mods/:modId', async (c) => {
         for (let i = 0; i < chunksText.length; i++) {
             const chunkText = chunksText[i];
             if (chunkText && chunkText.includes(`"id":"${modId}"`)) {
-                // Chirurginis ištraukimas naudojant findMatchingBrace saugumui
+                // Surgical extraction using findMatchingBrace for safety
                 const searchStr = `"id":"${modId}"`;
                 const idPos = chunkText.indexOf(searchStr);
                 const startPos = chunkText.lastIndexOf('{', idPos);
@@ -245,7 +245,7 @@ app.get('/mods/:modId', async (c) => {
     if (meta && meta.chunks) {
         console.log(`[MODS_DETAIL] Scanning server chunks for mod inclusion (max ${MAX_SERVERS_PER_MOD} results)...`);
         
-        // Lygiagretus serverių chunks nuskaitymas
+        // Parallel retrieval of server chunks
         const chunkPromises = [];
         for (let i = 0; i < meta.chunks; i++) {
             chunkPromises.push(c.env.TRENDING_KV.get(`${keys.SERVERS}:${i}`, 'text'));
@@ -257,8 +257,8 @@ app.get('/mods/:modId', async (c) => {
             
             const chunkText = chunksText[i];
             if (chunkText && chunkText.includes(`"${modId}"`)) {
-                // Vietoj viso 2MB JSON parsinimo, išskaidome jį į atskirus serverius
-                // ir parsiname tik tuos, kurie turi ieškomą modId.
+                // Instead of parsing the entire 2MB JSON, split it into individual servers
+                // and parse only those containing the target modId.
                 const serverStrings = splitJsonArray(chunkText);
                 for (const serverStr of serverStrings) {
                     if (serverStr.includes(`"${modId}"`)) {
@@ -387,7 +387,7 @@ function scanHistoryPoints(historyText: string, modId: string): any[] {
   return modHistory;
 }
 
-/** Vieno shard skenuojami keli modId vienu praejimu (mažiau CPU nei 91× scanHistoryPoints) */
+/** Scan multiple modIds in a single pass of a shard (less CPU than 91x scanHistoryPoints) */
 function scanMultipleModsHistory(historyText: string, modIds: Set<string>): Map<string, any[]> {
   const modHistory = new Map<string, any[]>();
   for (const id of modIds) modHistory.set(id, []);
@@ -648,6 +648,22 @@ app.get('/servers', async (c) => {
   return response;
 });
 
+// Get Top Ranked Servers (Leaderboard) — must be registered before /servers/:serverId
+app.get('/servers/ranking', async (c) => {
+  const game = c.req.query('game') || 'reforger';
+  const cache = await caches.open('armamods:ranking:servers');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const ranking = await c.env.TRENDING_KV.get(`cache:ranking:servers:${game}`, 'json');
+  if (!ranking) return c.json({ data: [] });
+
+  const response = c.json({ data: ranking });
+  response.headers.set('Cache-Control', 'public, max-age=3600');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
 // Get Single Server Details
 app.get('/servers/:serverId', async (c) => {
   const cache = await caches.open('armamods:server_details');
@@ -664,7 +680,7 @@ app.get('/servers/:serverId', async (c) => {
   try {
     const meta = await c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json') as any;
     if (meta && meta.chunks) {
-        // Lygiagretus serverių chunks nuskaitymas
+        // Parallel retrieval of server chunks
         const chunkPromises = [];
         for (let i = 0; i < meta.chunks; i++) {
             chunkPromises.push(c.env.TRENDING_KV.get(`${keys.SERVERS}:${i}`, 'text'));
@@ -789,33 +805,8 @@ app.get('/diagnostics', async (c) => {
     });
 });
 
-// DEBUG ENDPOINT: See raw KV data structure
-app.get('/debug/raw/:key', async (c) => {
-    const key = c.req.param('key');
-    const data = await c.env.TRENDING_KV.get(key, 'text');
-    if (!data) return c.json({ error: 'Not found' });
-    return c.text(data.slice(0, 5000));
-});
-
-
 
 // --- SERVER RANKING ENDPOINTS ---
-
-// Get Top Ranked Servers (Leaderboard)
-app.get('/servers/ranking', async (c) => {
-  const game = c.req.query('game') || 'reforger';
-  const cache = await caches.open('armamods:ranking:servers');
-  const cacheResponse = await cache.match(c.req.raw);
-  if (cacheResponse) return cacheResponse;
-
-  const ranking = await c.env.TRENDING_KV.get(`cache:ranking:servers:${game}`, 'json');
-  if (!ranking) return c.json({ data: [] });
-
-  const response = c.json({ data: ranking });
-  response.headers.set('Cache-Control', 'public, max-age=3600');
-  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
-  return response;
-});
 
 // Get Points History for a specific server — reads from shared history shards
 app.get('/servers/:serverId/history', async (c) => {
@@ -877,7 +868,7 @@ app.get('/servers/:serverId/history', async (c) => {
     return finalResponse;
   }
 
-  // Lygiagretus history shards nuskaitymas
+  // Parallel retrieval of history shards
   const shardPromises = [];
   for (let i = 0; i < meta.chunks; i++) {
     shardPromises.push(c.env.TRENDING_KV.get(`${plan.baseKey}:${i}`, 'text'));
@@ -923,8 +914,8 @@ app.get('/servers/:serverId/history', async (c) => {
 
 /**
  * POST /audit/config
- * Tik modId (client-side parse); pavadinimai iš KV DB, ne iš config.json.
- * Config NEĮRAŠOMAS į KV / cache – tik atsakymas naršyklėje.
+ * Uses modId only (parsed client-side); names are fetched from KV DB, not config.json.
+ * Config is NOT stored in KV / cache – response only exists in the browser.
  */
 app.post('/audit/config', async (c) => {
   const start = Date.now();

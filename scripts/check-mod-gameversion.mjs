@@ -27,17 +27,17 @@ const stale16 = rows.filter((r) => r.gv && V16.test(r.gv));
 const v17 = rows.filter((r) => r.gv && V17.test(r.gv));
 const unknown = rows.filter((r) => !r.gv);
 
-console.log(`Config modų: ${mods.length}`);
+console.log(`Config mods: ${mods.length}`);
 console.log(`Workshop Game Version 1.7.x: ${v17.length}`);
-console.log(`Workshop Game Version 1.6.x (rizika po 1.7): ${stale16.length}`);
-console.log(`Nepavyko nuskaityti: ${unknown.length}`);
+console.log(`Workshop Game Version 1.6.x (risk after 1.7): ${stale16.length}`);
+console.log(`Failed to scan: ${unknown.length}`);
 
-console.log('\n=== 1.6.x – didžiausia rizika po 1.7 atnaujinimo ===');
+console.log('\n=== 1.6.x – highest risk after the 1.7 update ===');
 stale16.sort((a, b) => a.name.localeCompare(b.name)).forEach((r) => {
   console.log(`${r.id} | ${r.gv} | ${r.name}`);
 });
 
-console.log('\n=== 1.7.x – suderinta su nauju engine ===');
+console.log('\n=== 1.7.x – compatible with the new engine ===');
 v17.sort((a, b) => a.name.localeCompare(b.name)).forEach((r) => {
   console.log(`${r.id} | ${r.gv} | ${r.name}`);
 });

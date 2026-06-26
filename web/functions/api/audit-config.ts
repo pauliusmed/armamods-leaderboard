@@ -1,6 +1,6 @@
 /**
- * Server config audit – ar modas „mirė“ po Reforger 1.7 (2026-05-28).
- * + tendencija (kyla / atgyja / krenta) ir alternatyvos iš co-deploy duomenų.
+ * Server config audit – checks if the mod "died" after Reforger 1.7 (2026-05-28).
+ * + trend (rising / recovering / declining) and alternatives from co-deploy data.
  */
 
 export const REFORGER_PATCH_17 = '2026-05-28';
@@ -265,7 +265,7 @@ export function avgRankInRange(
   return Math.round(ranks.reduce((a, b) => a + b, 0) / ranks.length);
 }
 
-/** Paskutinės N kalendorinių dienų vidurkis (nuo paskutinės istorijos datos atgal) */
+/** Average of the last N calendar days (backwards from the last history date) */
 export function recentAvgFromHistory(
   history: HistoryPoint[],
   lastDays = 7,
@@ -298,9 +298,9 @@ export function analyzeTrend(
 ): TrendInsight {
   const beforeAvg = avgPlayersInRange(history, '2026-05-02', patchDate);
   const rankBefore = avgRankInRange(history, '2026-05-02', patchDate);
-  // Pirmos 4 dienos po patch – „smūgis“
+  // First 4 days after the patch - "impact" / "dip"
   const earlyAfterAvg = avgPlayersInRange(history, patchDate, addDays(patchDate, 4));
-  // Paskutinės dienos po patch (neperdengia su prieš-patch)
+  // Last days after the patch (no overlap with pre-patch)
   const recentAvg =
     avgPlayersInRange(history, addDays(patchDate, 3), '2099-01-01') ??
     recentAvgFromHistory(history, 7, patchDate);
@@ -326,7 +326,7 @@ export function analyzeTrend(
   const rankHeld =
     rankBefore != null && rankRecent != null && rankRecent <= rankBefore * 1.25;
 
-  // Atgyja: po 1.7 smūgis, bet paskutinės dienos gerėja
+  // Recovering: post-1.7 impact, but recent days are improving
   if (
     beforeAvg >= 15 &&
     early < beforeAvg * 0.55 &&
@@ -343,7 +343,7 @@ export function analyzeTrend(
     };
   }
 
-  // Visas Reforger BM sumažėjo po 1.7 – modas dar populiarus, absoliutus skaičius mažesnis (ne recovering)
+  // Entire Reforger BM player base decreased after 1.7 - mod remains popular, but absolute numbers are lower
   if (
     beforeAvg >= 50 &&
     recentAvg >= 30 &&
@@ -368,7 +368,7 @@ export function analyzeTrend(
     };
   }
 
-  // Kyla: po patch ne blogiau nei prieš arba aiškus augimas
+  // Rising: post-patch is not worse than pre-patch, or showing clear growth
   if (recentAvg >= beforeAvg * 0.85 || (recentAvg > early * 1.4 && recentAvg >= 25)) {
     return {
       phase: 'rising',

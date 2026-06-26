@@ -10,5 +10,4 @@ id = "a8f21c595e39452e95e7e41e3d812013"
 
 [vars]
 ENVIRONMENT = "production"
-WEBHOOK_SECRET = "REPLACE_WITH_SECRET"
 # WORKER_URL is no longer needed as we use internal Functions

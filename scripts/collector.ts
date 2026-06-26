@@ -510,7 +510,7 @@ interface ServerMod {
   return { servers: totalServers, mods: totalMods };
 }
 
-// Pagalbinė funkcija gauti istorijos tašką (skirta trending skaičiavimams)
+// Helper function to retrieve a history point (used for trending calculations)
 async function getFullHistoryPoint(kv: CloudflareKVClient, baseKey: string, offsetFromEnd: number): Promise<any> {
     // UPDATED: Now uses getChunkedData to support sharded history blocks
     const history = await getChunkedData(kv, baseKey);
@@ -564,7 +564,7 @@ async function runTrendingSnapshot() {
     ];
 
     for (const p of periods) {
-        // Paimame istorinį tašką iš visų blokų
+        // Retrieve the historical point from all sharded blocks
         let prevEntry = await getFullHistoryPoint(kv, p.baseKey, p.days);
         
         if (!prevEntry && p.days > 30) {
@@ -586,7 +586,7 @@ async function runTrendingSnapshot() {
         const falling: any[] = [];
         const newMods: any[] = [];
         
-        // Gauname bendrą statistiką dinaminiams slenksčiams (0.5%)
+        // Fetch global statistics for dynamic thresholds (0.5%)
         const stats = await kv.get(KV_KEYS.STATS, 'json') || { totalPlayers: 5000, totalServers: 500 };
         const MIN_TREND_PLAYERS = Math.max(5, Math.floor(stats.totalPlayers * 0.005));
         const MIN_TREND_SERVERS = Math.max(2, Math.floor(stats.totalServers * 0.005));
@@ -603,12 +603,12 @@ async function runTrendingSnapshot() {
             const prevPlayers = prev?.p || 0;
             const prevServers = prev?.s || 0;
 
-            // Reikšmingumo filtras: modas turi turėti pakankamai veiklos dabar arba praeityje
+            // Significance filter: mod must have enough activity currently or historically
             const isSignificant = (currentPlayers >= MIN_TREND_PLAYERS || prevPlayers >= MIN_TREND_PLAYERS) &&
                                   (currentServers >= MIN_TREND_SERVERS || prevServers >= MIN_TREND_SERVERS);
 
             if (!prev) {
-                // New Popular: traukiami tik tie nauji modai, kurie pasiekė bazinį aktyvumo lygį
+                // New Popular: extract only new mods that have reached the baseline activity level
                 if (isSignificant && currentRank < 10000) {
                     newMods.push({ ...mod, trendScore: (50000 - currentRank) });
                 }
@@ -622,7 +622,7 @@ async function runTrendingSnapshot() {
                 // 1. Pozicijos svoris (sunkiau pakilti Top 100 nei Top 5000)
                 const positionWeight = 100 / Math.sqrt(Math.min(currentRank, prevRank));
                 
-                // 2. Aktyvumo daugiklis (logaritminis žaidėjų skaičius)
+                // 2. Activity Multiplier (logarithmic player count)
                 const activityMultiplier = Math.log10(Math.max(currentPlayers, prevPlayers) + 1.1);
                 
                 const trendScore = rankDelta * positionWeight * activityMultiplier;
@@ -710,8 +710,9 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
 
       // Load previous leaderboard for Exponential Moving Average (EMA) smoothing
       const oldScoresMap = new Map<string, number>();
+      let oldLeaderboard: Array<{ id?: string; points?: number }> | null = null;
       try {
-          const oldLeaderboard = await kv.get(leaderboardKey, 'json');
+          oldLeaderboard = await kv.get(leaderboardKey, 'json');
           if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
               oldLeaderboard.forEach(item => {
                   if (item && item.id) {

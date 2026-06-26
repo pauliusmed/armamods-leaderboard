@@ -12,30 +12,30 @@ async function fetchJson(url) {
 }
 
 // 1) Global trending (falling) from armamods KV
-console.log('=== ARMA MODS PROJEKTAS: Krentantys modai (monthly trending) ===\n');
+console.log('=== ARMA MODS PROJECT: Falling mods (monthly trending) ===\n');
 for (const period of ['weekly', 'monthly']) {
   try {
     const t = await fetchJson(`https://reforgermods.com/api/trending/${period}?game=reforger`);
     const falling = t?.data?.falling || [];
     const inConfig = falling.filter((m) => configSet.has((m.id || '').toUpperCase()));
-    console.log(`--- ${period} | falling top (iš tavo config) ---`);
+    console.log(`--- ${period} | falling top (from your config) ---`);
     if (inConfig.length === 0) {
-      console.log('(nėra tavo config modų tarp top falling)\n');
+      console.log('(none of your config mods are in the top falling)\n');
     } else {
       inConfig.slice(0, 20).forEach((m) => {
         console.log(
-          `${m.id} | Δrank ${m.rankDelta} | ${m.prevPlayers ?? '?'}→${m.currentPlayers ?? m.totalPlayers} žaid. | score ${Math.round(m.trendScore)} | ${m.name}`
+          `${m.id} | Δrank ${m.rankDelta} | ${m.prevPlayers ?? '?'}→${m.currentPlayers ?? m.totalPlayers} players | score ${Math.round(m.trendScore)} | ${m.name}`
         );
       });
       console.log('');
     }
   } catch (e) {
-    console.log(`[${period}] API klaida: ${e.message}\n`);
+    console.log(`[${period}] API error: ${e.message}\n`);
   }
 }
 
-// 2) Per-mod history: prieš / po 1.7
-console.log(`=== ISTORIJA: prieš vs po ${PATCH_DATE} (daily history) ===\n`);
+// 2) Per-mod history: before / after 1.7
+console.log(`=== HISTORY: before vs after ${PATCH_DATE} (daily history) ===\n`);
 
 function sumPlayersInRange(history, from, to) {
   const pts = history.filter((h) => {
@@ -91,17 +91,17 @@ for (const m of configMods) {
 
 drops.sort((a, b) => b.dropPct - a.dropPct || b.beforeAvg - a.beforeAvg);
 
-console.log('--- Didžiausias kritimas % (balandis–gegužė vs po 1.7) ---');
+console.log('--- Biggest drop % (April–May vs after 1.7) ---');
 drops
   .filter((d) => d.beforeAvg >= 20 && d.dropPct >= 30)
   .slice(0, 25)
   .forEach((d) => {
     console.log(
-      `${d.id} | -${d.dropPct}% | ${d.beforeAvg}→${d.afterAvg} avg žaid. (max ${d.beforeMax}→${d.afterMax}) | dabar ~${d.latest} | ${d.name}`
+      `${d.id} | -${d.dropPct}% | ${d.beforeAvg}→${d.afterAvg} avg players (max ${d.beforeMax}→${d.afterMax}) | now ~${d.latest} | ${d.name}`
     );
   });
 
-console.log('\n--- Vis dar OK po 1.7 (augimas arba <20% kritimas, buvo populiarūs) ---');
+console.log('\n--- Still OK after 1.7 (growth or <20% drop, were popular) ---');
 drops
   .filter((d) => d.beforeAvg >= 50 && d.dropPct < 20)
   .slice(0, 15)
@@ -110,7 +110,7 @@ drops
   });
 
 if (noHistory.length) {
-  console.log(`\n--- Be istorijos API (${noHistory.length} modų) ---`);
+  console.log(`\n--- No history from API (${noHistory.length} mods) ---`);
   noHistory.slice(0, 10).forEach((m) => console.log(`${m.id} | ${m.name}`));
-  if (noHistory.length > 10) console.log(`... ir dar ${noHistory.length - 10}`);
+  if (noHistory.length > 10) console.log(`... and ${noHistory.length - 10} more`);
 }
