@@ -19,7 +19,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const navItemClass = (path: string) => `
-    px-10 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 relative group
+    px-4 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 relative group
     ${isActive(path)
       ? 'text-tactical-orange bg-white/5 border-l-2 border-r-2 border-tactical-orange'
       : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -31,10 +31,10 @@ export function Layout({ children }: LayoutProps) {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-[#000000] flex flex-col font-mono selection:bg-tactical-orange selection:text-black">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#000000] flex flex-col font-mono selection:bg-tactical-orange selection:text-black">
       {/* Top Bar - Tactical Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#000000]/80">
-        <div className="max-w-screen-2xl mx-auto flex items-stretch justify-between">
+        <div className="max-w-screen-2xl mx-auto w-full flex items-stretch justify-between">
           <div className="flex items-center flex-1 min-w-0 px-4 sm:px-8 py-4 sm:py-6 lg:border-r lg:border-white/5 group">
             <Link to={gp || '/'} className="flex items-center gap-3 sm:gap-4 min-w-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 bg-tactical-orange flex items-center justify-center text-black font-black text-lg sm:text-xl tracking-tighter shadow-[0_0_15px_rgba(255,107,0,0.3)] group-hover:scale-110 transition-transform">
@@ -70,15 +70,21 @@ export function Layout({ children }: LayoutProps) {
             <Link to={`${gp}/hosting`} className={navItemClass(`${gp}/hosting`)}>
               [ 🚀 Get Hosting ]
             </Link>
-            <Link to={`${gp}/status`} className={navItemClass(`${gp}/status`)}>
-              [ 🛰️ System Status ]
-            </Link>
-            <Link to={`${gp}/support`} className="px-6 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 border-l border-white/5 text-tactical-orange hover:text-white hover:bg-tactical-orange/10">
-              [ ❤️ Support ]
-            </Link>
           </nav>
 
           <div className="flex items-stretch shrink-0">
+            {/* Compact System Status indicator (separated from content nav, but visible) */}
+            <Link
+              to={`${gp}/status`}
+              title="System Status"
+              aria-label="System Status"
+              className={`flex items-center justify-center w-12 sm:w-14 border-l border-white/5 transition-colors ${
+                isActive(`${gp}/status`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500 hover:text-tactical-orange hover:bg-white/5'
+              }`}
+            >
+              <span className="text-sm" aria-hidden="true">🛰</span>
+            </Link>
+
             {/* Mobile Menu Button */}
             <button
               type="button"
@@ -149,7 +155,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <nav className="lg:hidden border-t border-white/5 bg-[#000000]/95 backdrop-blur-xl">
+          <nav className="lg:hidden relative z-10 border-t border-white/5 bg-[#000000]/95 backdrop-blur-xl">
             <div className="px-4 py-4 space-y-2">
               <div className="flex gap-2 p-1 bg-white/5 border border-white/10 mb-4">
                 <Link 
@@ -211,22 +217,6 @@ export function Layout({ children }: LayoutProps) {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 [ 🚀 Get Hosting ]
-              </Link>
-              <Link
-                to={`${gp}/status`}
-                className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                  isActive(`${gp}/status`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                [ 🛰️ System Status ]
-              </Link>
-              <Link
-                to={`${gp}/support`}
-                className="block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] text-tactical-orange transition-all"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                [ ❤️ Support ]
               </Link>
             </div>
           </nav>
