@@ -33,8 +33,8 @@ export function Arma3Hosting() {
 
   const providers = [
     {
-      name: "ArmaMods Official Partner",
-      subName: "Powered by EmpowerServers",
+      name: "EmpowerServers",
+      subName: "Our recommended host",
       basePrice: 9.99,
       ramTiers: {
         8: 0, 10: 2.50, 12: 6.00, 16: 10.50, 32: 30.00
@@ -103,7 +103,7 @@ export function Arma3Hosting() {
       ddos: "Basic / Shared",
       isWinner: false,
       url: "https://server.nitrado.net/en-GB/offers/arma-3",
-      warning: "Hardware limits hidden; high OOM crash risk with Milsim mods."
+      warning: "Limited public RAM specs — heavy Milsim modpacks may need a higher tier."
     }
   ];
 
@@ -111,7 +111,7 @@ export function Arma3Hosting() {
     let total = 0;
     let details = [];
 
-    if (p.name === "ArmaMods Official Partner") {
+    if (p.name === "EmpowerServers") {
       const ramCost = p.ramTiers[recRAM] || 0;
       total = p.basePrice + ramCost;
       if (ramCost > 0) details.push(`+$${ramCost.toFixed(2)} RAM`);
@@ -253,6 +253,10 @@ export function Arma3Hosting() {
         </Card>
       </section>
 
+      <p className="max-w-7xl mx-auto px-4 mb-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center">
+        Transparency: all provider links below are affiliate — we may earn a commission at no extra cost to you. Sorted by estimated total cost for your setup.
+      </p>
+
       <section className="max-w-7xl mx-auto px-4 overflow-x-auto">
         <table className="w-full border-collapse bg-zinc-950 border border-white/5 min-w-[900px]">
           <thead>
@@ -366,7 +370,7 @@ export function Arma3Hosting() {
               <p className="text-tactical-orange text-xs font-black uppercase tracking-widest underline decoration-2 underline-offset-4 decoration-white/20 italic">For High-Performance Milsim</p>
             </div>
             <p className="text-gray-400 text-sm font-bold uppercase tracking-widest leading-relaxed max-w-2xl mx-auto">
-              Arma 3's legacy engine is all about clock speeds. Don't be fooled by high core counts. While others charge extra for "Extreme Hardware" and hide their RAM limits, <span className="text-white">EmpowerServers</span> provides the dedicated frequency needed to keep your FPS stable.
+              Arma 3's legacy engine is sensitive to single-core clock speed. <span className="text-white">EmpowerServers</span> publishes its CPU tiers and RAM upfront and bills by resources rather than per slot, which suits high-pop Milsim setups.
             </p>
             <div className="pt-4 flex flex-col items-center gap-4">
               <a 
