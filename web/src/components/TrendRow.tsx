@@ -32,7 +32,7 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
       {/* Rank */}
-      <td className="py-2.5 pl-4 pr-2 align-middle">
+      <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
             isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
@@ -43,7 +43,7 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
       </td>
 
       {/* Module name — primary CTA */}
-      <td className="py-2.5 pr-4 align-middle">
+      <td className="py-3 md:py-2.5 pr-4 align-middle">
         <Link
           to={`${gp}/mod/${mod.id}`}
           className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
@@ -54,7 +54,7 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
       </td>
 
       {/* Change — the trending signal */}
-      <td className="py-2.5 px-4 align-middle whitespace-nowrap">
+      <td className="py-3 md:py-2.5 px-4 align-middle whitespace-nowrap">
         {category === 'new' ? (
           <span className="text-[10px] font-black uppercase tracking-widest text-tactical-orange">New</span>
         ) : hasChange ? (
@@ -71,20 +71,20 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
         )}
       </td>
 
-      {/* Personnel — hidden on mobile */}
-      <td className="hidden sm:table-cell py-2.5 px-4 text-right align-middle">
+      {/* Personnel */}
+      <td className="py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-white">
           {(mod.totalPlayers || 0).toLocaleString()}
         </span>
       </td>
 
       {/* Deployments — hidden on mobile */}
-      <td className="hidden md:table-cell py-2.5 px-4 text-right align-middle">
+      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">{mod.serverCount}</span>
       </td>
 
       {/* Workshop link */}
-      <td className="py-2.5 pl-2 pr-4 text-right align-middle">
+      <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle">
         <a
           href={workshopUrl}
           target="_blank"

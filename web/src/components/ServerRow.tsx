@@ -22,7 +22,7 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
       {/* SQE rank */}
-      <td className="py-2.5 pl-4 pr-2 align-middle">
+      <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
             isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
@@ -33,7 +33,7 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
       </td>
 
       {/* Server name — primary CTA */}
-      <td className="py-2.5 pr-4 align-middle">
+      <td className="py-3 md:py-2.5 pr-4 align-middle">
         <Link
           to={`${gp}/server/${server.id}`}
           className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
@@ -44,13 +44,13 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
       </td>
 
       {/* Players = current / capacity (each value shown once) */}
-      <td className="py-2.5 px-4 text-right align-middle whitespace-nowrap">
+      <td className="py-3 md:py-2.5 px-4 text-right align-middle whitespace-nowrap">
         <span className="font-mono text-sm tabular-nums text-white">{players}</span>
         <span className="font-mono text-xs tabular-nums text-gray-600"> / {max}</span>
       </td>
 
       {/* Mods — hidden on mobile */}
-      <td className="hidden md:table-cell py-2.5 pl-4 pr-4 text-right align-middle">
+      <td className="hidden md:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">
           {server.mods?.length ?? 0}
         </span>

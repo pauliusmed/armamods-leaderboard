@@ -25,7 +25,7 @@ export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
       {/* Rank */}
-      <td className="py-2.5 pl-4 pr-2 align-middle">
+      <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
             isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
@@ -36,7 +36,7 @@ export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
       </td>
 
       {/* Module name — primary CTA */}
-      <td className="py-2.5 pr-4 align-middle">
+      <td className="py-3 md:py-2.5 pr-4 align-middle">
         <Link
           to={`${gp}/mod/${mod.id}`}
           className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
@@ -47,19 +47,19 @@ export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
       </td>
 
       {/* Personnel (active players) */}
-      <td className="py-2.5 px-4 text-right align-middle">
+      <td className="py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-white">
           {(mod.totalPlayers || 0).toLocaleString()}
         </span>
       </td>
 
       {/* Deployments (servers) — hidden on mobile */}
-      <td className="hidden md:table-cell py-2.5 px-4 text-right align-middle">
+      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">{mod.serverCount}</span>
       </td>
 
       {/* Market share — hidden on mobile */}
-      <td className="hidden md:table-cell py-2.5 pl-4 pr-4 align-middle">
+      <td className="hidden md:table-cell py-3 md:py-2.5 pl-4 pr-4 align-middle">
         <div className="flex items-center justify-end gap-3">
           <span className="font-mono text-xs tabular-nums text-tactical-orange/80">
             {share.toFixed(1)}%
@@ -74,7 +74,7 @@ export function ModRow({ mod, rank, game = 'reforger' }: ModRowProps) {
       </td>
 
       {/* Workshop link */}
-      <td className="py-2.5 pl-2 pr-4 text-right align-middle">
+      <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle">
         <a
           href={workshopUrl}
           target="_blank"
