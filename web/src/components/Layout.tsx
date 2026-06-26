@@ -239,25 +239,6 @@ export function Layout({ children }: LayoutProps) {
       {/* Content Spacer */}
       <div className="h-[72px] sm:h-[84px]"></div>
 
-      {/* Tactical Broadcast Strip */}
-      {!location.pathname.includes('/hosting') && (
-        <div className="bg-tactical-orange/5 border-b border-tactical-orange/10 py-3 overflow-hidden whitespace-nowrap">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-tactical-orange rounded-full animate-pulse"></span>
-              <span className="text-[9px] font-black text-tactical-orange uppercase tracking-widest">System Broadcast</span>
-            </div>
-            <Link 
-              to={`${gp}/hosting`} 
-              className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] hover:text-white transition-colors flex items-center gap-2 group"
-            >
-              Need to deploy these assets? Compare high-performance {isArma3 ? 'Arma 3' : 'Reforger'} hosting nodes 
-              <span className="text-tactical-orange group-hover:translate-x-1 transition-transform inline-block">➔</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
       <main className="flex-1 min-h-[60vh] max-w-screen-2xl mx-auto px-4 sm:px-8 w-full py-8 sm:py-12 relative">
         <div className="animate-in fade-in duration-1000">
           {children}

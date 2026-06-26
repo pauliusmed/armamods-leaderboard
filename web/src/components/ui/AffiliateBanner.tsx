@@ -53,13 +53,9 @@ export function AffiliateBanner() {
           </div>
         </div>
 
-        {/* Pricing & CTA - Psychological Anchoring */}
-        <div className="flex flex-col items-center md:items-end gap-3 min-w-[240px] w-full md:w-auto p-6 md:p-0 bg-black/60 md:bg-transparent border md:border-none border-white/5 relative">
-          <div className="absolute -top-3 md:-top-6 right-1/2 md:right-0 translate-x-1/2 md:translate-x-0 bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 animate-bounce">
-            🔥 Limited Servers Available
-          </div>
-          <div className="text-center md:text-right pt-2 md:pt-0">
-            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mb-1 line-through decoration-red-500 decoration-2 opacity-70">Normally $15.00+</p>
+        {/* Pricing & CTA */}
+        <div className="flex flex-col items-center md:items-end gap-3 min-w-[240px] w-full md:w-auto p-6 md:p-0 bg-black/60 md:bg-transparent border md:border-none border-white/5">
+          <div className="text-center md:text-right">
             <p className="text-4xl sm:text-5xl font-black text-white tracking-tighter italic shadow-black drop-shadow-md">
               $9.99<span className="text-base sm:text-xl text-gray-500 not-italic">/mo</span>
             </p>
@@ -68,7 +64,10 @@ export function AffiliateBanner() {
             Rent Your Server →
           </div>
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center">
-            Instant Game Server Setup • 48H Refund
+            Instant Setup • 48H Refund • No Slot Limits
+          </p>
+          <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest text-center">
+            Affiliate link — supports this project at no extra cost to you
           </p>
         </div>
         
