@@ -76,7 +76,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Search mods by name"
-              className="w-full py-3 bg-transparent text-[11px] font-bold text-white uppercase tracking-widest outline-none transition-all placeholder:text-gray-800 font-mono"
+              className="w-full py-3 bg-transparent text-[13px] font-bold text-white uppercase tracking-widest outline-none transition-all placeholder:text-gray-800 font-mono"
             />
           </div>
 
@@ -85,7 +85,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               value={playerFilter}
               onChange={(e) => setPlayerFilter(e.target.value as any)}
               aria-label="Filter by player activity"
-              className="px-4 py-3 bg-white/5 border border-white/5 text-[9px] font-black text-gray-500 uppercase tracking-widest cursor-pointer hover:bg-white/10 hover:text-white transition-all outline-none"
+              className="px-4 py-3 bg-white/5 border border-white/5 text-xs font-black text-gray-500 uppercase tracking-widest cursor-pointer hover:bg-white/10 hover:text-white transition-all outline-none"
             >
               <option value="all">PERSONNEL: ALL</option>
               <option value="high">ACTIVITY: HIGH</option>
@@ -97,7 +97,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
               aria-label="Sort mods by"
-              className="px-4 py-3 bg-zinc-900 border border-white/10 text-[9px] font-black text-white uppercase tracking-widest cursor-pointer hover:bg-zinc-800 hover:border-tactical-orange transition-all outline-none"
+              className="px-4 py-3 bg-zinc-900 border border-white/10 text-xs font-black text-white uppercase tracking-widest cursor-pointer hover:bg-zinc-800 hover:border-tactical-orange transition-all outline-none"
             >
               <option value="overall" className="bg-zinc-900 text-white">SORT: OVERALL RANK</option>
               <option value="players" className="bg-zinc-900 text-white">SORT: PERSONNEL RANK</option>
@@ -106,7 +106,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
 
             <button
               onClick={resetFilters}
-              className="px-6 py-3 border border-white/5 hover:bg-white/5 text-[9px] font-black text-gray-700 hover:text-tactical-orange uppercase tracking-widest transition-all italic"
+              className="px-6 py-3 border border-white/5 hover:bg-white/5 text-xs font-black text-gray-700 hover:text-tactical-orange uppercase tracking-widest transition-all italic"
             >
               [ RST ]
             </button>

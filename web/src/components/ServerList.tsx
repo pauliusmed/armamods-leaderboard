@@ -51,17 +51,17 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         ]}
       />
 
-      <div className="bg-zinc-900/50 p-10 border border-white/5 backdrop-blur-sm shadow-2xl sticky top-28 z-40 transition-all hover:bg-zinc-900/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+      <div className="bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl sticky top-28 z-40 transition-all hover:bg-zinc-900/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
           <div className="group">
-            <label className="block text-[8px] font-black uppercase tracking-[0.4em] text-gray-600 mb-4 group-hover:text-tactical-orange transition-colors italic">// SCAN_REMOTE_SERVERS</label>
+            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 group-hover:text-tactical-orange transition-colors italic">// SCAN_REMOTE_SERVERS</label>
             <input
               type="search"
               placeholder="Server name (any word order)…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               aria-label="Search servers by name"
-              className="w-full px-8 py-5 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white placeholder-gray-700 uppercase tracking-widest text-[11px] rounded-none outline-none"
+              className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white placeholder-gray-700 uppercase tracking-widest text-[13px] rounded-none outline-none"
             />
             {initialLoading && (
               <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-tactical-orange animate-pulse">
@@ -76,12 +76,12 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
           </div>
 
           <div>
-            <label className="block text-[8px] font-black uppercase tracking-[0.4em] text-gray-600 mb-4 italic">// DATA_METRIC</label>
+            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic">// DATA_METRIC</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
               aria-label="Sort servers by"
-              className="w-full px-8 py-5 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[11px] rounded-none outline-none"
+              className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[13px] rounded-none outline-none"
             >
               <option value="rank">SQE_LEADERBOARD</option>
               <option value="players">PERSONNEL_IDX</option>
