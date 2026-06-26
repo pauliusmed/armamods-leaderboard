@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { trendingApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
-import { Card, CardContent } from './ui/Card';
+import { TrendRow } from './TrendRow';
 import type { TrendingMod, TrendPeriod } from '../types';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
@@ -13,7 +13,6 @@ interface TrendingPageProps {
 }
 
 export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
-  const gp = game === 'reforger' ? '' : `/${game}`;
   const [trending, setTrending] = useState<{
     rising: TrendingMod[];
     falling: TrendingMod[];
@@ -106,7 +105,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      <SEO 
+      <SEO
         title={`Trending ${activePeriod} - ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'}`}
         description={`See which mods are trending in ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} over the last ${activePeriod}. Track rising stars, falling giants, and new discoveries.`}
       />
@@ -188,74 +187,26 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
             <p className="text-gray-600 mt-2">Trending data will be available after the first daily snapshot</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedCurrentMods.map((mod) => (
-              <Card key={mod.id} className="border-l-4 border-l-zinc-800 hover:border-l-tactical-orange transition-all group">
-                <CardContent className="p-6 space-y-4">
-                  <div className="space-y-2">
-                    <Link to={`${gp}/mod/${mod.id}`}>
-                      <h3 className="text-lg font-black text-white uppercase leading-tight group-hover:text-tactical-orange transition-colors">
-                        {mod.name}
-                      </h3>
-                    </Link>
-                    <p className="text-[9px] font-mono text-gray-600 font-bold uppercase tracking-widest truncate">
-                      {mod.id}
-                    </p>
-                  </div>
-
-                  {/* Rank Badge */}
-                  <div className="flex items-center justify-between border-t border-white/5 pt-3">
-                    <div className="flex gap-4">
-                      <div className="space-y-1">
-                        <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Overall Rank</p>
-                        <p className="text-xl font-black text-white">#{mod.overallRank}</p>
-                      </div>
-                    </div>
-                    {activeCategory !== 'new' && mod.prevRank != null && mod.currentRank != null && (
-                      <div className="text-right">
-                        <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Rank Change</p>
-                        <p className={`text-sm font-black ${mod.currentRank < mod.prevRank ? 'text-green-500' : 'text-red-500'}`}>
-                          {mod.currentRank < mod.prevRank ? '↑' : '↓'} {Math.abs(mod.currentRank - mod.prevRank)} positions
-                        </p>
-                        <p className="text-[8px] text-gray-700 font-mono">#{mod.prevRank} → #{mod.currentRank}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-3">
-                    <div className="space-y-1">
-                      <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Personnel</p>
-                      <p className="text-sm font-black text-white font-mono">{mod.totalPlayers.toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Deployments</p>
-                      <p className="text-sm font-black text-white font-mono">{mod.serverCount}</p>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-1">
-                    <Link
-                      to={`${gp}/mod/${mod.id}`}
-                      className="flex-1 px-3 py-2 bg-white/5 border border-white/10 text-[9px] font-black text-gray-400 text-center uppercase tracking-widest hover:bg-tactical-orange hover:text-black transition-all"
-                    >
-                      Full Intel
-                    </Link>
-                    <a
-                      href={/^\d+$/.test(mod.id)
-                        ? `https://steamcommunity.com/sharedfiles/filedetails/?id=${mod.id}`
-                        : `https://reforger.armaplatform.com/workshop/${mod.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-2 bg-white/5 border border-white/10 text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-                    >
-                      Workshop ↗
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="border border-white/5 bg-black/40">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Rank</th>
+                    <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Module</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Change</th>
+                    <th className="hidden sm:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Personnel</th>
+                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Deploy</th>
+                    <th className="pl-2 pr-4 py-3" aria-label="Workshop link" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedCurrentMods.map((mod) => (
+                    <TrendRow key={mod.id} mod={mod} category={activeCategory} game={game} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
