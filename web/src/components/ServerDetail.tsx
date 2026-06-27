@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { serversApi, modsApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
-import { serverPageUrl, serverPreviewImageUrl } from '../lib/site';
+import { SITE_ORIGIN, serverPageUrl, serverPreviewImageUrl } from '../lib/site';
 import { AffiliateBanner } from './ui/AffiliateBanner';
 import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
@@ -13,6 +13,27 @@ import type { Server, ServerMod } from '../types';
 
 interface ServerDetailProps {
   game?: GameType;
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
@@ -28,6 +49,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [modSort, setModSort] = useState<'rank' | 'name' | 'players'>('players');
   const [personnelFilter, setPersonnelFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [rankFilter, setRankFilter] = useState<'all' | 'top100' | 'top500' | 'top1000'>('all');
+  const [embedOpen, setEmbedOpen] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const gp = game === 'reforger' ? '' : `/${game}`;
 
@@ -178,8 +201,19 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
   const fillPercent = server.maxPlayers > 0 ? (server.players / server.maxPlayers) * 100 : 0;
 
+  const badgeUrl = `${SITE_ORIGIN}/api/badge/server/${encodeURIComponent(server.id)}?game=${game}`;
+  const serverUrl = serverPageUrl(server.id, game);
+  const htmlEmbed = `<a href="${serverUrl}"><img src="${badgeUrl}" alt="${server.name.replace(/"/g, '&quot;')} on reforgermods.com" /></a>`;
+  const markdownEmbed = `[![${server.name.replace(/\]/g, '\\]')}](${badgeUrl})](${serverUrl})`;
 
-  
+  const handleCopy = async (key: string, text: string) => {
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedKey(key);
+      window.setTimeout(() => setCopiedKey(null), 2000);
+    }
+  };
+
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
       <SEO 
@@ -208,20 +242,61 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               </p>
             )}
           </div>
-          <div className="flex gap-4">
-            <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
-              <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-              <p className="text-3xl font-black text-tactical-orange tracking-tighter italic">#{server.sqeRank || '-'}</p>
-              {server.sqeTier && (
-                <div className="mt-2 flex justify-center">
-                  <TierBadge tier={server.sqeTier} size="md" />
+          <div className="flex flex-col items-end gap-3">
+            <div className="flex gap-4">
+              <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
+                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                <p className="text-3xl font-black text-tactical-orange tracking-tighter italic">#{server.sqeRank || '-'}</p>
+                {server.sqeTier && (
+                  <div className="mt-2 flex justify-center">
+                    <TierBadge tier={server.sqeTier} size="md" />
+                  </div>
+                )}
+              </div>
+              {server.sqePoints !== undefined && (
+                <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
+                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">SQE Points</p>
+                  <p className="text-3xl font-black text-white tracking-tighter font-mono">{server.sqePoints}</p>
                 </div>
               )}
             </div>
-            {server.sqePoints !== undefined && (
-              <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
-                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">SQE Points</p>
-                <p className="text-3xl font-black text-white tracking-tighter font-mono">{server.sqePoints}</p>
+            <button
+              type="button"
+              onClick={() => setEmbedOpen((o) => !o)}
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
+            >
+              {embedOpen ? 'Close Embed' : 'Embed Badge'}
+            </button>
+            {embedOpen && (
+              <div className="w-full max-w-md bg-zinc-900 border border-white/5 p-5 space-y-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Badge Preview</p>
+                <div className="bg-black/40 border border-white/5 p-3 flex justify-center">
+                  <img src={badgeUrl} alt={`${server.name} rank badge`} className="max-w-full h-auto" />
+                </div>
+                <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
+                  Updates automatically — shows your live tier and rank.
+                </p>
+                {([
+                  { key: 'html', label: 'HTML', value: htmlEmbed },
+                  { key: 'markdown', label: 'Markdown', value: markdownEmbed },
+                  { key: 'url', label: 'Direct URL', value: badgeUrl },
+                ] as const).map(({ key, label, value }) => (
+                  <div key={key} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-600">{label}</span>
+                      <button
+                        type="button"
+                        onClick={() => void handleCopy(key, value)}
+                        className="text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange transition-colors"
+                      >
+                        {copiedKey === key ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                    <pre className="text-[9px] font-mono text-gray-400 bg-black/40 border border-white/5 p-2 overflow-x-auto whitespace-pre-wrap break-all">
+                      {value}
+                    </pre>
+                  </div>
+                ))}
               </div>
             )}
           </div>
