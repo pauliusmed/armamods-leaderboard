@@ -36,6 +36,18 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
+function escapeHtmlAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeMarkdownAlt(value: string): string {
+  return value.replace(/[[\]]/g, '\\$&');
+}
+
 export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const { serverId } = useParams<{ serverId: string }>();
   const [server, setServer] = useState<Server | null>(null);
@@ -203,8 +215,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
   const badgeUrl = `${SITE_ORIGIN}/api/badge/server/${encodeURIComponent(server.id)}?game=${game}`;
   const serverUrl = serverPageUrl(server.id, game);
-  const htmlEmbed = `<a href="${serverUrl}"><img src="${badgeUrl}" alt="${server.name.replace(/"/g, '&quot;')} on reforgermods.com" /></a>`;
-  const markdownEmbed = `[![${server.name.replace(/\]/g, '\\]')}](${badgeUrl})](${serverUrl})`;
+  const htmlEmbed = `<a href="${serverUrl}"><img src="${badgeUrl}" alt="${escapeHtmlAttr(server.name)} on reforgermods.com" /></a>`;
+  const markdownEmbed = `[![${escapeMarkdownAlt(server.name)}](${badgeUrl})](${serverUrl})`;
 
   const handleCopy = async (key: string, text: string) => {
     const ok = await copyToClipboard(text);
@@ -242,7 +254,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               </p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-col gap-3">
             <div className="flex gap-4">
               <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
                 <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
@@ -263,12 +275,12 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <button
               type="button"
               onClick={() => setEmbedOpen((o) => !o)}
-              className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
+              className="self-end text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
             >
               {embedOpen ? 'Close Embed' : 'Embed Badge'}
             </button>
             {embedOpen && (
-              <div className="w-full max-w-md bg-zinc-900 border border-white/5 p-5 space-y-4">
+              <div className="self-end w-full max-w-md bg-zinc-900 border border-white/5 p-5 space-y-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Badge Preview</p>
                 <div className="bg-black/40 border border-white/5 p-3 flex justify-center">
                   <img src={badgeUrl} alt={`${server.name} rank badge`} className="max-w-full h-auto" />
@@ -276,6 +288,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
                   Updates automatically — shows your live tier and rank.
                 </p>
+                {import.meta.env.DEV && (
+                  <p className="text-[8px] text-gray-700 font-bold uppercase tracking-widest">
+                    Preview loads from production — broken image locally until badge API is deployed; tier may show — until collector runs.
+                  </p>
+                )}
                 {([
                   { key: 'html', label: 'HTML', value: htmlEmbed },
                   { key: 'markdown', label: 'Markdown', value: markdownEmbed },
