@@ -874,10 +874,26 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       const currentRanks: Record<string, number> = {};
       sortedIds.forEach((id, idx) => { currentRanks[id] = idx + 1; });
 
-      // 4. Enrich serverList with SQE data
+      // 4. Enrich serverList with SQE data + tier (S/A/B/C by rank percentile).
+      // Tiers are the platform's quality mark — collision-free (unlike evocative names like
+      // "Apex"/"Vanguard" that servers use themselves) and they fall out of the tenure-weighted
+      // rank, so elite tiers are only reachable by established servers.
+      const totalRanked = sortedIds.length;
+      const tierForRank = (rank: number): 'S' | 'A' | 'B' | 'C' | null => {
+          const sCut = Math.max(3, Math.floor(totalRanked * 0.02));
+          const aCut = Math.max(10, Math.floor(totalRanked * 0.08));
+          const bCut = Math.max(30, Math.floor(totalRanked * 0.25));
+          const cCut = Math.max(80, Math.floor(totalRanked * 0.60));
+          if (rank <= sCut) return 'S';
+          if (rank <= aCut) return 'A';
+          if (rank <= bCut) return 'B';
+          if (rank <= cCut) return 'C';
+          return null;
+      };
       for (const s of serverList) {
           s.sqePoints = Math.floor(displayedScores[s.id] || 0);
-          s.sqeRank = currentRanks[s.id] || (sortedIds.length + 1);
+          s.sqeRank = currentRanks[s.id] || (totalRanked + 1);
+          s.sqeTier = tierForRank(s.sqeRank);
       }
 
       // 5. Save TOP 200 leaderboard
@@ -891,16 +907,17 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
               points: s.sqePoints,
               players: s.players,
               modCount: s.mods?.length || 0,
-              rank: s.sqeRank
+              rank: s.sqeRank,
+              tier: s.sqeTier
           }));
 
       await kv.put(leaderboardKey, JSON.stringify(leaderboard));
 
       // Compact SQE index for API enrichment (servers chunks can be large; this is ~300KB)
-      const sqeIndex: Record<string, { r: number; p: number }> = {};
+      const sqeIndex: Record<string, { r: number; p: number; t?: string | null }> = {};
       for (const s of serverList) {
         if (s.sqeRank != null) {
-          sqeIndex[s.id] = { r: s.sqeRank, p: s.sqePoints ?? 0 };
+          sqeIndex[s.id] = { r: s.sqeRank, p: s.sqePoints ?? 0, t: s.sqeTier };
         }
       }
       await kv.put(`cache:server_sqe:${game}`, JSON.stringify(sqeIndex));

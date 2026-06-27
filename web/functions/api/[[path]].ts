@@ -881,6 +881,96 @@ app.get('/og/preview/server/:serverId', async (c) => {
   return c.redirect(defaultOgImage(), 302);
 });
 
+/** XML-escape for embedding user-controlled strings (server names) in SVG. */
+function escapeXml(s: string): string {
+  return s.replace(/[<>&'"]/g, (ch) =>
+    ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '&' ? '&amp;' : ch === "'" ? '&apos;' : '&quot;'
+  );
+}
+
+const BADGE_TIER_COLORS: Record<string, string> = {
+  S: '#ff6b00',
+  A: '#ff8c3a',
+  B: '#8a8a8a',
+  C: '#5a5a5a',
+};
+
+/** Embeddable SVG server badge: tier chip + rank + name + site brand. */
+function serverBadgeSvg(opts: { tier: string | null; rank: number | null; name: string }): string {
+  const { tier, rank, name } = opts;
+  const tierColor = tier ? BADGE_TIER_COLORS[tier] ?? '#5a5a5a' : '#3a3a3a';
+  const tierLabel = tier ?? '—';
+  const rankLabel = rank ? `RANK #${rank}` : 'UNRANKED';
+  const safeName = escapeXml((name || 'Server').slice(0, 30));
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="76" viewBox="0 0 320 76" font-family="monospace">
+  <rect width="320" height="76" fill="#0a0a0a" stroke="${tierColor}" stroke-width="1.5"/>
+  <rect x="0" y="0" width="64" height="76" fill="${tierColor}"/>
+  <text x="32" y="49" font-size="32" font-weight="900" fill="#0a0a0a" text-anchor="middle">${tierLabel}</text>
+  <text x="76" y="28" font-size="11" font-weight="900" fill="#ff6b00" letter-spacing="2">${rankLabel}</text>
+  <text x="76" y="48" font-size="12" font-weight="700" fill="#e0e0e0">${safeName}</text>
+  <text x="76" y="65" font-size="8" font-weight="700" fill="#777" letter-spacing="2">REFORGERMODS.COM</text>
+</svg>`;
+}
+
+/**
+ * GET /badge/server/:serverId — embeddable SVG badge (tier + rank + name) for owners to
+ * display on their Discord/website. Reads the server object from chunks (tier is baked in
+ * by the collector). Cached 10 min.
+ */
+app.get('/badge/server/:serverId', async (c) => {
+  const cache = await caches.open('armamods:badge');
+  const cached = await cache.match(c.req.raw);
+  if (cached) return cached;
+
+  const serverId = c.param('serverId');
+  const game = getGameFromQuery(c);
+  const keys = getKVKeys(game);
+
+  let server: any = null;
+  try {
+    const meta = (await c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json')) as { chunks?: number } | null;
+    if (meta?.chunks) {
+      const chunksText = await Promise.all(
+        Array.from({ length: meta.chunks }, (_, i) => c.env.TRENDING_KV.get(`${keys.SERVERS}:${i}`, 'text'))
+      );
+      const needle = `"id":"${serverId}"`;
+      for (const chunkText of chunksText) {
+        if (!chunkText || !chunkText.includes(needle)) continue;
+        const idPos = chunkText.indexOf(needle);
+        const startPos = chunkText.lastIndexOf('{', idPos);
+        const endPos = findMatchingBrace(chunkText, startPos);
+        if (startPos !== -1 && endPos !== -1) {
+          try {
+            server = JSON.parse(chunkText.slice(startPos, endPos + 1));
+            break;
+          } catch {
+            /* skip malformed */
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[BADGE] lookup error:', err);
+  }
+
+  if (!server) return c.text('Server not found', 404);
+
+  const svg = serverBadgeSvg({
+    tier: server.sqeTier ?? null,
+    rank: server.sqeRank ?? null,
+    name: server.name ?? '',
+  });
+  const response = new Response(svg, {
+    headers: {
+      'Content-Type': 'image/svg+xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=600',
+    },
+  });
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
 // Trending logic (Pre-calculated by collector)
 app.get('/trending/:period?', async (c) => {
     const cache = await caches.open('armamods:trending');

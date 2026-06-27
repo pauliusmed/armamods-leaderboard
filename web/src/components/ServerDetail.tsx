@@ -7,6 +7,7 @@ import { serverPageUrl, serverPreviewImageUrl } from '../lib/site';
 import { AffiliateBanner } from './ui/AffiliateBanner';
 import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
+import { TierBadge } from './ui/TierBadge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Server, ServerMod } from '../types';
 
@@ -211,6 +212,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
               <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
               <p className="text-3xl font-black text-tactical-orange tracking-tighter italic">#{server.sqeRank || '-'}</p>
+              {server.sqeTier && (
+                <div className="mt-2 flex justify-center">
+                  <TierBadge tier={server.sqeTier} size="md" />
+                </div>
+              )}
             </div>
             {server.sqePoints !== undefined && (
               <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">

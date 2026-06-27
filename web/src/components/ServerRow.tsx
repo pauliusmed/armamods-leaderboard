@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Server } from '../types';
+import { TierBadge } from './ui/TierBadge';
 
 interface ServerRowProps {
   server: Server;
@@ -21,15 +22,18 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-      {/* SQE rank */}
+      {/* SQE rank + tier */}
       <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
-        <span
-          className={`font-mono text-sm tabular-nums ${
-            isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
-          }`}
-        >
-          {rank != null ? String(rank).padStart(2, '0') : '–'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`font-mono text-sm tabular-nums ${
+              isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
+            }`}
+          >
+            {rank != null ? String(rank).padStart(2, '0') : '–'}
+          </span>
+          <TierBadge tier={server.sqeTier} />
+        </div>
       </td>
 
       {/* Server name — primary CTA */}

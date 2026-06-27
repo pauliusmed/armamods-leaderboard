@@ -1,3 +1,13 @@
+## [1.16.0] - 2026-06-27
+
+### 🏅 Serverių tier sistema + įskiepiamas badge (prestižo sluoksnis)
+- **S / A / B / C tier'ai**: kiekvienam serveriui tier pagal tenure-weighted reitingo percentilį (S top ~2%, A ~8%, B ~25%, C ~60%). **Raidės**, o ne „Apex/Vanguard" tipo žodžiai — nes šie sutampa su pačių serverių pavadinimais. Elito tier pasiekiamas tik su tenure (įrodytais serveriais).
+- **Įskiepiamas SVG badge**: `GET /api/badge/server/:id` — savininkai įdeda į Discord/svetainę, rodo gyvą tier + reitingą + pavadinimą. Psichologiškai svarbiausia (didžiavimasis + nemokama rinkodara / backlink'ai).
+- **UI**: `TierBadge` ženkliukas ant serverių sąrašo eilutės (prie reitingo) ir `ServerDetail` „Overall Rank" bloko.
+- **Tipai**: `Server.sqeTier` (`'S'|'A'|'B'|'C'|null`).
+- **Dokumentacija**: `docs/ALGORITHM.md` — Quality Tiers sekcija.
+- Tier įsigalioja kito kolektoriaus run'o metu (collector įrašo `sqeTier` į serverių chunks, leaderboard ir sqeIndex).
+
 ## [1.15.0] - 2026-06-26
 
 ### 🏆 Serverių reitingavimo stabilumas („elito" reitingas)

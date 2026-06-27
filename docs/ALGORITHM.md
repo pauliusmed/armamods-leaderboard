@@ -152,6 +152,20 @@ Bonus = Clamp((ServerAvgModRank - GlobalMeanRank) / ScalingFactor, -100, 100)
 
 All servers receive `sqePoints` and `sqeRank` fields stored in their KV data. The TOP 200 servers are saved separately to `cache:ranking:servers` for the leaderboard page.
 
+### Quality Tiers (S / A / B / C)
+
+Each server is assigned a tier from its tenure-weighted rank — a quick quality mark for players and a badge of honor owners can display:
+
+| Tier | Rank cutoff |
+|---|---|
+| **S** | top ~2% (min 3) |
+| **A** | top ~8% (min 10) |
+| **B** | top ~25% (min 30) |
+| **C** | top ~60% (min 80) |
+| — | below / new |
+
+Tiers use letters rather than evocative names (e.g. "Apex", "Vanguard") deliberately — those collide with server names. Letters are collision-free, universally ranked, and fall directly out of the tenure-weighted score, so elite tiers are only reachable by established servers. An embeddable SVG badge (`GET /api/badge/server/:id`) lets owners show their live tier/rank on their own site or Discord.
+
 ### History
 
 Server rank history is stored in the shared history shards alongside mod data. Each time point includes `"servers": { "serverId": rank }`, enabling the SQE Rank chart on server detail pages without separate storage or expensive calculations.

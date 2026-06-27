@@ -51,6 +51,8 @@ export interface Server {
   scenarioName?: string | null;
   sqePoints?: number;
   sqeRank?: number;
+  /** Quality tier from tenure-weighted rank: S/A/B/C, or null if below cutoff / new. */
+  sqeTier?: 'S' | 'A' | 'B' | 'C' | null;
   mods: ServerMod[];
 }
 
