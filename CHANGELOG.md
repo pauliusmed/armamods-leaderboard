@@ -3,7 +3,7 @@
 ### 🏆 Serverių reitingavimo stabilumas („elito" reitingas)
 - **Problema**: naujas serveris, pasirodęs pirmą kartą, gaudavo **pilną** snapshot'o balą (apeidamas EMA) ir galėdavo iš karto užimti #1 — pvz. serveris, pasirodęs tą pačią dieną, tapdavo lyderiu vienu snapshot'u. Priežastis: EMA istorija buvo saugoma tik buvusiems top-200, todėl visi kiti (ir nauji) kiekviename run'e įeidavo pilnu svoriu.
 - **Persisted EMA visiems serveriams** (`cache:server_ema:{game}`): kiekvienas serveris turi tęstinę EMA reikšmę + `age` tarp run'ų — joks serveris nebeįeina pilnu snapshot'u.
-- **Naujokų seed'inimas (probacija)**: pirmą kartą matytas serveris įeina × 0.5 snapshot'o, paskui ramp'inasi per EMA (~24–48h iki top). Vienas snapshot'as nebevainikuoja naujo serverio #1 vieta.
+- **Tenure weighting (lygis × ilgalaikis indėlis)**: reitingo svoris = kokybė × tenure, kur tenure ramp'inasi 25%→100% per ~14 dienų (168 run'ai) buvimo online. Vienas snapshot'as nebevainikuoja naujo serverio #1, o mėnesį išlaikyta kokybė lenkia savaitės. Pakeičia ankstesnį dirbtinį seed×0.5 tikresniu, duomenimis grįstu mechanizmu.
 - **Elito age gate**: top-3 inercijos (×1.05) cushion taikomas tik serveriams su `age ≥ 12` (~24h) — naujokai negali pasinaudoti.
 - **Warm-start migracija**: pirmas run'as po deploy seed'ina EMA map iš esamo top-200 leaderboardo, kad seni reitingai nenulūžtų.
 - **Dokumentacija**: `docs/ALGORITHM.md` atnaujinta (Persistence, New Entrant Seeding, age gate).

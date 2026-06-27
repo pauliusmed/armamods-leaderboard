@@ -105,15 +105,16 @@ NewSQEPoints = α × SnapshotScore + (1 - α) × PreviousSQEPoints
 - **Fadeaway (Slow Decay)**: If a server goes offline completely, its score decays slowly by 10% every 2 hours rather than instantly plunging to zero, preserving its ranking position during restarts.
 - **Stability**: Prevents new, volatile servers from instantly overtaking highly established community nodes.
 
-### New Entrant Seeding (Probation)
+### Tenure Weighting (Sustained Performance)
 
-A server seen for the **first time** does not enter at full strength. Its first score is seeded at a fraction of its snapshot, then ramps toward its true level via EMA over subsequent runs:
+A server's rank reflects **quality × longevity**, not just a single snapshot. The EMA quality score is multiplied by a *tenure factor* that ramps with how long the server has been consistently online:
 
 ```
-FirstSightingScore = SnapshotScore × 0.5
+RankingScore = QualityScore × tenure
+tenure = 0.25 + 0.75 × min(1, age / 168)      // age = consecutive 2h runs seen online
 ```
 
-Combined with α = 0.10, a newcomer needs roughly **24–48 hours of sustained activity** to climb near the top. This stops launch-day player spikes or momentary surges from handing a brand-new server the #1 spot — rank is earned through consistency. On the first collector run after this change is deployed, the persisted EMA map is **warm-started** from the existing top-200 leaderboard so established servers keep their rank and age instead of resetting.
+A brand-new server starts at **25%** rank weight and reaches **100%** only after ~**14 days** of sustained presence (168 runs). This is the "whole-month-contribution" principle: one snapshot can no longer crown a newcomer, and a month of strong performance outranks a week of it. The stored `sqePoints` already include tenure, so displayed points and rank stay consistent. On the first run after this change is deployed, the persisted EMA map is **warm-started** from the existing top-200 leaderboard (with full tenure) so established servers keep their rank instead of resetting.
 
 ### Elite Rank Inertia
 

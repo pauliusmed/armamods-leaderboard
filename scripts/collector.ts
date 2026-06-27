@@ -736,8 +736,9 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       // top-200) bypassed EMA entirely and could leapfrog to #1 on a single snapshot.
       const emaKey = `cache:server_ema:${game}`;
       const ALPHA = 0.10;            // 10% new snapshot, 90% history
-      const SEED_FRACTION = 0.5;      // first-time servers enter at half-strength, then ramp via EMA
-      const MIN_AGE_ELITE = 12;       // ~24h (12 runs x 2h) before a server can hold an elite top-3 rank
+      const RAMP_RUNS = 168;          // ~14 days (168 runs x 2h) for a new server to reach full rank weight
+      const TENURE_FLOOR = 0.25;      // a brand-new server's rank starts at 25% weight, ramping to 100%
+      const MIN_AGE_ELITE = 12;       // ~24h (12 runs x 2h) before a server can hold an elite top-3 cushion
 
       // Previous top-200 leaderboard — elite inertia source + EMA warm-start seed.
       const oldScoresMap = new Map<string, number>();
@@ -769,7 +770,7 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       // to the new-entrant seed fraction.
       if (Object.keys(emaMap).length === 0 && oldScoresMap.size > 0) {
           for (const [id, points] of oldScoresMap.entries()) {
-              emaMap[id] = { s: points, a: MIN_AGE_ELITE };
+              emaMap[id] = { s: points, a: RAMP_RUNS };
           }
           console.log(`[SERVER_SCORING] Warm-started EMA map from ${oldScoresMap.size} previous scores.`);
       }
@@ -820,8 +821,8 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
               newScore = ALPHA * snapshotScore + (1 - ALPHA) * prev.s;
               age = players > 0 ? prev.a + 1 : prev.a;   // age only accrues while online
           } else {
-              // First sighting: seed at a fraction so one snapshot can't crown a newcomer.
-              newScore = snapshotScore * SEED_FRACTION;
+              // First sighting: enter at full quality — tenure weighting (below) gates the rank.
+              newScore = snapshotScore;
               age = 1;
           }
 
@@ -841,12 +842,25 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       }
       console.log(`[SERVER_SCORING] Scored ${serverList.length} servers (${Object.keys(persistedEma).length} tracked in EMA map).`);
 
-      // 3. Elite inertia: a ranking-only cushion for established top servers. Age-gated so a
-      // brand-new server can't benefit; keeps #1-#3 from flipping on tiny score deltas.
+      // 3. Tenure weighting — the "sustained performance" signal. Rank rewards servers that
+      // have proven themselves over time: a brand-new server's rank starts at TENURE_FLOOR and
+      // ramps to full weight over RAMP_RUNS (~14 days) of being seen online. This is level x
+      // longevity: one good snapshot can no longer crown a newcomer, and a month of strong
+      // performance outranks a week of it.
+      const rankingScores: Record<string, number> = {};
+      const displayedScores: Record<string, number> = {};
+      for (const id of Object.keys(currentScores)) {
+          const age = emaMap[id]?.a ?? 1;
+          const tenure = TENURE_FLOOR + (1 - TENURE_FLOOR) * Math.min(1, age / RAMP_RUNS);
+          const weighted = Math.floor(currentScores[id] * tenure);
+          displayedScores[id] = weighted;     // shown points = quality x tenure (no elite cushion)
+          rankingScores[id] = weighted;
+      }
+
+      // Elite inertia: a small ranking-only cushion for established top servers so #1-#3 don't
+      // flip on tiny score deltas. Age-gated so a brand-new server can't benefit.
       const ELITE_INERTIA_SIZE = 3;
       const ELITE_INERTIA_BONUS_PCT = 0.05; // 5% cushion, ranking only
-      const rankingScores: Record<string, number> = { ...currentScores };
-
       if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
           for (let i = 0; i < Math.min(ELITE_INERTIA_SIZE, oldLeaderboard.length); i++) {
               const eliteId = oldLeaderboard[i]?.id;
@@ -862,7 +876,7 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
 
       // 4. Enrich serverList with SQE data
       for (const s of serverList) {
-          s.sqePoints = Math.floor(currentScores[s.id] || 0);
+          s.sqePoints = Math.floor(displayedScores[s.id] || 0);
           s.sqeRank = currentRanks[s.id] || (sortedIds.length + 1);
       }
 
