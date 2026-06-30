@@ -23,6 +23,7 @@ import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { workshopPageUrl, workshopLabel } from '../lib/workshop';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModConfigCopy } from './ui/ModConfigCopy';
+import { ModThumbnail } from './ui/ModThumbnail';
 import { ModRow } from './ModRow';
 import { ServerRow } from './ServerRow';
 import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
@@ -173,44 +174,53 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         <Link to={`${gp}/`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
           ← [ Back to Registry ]
         </Link>
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 border-b border-white/10 pb-10 sm:pb-12">
-          <ModWorkshopGallery
-            modId={mod.id}
-            modName={mod.name}
-            game={game}
-            className="self-start"
-          />
-          <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-4 min-w-0">
-              <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">// MODULE_IDENTIFIER: {mod.id}</span>
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none break-words">
-                {mod.name}
-              </h1>
-              {mod.author && (
-                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                  Workshop author · {mod.author}
+        <div className="space-y-6 border-b border-white/10 pb-10 sm:pb-12">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+            <div className="flex gap-4 sm:gap-5 min-w-0 flex-1">
+              <ModThumbnail
+                modId={mod.id}
+                modName={mod.name}
+                game={game}
+                size="lg"
+                className="shrink-0"
+              />
+              <div className="space-y-4 min-w-0 flex-1">
+                <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
+                  // MODULE_IDENTIFIER: {mod.id}
+                </span>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tighter leading-none break-words">
+                  {mod.name}
+                </h1>
+                {mod.author && (
+                  <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                    Workshop author · {mod.author}
+                  </p>
+                )}
+                <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
+                  Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
                 </p>
-              )}
-              <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
-              </p>
-              <a
-                href={workshopPageUrl(mod.id, game)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 bg-tactical-orange/10 border border-tactical-orange/30 text-tactical-orange hover:bg-tactical-orange hover:text-black text-[10px] font-black uppercase tracking-widest transition-all"
-              >
-                Open in {workshopLabel(game)} ↗
-              </a>
-              {game === 'reforger' && (
-                <ModConfigCopy modId={mod.id} modName={mod.name} />
-              )}
+                <div className="flex flex-wrap items-start gap-2 pt-1">
+                  <a
+                    href={workshopPageUrl(mod.id, game)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-tactical-orange/10 border border-tactical-orange/30 text-tactical-orange hover:bg-tactical-orange hover:text-black text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    Open in {workshopLabel(game)} ↗
+                  </a>
+                  {game === 'reforger' && (
+                    <ModConfigCopy modId={mod.id} modName={mod.name} />
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0">
+            <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0 self-start sm:self-auto">
               <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
               <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
             </div>
           </div>
+
+          <ModWorkshopGallery modId={mod.id} modName={mod.name} game={game} />
         </div>
       </header>
 

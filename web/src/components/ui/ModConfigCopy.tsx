@@ -7,8 +7,11 @@ interface ModConfigCopyProps {
   modName: string;
 }
 
+const BTN =
+  'inline-flex items-center px-5 py-3 border text-[10px] font-black uppercase tracking-widest transition-all';
+
 export function ModConfigCopy({ modId, modName }: ModConfigCopyProps) {
-  const [open, setOpen] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
 
   const snippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
@@ -20,61 +23,38 @@ export function ModConfigCopy({ modId, modName }: ModConfigCopyProps) {
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(snippet);
-    showHint(ok ? 'Copied — paste into game.mods[]' : 'Copy failed — allow clipboard access');
-  };
-
-  const handleCopyModId = async () => {
-    const ok = await copyToClipboard(modId.toUpperCase());
-    showHint(ok ? 'Copied modId' : 'Copy failed');
+    showHint(ok ? 'Copied' : 'Copy failed');
   };
 
   return (
-    <div className="space-y-2">
+    <>
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="inline-flex items-center gap-2 px-5 py-3 border border-white/10 bg-zinc-900 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest transition-colors"
+        onClick={() => void handleCopy()}
+        className={`${BTN} border-tactical-orange/30 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
       >
-        {open ? 'Close Config Snippet' : 'Copy config.json Snippet'}
+        Copy config.json
+      </button>
+      <button
+        type="button"
+        onClick={() => setPreview((v) => !v)}
+        className={`${BTN} border-white/10 text-gray-500 hover:text-white hover:border-white/20`}
+      >
+        {preview ? 'Hide' : 'Preview'}
       </button>
 
-      {open && (
-        <div className="max-w-xl bg-zinc-900 border border-white/5 p-5 space-y-4">
-          <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-              Paste into game.mods[]
-            </p>
-            <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest leading-relaxed">
-              Name comes from our database — often more accurate than workshop titles in old configs.
-            </p>
-          </div>
-
-          <pre className="overflow-x-auto p-4 bg-black/50 border border-white/5 text-[11px] leading-relaxed text-emerald-200/90 font-mono">
-            {snippet}
-          </pre>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void handleCopy()}
-              className="px-4 py-2 bg-tactical-orange text-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
-            >
-              Copy snippet
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleCopyModId()}
-              className="px-4 py-2 border border-white/10 text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors"
-            >
-              Copy modId only
-            </button>
-          </div>
-
+      {(preview || hint) && (
+        <div className="w-full basis-full mt-2 space-y-3">
           {hint && (
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-tactical-orange">{hint}</p>
           )}
+          {preview && (
+            <pre className="overflow-x-auto p-4 bg-zinc-900 border border-white/5 text-[11px] leading-relaxed text-emerald-200/90 font-mono">
+              {snippet}
+            </pre>
+          )}
         </div>
       )}
-    </div>
+    </>
   );
 }
