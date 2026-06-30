@@ -21,6 +21,9 @@ const thumbnailInflight = new Map<string, Promise<string | null>>();
 /** Dedupe concurrent author lookups for the same mod. */
 const authorInflight = new Map<string, Promise<string | null>>();
 
+/** Dedupe concurrent gallery lookups for the same mod. */
+const galleryInflight = new Map<string, Promise<import('../types').ModGalleryImage[]>>();
+
 async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl = CACHE_TTL): Promise<T> {
   const cached = cache.get(key);
   const now = Date.now();
@@ -81,6 +84,29 @@ export const modsApi = {
       }>(`mods/${modId}/dependencies`, { params: { game } });
       return response.data;
     }, 86400000); // Workshop deps change rarely — cache 24h client-side
+  },
+
+  getGallery: async (modId: string, game: GameType = 'reforger') => {
+    const key = `gallery:${game}:${modId}`;
+    const inflight = galleryInflight.get(key);
+    if (inflight) return inflight;
+
+    const request = getCached(
+      key,
+      async () => {
+        const response = await api.get<{
+          data: import('../types').ModGalleryImage[];
+          meta: { source: string; supported: boolean; count?: number };
+        }>(`mods/${modId}/gallery`, { params: { game } });
+        return response.data.data ?? [];
+      },
+      604800000 // 7 days — matches KV TTL
+    )
+      .then((images) => images as import('../types').ModGalleryImage[])
+      .finally(() => galleryInflight.delete(key));
+
+    galleryInflight.set(key, request);
+    return request;
   },
 
   getThumbnailUrl: async (modId: string, game: GameType = 'reforger'): Promise<string | null> => {

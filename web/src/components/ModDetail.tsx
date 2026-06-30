@@ -21,7 +21,8 @@ import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-co
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { workshopPageUrl, workshopLabel } from '../lib/workshop';
-import { ModThumbnail } from './ui/ModThumbnail';
+import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
+import { ModConfigCopy } from './ui/ModConfigCopy';
 import { ModRow } from './ModRow';
 import { ServerRow } from './ServerRow';
 import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
@@ -173,11 +174,10 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           ← [ Back to Registry ]
         </Link>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 border-b border-white/10 pb-10 sm:pb-12">
-          <ModThumbnail
+          <ModWorkshopGallery
             modId={mod.id}
             modName={mod.name}
             game={game}
-            size="lg"
             className="self-start"
           />
           <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -202,6 +202,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               >
                 Open in {workshopLabel(game)} ↗
               </a>
+              {game === 'reforger' && (
+                <ModConfigCopy modId={mod.id} modName={mod.name} />
+              )}
             </div>
             <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0">
               <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>

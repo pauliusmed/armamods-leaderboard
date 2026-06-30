@@ -265,12 +265,6 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                   </div>
                 )}
               </div>
-              {server.sqePoints !== undefined && (
-                <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
-                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">SQE Points</p>
-                  <p className="text-3xl font-black text-white tracking-tighter font-mono">{server.sqePoints}</p>
-                </div>
-              )}
             </div>
             <button
               type="button"

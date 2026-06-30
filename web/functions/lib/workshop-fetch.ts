@@ -10,6 +10,13 @@ export interface WorkshopDependency {
   marketShare?: number;
 }
 
+export interface WorkshopGalleryImage {
+  url: string;
+  thumb?: string;
+  width?: number;
+  height?: number;
+}
+
 export function reforgerWorkshopPageUrl(modId: string): string {
   return `https://reforger.armaplatform.com/workshop/${encodeURIComponent(modId)}`;
 }
@@ -24,6 +31,10 @@ export function depsCacheKey(game: ShareGame, modId: string): string {
 
 export function authorCacheKey(game: ShareGame, modId: string): string {
   return `cache:mod-author:${game}:${modId.toUpperCase()}`;
+}
+
+export function galleryCacheKey(game: ShareGame, modId: string): string {
+  return `cache:mod-gallery:${game}:${modId.toUpperCase()}`;
 }
 
 const WORKSHOP_KV_TTL = 604800; // 7 days
@@ -89,6 +100,49 @@ export function parseReforgerDependenciesFromHtml(html: string): WorkshopDepende
   return deps;
 }
 
+function parseBackendImageEntry(entry: unknown): WorkshopGalleryImage | null {
+  if (!entry || typeof entry !== 'object') return null;
+  const url = (entry as { url?: string }).url;
+  if (!url?.startsWith('http')) return null;
+
+  const width = (entry as { width?: number }).width;
+  const height = (entry as { height?: number }).height;
+  const thumb = (entry as { thumbnails?: { 'image/jpeg'?: { url?: string }[] } }).thumbnails?.[
+    'image/jpeg'
+  ]?.[0]?.url;
+
+  return {
+    url,
+    ...(thumb?.startsWith('http') ? { thumb } : {}),
+    ...(typeof width === 'number' ? { width } : {}),
+    ...(typeof height === 'number' ? { height } : {}),
+  };
+}
+
+export function parseReforgerGalleryFromHtml(html: string): WorkshopGalleryImage[] {
+  const nextData = extractNextDataJson(html);
+  if (!nextData || typeof nextData !== 'object') return [];
+
+  const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
+    ?.pageProps;
+  if (!pageProps) return [];
+
+  const asset = pageProps.asset as { previews?: unknown[]; screenshots?: unknown[] } | undefined;
+  if (!asset) return [];
+
+  const seen = new Set<string>();
+  const images: WorkshopGalleryImage[] = [];
+
+  for (const entry of [...(asset.previews ?? []), ...(asset.screenshots ?? [])]) {
+    const image = parseBackendImageEntry(entry);
+    if (!image || seen.has(image.url)) continue;
+    seen.add(image.url);
+    images.push(image);
+  }
+
+  return images;
+}
+
 export function parseReforgerAuthorFromHtml(html: string): string | null {
   const nextData = extractNextDataJson(html);
   if (!nextData || typeof nextData !== 'object') return null;
@@ -130,12 +184,14 @@ export async function ensureReforgerWorkshopMetadata(
   const ogKey = ogImageCacheKey(game, modId);
   const depKey = depsCacheKey(game, modId);
   const authorKey = authorCacheKey(game, modId);
-  const [ogCached, depsCached, authorCached] = await Promise.all([
+  const galleryKey = galleryCacheKey(game, modId);
+  const [ogCached, depsCached, authorCached, galleryCached] = await Promise.all([
     kv.get(ogKey, 'text'),
     kv.get(depKey, 'text'),
     kv.get(authorKey, 'text'),
+    kv.get(galleryKey, 'text'),
   ]);
-  if (ogCached && depsCached && authorCached) return;
+  if (ogCached && depsCached && authorCached && galleryCached) return;
 
   const html = await fetchReforgerWorkshopHtml(modId);
   if (!html) return;
@@ -176,6 +232,11 @@ export async function ensureReforgerWorkshopMetadata(
     writes.push(kv.put(depKey, JSON.stringify(enriched), { expirationTtl: WORKSHOP_KV_TTL }));
   }
 
+  if (!galleryCached) {
+    const gallery = parseReforgerGalleryFromHtml(html);
+    writes.push(kv.put(galleryKey, JSON.stringify(gallery), { expirationTtl: WORKSHOP_KV_TTL }));
+  }
+
   await Promise.all(writes);
 }
 
@@ -208,6 +269,36 @@ export async function resolveModAuthor(
 
   await ensureReforgerWorkshopMetadata(kv, game, modId);
   return (await kv.get(cacheKey, 'text')) || null;
+}
+
+export async function resolveModGallery(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<WorkshopGalleryImage[]> {
+  if (game === 'arma3') return [];
+
+  const cacheKey = galleryCacheKey(game, modId);
+  const cached = await kv.get(cacheKey, 'text');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached) as WorkshopGalleryImage[];
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      /* refetch */
+    }
+  }
+
+  await ensureReforgerWorkshopMetadata(kv, game, modId);
+
+  const refreshed = await kv.get(cacheKey, 'text');
+  if (!refreshed) return [];
+  try {
+    const parsed = JSON.parse(refreshed) as WorkshopGalleryImage[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function resolveModDependencies(

@@ -27,7 +27,7 @@ import {
   defaultOgImage,
   type ShareGame,
 } from '../lib/share-meta';
-import { resolveModDependencies, resolveModAuthor, resolveModThumbnailUrl } from '../lib/workshop-fetch';
+import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl } from '../lib/workshop-fetch';
 import { matchesModSearch, matchesServerSearch } from '../lib/search-match';
 
 type Bindings = {
@@ -655,6 +655,39 @@ app.get('/mods/:modId/thumbnail', async (c) => {
   const response = c.json({
     data: { url },
     meta: { modId, game, direct: true },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
+app.get('/mods/:modId/gallery', async (c) => {
+  const cache = await caches.open('armamods:mod_gallery');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+
+  if (game === 'arma3') {
+    const response = c.json({
+      data: [],
+      meta: { source: 'steam_workshop', supported: false, modId, count: 0 },
+    });
+    response.headers.set('Cache-Control', 'public, max-age=3600');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  }
+
+  const images = await resolveModGallery(c.env.TRENDING_KV, game, modId);
+  const response = c.json({
+    data: images,
+    meta: {
+      source: 'reforger_workshop',
+      supported: true,
+      modId,
+      count: images.length,
+    },
   });
   response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));

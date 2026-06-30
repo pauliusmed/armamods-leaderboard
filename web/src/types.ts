@@ -20,6 +20,13 @@ export interface Mod {
   }[];
 }
 
+export interface ModGalleryImage {
+  url: string;
+  thumb?: string;
+  width?: number;
+  height?: number;
+}
+
 export interface ModDependency {
   id: string;
   name: string;
