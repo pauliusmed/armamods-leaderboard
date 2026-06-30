@@ -4,6 +4,8 @@ import {
   parseReforgerAuthorFromHtml,
   parseReforgerDependenciesFromHtml,
   parseReforgerGalleryFromHtml,
+  parseReforgerDatesFromHtml,
+  formatWorkshopDate,
 } from '../web/functions/lib/workshop-fetch.ts';
 
 const SAMPLE_NEXT = `<script id="__NEXT_DATA__" type="application/json">{
@@ -11,6 +13,8 @@ const SAMPLE_NEXT = `<script id="__NEXT_DATA__" type="application/json">{
     "pageProps": {
       "asset": {
         "author": { "username": "Worst Case Scenario" },
+        "createdAt": "2024-10-15T12:00:00.000Z",
+        "updatedAt": "2026-06-19T08:30:00.000Z",
         "previews": [
           {
             "url": "https://cdn.example/preview.jpg",
@@ -76,6 +80,27 @@ describe('parseReforgerAuthorFromHtml', () => {
 
   it('returns null when author is missing', () => {
     assert.equal(parseReforgerAuthorFromHtml('<html></html>'), null);
+  });
+});
+
+describe('parseReforgerDatesFromHtml', () => {
+  it('extracts created and modified dates as DD.MM.YYYY', () => {
+    const dates = parseReforgerDatesFromHtml(SAMPLE_NEXT);
+    assert.equal(dates.created, '15.10.2024');
+    assert.equal(dates.modified, '19.06.2026');
+  });
+
+  it('returns nulls when dates are missing', () => {
+    assert.deepEqual(parseReforgerDatesFromHtml('<html></html>'), {
+      created: null,
+      modified: null,
+    });
+  });
+});
+
+describe('formatWorkshopDate', () => {
+  it('formats ISO strings to DD.MM.YYYY', () => {
+    assert.equal(formatWorkshopDate('2024-10-15T12:00:00.000Z'), '15.10.2024');
   });
 });
 

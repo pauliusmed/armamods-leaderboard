@@ -27,7 +27,7 @@ import {
   defaultOgImage,
   type ShareGame,
 } from '../lib/share-meta';
-import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl } from '../lib/workshop-fetch';
+import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates } from '../lib/workshop-fetch';
 import { matchesModSearch, matchesServerSearch } from '../lib/search-match';
 
 type Bindings = {
@@ -259,8 +259,18 @@ app.get('/mods/:modId', async (c) => {
   if (!mod) return c.json({ error: 'Not found' }, 404);
 
   if (game === 'reforger') {
-    const author = await resolveModAuthor(c.env.TRENDING_KV, game, modId);
+    const [author, workshopDates] = await Promise.all([
+      resolveModAuthor(c.env.TRENDING_KV, game, modId),
+      resolveModWorkshopDates(c.env.TRENDING_KV, game, modId),
+    ]);
     if (author) mod = { ...mod, author };
+    if (workshopDates.created || workshopDates.modified) {
+      mod = {
+        ...mod,
+        workshopCreated: workshopDates.created,
+        workshopModified: workshopDates.modified,
+      };
+    }
   }
 
   if (Array.isArray(mod.coDeployed) && mod.coDeployed.length > 0 && modChunksText.length > 0) {

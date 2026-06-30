@@ -3,6 +3,8 @@ export interface Mod {
   name: string;
   author?: string | null;
   thumbnail?: string | null;
+  workshopCreated?: string | null;
+  workshopModified?: string | null;
   serverCount: number;
   totalPlayers: number;
   playerRank?: number;

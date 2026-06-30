@@ -20,10 +20,8 @@ import {
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
-import { workshopPageUrl, workshopLabel } from '../lib/workshop';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModConfigPanel } from './ui/ModConfigPanel';
-import { ModThumbnail } from './ui/ModThumbnail';
 import { ModRow } from './ModRow';
 import { ServerRow } from './ServerRow';
 import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
@@ -42,6 +40,8 @@ const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
 interface ModDetailData extends Mod {
   stats: Mod & { totalMods: number };
   author?: string | null;
+  workshopCreated?: string | null;
+  workshopModified?: string | null;
   servers: Server[];
 }
 
@@ -170,32 +170,16 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         url={modPageUrl(mod.id, game)}
         image={modPreviewImageUrl(mod.id, game)}
       />
-      <header className="space-y-6">
-        <Link to={`${gp}/`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
-          ← [ Back to Registry ]
-        </Link>
+      <header>
         <div className="border-b border-white/10 pb-10 sm:pb-12">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            <aside className="w-full lg:w-64 xl:w-72 shrink-0 space-y-4">
-              <ModThumbnail
+            <aside className="w-full lg:w-64 xl:w-72 shrink-0">
+              <ModConfigPanel
                 modId={mod.id}
                 modName={mod.name}
+                backHref={`${gp}/`}
                 game={game}
-                size="lg"
-                className="w-full! max-w-none! aspect-square object-cover"
               />
-              {game === 'reforger' ? (
-                <ModConfigPanel modId={mod.id} modName={mod.name} game={game} />
-              ) : (
-                <a
-                  href={workshopPageUrl(mod.id, game)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center px-4 py-2.5 border border-tactical-orange/30 text-tactical-orange hover:bg-tactical-orange/10 text-[10px] font-black uppercase tracking-widest transition-colors"
-                >
-                  {workshopLabel(game)} ↗
-                </a>
-              )}
             </aside>
 
             <div className="flex-1 min-w-0 space-y-6">
@@ -211,6 +195,20 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
                       Workshop author · {mod.author}
                     </p>
+                  )}
+                  {(mod.workshopCreated || mod.workshopModified) && (
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                      {mod.workshopCreated && (
+                        <span>
+                          Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
+                        </span>
+                      )}
+                      {mod.workshopModified && (
+                        <span>
+                          Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
+                        </span>
+                      )}
+                    </div>
                   )}
                   <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
                     Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now

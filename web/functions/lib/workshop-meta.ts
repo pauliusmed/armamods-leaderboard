@@ -1,12 +1,16 @@
 export {
   type WorkshopDependency,
+  type WorkshopDates,
   type WorkshopGalleryImage,
   extractNextDataJson,
+  formatWorkshopDate,
   parseReforgerAuthorFromHtml,
+  parseReforgerDatesFromHtml,
   parseReforgerDependenciesFromHtml,
   parseReforgerGalleryFromHtml,
   resolveModAuthor,
   resolveModDependencies,
   resolveModGallery,
   resolveModThumbnailUrl,
+  resolveModWorkshopDates,
 } from './workshop-fetch';

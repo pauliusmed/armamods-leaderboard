@@ -17,6 +17,11 @@ export interface WorkshopGalleryImage {
   height?: number;
 }
 
+export interface WorkshopDates {
+  created: string | null;
+  modified: string | null;
+}
+
 export function reforgerWorkshopPageUrl(modId: string): string {
   return `https://reforger.armaplatform.com/workshop/${encodeURIComponent(modId)}`;
 }
@@ -35,6 +40,10 @@ export function authorCacheKey(game: ShareGame, modId: string): string {
 
 export function galleryCacheKey(game: ShareGame, modId: string): string {
   return `cache:mod-gallery:${game}:${modId.toUpperCase()}`;
+}
+
+export function datesCacheKey(game: ShareGame, modId: string): string {
+  return `cache:mod-dates:${game}:${modId.toUpperCase()}`;
 }
 
 const WORKSHOP_KV_TTL = 604800; // 7 days
@@ -156,6 +165,36 @@ export function parseReforgerAuthorFromHtml(html: string): string | null {
   return typeof author === 'string' && author.trim() ? author.trim() : null;
 }
 
+/** Workshop Created / Last Modified — DD.MM.YYYY like the official page. */
+export function formatWorkshopDate(iso: string): string | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const year = d.getUTCFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+export function parseReforgerDatesFromHtml(html: string): WorkshopDates {
+  const nextData = extractNextDataJson(html);
+  if (!nextData || typeof nextData !== 'object') {
+    return { created: null, modified: null };
+  }
+
+  const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
+    ?.pageProps;
+  if (!pageProps) return { created: null, modified: null };
+
+  const asset = pageProps.asset as { createdAt?: string; updatedAt?: string } | undefined;
+  const createdRaw = asset?.createdAt;
+  const modifiedRaw = asset?.updatedAt;
+
+  return {
+    created: typeof createdRaw === 'string' ? formatWorkshopDate(createdRaw) : null,
+    modified: typeof modifiedRaw === 'string' ? formatWorkshopDate(modifiedRaw) : null,
+  };
+}
+
 export async function fetchReforgerWorkshopHtml(modId: string): Promise<string | null> {
   try {
     const response = await fetch(reforgerWorkshopPageUrl(modId), {
@@ -185,13 +224,15 @@ export async function ensureReforgerWorkshopMetadata(
   const depKey = depsCacheKey(game, modId);
   const authorKey = authorCacheKey(game, modId);
   const galleryKey = galleryCacheKey(game, modId);
-  const [ogCached, depsCached, authorCached, galleryCached] = await Promise.all([
+  const datesKey = datesCacheKey(game, modId);
+  const [ogCached, depsCached, authorCached, galleryCached, datesCached] = await Promise.all([
     kv.get(ogKey, 'text'),
     kv.get(depKey, 'text'),
     kv.get(authorKey, 'text'),
     kv.get(galleryKey, 'text'),
+    kv.get(datesKey, 'text'),
   ]);
-  if (ogCached && depsCached && authorCached && galleryCached) return;
+  if (ogCached && depsCached && authorCached && galleryCached && datesCached) return;
 
   const html = await fetchReforgerWorkshopHtml(modId);
   if (!html) return;
@@ -235,6 +276,11 @@ export async function ensureReforgerWorkshopMetadata(
   if (!galleryCached) {
     const gallery = parseReforgerGalleryFromHtml(html);
     writes.push(kv.put(galleryKey, JSON.stringify(gallery), { expirationTtl: WORKSHOP_KV_TTL }));
+  }
+
+  if (!datesCached) {
+    const dates = parseReforgerDatesFromHtml(html);
+    writes.push(kv.put(datesKey, JSON.stringify(dates), { expirationTtl: WORKSHOP_KV_TTL }));
   }
 
   await Promise.all(writes);
@@ -298,6 +344,37 @@ export async function resolveModGallery(
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
+  }
+}
+
+export async function resolveModWorkshopDates(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<WorkshopDates> {
+  const empty = { created: null, modified: null };
+  if (game === 'arma3') return empty;
+
+  const cacheKey = datesCacheKey(game, modId);
+  const cached = await kv.get(cacheKey, 'text');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached) as WorkshopDates;
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch {
+      /* refetch */
+    }
+  }
+
+  await ensureReforgerWorkshopMetadata(kv, game, modId);
+
+  const refreshed = await kv.get(cacheKey, 'text');
+  if (!refreshed) return empty;
+  try {
+    const parsed = JSON.parse(refreshed) as WorkshopDates;
+    return parsed && typeof parsed === 'object' ? parsed : empty;
+  } catch {
+    return empty;
   }
 }
 
