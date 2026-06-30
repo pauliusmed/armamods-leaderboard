@@ -228,7 +228,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
           {/* Mobile: owner-tools panel inline, high up under the gallery.
               Hidden on desktop where the sticky right rail renders instead. */}
-          <div className="lg:hidden min-w-0 max-w-full overflow-hidden">
+          <div className="lg:hidden w-full">
             <ModConfigPanel
               modId={mod.id}
               modName={mod.name}
@@ -552,8 +552,8 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         </div>
 
         {/* Desktop sticky right rail: owner tools always one click away. */}
-        <aside className="hidden lg:block w-72 xl:w-80 shrink-0 min-w-0 max-w-full overflow-hidden">
-          <div className="sticky top-24">
+        <aside className="hidden lg:block w-72 xl:w-80 shrink-0">
+          <div className="sticky top-24 w-full">
             <ModConfigPanel
               modId={mod.id}
               modName={mod.name}

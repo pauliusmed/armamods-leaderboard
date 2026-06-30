@@ -65,14 +65,14 @@ export function ModWorkshopGallery({
       className="w-full border border-white/5 bg-zinc-950/50"
       aria-label={`${label} workshop gallery`}
     >
-      <div className="relative aspect-video max-h-80 bg-black overflow-hidden">
+      <div className="relative w-full aspect-video max-h-80 bg-black overflow-hidden">
         {images.map((image, index) => (
           <a
             key={image.url}
             href={image.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+            className={`absolute inset-0 transition-opacity duration-300 ${
               index === active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
             title={`Open screenshot ${index + 1} of ${images.length}`}
@@ -83,7 +83,7 @@ export function ModWorkshopGallery({
               alt=""
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
-              className="max-w-full max-h-full w-auto h-auto object-contain"
+              className="w-full h-full object-contain object-center"
             />
           </a>
         ))}

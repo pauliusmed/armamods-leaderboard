@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatModConfigSnippet } from '../web/src/lib/modConfig.ts';
+import { formatModConfigPreview, formatModConfigSnippet } from '../web/src/lib/modConfig.ts';
 
 describe('formatModConfigSnippet', () => {
   it('formats a game.mods[] entry with trailing comma', () => {
@@ -14,5 +14,13 @@ describe('formatModConfigSnippet', () => {
   it('escapes quotes in mod names', () => {
     const snippet = formatModConfigSnippet('AAAAAAAAAAAAAAAA', 'Mod "Special" Name');
     assert.match(snippet, /"name": "Mod \\"Special\\" Name"/);
+  });
+});
+
+describe('formatModConfigPreview', () => {
+  it('shows compact JSON without config.json line indent', () => {
+    const preview = formatModConfigPreview('629B2BA37EFFD577', 'WCS_Armaments');
+    assert.match(preview, /^\{\n  "modId": "629B2BA37EFFD577"/);
+    assert.doesNotMatch(preview, /^            \{/);
   });
 });

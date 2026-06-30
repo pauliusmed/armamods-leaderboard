@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { GameType } from '../../api/client';
 import { copyToClipboard } from '../../lib/clipboard';
-import { formatModConfigSnippet } from '../../lib/modConfig';
+import { formatModConfigPreview, formatModConfigSnippet } from '../../lib/modConfig';
 import { workshopPageUrl, workshopLabel } from '../../lib/workshop';
 import { ModThumbnail } from './ModThumbnail';
 
@@ -16,18 +16,19 @@ const BTN =
 
 export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigPanelProps) {
   const [hint, setHint] = useState<string | null>(null);
-  const snippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
+  const copySnippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
+  const previewSnippet = useMemo(() => formatModConfigPreview(modId, modName), [modId, modName]);
   const isReforger = game === 'reforger';
 
   const handleCopy = async () => {
-    const ok = await copyToClipboard(snippet);
+    const ok = await copyToClipboard(copySnippet);
     setHint(ok ? 'Copied' : 'Copy failed');
     window.setTimeout(() => setHint(null), 2500);
   };
 
   return (
-    <div className="border border-white/10 bg-zinc-900/50 flex flex-col overflow-hidden min-w-0 w-full max-w-full">
-      <div className="p-4 flex flex-col gap-4 min-w-0">
+    <div className="border border-white/10 bg-zinc-900/50 flex flex-col w-full">
+      <div className="p-4 flex flex-col gap-4 w-full">
         {/* `h-auto!` overrides ModThumbnail's fixed `h-20` so `aspect-square`
             actually produces a full-width square instead of an 80px strip. */}
         <ModThumbnail
@@ -39,31 +40,43 @@ export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigP
         />
 
         {isReforger && (
-          <div className="space-y-3 min-w-0">
+          <div className="space-y-3 w-full">
             <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.25em] text-center">
               game.mods[]
             </p>
-            <pre className="min-w-0 w-full max-w-full overflow-x-auto p-3 bg-black/40 border border-white/5 text-[10px] leading-relaxed text-emerald-200/90 font-mono whitespace-pre">
-              {snippet}
+            <pre className="w-full min-w-0 overflow-x-auto p-3 bg-black/40 border border-white/5 text-[10px] leading-relaxed text-emerald-200/90 font-mono whitespace-pre">
+              {previewSnippet}
             </pre>
-            <button
-              type="button"
-              onClick={() => void handleCopy()}
-              className={`${BTN} bg-tactical-orange text-black hover:bg-white`}
-            >
-              Copy
-            </button>
+            <div className="flex flex-col gap-2 w-full">
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className={`${BTN} bg-tactical-orange text-black hover:bg-white`}
+              >
+                Copy
+              </button>
+              <a
+                href={workshopPageUrl(modId, game)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${BTN} border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
+              >
+                {workshopLabel(game)} ↗
+              </a>
+            </div>
           </div>
         )}
 
-        <a
-          href={workshopPageUrl(modId, game)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`${BTN} min-w-0 max-w-full border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
-        >
-          {workshopLabel(game)} ↗
-        </a>
+        {!isReforger && (
+          <a
+            href={workshopPageUrl(modId, game)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${BTN} border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
+          >
+            {workshopLabel(game)} ↗
+          </a>
+        )}
 
         {hint && (
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-tactical-orange text-center">
