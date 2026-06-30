@@ -29,6 +29,7 @@ import {
 } from '../lib/share-meta';
 import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates } from '../lib/workshop-fetch';
 import { matchesModSearch, matchesServerSearch } from '../lib/search-match';
+import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -77,6 +78,7 @@ function getKVKeys(game: GameType) {
     HISTORY_DAILY: `history:daily:${game}`,
     SERVER_SQE: `cache:server_sqe:${game}`,
     SERVER_RANKING: `cache:ranking:servers:${game}`,
+    SCENARIO_RANKING: `cache:ranking:scenarios:${game}`,
   };
 }
 
@@ -835,6 +837,69 @@ app.get('/servers', async (c) => {
   const finished = Date.now() - start;
   console.log(`[SERVERS] Prepared in ${finished}ms`);
   
+  return response;
+});
+
+// Scenario leaderboard — persisted by collector; live fallback until next run
+app.get('/scenarios', async (c) => {
+  const game = getGameFromQuery(c);
+  const keys = getKVKeys(game);
+  const cache = await caches.open('armamods:scenarios');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  let source: 'kv' | 'live' = 'kv';
+  let ranking = await c.env.TRENDING_KV.get(keys.SCENARIO_RANKING, 'json') as any[] | null;
+
+  if (!ranking?.length) {
+    source = 'live';
+    const servers = await getChunkedData(c.env.TRENDING_KV, keys.SERVERS);
+    if (!servers?.length) {
+      return c.json({ data: [], meta: { total: 0, source: 'empty' } });
+    }
+    ranking = buildScenarioRanking(servers);
+  }
+
+  const response = c.json({
+    data: ranking,
+    meta: { total: ranking.length, source },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=300');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
+// Servers running a specific scenario (on-demand drill-down)
+app.get('/scenarios/servers', async (c) => {
+  const game = getGameFromQuery(c);
+  const keys = getKVKeys(game);
+  const scenarioName = c.req.query('name')?.trim();
+  if (!scenarioName) {
+    return c.json({ error: 'Missing name query parameter' }, 400);
+  }
+
+  const cache = await caches.open('armamods:scenario-servers');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const servers = await getChunkedData(c.env.TRENDING_KV, keys.SERVERS);
+  const sqeIndex = await loadSqeIndex(c.env.TRENDING_KV, game);
+  const enriched = enrichServersWithSqe(servers ?? [], sqeIndex);
+  const matched = enriched
+    .filter((s) => scenarioKey(s.scenarioName) === scenarioName)
+    .sort((a, b) => {
+      const rankA = a.sqeRank ?? Number.MAX_SAFE_INTEGER;
+      const rankB = b.sqeRank ?? Number.MAX_SAFE_INTEGER;
+      if (rankA !== rankB) return rankA - rankB;
+      return (b.players || 0) - (a.players || 0);
+    });
+
+  const response = c.json({
+    data: matched,
+    meta: { total: matched.length, scenario: scenarioName },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=300');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
 

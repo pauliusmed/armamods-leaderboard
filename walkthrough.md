@@ -16,8 +16,8 @@ BattleMetrics (every two hours). Workshop answers *what the mod is*; we answer
 *whether anyone is running it right now*.
 
 The UI may show workshop preview thumbnails for quick recognition, but the core
-value is telemetry — leaderboard, trending deltas, history charts, and a Reforger
-1.7 config auditor.
+value is telemetry — leaderboard, trending deltas, history charts, scenario popularity
+by active mission, and a Reforger 1.7 config auditor.
 
 It supports two games — **Reforger** (default) and **Arma 3** — served from the same
 pipeline with game-suffixed keys.
@@ -30,7 +30,7 @@ pipeline with game-suffixed keys.
 BattleMetrics REST API
         │  every 2h (GitHub Actions cron)
         ▼
-scripts/collector.ts  ──  ranks, trends, SQE scores, history, co-deployment
+scripts/collector.ts  ──  ranks, trends, SQE scores, scenario leaderboard, history, co-deployment
         │  shards into ≤5MB chunks
         ▼
 Cloudflare KV  (namespace TRENDING_KV)
@@ -67,11 +67,11 @@ web/
     audit-config.ts        config auditor heuristics (Reforger 1.7)
     history-query.ts       maps ?days= → KV history key + slice
     _middleware.ts         request logging
-  functions/lib/           shared helpers (share-meta, search-match)
+  functions/lib/           shared helpers (share-meta, search-match, scenario-ranking)
   src/
     api/client.ts          axios client with in-memory TTL cache
-    components/            pages (ModList, ServerList, ModDetail, ServerDetail, …)
-    hooks/                 useMods, useServers
+    components/            pages (ModList, ServerList, ScenarioList, ModDetail, …)
+    hooks/                 useMods, useServers, useScenarios
     lib/                   site links, audit labels, parseServerConfig
 test/                      node:test unit tests (findMatchingBrace, EMA, audit, …)
 docs/                      ALGORITHM.md, architecture decisions, case study
@@ -88,8 +88,9 @@ Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`. Two phases:
 **`collect`** (run per game):
 1. `BattleMetricsService.fetchAllServers()` paginates the BM API, respecting the
    120 req/min (keyed) / 60 req/min (anonymous) limits.
-2. Servers are normalized — Reforger exposes `details.reforger.mods[]`, Arma 3
-   exposes `details.modIds[]` / `modNames[]`.
+2. Servers are normalized — Reforger exposes `details.reforger.mods[]` and
+   `details.reforger.scenarioName`; Arma 3 exposes `details.modIds[]` / `modNames[]`
+   and `map · mission` as `scenarioName`.
 3. Mod usage is aggregated into `serverCount` + `totalPlayers` per mod.
 4. Mods are ranked: `overallRank = round((playerRank + serverRank) / 2)`.
 5. **Co-deployment**: for each mod, the top 5 mods most often run alongside it are
@@ -97,7 +98,10 @@ Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`. Two phases:
    writes**.
 6. **SQE scoring** (`runServerScoring`): snapshot score, EMA smoothing against the
    previous leaderboard, elite-rank inertia for the top 3, then ranks are assigned.
-7. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
+7. **Scenario leaderboard** (`buildScenarioRanking`): groups servers by `scenarioName`,
+   sums players, computes avg fill %, picks top server by SQE rank, assigns `rank`
+   by total players. Written to `cache:ranking:scenarios:{game}` (one KV write).
+8. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
 
 **`trending`** (run after collect):
 Reads the previous history point, computes `trendScore = rankDelta × positionWeight
@@ -110,8 +114,10 @@ suffix, Arma 3 uses `:arma3`):
 | Key pattern | Contents |
 |---|---|
 | `cache:mods:{i}` + `:meta` | sharded mod list (rank, players, coDeployed) |
-| `cache:servers:{i}` + `:meta` | sharded server list (with SQE fields) |
+| `cache:servers:{i}` + `:meta` | sharded server list (with SQE fields + `scenarioName`) |
 | `cache:ranking:servers:{game}` | top-200 SQE leaderboard |
+| `cache:ranking:scenarios:{game}` | scenario leaderboard (rank, servers, players, top server) |
+| `cache:server_sqe:{game}` | compact SQE index for API enrichment |
 | `cache:stats`, `cache:lastUpdate` | global counts |
 | `cache:trending:{daily\|weekly\|monthly}` | precomputed trending |
 | `history:{hourly\|daily\|weekly\|monthly\|yearly}:{game}:{i}` | sharded time series |
@@ -170,6 +176,14 @@ Detailed derivations live in [`docs/ALGORITHM.md`](./docs/ALGORITHM.md).
   to stabilize the #1–#3 positions.
 - **Co-deployment** — O(servers × mods) association mining, results embedded into
   mod objects for free.
+- **Scenario ranking** — groups live servers by BattleMetrics `scenarioName` (Reforger
+  mission or Arma 3 `map · mission`). Rank `#1` = highest total players across all
+  servers running that scenario. No EMA — scenarios are aggregate snapshots, not
+  persistent entities. Shared logic: `web/functions/lib/scenario-ranking.ts`.
+
+**UI navigation:** primary nav is Mods · Servers · Trending · **Scenarios** ·
+**Tools** (dropdown: Config Audit, Get Hosting). Server detail links scenario name
+to `/scenarios?s={name}`.
 
 ---
 
@@ -189,6 +203,8 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 | GET | `/servers/:id` | single server detail |
 | GET | `/servers/:id/history` | server rank/players time series |
 | GET | `/servers/ranking` | top-200 SQE leaderboard |
+| GET | `/scenarios` | scenario leaderboard (KV; live fallback if key missing) |
+| GET | `/scenarios/servers?name=` | servers running a given scenario |
 | GET | `/trending/:period` | rising / falling / new |
 | GET | `/diagnostics` | system health (shard counts, history range) |
 | GET | `/og/preview/{mod,server}/:id` | 302 to cached workshop CDN URL (OG bots; same KV as thumbnails) |
@@ -240,8 +256,8 @@ npm test
 ```
 
 Covers the pieces where correctness is non-obvious: `findMatchingBrace` surgical
-extraction, EMA smoothing/clamping, audit-config heuristics, history-query
-resolution, share-meta, and search matching.
+extraction, EMA smoothing/clamping, scenario aggregation (`buildScenarioRanking`),
+audit-config heuristics, history-query resolution, share-meta, and search matching.
 
 ---
 
@@ -252,8 +268,10 @@ resolution, share-meta, and search matching.
   that full `JSON.parse` of multi-MB blobs would hit.
 - **Sharded, parallel reads.** `Promise.all` over shards instead of sequential gets
   removes the latency that previously caused 503s under load.
-- **Compute-on-write.** Trending, SQE, and co-deployment are all precomputed by the
-  collector, so the edge API only reads — no per-request computation, cacheable.
+- **Compute-on-write.** Trending, SQE, scenario ranking, and co-deployment are all
+  precomputed by the collector, so the edge API only reads — no per-request
+  aggregation on the hot path (except a one-time live fallback for scenarios until
+  the first post-deploy collector run).
 - **EMA + elite inertia.** Smoothing prevents routine restarts and off-peak hours
   from reshuffling the leaderboard; the top-3 cushion avoids noisy #1–#3 flips
   while still letting a real challenger through.

@@ -10,6 +10,8 @@ Thank you for your interest in improving the project! This document provides gui
    - Web: `cd web && npm install`
 3. **Run Linting**: Ensure your code passes TypeScript checks with `npx tsc --noEmit`.
 4. **Local Proxy**: Use `npm run dev` in the root to test API interactions.
+5. **Tests**: Run `npm test` before opening a PR. Scenario logic lives in
+   `web/functions/lib/scenario-ranking.ts` with coverage in `test/scenario-ranking.test.ts`.
 
 ## 📜 Coding Standards
 

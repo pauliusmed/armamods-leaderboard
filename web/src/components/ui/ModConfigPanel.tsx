@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { GameType } from '../../api/client';
 import { copyToClipboard } from '../../lib/clipboard';
 import { formatModConfigSnippet } from '../../lib/modConfig';
@@ -9,14 +8,13 @@ import { ModThumbnail } from './ModThumbnail';
 interface ModConfigPanelProps {
   modId: string;
   modName: string;
-  backHref: string;
   game?: GameType;
 }
 
 const BTN =
-  'flex w-full items-center justify-center py-4 text-[11px] font-black uppercase tracking-widest transition-colors';
+  'flex w-full items-center justify-center py-3 text-[11px] font-black uppercase tracking-widest transition-colors';
 
-export function ModConfigPanel({ modId, modName, backHref, game = 'reforger' }: ModConfigPanelProps) {
+export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigPanelProps) {
   const [hint, setHint] = useState<string | null>(null);
   const snippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
   const isReforger = game === 'reforger';
@@ -29,20 +27,15 @@ export function ModConfigPanel({ modId, modName, backHref, game = 'reforger' }: 
 
   return (
     <div className="border border-white/10 bg-zinc-900/50 flex flex-col overflow-hidden">
-      <Link
-        to={backHref}
-        className="px-4 py-3.5 border-b border-white/5 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
-      >
-        ← [ Back to Registry ]
-      </Link>
-
       <div className="p-4 flex flex-col gap-4">
+        {/* `h-auto!` overrides ModThumbnail's fixed `h-20` so `aspect-square`
+            actually produces a full-width square instead of an 80px strip. */}
         <ModThumbnail
           modId={modId}
           modName={modName}
           game={game}
           size="lg"
-          className="w-full! max-w-none! aspect-square object-cover border border-white/10"
+          className="w-full! h-auto! max-w-none! aspect-square object-cover border border-white/10"
         />
 
         {isReforger && (

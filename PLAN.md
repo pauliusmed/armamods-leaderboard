@@ -16,6 +16,7 @@ This document outlines the strategic vision, current implementation status, and 
 - [x] **Storage Layer**: Sharded Cloudflare KV (JSON-based) to bypass 25MB limits.
 - [x] **API Layer**: High-performance Hono-based Edge API with global caching.
 - [x] **Frontend**: Reactive React 19 dashboard with client-side caching.
+- [x] **Scenario leaderboard**: Collector → KV `cache:ranking:scenarios:{game}`; `/scenarios` UI + Tools nav dropdown.
 
 ---
 
@@ -44,6 +45,11 @@ This document outlines the strategic vision, current implementation status, and 
   - [x] `/api/mods/:id/dependencies` — direct deps from workshop `__NEXT_DATA__`, KV cache 7d.
   - [x] Mod detail UI: „Required Dependencies“ vs „Frequently Deployed Together“ (BM co-deploy).
   - [ ] Recursive / transitive dependency tree (depth &gt; 1).
+- [x] **Scenario leaderboard**:
+  - [x] `scenarioName` per server (BM: Reforger mission / Arma 3 map·mission).
+  - [x] Collector aggregation + `GET /api/scenarios` + drill-down `/api/scenarios/servers`.
+  - [x] UI `/scenarios`, server detail deep-link `?s=`, nav **Tools** dropdown.
+  - [ ] Scenario history / trending (future — would extend shared `history:*` shards).
 - [ ] **Arma Workshop Scraper (batch metadata)**:
   - [ ] Author, file size, last update (collector-side enrichment, not per-page scrape).
   - [ ] Categorization (Survival, Roleplay, PvP, MilSim).

@@ -26,6 +26,15 @@ export function Layout({ children }: LayoutProps) {
     }
   `;
 
+  const toolsActive = (!isArma3 && isActive('/audit')) || isActive(`${gp}/hosting`);
+  const toolsNavClass = `
+    px-4 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 relative group/tools
+    ${toolsActive
+      ? 'text-tactical-orange bg-white/5 border-l-2 border-r-2 border-tactical-orange'
+      : 'text-gray-500 hover:text-white hover:bg-white/5'
+    }
+  `;
+
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -62,14 +71,38 @@ export function Layout({ children }: LayoutProps) {
             <Link to={`${gp}/trending`} className={navItemClass(`${gp}/trending`)}>
               [ 📈 Trending Intel ]
             </Link>
-            {!isArma3 && (
-              <Link to="/audit" className={navItemClass('/audit')}>
-                [ 🔍 Config Audit ]
-              </Link>
-            )}
-            <Link to={`${gp}/hosting`} className={navItemClass(`${gp}/hosting`)}>
-              [ 🚀 Get Hosting ]
+            <Link to={`${gp}/scenarios`} className={navItemClass(`${gp}/scenarios`)}>
+              [ 🗺️ Scenarios ]
             </Link>
+            <div className="relative group/tools">
+              <button type="button" className={toolsNavClass}>
+                [ 🛠 Tools ]
+                <svg className="inline-block ml-1 w-2 h-2 text-tactical-orange group-hover/tools:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="absolute top-full left-0 w-56 bg-[#0a0a0a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible group-hover/tools:opacity-100 group-hover/tools:visible transition-all duration-200 py-2 z-50">
+                <div className="px-4 py-2 border-b border-white/5 mb-2">
+                  <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Utilities</span>
+                </div>
+                {!isArma3 && (
+                  <Link
+                    to="/audit"
+                    className={`flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors ${isActive('/audit') ? 'text-tactical-orange' : 'text-gray-400'}`}
+                  >
+                    <div className={`w-1 h-4 ${isActive('/audit') ? 'bg-tactical-orange' : 'bg-transparent'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Config Audit</span>
+                  </Link>
+                )}
+                <Link
+                  to={`${gp}/hosting`}
+                  className={`flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors ${isActive(`${gp}/hosting`) ? 'text-tactical-orange' : 'text-gray-400'}`}
+                >
+                  <div className={`w-1 h-4 ${isActive(`${gp}/hosting`) ? 'bg-tactical-orange' : 'bg-transparent'}`} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Get Hosting</span>
+                </Link>
+              </div>
+            </div>
           </nav>
 
           <div className="flex items-stretch shrink-0">
@@ -198,26 +231,38 @@ export function Layout({ children }: LayoutProps) {
               >
                 [ 📈 Trending Intel ]
               </Link>
-              {!isArma3 && (
-                <Link
-                  to="/audit"
-                  className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                    isActive('/audit') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  [ 🔍 Config Audit ]
-                </Link>
-              )}
               <Link
-                to={`${gp}/hosting`}
+                to={`${gp}/scenarios`}
                 className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                  isActive(`${gp}/hosting`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
+                  isActive(`${gp}/scenarios`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                [ 🚀 Get Hosting ]
+                [ 🗺️ Scenarios ]
               </Link>
+              <div className="pt-2 mt-2 border-t border-white/5">
+                <p className="px-4 py-2 text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Tools</p>
+                {!isArma3 && (
+                  <Link
+                    to="/audit"
+                    className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
+                      isActive('/audit') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    [ 🔍 Config Audit ]
+                  </Link>
+                )}
+                <Link
+                  to={`${gp}/hosting`}
+                  className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
+                    isActive(`${gp}/hosting`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  [ 🚀 Get Hosting ]
+                </Link>
+              </div>
             </div>
           </nav>
         )}
@@ -267,6 +312,7 @@ export function Layout({ children }: LayoutProps) {
                 <ul className="space-y-4">
                   <li><Link to={isArma3 ? "/arma3" : "/"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Mod Database</Link></li>
                   <li><Link to={isArma3 ? "/arma3/servers" : "/servers"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Active Servers</Link></li>
+                  <li><Link to={isArma3 ? "/arma3/scenarios" : "/scenarios"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Scenario Leaderboard</Link></li>
                   <li><Link to={isArma3 ? "/best-arma-3-hosting" : "/best-arma-reforger-hosting"} className="text-tactical-orange hover:underline transition-colors font-black uppercase tracking-widest text-[10px]">Best Hosting 2026</Link></li>
                 </ul>
                 <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Support Project</Link>

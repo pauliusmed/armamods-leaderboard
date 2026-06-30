@@ -172,17 +172,25 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       />
       <header>
         <div className="border-b border-white/10 pb-10 sm:pb-12">
+          <Link
+            to={`${gp}/`}
+            className="block mb-6 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+          >
+            ← [ Back to Registry ]
+          </Link>
+
+          {/* order-* keeps the mod identity (title/rank) first on mobile while
+              keeping the owner-tools sidebar on the left on desktop. */}
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            <aside className="w-full lg:w-64 xl:w-72 shrink-0">
+            <aside className="order-2 lg:order-1 w-full lg:w-72 xl:w-80 shrink-0">
               <ModConfigPanel
                 modId={mod.id}
                 modName={mod.name}
-                backHref={`${gp}/`}
                 game={game}
               />
             </aside>
 
-            <div className="flex-1 min-w-0 space-y-6">
+            <div className="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="space-y-3 min-w-0">
                   <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">

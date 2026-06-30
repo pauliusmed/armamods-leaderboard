@@ -250,7 +250,13 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             </p>
             {server.scenarioName && (
               <p className="text-sm font-bold uppercase tracking-[0.15em] text-gray-400 max-w-3xl">
-                Scenario · {server.scenarioName}
+                Scenario ·{' '}
+                <Link
+                  to={`${gp}/scenarios?s=${encodeURIComponent(server.scenarioName)}`}
+                  className="text-gray-400 hover:text-tactical-orange transition-colors"
+                >
+                  {server.scenarioName}
+                </Link>
               </p>
             )}
           </div>

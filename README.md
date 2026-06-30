@@ -38,6 +38,11 @@ A production-grade, highly-optimized data aggregation and visualization platform
 * **Solution**: On-demand Reforger workshop scrape in Edge Workers — one HTML fetch caches thumbnail CDN URL + dependency list in KV (7d). UI loads images directly from Bohemia CDN via `/api/mods/:id/thumbnail` JSON (no redirect hop per `<img>`).
 * **Result**: Workshop recognition + install requirements without duplicating the catalog or storing image files. See [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md).
 
+### 6. Scenario Leaderboard (Mission Popularity)
+* **Problem**: Server lists show per-node `scenarioName`, but there was no view of which missions/scenarios dominate the network.
+* **Solution**: Collector aggregates servers by `scenarioName` after SQE scoring and writes a compact ranking to `cache:ranking:scenarios:{game}`. Edge API serves `GET /api/scenarios`; drill-down via `GET /api/scenarios/servers?name=`.
+* **Result**: One KV write per collector run, no client-side aggregation of 5000 servers. UI at `/scenarios` with **Tools** dropdown nav (Config Audit, Hosting).
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -138,9 +143,9 @@ To ensure the integrity of the math scoring models and surgical parser:
 ```bash
 npm test
 ```
-*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds.*
+*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`).*
 
----
+**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [CHANGELOG.md](CHANGELOG.md) (release notes).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 

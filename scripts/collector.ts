@@ -15,6 +15,7 @@
 
 import 'dotenv/config';
 import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
+import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
 
 type BattleMetricsServer = Awaited<ReturnType<BattleMetricsService['fetchAllServers']>>[number];
 
@@ -108,6 +109,7 @@ function getKVKeys(game: GameType) {
     STATS: `cache:stats${suffix}`,
     LAST_UPDATE: `cache:lastUpdate${suffix}`,
     TRENDING: `cache:trending${suffix}`,
+    SCENARIO_RANKING: `cache:ranking:scenarios:${game}`,
   };
 }
 
@@ -376,6 +378,10 @@ interface ServerMod {
       }
     }
     await kv.put(`${KV_KEYS.SERVERS}:meta`, JSON.stringify({ total: serverList.length, chunks: serverChunks.length }));
+
+    const scenarioRanking = buildScenarioRanking(serverList);
+    await kv.put(KV_KEYS.SCENARIO_RANKING, JSON.stringify(scenarioRanking));
+    console.log(`  - ${scenarioRanking.length} scenarios ranked`);
 
     console.log(`✅ KV write completed successfully`);
 

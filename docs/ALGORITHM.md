@@ -1,4 +1,4 @@
-https://reforgermods.com/trending# Trending Algorithm
+# Trending Algorithm
 
 ## Overall Rank-Based Weighted Velocity Model
 
@@ -175,6 +175,63 @@ The history API supports dynamic temporal scaling:
 - **7D / 30D (Daily)**: Reads from `history:daily:${game}` (slices the last 7 or 30 entries).
 - **1Y (Weekly)**: Swings baseKey to `history:weekly:${game}` (52 Monday buckets, peak per week). Falls back to `history:monthly` until enough weekly points exist after deploy.
 - **All-Time (Yearly)**: Swings baseKey to `history:yearly:${game}` (slices the last 10 entries).
+
+---
+
+## Scenario Leaderboard (Mission Popularity)
+
+Scenarios are **not** scored with EMA or tenure — they are ephemeral groupings of
+servers that happen to run the same BattleMetrics mission label at snapshot time.
+
+### Data source
+
+| Game | `scenarioName` field |
+|---|---|
+| Reforger | `details.reforger.scenarioName` |
+| Arma 3 | `{map} · {mission}` concatenation |
+
+Servers without a scenario are grouped under `— Unknown —`.
+
+### Aggregation (`buildScenarioRanking`)
+
+For each distinct scenario key:
+
+```
+totalPlayers   = Σ server.players
+serverCount    = number of servers in group
+avgFillPercent = mean(players / maxPlayers × 100) over servers with maxPlayers > 0
+topServer      = server with best sqeRank (tie-break: more players)
+```
+
+### Ranking
+
+Scenarios are sorted by `totalPlayers` descending (tie-break: `serverCount`, then
+name). Rank `1` is assigned to the scenario with the most active players network-wide.
+
+Output is stored in `cache:ranking:scenarios:{game}`:
+
+```json
+{
+  "name": "Conflict",
+  "rank": 1,
+  "serverCount": 42,
+  "totalPlayers": 680,
+  "avgFillPercent": 55.2,
+  "topServer": { "id": "…", "name": "…", "players": 64, "sqeRank": 3 }
+}
+```
+
+### API
+
+- `GET /api/scenarios` — reads KV ranking (5 min edge cache). If the key is empty
+  (e.g. before first post-deploy collector run), falls back to live aggregation from
+  server shards.
+- `GET /api/scenarios/servers?name=` — filters server shards for drill-down UI.
+
+Shared implementation: `web/functions/lib/scenario-ranking.ts` (collector + API + tests).
+
+> **Future:** scenario history/trending would require adding a `scenarios` map to
+> shared `history:*` time-series points — not implemented in v1.17.
 
 ---
 

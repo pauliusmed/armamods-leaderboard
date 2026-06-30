@@ -65,6 +65,20 @@ export interface Server {
   mods: ServerMod[];
 }
 
+export interface ScenarioRankingEntry {
+  name: string;
+  rank: number;
+  serverCount: number;
+  totalPlayers: number;
+  avgFillPercent: number;
+  topServer: {
+    id: string;
+    name: string;
+    players: number;
+    sqeRank: number | null;
+  } | null;
+}
+
 export interface ApiResponse<T> {
   data: T[];
   meta: {

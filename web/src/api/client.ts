@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Mod, Server, ApiResponse, TrendingResponse } from '../types';
+import type { Mod, Server, ApiResponse, TrendingResponse, ScenarioRankingEntry } from '../types';
 import { modThumbnailUrl } from '../lib/workshop';
 
 export type GameType = 'reforger' | 'arma3';
@@ -207,6 +207,29 @@ export const serversApi = {
       });
       return response.data;
     }, 3600000);
+  },
+};
+
+export const scenariosApi = {
+  getRanking: async (game: GameType = 'reforger') => {
+    const key = `scenarios:${game}`;
+    return getCached(key, async () => {
+      const response = await api.get<{
+        data: ScenarioRankingEntry[];
+        meta: { total: number; source: string };
+      }>('scenarios', { params: { game } });
+      return response.data;
+    }, 300000);
+  },
+
+  getServers: async (scenarioName: string, game: GameType = 'reforger') => {
+    const key = `scenario-servers:${game}:${scenarioName}`;
+    return getCached(key, async () => {
+      const response = await api.get<ApiResponse<Server>>('scenarios/servers', {
+        params: { name: scenarioName, game },
+      });
+      return response.data;
+    }, 60000);
   },
 };
 

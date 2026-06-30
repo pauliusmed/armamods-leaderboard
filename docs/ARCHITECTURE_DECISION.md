@@ -33,6 +33,10 @@ cache:trending:daily       — 24h trending pre-calculated
 cache:trending:weekly      — 7d trending pre-calculated
 cache:trending:monthly     — 30d trending pre-calculated
 cache:ranking:servers      — TOP 200 serverių leaderboard
+cache:ranking:scenarios:{game} — Scenario leaderboard (rank, serverCount, totalPlayers, topServer)
+cache:server_sqe:{game}    — Kompaktinis SQE indeksas API enrichment
+cache:og-image:*           — Workshop thumbnail CDN URL (on-demand, 7d)
+cache:mod-deps:*           — Workshop dependencies JSON (on-demand, 7d)
 
 history:hourly:game[:0..N] — Modų + serverių istorija (12 taškų, valandinė)
 history:daily:game[:0..N]  — Modų + serverių istorija (31 taškas, dienos peak)
@@ -67,3 +71,4 @@ Kiekvienas istorijos taškas turi formatą:
 - 2024-03-29: Pradinis SQL → KV migracijos sprendimas.
 - 2026-05-13: Peak Aggregation, sharding, chirurginis JSON išskleidimas.
 - 2026-05-14: Serverių istorijos suliejimas su modų istorija, pašalinant atskirą `history:server_scores` blob'ą.
+- 2026-06-30: Scenario leaderboard (`cache:ranking:scenarios:{game}`) — agregacija collector run metu, API read-only.

@@ -1,3 +1,22 @@
+## [1.17.0] - 2026-06-30
+
+### 🗺️ Scenario leaderboard + Tools navigacija
+- **Scenario leaderboard** (`/scenarios`, `/arma3/scenarios`): scenarijai agreguojami collector run metu → KV `cache:ranking:scenarios:{game}` su `rank`, serverių sk., žaidėjų suma, vid. užpildymu, top serveriu.
+- **API**: `GET /api/scenarios` (reitingas iš KV, live fallback iki kito run), `GET /api/scenarios/servers?name=` (serveriai pagal scenarijų).
+- **Navigacija**: Config Audit ir Get Hosting perkelti į **Tools** dropdown; naujas **Scenarios** punktas header'yje.
+- **Server detail**: scenario pavadinimas nuoroda į atitinkamą scenario leaderboard su `?s=` filtru.
+
+### 📋 Mod detail — serverių savininkų įrankiai + workshop metadata
+- **config.json snippet**: Kairysis sidebar panelis su visada matomu `game.mods[]` įrašu (`modId` + `name` iš DB), vieno paspaudimo **Copy** ir **Reforger Workshop ↗** nuoroda. Formatas paruoštas įklijavimui į serverio `config.json`.
+- **Vieningas sidebar blokas**: `ModConfigPanel` (thumbnail, `game.mods[]` snippet, Copy, Workshop) kairiajame skydelyje. **Back to Registry** pakeltas į antraštės viršų; mobile pirmiausia pavadinimas + reitingas + galerija, savininko įrankiai — žemiau. Thumbnail dabar tikras kvadratas (anksčiau atsivaizdavo plona juostele), sidebar praplėstas, mygtukai lieknesni.
+- **Workshop screenshot galerija**: `GET /api/mods/:id/gallery` — on-demand scrape iš `previews` + `screenshots` (`__NEXT_DATA__`); KV cache 7d. Mod detail rodo carousel tik kai 2+ shot'ai (vienas slide, rodyklės, dots).
+- **Workshop datos**: `createdAt` / `updatedAt` iš workshop → **Created** ir **Last Modified** (DD.MM.YYYY) mod detail antraštėje; KV `cache:mod-dates:*`, įtraukta į `ensureReforgerWorkshopMetadata()`.
+- **SQE Points paslėpti**: Serverio profilyje (`ServerDetail`) neberodomas `sqePoints` — lieka tik Overall Rank ir tier badge.
+
+### 🧪 Testai
+- `test/mod-config.test.ts` — `formatModConfigSnippet()`
+- `test/scenario-ranking.test.ts` — `buildScenarioRanking()` agregacija
+
 ## [1.16.0] - 2026-06-27
 
 ### 🏅 Serverių tier sistema + įskiepiamas badge (prestižo sluoksnis)
