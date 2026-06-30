@@ -26,8 +26,8 @@ export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigP
   };
 
   return (
-    <div className="border border-white/10 bg-zinc-900/50 flex flex-col overflow-hidden">
-      <div className="p-4 flex flex-col gap-4">
+    <div className="border border-white/10 bg-zinc-900/50 flex flex-col overflow-hidden min-w-0 w-full max-w-full">
+      <div className="p-4 flex flex-col gap-4 min-w-0">
         {/* `h-auto!` overrides ModThumbnail's fixed `h-20` so `aspect-square`
             actually produces a full-width square instead of an 80px strip. */}
         <ModThumbnail
@@ -39,11 +39,11 @@ export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigP
         />
 
         {isReforger && (
-          <div className="space-y-3">
+          <div className="space-y-3 min-w-0">
             <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.25em] text-center">
               game.mods[]
             </p>
-            <pre className="overflow-x-auto p-3 bg-black/40 border border-white/5 text-[10px] leading-relaxed text-emerald-200/90 font-mono whitespace-pre">
+            <pre className="min-w-0 w-full max-w-full overflow-x-auto p-3 bg-black/40 border border-white/5 text-[10px] leading-relaxed text-emerald-200/90 font-mono whitespace-pre">
               {snippet}
             </pre>
             <button
@@ -60,7 +60,7 @@ export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigP
           href={workshopPageUrl(modId, game)}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${BTN} border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
+          className={`${BTN} min-w-0 max-w-full border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
         >
           {workshopLabel(game)} ↗
         </a>

@@ -183,7 +183,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         Mobile (<lg): the panel renders inline below the header instead, so the
         mod identity (title/rank/gallery) stays above the fold.
       */}
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 min-w-0 max-w-full">
         <div className="flex-1 min-w-0 space-y-12">
           <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -228,7 +228,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
           {/* Mobile: owner-tools panel inline, high up under the gallery.
               Hidden on desktop where the sticky right rail renders instead. */}
-          <div className="lg:hidden">
+          <div className="lg:hidden min-w-0 max-w-full overflow-hidden">
             <ModConfigPanel
               modId={mod.id}
               modName={mod.name}
@@ -552,7 +552,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         </div>
 
         {/* Desktop sticky right rail: owner tools always one click away. */}
-        <aside className="hidden lg:block w-72 xl:w-80 shrink-0">
+        <aside className="hidden lg:block w-72 xl:w-80 shrink-0 min-w-0 max-w-full overflow-hidden">
           <div className="sticky top-24">
             <ModConfigPanel
               modId={mod.id}
