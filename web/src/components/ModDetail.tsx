@@ -86,13 +86,13 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             if (!signal?.aborted) setDepsLoading(false);
           });
       }
-      
+
       // Filter history: if data is older than 7 days and mod is currently inactive,
       // it's better to show no data than misleading stale data.
       const rawHistory = historyData.data || [];
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      
+
       const latestEntry = rawHistory.length > 0 ? new Date(rawHistory[rawHistory.length - 1].date) : null;
       const isStale = latestEntry && latestEntry < sevenDaysAgo && (modRes.data.totalPlayers === 0);
 
@@ -149,11 +149,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   if (loading) return <StatusState type="loading" />;
   if (error || !mod) return (
     <div className="space-y-8">
-      <StatusState 
-        type="error" 
-        message={error || 'Module not found in registry'} 
-        onAction={() => loadMod(selectedDays)} 
-        actionText="Re-scan" 
+      <StatusState
+        type="error"
+        message={error || 'Module not found in registry'}
+        onAction={() => loadMod(selectedDays)}
+        actionText="Re-scan"
       />
       <Link to={`${gp}/`} className="block text-center text-tactical-orange font-black uppercase tracking-[0.4em] text-[10px] hover:underline">
         ← Return to Database
@@ -162,391 +162,406 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   );
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      <SEO 
+    <div className="animate-in fade-in duration-700">
+      <SEO
         title={`${mod.name} - Statistics & Trends`}
         description={`${mod.name}: ${mod.totalPlayers?.toLocaleString() ?? 0} players on ${mod.serverCount ?? 0} BattleMetrics servers. Rank #${mod.stats?.overallRank || mod.overallRank || '—'}.`}
         keywords={`${mod.name}, Arma Reforger Mods, Arma 3 Mods, Mod Statistics, ${mod.author || ''}`}
         url={modPageUrl(mod.id, game)}
         image={modPreviewImageUrl(mod.id, game)}
       />
-      <header>
-        <div className="border-b border-white/10 pb-10 sm:pb-12">
-          <Link
-            to={`${gp}/`}
-            className="block mb-6 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
-          >
-            ← [ Back to Registry ]
-          </Link>
+      <Link
+        to={`${gp}/`}
+        className="block mb-6 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+      >
+        ← [ Back to Registry ]
+      </Link>
 
-          {/* order-* keeps the mod identity (title/rank) first on mobile while
-              keeping the owner-tools sidebar on the left on desktop. */}
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            <aside className="order-2 lg:order-1 w-full lg:w-72 xl:w-80 shrink-0">
-              <ModConfigPanel
-                modId={mod.id}
-                modName={mod.name}
-                game={game}
-              />
-            </aside>
+      {/*
+        Desktop: main content on the left, owner-tools panel as a sticky right
+        rail so Copy/Workshop stay reachable while scrolling the long page.
+        Mobile (<lg): the panel renders inline below the header instead, so the
+        mod identity (title/rank/gallery) stays above the fold.
+      */}
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+        <div className="flex-1 min-w-0 space-y-12">
+          <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-3 min-w-0">
+                <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
+                  // MODULE_IDENTIFIER: {mod.id}
+                </span>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tighter leading-none break-words">
+                  {mod.name}
+                </h1>
+                {mod.author && (
+                  <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                    Workshop author · {mod.author}
+                  </p>
+                )}
+                {(mod.workshopCreated || mod.workshopModified) && (
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                    {mod.workshopCreated && (
+                      <span>
+                        Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
+                      </span>
+                    )}
+                    {mod.workshopModified && (
+                      <span>
+                        Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+                <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
+                  Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
+                </p>
+              </div>
+              <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0 self-start">
+                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+              </div>
+            </div>
 
-            <div className="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="space-y-3 min-w-0">
-                  <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
-                    // MODULE_IDENTIFIER: {mod.id}
+            <ModWorkshopGallery modId={mod.id} modName={mod.name} game={game} />
+          </header>
+
+          {/* Mobile: owner-tools panel inline, high up under the gallery.
+              Hidden on desktop where the sticky right rail renders instead. */}
+          <div className="lg:hidden">
+            <ModConfigPanel
+              modId={mod.id}
+              modName={mod.name}
+              game={game}
+            />
+          </div>
+
+          <StatsHero
+            stats={[
+              { label: 'Total Personnel', value: mod.stats?.totalPlayers || mod.totalPlayers || 0 },
+              { label: 'Deployed Servers', value: mod.stats?.serverCount || mod.serverCount || 0 },
+              { label: 'Marketshare', value: `${(mod.stats?.marketShare || 0).toFixed(1)}%` },
+              { label: 'Overall Rank', value: `#${mod.stats?.overallRank || '-'}` }
+            ]}
+            title="Tactical Analytics"
+            subtitle="Real-time module performance tracking across global network"
+          />
+
+          {/* Affiliate Section */}
+          <AffiliateBanner />
+
+          <section className="space-y-6 sm:space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
+              <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+                📈 Performance Timeline
+              </h2>
+              <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
+                {[
+                  { label: '24H', value: 1 },
+                  { label: '1M', value: 30 },
+                  { label: '1Y', value: 366 }
+                ].map(opt => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setSelectedDays(opt.value)}
+                    className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                      selectedDays === opt.value
+                        ? 'bg-tactical-orange text-black'
+                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {patchInsight && (
+              <div
+                className={`flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 border rounded-lg ${PATCH_STATUS_STYLE[patchInsight.row.status]}`}
+              >
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {AUDIT_STATUS_SHORT[patchInsight.row.status]}
+                </span>
+                <p className="text-[11px] opacity-90 flex-1">{patchInsight.row.title}</p>
+                {patchInsight.row.dropPct != null && patchInsight.row.dropPct > 0 && (
+                  <span className="text-sm font-black text-red-400 shrink-0">
+                    −{patchInsight.row.dropPct}%
                   </span>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tighter leading-none break-words">
-                    {mod.name}
-                  </h1>
-                  {mod.author && (
-                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                      Workshop author · {mod.author}
-                    </p>
-                  )}
-                  {(mod.workshopCreated || mod.workshopModified) && (
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
-                      {mod.workshopCreated && (
-                        <span>
-                          Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
-                        </span>
+                )}
+                {patchInsight.broken && (
+                  <Link
+                    to="/audit"
+                    className="text-[9px] font-bold uppercase tracking-widest text-tactical-orange hover:underline shrink-0"
+                  >
+                    Config audit →
+                  </Link>
+                )}
+              </div>
+            )}
+
+            <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm">
+              <CardContent className="p-4 sm:p-6 lg:p-8 h-[400px]">
+                {!history || history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
+                    <span>No recent activity detected</span>
+                    <span className="text-[8px] opacity-50 font-medium">Data may be archived or module is currently inactive</span>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#666"
+                        tickFormatter={(tick) => {
+                          if (!tick) return '';
+                          if (tick.length === 10 && tick.includes('-')) {
+                            const parts = tick.split('-');
+                            return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+                          }
+                          const d = new Date(tick);
+                          if (selectedDays === 1) {
+                            return `${d.getHours().toString().padStart(2, '0')}:00`;
+                          }
+                          return `${d.getMonth()+1}/${d.getDate()}`;
+                        }}
+                        tick={{ fontSize: 10, fill: '#666', fontWeight: 'bold' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        yAxisId="players"
+                        stroke="#f97316"
+                        tick={{ fontSize: 10, fill: '#f97316', fontWeight: 'bold' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={40}
+                      />
+                      <YAxis
+                        yAxisId="servers"
+                        orientation="left"
+                        stroke="#db2777"
+                        domain={[(min: number) => Math.max(0, min - 1), (max: number) => max + 1]}
+                        tick={{ fontSize: 10, fill: '#db2777', fontWeight: 'bold' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={30}
+                      />
+                      <YAxis
+                        yAxisId="rank"
+                        orientation="right"
+                        reversed
+                        domain={[
+                          (dataMin: number) => Math.max(1, dataMin - 5),
+                          (dataMax: number) => dataMax + 5
+                        ]}
+                        stroke="#3b82f6"
+                        tickFormatter={(val) => `#${val}`}
+                        tick={{ fontSize: 10, fill: '#3b82f6', fontWeight: 'bold' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={40}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}
+                        itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                        labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
+                        formatter={(value, name) => {
+                          if (name === "Overall Rank") return [`#${value}`, name];
+                          return [value, name];
+                        }}
+                      />
+                      {patchInsight?.showPatchLine && (
+                        <>
+                          {patchInsight.broken && (
+                            <ReferenceArea
+                              x1={REFORGER_PATCH_17}
+                              x2={patchInsight.maxDate}
+                              yAxisId="players"
+                              fill="#ef4444"
+                              fillOpacity={0.06}
+                              strokeOpacity={0}
+                            />
+                          )}
+                          <ReferenceLine
+                            x={REFORGER_PATCH_17}
+                            yAxisId="players"
+                            stroke="#fbbf24"
+                            strokeWidth={2}
+                            strokeDasharray="6 4"
+                            label={{
+                              value: '1.7 Partisan',
+                              position: 'insideTopLeft',
+                              fill: '#fbbf24',
+                              fontSize: 10,
+                              fontWeight: 700,
+                            }}
+                          />
+                        </>
                       )}
-                      {mod.workshopModified && (
-                        <span>
-                          Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
-                    Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
+                      <Line
+                        yAxisId="players"
+                        type="monotone"
+                        dataKey="totalPlayers"
+                        name="Deployed Personnel"
+                        stroke="#f97316"
+                        strokeWidth={3}
+                        dot={false}
+                        activeDot={{ r: 6, fill: '#f97316', stroke: '#18181b', strokeWidth: 2 }}
+                      />
+                      <Line
+                        yAxisId="servers"
+                        type="monotone"
+                        dataKey="serverCount"
+                        name="Active Servers"
+                        stroke="#db2777"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4, fill: '#db2777', stroke: '#18181b', strokeWidth: 2 }}
+                      />
+                      <Line
+                        yAxisId="rank"
+                        type="monotone"
+                        dataKey="overallRank"
+                        name="Overall Rank"
+                        stroke="#3b82f6"
+                        strokeWidth={1}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        activeDot={{ r: 4, fill: '#3b82f6', stroke: '#18181b', strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Analysis Glossary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+              <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
+                <div className="w-1 h-full bg-[#f97316]" />
+                <div>
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Deployed Personnel</h4>
+                  <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                    Total player count. <span className="text-tactical-orange">Higher is better</span> – indicates a larger active player base.
                   </p>
                 </div>
-                <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0 self-start">
-                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-                  <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+              </div>
+              <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
+                <div className="w-1 h-full bg-[#db2777]" />
+                <div>
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Active Servers</h4>
+                  <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                    Network presence. <span className="text-pink-500">Higher is better</span> – indicates wider deployment across server nodes.
+                  </p>
                 </div>
               </div>
-
-              <ModWorkshopGallery modId={mod.id} modName={mod.name} game={game} />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <StatsHero
-        stats={[
-          { label: 'Total Personnel', value: mod.stats?.totalPlayers || mod.totalPlayers || 0 },
-          { label: 'Deployed Servers', value: mod.stats?.serverCount || mod.serverCount || 0 },
-          { label: 'Marketshare', value: `${(mod.stats?.marketShare || 0).toFixed(1)}%` },
-          { label: 'Overall Rank', value: `#${mod.stats?.overallRank || '-'}` }
-        ]}
-        title="Tactical Analytics"
-        subtitle="Real-time module performance tracking across global network"
-      />
-
-      {/* Affiliate Section */}
-      <AffiliateBanner />
-
-      <section className="space-y-6 sm:space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-              📈 Performance Timeline
-            </h2>
-            <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
-              {[
-                { label: '24H', value: 1 },
-                { label: '1M', value: 30 },
-                { label: '1Y', value: 366 }
-              ].map(opt => (
-                <button
-                  key={opt.label}
-                  onClick={() => setSelectedDays(opt.value)}
-                  className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    selectedDays === opt.value 
-                      ? 'bg-tactical-orange text-black' 
-                      : 'text-gray-500 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {patchInsight && (
-            <div
-              className={`flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 border rounded-lg ${PATCH_STATUS_STYLE[patchInsight.row.status]}`}
-            >
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                {AUDIT_STATUS_SHORT[patchInsight.row.status]}
-              </span>
-              <p className="text-[11px] opacity-90 flex-1">{patchInsight.row.title}</p>
-              {patchInsight.row.dropPct != null && patchInsight.row.dropPct > 0 && (
-                <span className="text-sm font-black text-red-400 shrink-0">
-                  −{patchInsight.row.dropPct}%
-                </span>
-              )}
-              {patchInsight.broken && (
-                <Link
-                  to="/audit"
-                  className="text-[9px] font-bold uppercase tracking-widest text-tactical-orange hover:underline shrink-0"
-                >
-                  Config audit →
-                </Link>
-              )}
-            </div>
-          )}
-
-          <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm">
-            <CardContent className="p-4 sm:p-6 lg:p-8 h-[400px]">
-              {!history || history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
-                  <span>No recent activity detected</span>
-                  <span className="text-[8px] opacity-50 font-medium">Data may be archived or module is currently inactive</span>
+              <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
+                <div className="w-1 h-full bg-[#3b82f6]" />
+                <div>
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Overall Rank</h4>
+                  <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                    Global standing. <span className="text-blue-500">Higher visual position is better</span> – Rank #1 is at the top of the axis.
+                  </p>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Workshop-declared dependencies (Reforger) */}
+          {game === 'reforger' && (
+            <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+              <div className="border-b border-white/5 pb-6">
+                <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+                  📦 Required Dependencies
+                </h2>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
+                  Author-declared on Reforger Workshop — technical install requirements, not popularity stats
+                </p>
+              </div>
+
+              {depsLoading ? (
+                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                  Resolving workshop dependency tree…
+                </p>
+              ) : dependencies.length === 0 ? (
+                <p className="text-sm text-gray-600 font-medium">
+                  No declared dependencies for this mod (standalone module).
+                </p>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#666" 
-                      tickFormatter={(tick) => {
-                        if (!tick) return '';
-                        if (tick.length === 10 && tick.includes('-')) {
-                          const parts = tick.split('-');
-                          return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
-                        }
-                        const d = new Date(tick);
-                        if (selectedDays === 1) {
-                          return `${d.getHours().toString().padStart(2, '0')}:00`;
-                        }
-                        return `${d.getMonth()+1}/${d.getDate()}`;
-                      }}
-                      tick={{ fontSize: 10, fill: '#666', fontWeight: 'bold' }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis 
-                      yAxisId="players"
-                      stroke="#f97316" 
-                      tick={{ fontSize: 10, fill: '#f97316', fontWeight: 'bold' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={40}
-                    />
-                    <YAxis 
-                      yAxisId="servers"
-                      orientation="left"
-                      stroke="#db2777" 
-                      domain={[(min: number) => Math.max(0, min - 1), (max: number) => max + 1]}
-                      tick={{ fontSize: 10, fill: '#db2777', fontWeight: 'bold' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={30}
-                    />
-                    <YAxis 
-                      yAxisId="rank"
-                      orientation="right"
-                      reversed
-                      domain={[
-                        (dataMin: number) => Math.max(1, dataMin - 5), 
-                        (dataMax: number) => dataMax + 5
-                      ]}
-                      stroke="#3b82f6" 
-                      tickFormatter={(val) => `#${val}`}
-                      tick={{ fontSize: 10, fill: '#3b82f6', fontWeight: 'bold' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={40}
-                    />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}
-                      itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                      labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
-                      formatter={(value, name) => {
-                        if (name === "Overall Rank") return [`#${value}`, name];
-                        return [value, name];
-                      }}
-                    />
-                    {patchInsight?.showPatchLine && (
-                      <>
-                        {patchInsight.broken && (
-                          <ReferenceArea
-                            x1={REFORGER_PATCH_17}
-                            x2={patchInsight.maxDate}
-                            yAxisId="players"
-                            fill="#ef4444"
-                            fillOpacity={0.06}
-                            strokeOpacity={0}
-                          />
-                        )}
-                        <ReferenceLine
-                          x={REFORGER_PATCH_17}
-                          yAxisId="players"
-                          stroke="#fbbf24"
-                          strokeWidth={2}
-                          strokeDasharray="6 4"
-                          label={{
-                            value: '1.7 Partisan',
-                            position: 'insideTopLeft',
-                            fill: '#fbbf24',
-                            fontSize: 10,
-                            fontWeight: 700,
-                          }}
-                        />
-                      </>
-                    )}
-                    <Line 
-                      yAxisId="players"
-                      type="monotone" 
-                      dataKey="totalPlayers" 
-                      name="Deployed Personnel"
-                      stroke="#f97316" 
-                      strokeWidth={3}
-                      dot={false}
-                      activeDot={{ r: 6, fill: '#f97316', stroke: '#18181b', strokeWidth: 2 }}
-                    />
-                    <Line 
-                      yAxisId="servers"
-                      type="monotone" 
-                      dataKey="serverCount" 
-                      name="Active Servers"
-                      stroke="#db2777" 
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#db2777', stroke: '#18181b', strokeWidth: 2 }}
-                    />
-                    <Line 
-                      yAxisId="rank"
-                      type="monotone" 
-                      dataKey="overallRank" 
-                      name="Overall Rank"
-                      stroke="#3b82f6" 
-                      strokeWidth={1}
-                      strokeDasharray="5 5"
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#3b82f6', stroke: '#18181b', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <ModDependencyTable>
+                  {dependencies.map((dep) => (
+                    <DependencyRow key={dep.id} dep={dep} game={game} />
+                  ))}
+                </ModDependencyTable>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Analysis Glossary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
-              <div className="w-1 h-full bg-[#f97316]" />
-              <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Deployed Personnel</h4>
-                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
-                  Total player count. <span className="text-tactical-orange">Higher is better</span> – indicates a larger active player base.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
-              <div className="w-1 h-full bg-[#db2777]" />
-              <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Active Servers</h4>
-                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
-                  Network presence. <span className="text-pink-500">Higher is better</span> – indicates wider deployment across server nodes.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
-              <div className="w-1 h-full bg-[#3b82f6]" />
-              <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Overall Rank</h4>
-                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
-                  Global standing. <span className="text-blue-500">Higher visual position is better</span> – Rank #1 is at the top of the axis.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-      {/* Workshop-declared dependencies (Reforger) */}
-      {game === 'reforger' && (
-        <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
-          <div className="border-b border-white/5 pb-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-              📦 Required Dependencies
-            </h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
-              Author-declared on Reforger Workshop — technical install requirements, not popularity stats
-            </p>
-          </div>
-
-          {depsLoading ? (
-            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
-              Resolving workshop dependency tree…
-            </p>
-          ) : dependencies.length === 0 ? (
-            <p className="text-sm text-gray-600 font-medium">
-              No declared dependencies for this mod (standalone module).
-            </p>
-          ) : (
-            <ModDependencyTable>
-              {dependencies.map((dep) => (
-                <DependencyRow key={dep.id} dep={dep} game={game} />
-              ))}
-            </ModDependencyTable>
+            </section>
           )}
-        </section>
-      )}
 
-      {/* Frequently Deployed Together Section */}
-      {mod.coDeployed && mod.coDeployed.length > 0 && (
-        <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
-          <div className="border-b border-white/5 pb-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-              🤝 Frequently Deployed Together
-            </h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
-              Statistical co-occurrence on BattleMetrics servers — popular pairings, not required dependencies
-            </p>
-          </div>
+          {/* Frequently Deployed Together Section */}
+          {mod.coDeployed && mod.coDeployed.length > 0 && (
+            <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+              <div className="border-b border-white/5 pb-6">
+                <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+                  🤝 Frequently Deployed Together
+                </h2>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
+                  Statistical co-occurrence on BattleMetrics servers — popular pairings, not required dependencies
+                </p>
+              </div>
 
-          <ModDataTable>
-            {mod.coDeployed.map((other) => (
-              <ModRow
-                key={other.id}
-                mod={toModRow(other)}
-                rank={other.overallRank || undefined}
-                game={game}
-                variant="embedded"
-              />
-            ))}
-          </ModDataTable>
-        </section>
-      )}
+              <ModDataTable>
+                {mod.coDeployed.map((other) => (
+                  <ModRow
+                    key={other.id}
+                    mod={toModRow(other)}
+                    rank={other.overallRank || undefined}
+                    game={game}
+                    variant="embedded"
+                  />
+                ))}
+              </ModDataTable>
+            </section>
+          )}
 
-      <section className="space-y-6 sm:space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
-          <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-            📡 Active Deployed Servers
-          </h2>
-          <span className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest">
-            Displaying {(mod.servers || []).length} Intel Nodes
-          </span>
+          <section className="space-y-6 sm:space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+              <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+                📡 Active Deployed Servers
+              </h2>
+              <span className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                Displaying {(mod.servers || []).length} Intel Nodes
+              </span>
+            </div>
+
+            {!mod.servers || mod.servers.length === 0 ? (
+              <div className="p-12 sm:p-20 text-center border-2 border-dashed border-white/5">
+                <p className="text-lg sm:text-xl font-black text-gray-700 uppercase tracking-widest">No active deployments detected</p>
+              </div>
+            ) : (
+              <ServerDataTable>
+                {[...(mod.servers || [])]
+                  .sort((a, b) => (b.players || 0) - (a.players || 0))
+                  .map((server) => (
+                    <ServerRow key={server.id} server={server} game={game} />
+                  ))}
+              </ServerDataTable>
+            )}
+          </section>
         </div>
 
-        {!mod.servers || mod.servers.length === 0 ? (
-          <div className="p-12 sm:p-20 text-center border-2 border-dashed border-white/5">
-            <p className="text-lg sm:text-xl font-black text-gray-700 uppercase tracking-widest">No active deployments detected</p>
+        {/* Desktop sticky right rail: owner tools always one click away. */}
+        <aside className="hidden lg:block w-72 xl:w-80 shrink-0">
+          <div className="sticky top-24">
+            <ModConfigPanel
+              modId={mod.id}
+              modName={mod.name}
+              game={game}
+            />
           </div>
-        ) : (
-          <ServerDataTable>
-            {[...(mod.servers || [])]
-              .sort((a, b) => (b.players || 0) - (a.players || 0))
-              .map((server) => (
-                <ServerRow key={server.id} server={server} game={game} />
-              ))}
-          </ServerDataTable>
-        )}
-      </section>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@
 
 ### 📋 Mod detail — serverių savininkų įrankiai + workshop metadata
 - **config.json snippet**: Kairysis sidebar panelis su visada matomu `game.mods[]` įrašu (`modId` + `name` iš DB), vieno paspaudimo **Copy** ir **Reforger Workshop ↗** nuoroda. Formatas paruoštas įklijavimui į serverio `config.json`.
-- **Vieningas sidebar blokas**: `ModConfigPanel` (thumbnail, `game.mods[]` snippet, Copy, Workshop) kairiajame skydelyje. **Back to Registry** pakeltas į antraštės viršų; mobile pirmiausia pavadinimas + reitingas + galerija, savininko įrankiai — žemiau. Thumbnail dabar tikras kvadratas (anksčiau atsivaizdavo plona juostele), sidebar praplėstas, mygtukai lieknesni.
+- **Savininko įrankių panelė**: `ModConfigPanel` (thumbnail, `game.mods[]` snippet, Copy, Workshop) desktop'e — **sticky dešinys rail**, kad Copy/Workshop liktų pasiekiami slankant visą puslapį; mobile — inline po galerija. **Back to Registry** headerio viršuje. Thumbnail tikras kvadratas (anksčiau atsivaizdavo plona juostele), mygtukai lieknesni.
 - **Workshop screenshot galerija**: `GET /api/mods/:id/gallery` — on-demand scrape iš `previews` + `screenshots` (`__NEXT_DATA__`); KV cache 7d. Mod detail rodo carousel tik kai 2+ shot'ai (vienas slide, rodyklės, dots).
 - **Workshop datos**: `createdAt` / `updatedAt` iš workshop → **Created** ir **Last Modified** (DD.MM.YYYY) mod detail antraštėje; KV `cache:mod-dates:*`, įtraukta į `ensureReforgerWorkshopMetadata()`.
 - **SQE Points paslėpti**: Serverio profilyje (`ServerDetail`) neberodomas `sqePoints` — lieka tik Overall Rank ir tier badge.
