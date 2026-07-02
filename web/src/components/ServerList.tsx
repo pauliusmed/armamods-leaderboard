@@ -6,8 +6,10 @@ import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
 import { SortableTh } from './ui/SortableTh';
+import { ListFilterBar } from './ui/ListFilterBar';
 import type { GameType } from '../api/client';
 import type { ServerSortBy } from '../hooks/useServers';
+import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 
 interface ServerListProps {
   game?: GameType;
@@ -59,84 +61,74 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         ]}
       />
 
-      <div className="bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl sticky top-28 z-40 transition-all hover:bg-zinc-900/80">
-        <div className={`grid grid-cols-1 gap-4 items-end ${game === 'reforger' ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-          <div className="group">
-            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 group-hover:text-tactical-orange transition-colors italic">// SCAN_REMOTE_SERVERS</label>
-            <input
-              type="search"
-              placeholder="Server name (any word order)…"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Search servers by name"
-              className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white placeholder-gray-700 uppercase tracking-widest text-[13px] rounded-none outline-none"
-            />
-            {initialLoading && (
-              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-tactical-orange animate-pulse">
-                Loading server network…
-              </p>
-            )}
-            {!initialLoading && searchQuery && totalItems === 0 && (
-              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
-                No servers match &quot;{searchQuery}&quot;
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic">// DATA_METRIC</label>
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                const col = e.target.value as ServerSortBy;
-                if (col !== sortBy) toggleSort(col);
-              }}
-              aria-label="Sort servers by"
-              className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[13px] rounded-none outline-none"
-            >
-              <option value="rank">SQE_LEADERBOARD</option>
-              <option value="players">PERSONNEL_IDX</option>
-              <option value="mods">MODULE_IDX</option>
-              <option value="modpack">MODPACK_SIZE</option>
-              <option value="name">IDENTIFIER_IDX</option>
-            </select>
-          </div>
-
-          {game === 'reforger' && (
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic">
-                // CONSOLE_FILTER
-              </label>
-              <select
-                value={consoleFilter}
-                onChange={(e) => setConsoleFilter(e.target.value as ConsoleFitFilter)}
-                aria-label="Filter servers by console mod storage"
-                className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[13px] rounded-none outline-none"
-              >
-                <option value="all">ALL_SERVERS</option>
-                <option value="vanilla">VANILLA_ONLY</option>
-                <option value="ps5">FITS_PS5_25GB</option>
-                <option value="xbox-x">FITS_XBOX_X_40GB</option>
-                <option value="xbox-s">FITS_XBOX_S_20GB</option>
-              </select>
+      <ListFilterBar
+        search={{
+          label: '// SEARCH',
+          value: searchInput,
+          onChange: setSearchInput,
+          placeholder: 'Search servers…',
+          ariaLabel: 'Search servers by name',
+          hint: (
+            <>
+              {initialLoading && (
+                <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-tactical-orange animate-pulse">
+                  Loading server network…
+                </p>
+              )}
+              {!initialLoading && searchQuery && totalItems === 0 && (
+                <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
+                  No servers match &quot;{searchQuery}&quot;
+                </p>
+              )}
+            </>
+          ),
+        }}
+        selects={[
+          {
+            id: 'sort',
+            label: '// SORT',
+            value: sortBy,
+            onChange: (v) => {
+              const col = v as ServerSortBy;
+              if (col !== sortBy) toggleSort(col);
+            },
+            options: SERVER_LIST_SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+            ariaLabel: 'Sort servers by',
+          },
+          ...(game === 'reforger'
+            ? [
+                {
+                  id: 'console',
+                  label: '// CONSOLE',
+                  value: consoleFilter,
+                  onChange: (v: string) => setConsoleFilter(v as ConsoleFitFilter),
+                  options: CONSOLE_FIT_FILTER_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+                  ariaLabel: 'Filter servers by console mod storage',
+                },
+              ]
+            : []),
+        ]}
+        onReset={resetFilters}
+        columns={game === 'reforger' ? 3 : 2}
+        footer={
+          game === 'reforger' ? (
+            <>
               {consoleFilter !== 'all' && (
-                <p className="mt-2 text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+                <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">
                   {totalItems} match · unknown sizes excluded from fit filter
                 </p>
               )}
-            </div>
-          )}
-        </div>
-        {game === 'reforger' && (
-          <p className="mt-3 text-[8px] text-gray-600 font-bold uppercase tracking-widest">
-            Modpack = estimated download size ·{' '}
-            <Link to="/storage-planner" className="text-tactical-orange hover:underline">
-              Storage Planner
-            </Link>{' '}
-            for multi-server planning
-          </p>
-        )}
-      </div>
+              <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+                Modpack = estimated download size ·{' '}
+                <Link to="/storage-planner" className="text-tactical-orange hover:underline">
+                  Storage Planner
+                </Link>{' '}
+                for multi-server planning
+              </p>
+            </>
+          ) : undefined
+        }
+      />
 
       <div className="border border-white/5 bg-black/40">
         <div className="overflow-x-auto">
