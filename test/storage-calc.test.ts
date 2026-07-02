@@ -36,6 +36,20 @@ describe('parseReforgerSizeBytesFromHtml', () => {
       '<section><dl>Rating93%Version0.6.10Game Version1.7.0.41Version size67.24 KBSubscribers5,455Downloads12,345</dl></section>';
     assert.equal(parseReforgerSizeBytesFromHtml(html), Math.round(67.24 * 1024));
   });
+
+  it('reads Version size from App Router dt/dd markup', () => {
+    const html =
+      '<dt>Version size</dt><dd class="flex items-center gap-1">339.89 MB</dd>';
+    assert.equal(
+      parseReforgerSizeBytesFromHtml(html),
+      Math.round(339.89 * 1024 ** 2)
+    );
+  });
+
+  it('reads VersionSize numeric field from embedded JSON', () => {
+    const html = '{"VersionSize":356397017,"name":"WCS_Armaments"}';
+    assert.equal(parseReforgerSizeBytesFromHtml(html), 356397017);
+  });
 });
 
 describe('analyzeStoragePlan', () => {

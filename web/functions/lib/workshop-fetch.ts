@@ -195,6 +195,7 @@ function findSizeInVersionObject(obj: unknown, depth = 0): number | null {
   const record = obj as Record<string, unknown>;
   const priorityKeys = [
     'sizeBytes',
+    'VersionSize',
     'size',
     'fileSize',
     'downloadSize',
@@ -224,9 +225,23 @@ function findSizeInVersionObject(obj: unknown, depth = 0): number | null {
   return null;
 }
 
-/** Parse "Version size67.24 KB" from workshop SSR markup (dl text blob). */
+/** Parse version download size from workshop SSR markup. */
 export function parseVersionSizeFromWorkshopHtml(html: string): number | null {
-  // Workshop concatenates <dl> labels+values: "...Version size67.24 KBSubscribers..."
+  // App Router: <dt>Version size</dt><dd ...>339.89 MB</dd>
+  const dtDdMatch = html.match(/Version\s*size<\/dt>\s*<dd[^>]*>([^<]+)<\/dd>/i);
+  if (dtDdMatch) {
+    const bytes = parseHumanSizeToBytes(dtDdMatch[1].trim());
+    if (bytes) return bytes;
+  }
+
+  // Embedded JSON (RSC payload): "VersionSize":356397017
+  const jsonMatch = html.match(/"VersionSize"\s*:\s*(\d+)/i);
+  if (jsonMatch) {
+    const n = parseInt(jsonMatch[1], 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
+  // Legacy concatenated <dl> text: "...Version size67.24 KBSubscribers..."
   const dlMatch = html.match(
     /Version\s*size\s*([\d.,]+)\s*(KB|MB|GB|TB|B)(?=\s*Subscribers|\s*Downloads|<|\s*$)/i
   );
