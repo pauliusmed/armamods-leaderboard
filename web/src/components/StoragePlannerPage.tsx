@@ -13,6 +13,7 @@ import {
   type ConsolePresetId,
   type StorageProfile,
 } from '../lib/storageProfile';
+import { findStorageAlternatives } from '../../functions/lib/server-storage-similarity';
 
 interface StoragePlannerPageProps {
   game?: GameType;
@@ -165,8 +166,8 @@ function StoragePlanResultsSkeleton() {
           <div key={i} className="bg-zinc-900 border border-white/10 p-5 h-24" />
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {Array.from({ length: 2 }).map((_, i) => (
           <div key={i} className="bg-zinc-900 border border-white/10 h-64" />
         ))}
       </div>
@@ -314,12 +315,13 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     [servers, profile.mainServerId, profile.wantedServerIds]
   );
 
-  const runPlan = async () => {
-    if (!profile.mainServerId) {
+  const runPlan = async (profileOverride?: StorageProfile) => {
+    const active = profileOverride ?? profile;
+    if (!active.mainServerId) {
       setError('Select your current server first.');
       return;
     }
-    if (!profile.wantedServerIds.length) {
+    if (!active.wantedServerIds.length) {
       setError('Select at least one server you want to play.');
       return;
     }
@@ -329,9 +331,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     try {
       const data = await storageApi.plan({
         game,
-        mainServerId: profile.mainServerId,
-        wantedServerIds: profile.wantedServerIds,
-        availableGb: profile.availableGb,
+        mainServerId: active.mainServerId,
+        wantedServerIds: active.wantedServerIds,
+        availableGb: active.availableGb,
       });
       setResult(data);
     } catch (err) {
@@ -342,6 +344,49 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
       setPlanStartedAt(null);
     }
   };
+
+  const swapWantedServer = async (fromId: string, toId: string) => {
+    const wantedServerIds = profile.wantedServerIds.filter((id) => id !== fromId);
+    if (!wantedServerIds.includes(toId)) wantedServerIds.push(toId);
+    const nextProfile = { ...profile, wantedServerIds };
+    setProfile(nextProfile);
+    saveStorageProfile(game, nextProfile);
+    await runPlan(nextProfile);
+  };
+
+  const sizeById = useMemo(() => {
+    if (!result) return new Map<string, number | null>();
+    const map = new Map<string, number | null>();
+    const add = (mods: ModWithSize[]) => {
+      for (const mod of mods) map.set(mod.id.toUpperCase(), mod.sizeBytes);
+    };
+    add(result.data.mainServer.mods);
+    for (const server of result.data.wantedServers) add(server.mods);
+    add(result.data.analysis.wantedUnion);
+    return map;
+  }, [result]);
+
+  const storageAlternatives = useMemo(() => {
+    if (!result || servers.length === 0) return [];
+    return findStorageAlternatives({
+      mainModIds: result.data.mainServer.mods.map((m) => m.id),
+      wantedServers: result.data.wantedServers.map((s) => ({
+        id: s.id,
+        name: s.name,
+        mods: s.mods,
+      })),
+      candidates: servers
+        .filter((s) => (s.mods?.length ?? 0) > 0)
+        .map((s) => ({
+          id: s.id,
+          name: s.name,
+          mods: s.mods,
+          players: s.players,
+          scenarioName: s.scenarioName,
+        })),
+      sizeById,
+    });
+  }, [result, servers, sizeById]);
 
   const analysis = result?.data.analysis;
 
@@ -379,8 +424,8 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           Storage Planner
         </h1>
         <p className="text-sm text-gray-500 font-bold uppercase tracking-widest max-w-3xl leading-relaxed">
-          Approximate your installed mods from a main server, pick servers you want to play, and see
-          combined download size, free-space fit, and safe-to-remove modules.
+          See if your servers fit in console mod space, what the game auto-downloads when you join,
+          and which mods you can delete manually — plus similar servers that need less downloading.
         </p>
       </header>
 
@@ -423,9 +468,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
 
         <Card className="border-l-4 border-l-zinc-700">
           <CardContent className="p-6 space-y-6">
-            <h2 className="text-lg font-black text-white uppercase tracking-tight">2 · Current server</h2>
+            <h2 className="text-lg font-black text-white uppercase tracking-tight">2 · Installed library (proxy)</h2>
             <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-              We treat this modpack as your installed library (proxy).
+              Server you are on now — used to estimate auto-downloads when joining others.
             </p>
             <input
               type="text"
@@ -465,9 +510,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
 
       <Card className="border-l-4 border-l-emerald-600">
         <CardContent className="p-6 space-y-6">
-          <h2 className="text-lg font-black text-white uppercase tracking-tight">3 · Servers you want to play</h2>
+          <h2 className="text-lg font-black text-white uppercase tracking-tight">3 · My servers</h2>
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-            Multi-select — shared mods (RHS, WCS…) count once in the combined total.
+            All servers you want to play — shared mods (RHS, WCS…) count once in the combined total.
           </p>
           <input
             type="text"
@@ -528,7 +573,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
         </CardContent>
       </Card>
 
-      {planning && !analysis && <StoragePlanResultsSkeleton />}
+          {planning && !analysis && <StoragePlanResultsSkeleton />}
 
       {analysis && result && (
         <section className={`space-y-8 ${planning ? 'opacity-40 pointer-events-none' : ''}`}>
@@ -573,12 +618,70 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           )}
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {storageAlternatives.length > 0 && (
+            <Card className="border-l-4 border-l-sky-500/80">
+              <CardContent className="p-5 space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black text-white uppercase">Less download / delete hassle</h3>
+                  <p className="text-[8px] text-gray-600 uppercase tracking-widest">
+                    Similar modpacks from the network — auto-downloads when you join; deleting is manual.
+                    Check scenario and rules before switching.
+                  </p>
+                </div>
+                <ul className="space-y-3">
+                  {storageAlternatives.map((alt) => (
+                    <li
+                      key={`${alt.referenceServerId}-${alt.alternativeServerId}`}
+                      className="border border-white/10 bg-black/30 px-4 py-3 space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            Instead of{' '}
+                            <span className="text-white">{alt.referenceServerName}</span>
+                            {' '}(+{formatBytes(alt.referenceExtraBytes)} to stack)
+                          </p>
+                          <p className="text-[11px] font-black text-white uppercase truncate">
+                            → {alt.alternativeServerName}
+                          </p>
+                          <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+                            {alt.overlapPercent}% mod overlap · +{formatBytes(alt.alternativeExtraBytes)} to stack ·{' '}
+                            saves ~{formatBytes(alt.bytesSaved)} · {alt.players} players
+                            {alt.scenarioName ? ` · ${alt.scenarioName}` : ''}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 shrink-0">
+                          <Link
+                            to={`${gp}/server/${alt.alternativeServerId}`}
+                            className="px-3 py-2 text-[8px] font-black uppercase tracking-widest border border-white/20 text-gray-300 hover:border-white/50 hover:text-white"
+                          >
+                            Inspect
+                          </Link>
+                          <button
+                            type="button"
+                            disabled={planning}
+                            onClick={() => void swapWantedServer(alt.referenceServerId, alt.alternativeServerId)}
+                            className="px-3 py-2 text-[8px] font-black uppercase tracking-widest bg-sky-500/20 border border-sky-500/50 text-sky-200 hover:bg-sky-500/30 disabled:opacity-50"
+                          >
+                            Use instead
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h3 className="text-sm font-black text-white uppercase">Safe to remove</h3>
                 <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-                  On your main server but not needed for selected targets — frees disk space
+                  {!analysis.fits && analysis.bytesOver > 0
+                    ? `Over limit by ${formatBytes(analysis.bytesOver)} — delete manually (~${formatBytes(analysis.suggestedFreeBytes)} from top items)`
+                    : 'Not needed for any selected server — delete manually to free disk space'}
                 </p>
                 <ModSizeList
                   mods={analysis.canRemove}
@@ -591,27 +694,12 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               <CardContent className="p-5 space-y-3">
                 <h3 className="text-sm font-black text-white uppercase">Need to download</h3>
                 <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-                  Required for selected servers — uses additional disk space
+                  Auto-downloaded when you join — game fetches these; you do not pick them manually
                 </p>
                 <ModSizeList
                   mods={analysis.toDownload}
                   emptyLabel="Already have all mods"
                   title="Uses on disk"
-                />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-5 space-y-3">
-                <h3 className="text-sm font-black text-white uppercase">
-                  {analysis.fits ? 'Optional cleanup' : 'Suggested removals'}
-                </h3>
-                <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-                  Largest removable mods first
-                </p>
-                <ModSizeList
-                  mods={analysis.suggestedRemovals}
-                  emptyLabel="No suggestions"
-                  title="Suggested free"
                 />
               </CardContent>
             </Card>

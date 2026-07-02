@@ -116,7 +116,7 @@ export function analyzeStoragePlan(input: {
     availableBytes: input.availableBytes,
     fits,
     bytesOver,
-    suggestedRemovals: bytesOver > 0 ? trimmedRemovals : suggestedRemovals.slice(0, 10),
-    suggestedFreeBytes,
+    suggestedRemovals: bytesOver > 0 ? trimmedRemovals : [],
+    suggestedFreeBytes: bytesOver > 0 ? suggestedFreeBytes : 0,
   };
 }
