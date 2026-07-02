@@ -4,6 +4,12 @@ import { matchesServerSearch } from '../lib/searchMatch';
 import type { Server } from '../types';
 
 export type ServerSortBy = 'rank' | 'players' | 'name' | 'mods' | 'modpack';
+export type ServerSortDir = 'asc' | 'desc';
+
+function modpackSortBytes(server: Server): number {
+  if ((server.mods?.length ?? 0) === 0) return 0;
+  return server.modpackEstimatedBytes ?? server.modpackKnownBytes ?? 0;
+}
 
 interface UseServersOptions {
   game?: GameType;
@@ -18,6 +24,7 @@ export function useServers(options: UseServersOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<ServerSortBy>('rank');
+  const [sortDir, setSortDir] = useState<ServerSortDir>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
@@ -56,7 +63,16 @@ export function useServers(options: UseServersOptions = {}) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchInput, sortBy]);
+  }, [searchInput, sortBy, sortDir]);
+
+  const toggleSort = useCallback((column: ServerSortBy) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortBy(column);
+    setSortDir(column === 'name' ? 'asc' : column === 'rank' ? 'asc' : 'desc');
+  }, [sortBy]);
 
   useEffect(() => {
     loadServers();
@@ -66,6 +82,7 @@ export function useServers(options: UseServersOptions = {}) {
     if (!Array.isArray(servers)) return [];
 
     const query = searchInput.trim();
+    const dir = sortDir === 'asc' ? 1 : -1;
 
     return servers
       .filter((server) => {
@@ -78,19 +95,16 @@ export function useServers(options: UseServersOptions = {}) {
         if (sortBy === 'rank') {
           const rankA = a.sqeRank ?? 99999;
           const rankB = b.sqeRank ?? 99999;
-          if (rankA !== rankB) return rankA - rankB;
-          return (b.players || 0) - (a.players || 0);
+          if (rankA !== rankB) return dir * (rankA - rankB);
+          return dir * ((a.players || 0) - (b.players || 0));
         }
-        if (sortBy === 'players') return b.players - a.players;
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'mods') return (b.mods?.length ?? 0) - (a.mods?.length ?? 0);
-        if (sortBy === 'modpack') {
-          return (b.modpackEstimatedBytes ?? b.modpackKnownBytes ?? 0) -
-            (a.modpackEstimatedBytes ?? a.modpackKnownBytes ?? 0);
-        }
+        if (sortBy === 'players') return dir * (a.players - b.players);
+        if (sortBy === 'name') return dir * a.name.localeCompare(b.name);
+        if (sortBy === 'mods') return dir * ((a.mods?.length ?? 0) - (b.mods?.length ?? 0));
+        if (sortBy === 'modpack') return dir * (modpackSortBytes(a) - modpackSortBytes(b));
         return 0;
       });
-  }, [servers, searchInput, sortBy]);
+  }, [servers, searchInput, sortBy, sortDir]);
 
   const paginatedServers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -113,6 +127,7 @@ export function useServers(options: UseServersOptions = {}) {
   const resetFilters = () => {
     setSearchInput('');
     setSortBy('rank');
+    setSortDir('asc');
     setCurrentPage(1);
   };
 
@@ -128,6 +143,8 @@ export function useServers(options: UseServersOptions = {}) {
     searchQuery,
     sortBy,
     setSortBy,
+    sortDir,
+    toggleSort,
     currentPage,
     setCurrentPage,
     totalPages,

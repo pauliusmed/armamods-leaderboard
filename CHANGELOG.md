@@ -12,6 +12,7 @@
 - **UX**: storage planner loading panel with progress bar, stage labels, and elapsed timer (no frozen `0/N` workshop counter).
 - **Mod size surfaces**: download size on mod detail + leaderboard **Size** column (sortable); server list **Modpack** total (collector precomputes per server).
 - **Collector**: warms `cache:mod-size` for top 300 mods from workshop when cache is empty.
+- **Server list**: sortable column headers (Rank, Server, Players, Mods, Modpack); **Vanilla** label when modpack is empty.
 
 ## [1.17.0] - 2026-06-30
 

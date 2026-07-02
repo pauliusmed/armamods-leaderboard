@@ -21,6 +21,9 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
   const max = server.maxPlayers || 0;
   const players = server.players || 0;
 
+  const modCount = server.mods?.length ?? 0;
+  const isVanilla = modCount === 0;
+
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
       {/* SQE rank + tier */}
@@ -64,23 +67,32 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
       {/* Mod count */}
       <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">
-          {server.mods?.length ?? 0}
+          {modCount}
         </span>
       </td>
 
       {/* Modpack download size (estimated from cached workshop sizes) */}
       <td className="hidden lg:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
-        <span className="font-mono text-xs tabular-nums text-tactical-orange/90" title={
-          server.modpackCoverage != null && server.modpackCoverage < 1
-            ? `${Math.round((server.modpackCoverage ?? 0) * 100)}% of mods sized — estimate`
-            : undefined
-        }>
-          {formatBytes(server.modpackEstimatedBytes ?? server.modpackKnownBytes)}
-        </span>
-        {server.modpackCoverage != null && server.modpackCoverage > 0 && server.modpackCoverage < 1 && (
-          <span className="block text-[8px] font-bold text-gray-600 uppercase tracking-widest">
-            ~{Math.round(server.modpackCoverage * 100)}% sized
-          </span>
+        {isVanilla ? (
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vanilla</span>
+        ) : (
+          <>
+            <span
+              className="font-mono text-xs tabular-nums text-tactical-orange/90"
+              title={
+                server.modpackCoverage != null && server.modpackCoverage < 1
+                  ? `${Math.round((server.modpackCoverage ?? 0) * 100)}% of mods sized — estimate`
+                  : undefined
+              }
+            >
+              {formatBytes(server.modpackEstimatedBytes ?? server.modpackKnownBytes)}
+            </span>
+            {server.modpackCoverage != null && server.modpackCoverage > 0 && server.modpackCoverage < 1 && (
+              <span className="block text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+                ~{Math.round(server.modpackCoverage * 100)}% sized
+              </span>
+            )}
+          </>
         )}
       </td>
     </tr>

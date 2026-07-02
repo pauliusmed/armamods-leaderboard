@@ -4,7 +4,9 @@ import { ServerRow } from './ServerRow';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
+import { SortableTh } from './ui/SortableTh';
 import type { GameType } from '../api/client';
+import type { ServerSortBy } from '../hooks/useServers';
 
 interface ServerListProps {
   game?: GameType;
@@ -20,7 +22,8 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     setSearchInput,
     searchQuery,
     sortBy,
-    setSortBy,
+    sortDir,
+    toggleSort,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -79,7 +82,10 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
             <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic">// DATA_METRIC</label>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => {
+                const col = e.target.value as ServerSortBy;
+                if (col !== sortBy) toggleSort(col);
+              }}
               aria-label="Sort servers by"
               className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[13px] rounded-none outline-none"
             >
@@ -98,11 +104,49 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Rank</th>
-                <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Server</th>
-                <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Players</th>
-                <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Mods</th>
-                <th className="hidden lg:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Modpack</th>
+                <SortableTh
+                  label="Rank"
+                  sortKey="rank"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as ServerSortBy)}
+                  className="pl-4 pr-2"
+                />
+                <SortableTh
+                  label="Server"
+                  sortKey="name"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as ServerSortBy)}
+                  className="pr-4"
+                />
+                <SortableTh
+                  label="Players"
+                  sortKey="players"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as ServerSortBy)}
+                  align="right"
+                  className="px-4"
+                />
+                <SortableTh
+                  label="Mods"
+                  sortKey="mods"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as ServerSortBy)}
+                  align="right"
+                  className="hidden md:table-cell px-4"
+                />
+                <SortableTh
+                  label="Modpack"
+                  sortKey="modpack"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as ServerSortBy)}
+                  align="right"
+                  className="hidden lg:table-cell pl-4 pr-4"
+                />
               </tr>
             </thead>
             <tbody>
