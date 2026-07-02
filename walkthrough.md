@@ -17,7 +17,8 @@ BattleMetrics (every two hours). Workshop answers *what the mod is*; we answer
 
 The UI may show workshop preview thumbnails for quick recognition, but the core
 value is telemetry — leaderboard, trending deltas, history charts, scenario popularity
-by active mission, and a Reforger 1.7 config auditor.
+by active mission, Reforger 1.7 config auditor, and **console storage planning**
+(modpack download sizes for PS5/Xbox).
 
 It supports two games — **Reforger** (default) and **Arma 3** — served from the same
 pipeline with game-suffixed keys.
@@ -67,12 +68,13 @@ web/
     audit-config.ts        config auditor heuristics (Reforger 1.7)
     history-query.ts       maps ?days= → KV history key + slice
     _middleware.ts         request logging
-  functions/lib/           shared helpers (share-meta, search-match, scenario-ranking)
+  functions/lib/           shared helpers (share-meta, search-match, scenario-ranking,
+                           storage-calc, server-set-analysis, workshop-fetch)
   src/
     api/client.ts          axios client with in-memory TTL cache
-    components/            pages (ModList, ServerList, ScenarioList, ModDetail, …)
+    components/            pages (ModList, ServerList, StoragePlannerPage, …)
     hooks/                 useMods, useServers, useScenarios
-    lib/                   site links, audit labels, parseServerConfig
+    lib/                   site links, storageProfile, serverModpack, parseServerConfig
 test/                      node:test unit tests (findMatchingBrace, EMA, audit, …)
 docs/                      ALGORITHM.md, architecture decisions, case study
 .github/workflows/         ci, collector (cron), deploy
@@ -101,7 +103,11 @@ Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`. Two phases:
 7. **Scenario leaderboard** (`buildScenarioRanking`): groups servers by `scenarioName`,
    sums players, computes avg fill %, picks top server by SQE rank, assigns `rank`
    by total players. Written to `cache:ranking:scenarios:{game}` (one KV write).
-8. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
+8. **Mod sizes & server modpack** (`attachModSizesFromKvCache`, `warmTopModSizesFromWorkshop`,
+   `attachServerModpackSizes`): copies/scrapes workshop version sizes into
+   `cache:mod-size:{game}:{id}`; computes `modpackEstimatedBytes` per server for
+   the leaderboard and Storage Planner.
+9. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
 
 **`trending`** (run after collect):
 Reads the previous history point, computes `trendScore = rankDelta × positionWeight
@@ -120,6 +126,7 @@ suffix, Arma 3 uses `:arma3`):
 | `cache:server_sqe:{game}` | compact SQE index for API enrichment |
 | `cache:stats`, `cache:lastUpdate` | global counts |
 | `cache:trending:{daily\|weekly\|monthly}` | precomputed trending |
+| `cache:mod-size:{game}:{MODID}` | workshop version download size (7d) |
 | `history:{hourly\|daily\|weekly\|monthly\|yearly}:{game}:{i}` | sharded time series |
 
 Sharding exists because KV values are capped at 25 MB; 5 MB chunks keep individual
@@ -182,8 +189,23 @@ Detailed derivations live in [`docs/ALGORITHM.md`](./docs/ALGORITHM.md).
   persistent entities. Shared logic: `web/functions/lib/scenario-ranking.ts`.
 
 **UI navigation:** primary nav is Mods · Servers · Trending · **Scenarios** ·
-**Tools** (dropdown: Config Audit, Get Hosting). Server detail links scenario name
-to `/scenarios?s={name}`.
+**Tools** (dropdown: Config Audit, Get Hosting, **Console Mod Storage**).
+Server detail links scenario name to `/scenarios?s={name}` and modpack size to
+Storage Planner (`?main=`).
+
+### Console modpack sizes & Storage Planner
+
+Workshop **version download size** (not BM) drives console planning. See
+[`docs/STORAGE_PLANNER.md`](./docs/STORAGE_PLANNER.md) for full design.
+
+- **Collector** writes `modpackEstimatedBytes` on each server; warms top-300 mod
+  sizes into `cache:mod-size:*`.
+- **Mod leaderboard** — **Size** column (sortable).
+- **Server list** — **Modpack** column, console fit badges (`≤25 GB` / `Heavy`),
+  filters (PS5 / Xbox / vanilla).
+- **Storage Planner** (`/storage-planner`) — multi-server union, auto-download vs
+  manual delete lists, server-group suggestions, similar-server alternatives.
+- **SEO landing** — `/arma-reforger-console-mod-storage`.
 
 ---
 
@@ -199,8 +221,10 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 | GET | `/mods/:id/history` | mod time series (24h/7d/30d/1y/all) |
 | GET | `/mods/:id/thumbnail` | JSON `{ url }` — Bohemia CDN thumbnail (KV 7d) |
 | GET | `/mods/:id/dependencies` | workshop-declared required deps (Reforger; KV cache 7d) |
+| GET | `/mods/:id/size` | workshop version download size (bytes) |
 | GET | `/servers` | paginated server list |
 | GET | `/servers/:id` | single server detail |
+| GET | `/servers/:id/storage` | modpack size breakdown (per-mod bytes) |
 | GET | `/servers/:id/history` | server rank/players time series |
 | GET | `/servers/ranking` | top-200 SQE leaderboard |
 | GET | `/scenarios` | scenario leaderboard (KV; live fallback if key missing) |
@@ -209,6 +233,8 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 | GET | `/diagnostics` | system health (shard counts, history range) |
 | GET | `/og/preview/{mod,server}/:id` | 302 to cached workshop CDN URL (OG bots; same KV as thumbnails) |
 | POST | `/audit/config` | Reforger config.json health audit |
+| POST | `/storage/plan` | console storage plan (main + wanted servers, GB limit) |
+| POST | `/storage/sizes` | batch mod size lookup |
 
 ---
 
@@ -257,6 +283,7 @@ npm test
 
 Covers the pieces where correctness is non-obvious: `findMatchingBrace` surgical
 extraction, EMA smoothing/clamping, scenario aggregation (`buildScenarioRanking`),
+storage planner (`storage-calc`, `server-set-analysis`, `server-modpack`),
 audit-config heuristics, history-query resolution, share-meta, and search matching.
 
 ---

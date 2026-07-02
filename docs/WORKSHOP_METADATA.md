@@ -66,6 +66,8 @@ If no `og:image` is found, the API returns the site default `og-image.png`. `Mod
 
 Opening mod detail (thumbnail + dependencies) therefore triggers at most **one** workshop scrape per mod per 7 days, not two.
 
+**Version download size** uses the same HTML parser (`parseReforgerVersionSizeFromHtml`) but is stored separately in `cache:mod-size:{game}:{MODID}` (7d). The collector warms top-ranked mods and copies sizes into mod/server shards for the Storage Planner. See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md).
+
 ---
 
 ## Declared dependencies
@@ -109,6 +111,7 @@ Co-deploy is computed in the collector (`scripts/collector.ts`) with **zero extr
 |--------|------|----------|-----|
 | GET | `/mods/:id/thumbnail` | `{ data: { url } }` | UI `ModThumbnail` (direct CDN) |
 | GET | `/mods/:id/dependencies` | `{ data: ModDependency[] }` | Mod detail dependency table |
+| GET | `/mods/:id/size` | `{ data: { sizeBytes } }` | Mod detail + Storage Planner |
 | GET | `/og/preview/mod/:id` | 302 → CDN URL | Discord, Twitter, OG bots |
 
 All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnails/deps are limited).
@@ -147,3 +150,4 @@ Only if, after this architecture, CDN hotlinking is still too slow or blocked. T
 - [PLAN.md](../PLAN.md) — product roadmap, Phase 2
 - [walkthrough.md](../walkthrough.md) — full system overview
 - [docs/ALGORITHM.md](./ALGORITHM.md) — co-deployment algorithm (BM, not workshop)
+- [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) — console modpack sizes & planner

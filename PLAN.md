@@ -50,31 +50,38 @@ This document outlines the strategic vision, current implementation status, and 
   - [x] Collector aggregation + `GET /api/scenarios` + drill-down `/api/scenarios/servers`.
   - [x] UI `/scenarios`, server detail deep-link `?s=`, nav **Tools** dropdown.
   - [ ] Scenario history / trending (future — would extend shared `history:*` shards).
-### 💾 Storage Planner (console mod space) — [IN PROGRESS]
+### 💾 Storage Planner (console mod space) — [COMPLETED]
 
-**Problem (SEO + product):** PS5/Xbox players can only keep mods for ~2–3 servers. They manually guess what to delete when switching between 5–6 community servers. Shared mods (RHS, WCS) inflate perceived size unless deduplicated.
+**Problem (SEO + product):** PS5/Xbox players can only keep mods for ~2–3 heavy servers. They manually guess what to delete when switching. Shared mods (RHS, WCS) inflate perceived size unless deduplicated.
 
 | Layer | Route | Role |
 |-------|-------|------|
 | **SEO landing** | `/arma-reforger-console-mod-storage` | Indexable content: problem, how-it-works, FAQ + JSON-LD, CTAs → tool |
 | **Tool** | `/storage-planner` | Wizard (localStorage profile, no auth) |
 | **Server hook** | `/server/:id` | Modpack size + deep-link `?main=` |
+| **Server list** | `/servers` | Modpack column, console fit badges, PS5/Xbox filters |
 
 - [x] **Workshop mod sizes**: Reforger scrape → KV `cache:mod-size:{game}:{modId}` (7d), unified `ensureReforgerWorkshopMetadata()`.
-- [x] **API**: `GET /api/mods/:id/size`, `GET /api/servers/:id/storage`, `POST /api/storage/plan`.
+- [x] **API**: `GET /api/mods/:id/size`, `GET /api/servers/:id/storage`, `POST /api/storage/plan`, `POST /api/storage/sizes`.
 - [x] **Storage Planner UI** + server detail modpack breakdown.
-- [x] **SEO landing page**: `/arma-reforger-console-mod-storage` — target keywords (console mod storage, PS5/Xbox, delete mods, server comparison).
-- [x] **Sitemap + robots.txt**: static `sitemap.xml` + `robots.txt` in `web/public/` (includes storage landing).
-- [ ] **SEO follow-ups**:
-  - [ ] Internal links from support page.
-  - [ ] `Which server combinations fit in X GB` auto-suggest (subset picker).
-  - [ ] Optional `noindex` on `/storage-planner` if landing becomes canonical (evaluate in Search Console).
-- [ ] **Arma 3**: Steam workshop sizes (later).
+- [x] **SEO landing page** + sitemap/robots.
+- [x] **Server list**: modpack size (mobile + desktop), console fit badges, filters (PS5 25 GB / Xbox S/X / vanilla).
+- [x] **Planner UX**: similar-server suggestions, server-group feedback, deduplicated results, PS5 25 GB preset.
+- [x] **Collector**: modpack totals per server; warm top-300 mod sizes from workshop.
+- [x] **Docs**: [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md).
+
+**Follow-ups (optional):**
+- [ ] SEO: internal links, Search Console `noindex` evaluation for `/storage-planner` vs landing.
+- [ ] Precomputed server-similarity index (full network, not client pool).
+- [ ] Increase size coverage (beyond top-300 warm).
+- [ ] **Arma 3**: Steam workshop sizes in planner.
+
+**Technical detail:** [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md)
 
 ---
 
 - [ ] **Arma Workshop Scraper (batch metadata)**:
-  - [x] File size (Reforger on-demand via workshop scrape — see Storage Planner above).
+  - [x] File size (Reforger — workshop scrape + collector warm; see Storage Planner).
   - [ ] Author, file size batch (collector-side), last update for Arma 3 / batch warm.
   - [ ] Categorization (Survival, Roleplay, PvP, MilSim).
 - [ ] **Mod Comparison Tool**: Side-by-side performance analytics for multiple mods.

@@ -277,6 +277,30 @@ As a result:
 
 ---
 
+## Console modpack sizes & Storage Planner
+
+SQE rank measures server *popularity*; **modpack size** is a separate axis for
+console players with a fixed Workshop budget (~25 GB on PS5).
+
+### Data
+
+- Per-mod: `cache:mod-size:{game}:{MODID}` (workshop scrape, 7d) + `sizeBytes` on mod shards
+- Per-server (collector): `modpackKnownBytes`, `modpackEstimatedBytes`, `modpackCoverage`
+
+### Planner math (`storage-calc.ts`)
+
+- **Union** — deduplicate mods across selected servers (shared RHS/WCS count once)
+- **To download** — union minus mods in the user's *installed library proxy* (main server)
+- **Can remove** — proxy mods not in the union (manual cleanup candidates)
+- **Fits** — `estimateTotalBytes(union) ≤ availableBytes`
+
+Related: `server-set-analysis.ts` (cluster by Jaccard overlap, fitting subsets),
+`server-storage-similarity.ts` (lower-cost similar servers).
+
+Full product/API documentation: [STORAGE_PLANNER.md](./STORAGE_PLANNER.md).
+
+---
+
 ## References
 
 - [Bayesian Statistics](https://en.wikipedia.org/wiki/Bayesian_statistics)

@@ -11,7 +11,9 @@ Thank you for your interest in improving the project! This document provides gui
 3. **Run Linting**: Ensure your code passes TypeScript checks with `npx tsc --noEmit`.
 4. **Local Proxy**: Use `npm run dev` in the root to test API interactions.
 5. **Tests**: Run `npm test` before opening a PR. Scenario logic lives in
-   `web/functions/lib/scenario-ranking.ts` with coverage in `test/scenario-ranking.test.ts`.
+   `web/functions/lib/scenario-ranking.ts`; storage planner in `storage-calc.ts`,
+   `server-set-analysis.ts`, `server-modpack.ts` — see `test/storage-*.test.ts`,
+   `test/server-*.test.ts`.
 
 ## 📜 Coding Standards
 

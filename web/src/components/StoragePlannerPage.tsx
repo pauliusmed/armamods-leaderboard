@@ -361,6 +361,41 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     };
   }, [game]);
 
+  const missingProfileServerIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (profile.mainServerId) ids.add(profile.mainServerId);
+    for (const id of profile.wantedServerIds) ids.add(id);
+    return [...ids].filter((id) => !servers.some((s) => s.id === id));
+  }, [profile.mainServerId, profile.wantedServerIds, servers]);
+
+  useEffect(() => {
+    if (!missingProfileServerIds.length) return;
+    let cancelled = false;
+    void (async () => {
+      const loaded: Server[] = [];
+      await Promise.all(
+        missingProfileServerIds.map(async (id) => {
+          try {
+            const res = await serversApi.getById(id, game);
+            if (res.data) loaded.push(res.data);
+          } catch {
+            /* server offline or removed */
+          }
+        })
+      );
+      if (!cancelled && loaded.length) {
+        setServers((prev) => {
+          const map = new Map(prev.map((s) => [s.id, s]));
+          for (const s of loaded) map.set(s.id, s);
+          return [...map.values()];
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [missingProfileServerIds, game]);
+
   useEffect(() => {
     const q = mainSearch.trim();
     if (q.length < 3) return;
@@ -407,19 +442,40 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
 
   const filteredMainServers = useMemo(() => {
     const q = mainSearch.trim().toLowerCase();
-    if (!q) return servers;
-    return servers.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
-    );
-  }, [servers, mainSearch]);
+    const base = q
+      ? servers.filter(
+          (s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+        )
+      : servers;
+    if (!profile.mainServerId) return base;
+    const main = servers.find((s) => s.id === profile.mainServerId);
+    if (!main) return base;
+    const matchesSearch =
+      !q ||
+      main.name.toLowerCase().includes(q) ||
+      main.id.toLowerCase().includes(q);
+    if (!matchesSearch) return base;
+    return [main, ...base.filter((s) => s.id !== main.id)];
+  }, [servers, mainSearch, profile.mainServerId]);
 
-  const filteredWantedServers = useMemo(() => {
+  const selectedWantedServers = useMemo(
+    () =>
+      profile.wantedServerIds
+        .map((id) => servers.find((s) => s.id === id))
+        .filter((s): s is Server => s != null),
+    [profile.wantedServerIds, servers]
+  );
+
+  const browseWantedServers = useMemo(() => {
+    const selectedSet = new Set(profile.wantedServerIds);
     const q = wantedSearch.trim().toLowerCase();
-    if (!q) return servers;
-    return servers.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
-    );
-  }, [servers, wantedSearch]);
+    const base = q
+      ? servers.filter(
+          (s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+        )
+      : servers;
+    return base.filter((s) => !selectedSet.has(s.id));
+  }, [servers, wantedSearch, profile.wantedServerIds]);
 
   const updateProfile = useCallback(
     (patch: Partial<StorageProfile>) => {
@@ -671,6 +727,21 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               onChange={(e) => setMainSearch(e.target.value)}
               className="w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange"
             />
+            {profile.mainServerId && (
+              <div className="border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+                <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest mb-2">
+                  Current selection
+                </p>
+                {(() => {
+                  const main = servers.find((s) => s.id === profile.mainServerId);
+                  return (
+                    <p className="text-[10px] font-black text-white uppercase truncate">
+                      {main?.name ?? `Loading… (${profile.mainServerId.slice(0, 8)})`}
+                    </p>
+                  );
+                })()}
+              </div>
+            )}
             {loadingServers && !filteredMainServers.length ? (
               <StatusState type="loading" />
             ) : (
@@ -713,45 +784,80 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             onChange={(e) => setWantedSearch(e.target.value)}
             className="w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange"
           />
-          {loadingServers && !filteredWantedServers.length ? (
-            <StatusState type="loading" />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
-              {filteredWantedServers.length === 0 ? (
-                <p className="col-span-full p-4 text-[10px] text-gray-600 font-bold uppercase">No servers match</p>
-              ) : (
-                filteredWantedServers.slice(0, 150).map((server) => {
-                  const checked = profile.wantedServerIds.includes(server.id);
+          {profile.wantedServerIds.length > 0 && (
+            <div className="space-y-2 border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+              <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest">
+                Selected · {profile.wantedServerIds.length} server(s)
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {profile.wantedServerIds.map((serverId) => {
+                  const server = servers.find((s) => s.id === serverId);
                   return (
                     <label
-                      key={server.id}
-                      className={`flex items-start gap-3 px-3 py-3 border cursor-pointer transition-colors ${
-                        checked ? 'border-tactical-orange/50 bg-tactical-orange/5' : 'border-white/5 hover:border-white/20'
-                      }`}
+                      key={serverId}
+                      className="flex items-start gap-3 px-3 py-3 border border-tactical-orange/50 bg-tactical-orange/10 cursor-pointer"
                     >
                       <input
                         type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleWantedServer(server.id)}
+                        checked
+                        onChange={() => toggleWantedServer(serverId)}
                         className="mt-1 accent-orange-500"
                       />
                       <span className="min-w-0">
-                        <span className="block text-[10px] font-black text-white uppercase truncate">{server.name}</span>
-                        <span className="text-[8px] text-gray-600 font-mono">{server.mods?.length ?? 0} mods</span>
+                        <span className="block text-[10px] font-black text-white uppercase truncate">
+                          {server?.name ?? `Loading… (${serverId.slice(0, 8)})`}
+                        </span>
+                        <span className="text-[8px] text-gray-600 font-mono">
+                          {server ? `${server.mods?.length ?? 0} mods` : 'fetching from API'}
+                        </span>
                       </span>
                     </label>
                   );
-                })
+                })}
+              </div>
+              {!analysis && profile.wantedServerIds.length >= 2 && (
+                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">
+                  Run Analyze for combined size and fit
+                </p>
               )}
             </div>
           )}
-          {profile.wantedServerIds.length > 0 && (
-            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-              Selected: {profile.wantedServerIds.length} server(s)
-              {profile.wantedServerIds.length >= 2 && !analysis
-                ? ' — run Analyze for combined size and fit'
-                : ''}
-            </p>
+          {loadingServers && !browseWantedServers.length && !selectedWantedServers.length ? (
+            <StatusState type="loading" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+              {browseWantedServers.length === 0 ? (
+                <p className="col-span-full p-4 text-[10px] text-gray-600 font-bold uppercase">
+                  {wantedSearch.trim()
+                    ? 'No more servers match'
+                    : profile.wantedServerIds.length
+                      ? 'All loaded servers selected — search to add more'
+                      : 'Search or scroll to pick servers'}
+                </p>
+              ) : (
+                browseWantedServers.slice(0, 150).map((server) => (
+                  <label
+                    key={server.id}
+                    className="flex items-start gap-3 px-3 py-3 border border-white/5 hover:border-white/20 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => toggleWantedServer(server.id)}
+                      className="mt-1 accent-orange-500"
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-[10px] font-black text-white uppercase truncate">
+                        {server.name}
+                      </span>
+                      <span className="text-[8px] text-gray-600 font-mono">
+                        {server.mods?.length ?? 0} mods
+                      </span>
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
           )}
           <button
             type="button"

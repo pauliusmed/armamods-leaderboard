@@ -41,7 +41,12 @@ A production-grade, highly-optimized data aggregation and visualization platform
 ### 6. Scenario Leaderboard (Mission Popularity)
 * **Problem**: Server lists show per-node `scenarioName`, but there was no view of which missions/scenarios dominate the network.
 * **Solution**: Collector aggregates servers by `scenarioName` after SQE scoring and writes a compact ranking to `cache:ranking:scenarios:{game}`. Edge API serves `GET /api/scenarios`; drill-down via `GET /api/scenarios/servers?name=`.
-* **Result**: One KV write per collector run, no client-side aggregation of 5000 servers. UI at `/scenarios` with **Tools** dropdown nav (Config Audit, Hosting).
+* **Result**: One KV write per collector run, no client-side aggregation of 5000 servers. UI at `/scenarios` with **Tools** dropdown nav (Config Audit, Hosting, **Console Mod Storage**).
+
+### 7. Console Storage Planner & Modpack Sizes
+* **Problem**: PS5/Xbox players have ~25 GB Workshop space; mod count does not reflect download weight (WCS+RHS stacks vs vanilla). Switching servers forces manual deletes; shared mods (RHS, WCS) must be deduplicated.
+* **Solution**: Workshop version sizes → KV `cache:mod-size:*`; collector attaches `modpackEstimatedBytes` per server; **Storage Planner** (`/storage-planner`) compares installed proxy vs wanted servers; server list shows modpack GB + console fit filters.
+* **Result**: Console players see fit/over-limit before joining; server leaderboard exposes size as a dimension separate from SQE rank. See [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md).
 
 ---
 
@@ -143,9 +148,9 @@ To ensure the integrity of the math scoring models and surgical parser:
 ```bash
 npm test
 ```
-*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`).*
+*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`), storage planner math (`storage-calc`, `server-set-analysis`, `server-modpack`).*
 
-**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [CHANGELOG.md](CHANGELOG.md) (release notes).
+**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) (console mod sizes & planner), [CHANGELOG.md](CHANGELOG.md) (release notes).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 
