@@ -16,6 +16,10 @@
 import 'dotenv/config';
 import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
+import {
+  fetchReforgerWorkshopHtml,
+  parseReforgerSizeBytesFromHtml,
+} from '../web/functions/lib/workshop-fetch.ts';
 
 type BattleMetricsServer = Awaited<ReturnType<BattleMetricsService['fetchAllServers']>>[number];
 
@@ -162,6 +166,47 @@ async function attachModSizesFromKvCache(
   }
 
   console.log(`  - sizeBytes attached: ${attached}/${modList.length} from workshop KV cache`);
+}
+
+/** Fetch workshop version size for top-ranked mods missing KV cache (populates cache:mod-size). */
+async function warmTopModSizesFromWorkshop(
+  kv: CloudflareKVClient,
+  game: GameType,
+  modList: Array<{ id: string; overallRank: number; sizeBytes?: number | null }>,
+  limit = 300
+): Promise<void> {
+  if (game !== 'reforger') return;
+
+  const top = [...modList].sort((a, b) => a.overallRank - b.overallRank).slice(0, limit);
+  const missing = top.filter((m) => !m.sizeBytes || m.sizeBytes <= 0);
+  if (!missing.length) {
+    console.log(`  - workshop warm: skipped (top ${limit} already sized)`);
+    return;
+  }
+
+  let warmed = 0;
+  const concurrency = 6;
+  for (let i = 0; i < missing.length; i += concurrency) {
+    const batch = missing.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (mod) => {
+        const key = `cache:mod-size:reforger:${mod.id.toUpperCase()}`;
+        try {
+          const html = await fetchReforgerWorkshopHtml(mod.id);
+          const bytes = html ? parseReforgerSizeBytesFromHtml(html) : null;
+          if (bytes && bytes > 0) {
+            await kv.put(key, String(bytes));
+            mod.sizeBytes = bytes;
+            warmed++;
+          }
+        } catch {
+          /* skip failed fetch */
+        }
+      })
+    );
+    await sleep(250);
+  }
+  console.log(`  - workshop warm: ${warmed}/${missing.length} top-mod fetches (cap ${limit})`);
 }
 
 function attachServerModpackSizes(
@@ -390,6 +435,7 @@ interface ServerMod {
 
   // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
   await attachModSizesFromKvCache(kv, game, modList);
+  await warmTopModSizesFromWorkshop(kv, game, modList, 300);
 
   const modSizeById = new Map<string, number>();
   for (const m of modList) {
