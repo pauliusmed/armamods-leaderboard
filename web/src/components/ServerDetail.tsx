@@ -614,8 +614,16 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         </div>
 
         {sortedAndFilteredMods.length === 0 ? (
-          <div className="p-20 text-center border-2 border-dashed border-white/5">
+          <div className="p-20 text-center border-2 border-dashed border-white/5 space-y-4">
             <p className="text-xl font-black text-gray-700 uppercase tracking-widest">No mods match your filters</p>
+            <button
+              type="button"
+              onClick={resetModFilters}
+              className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange"
+            >
+              Reset filters
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {sortedAndFilteredMods.map(mod => {

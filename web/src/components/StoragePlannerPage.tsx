@@ -10,6 +10,7 @@ import {
   CONSOLE_PRESETS,
   loadStorageProfile,
   saveStorageProfile,
+  rememberServerNames,
   type ConsolePresetId,
   type StorageProfile,
 } from '../lib/storageProfile';
@@ -26,6 +27,36 @@ interface StoragePlannerPageProps {
 
 function truncateServerName(name: string, max = 52): string {
   return name.length > max ? `${name.slice(0, max)}…` : name;
+}
+
+type ServerResolveState = 'loading' | 'failed';
+
+function resolveServerLabel(
+  serverId: string,
+  server: Server | undefined,
+  serverNames: Record<string, string> | undefined,
+  resolveState: ServerResolveState | undefined
+): { title: string; sub: string } {
+  if (server) {
+    return {
+      title: server.name,
+      sub: `${server.mods?.length ?? 0} mods`,
+    };
+  }
+  const cached = serverNames?.[serverId];
+  if (cached) {
+    return { title: cached, sub: 'resolving mod list…' };
+  }
+  if (resolveState === 'failed') {
+    return {
+      title: `Server ${serverId}`,
+      sub: 'Not in network — removed or offline',
+    };
+  }
+  return {
+    title: `Loading… (${serverId.slice(0, 8)})`,
+    sub: 'fetching from KV cache',
+  };
 }
 
 function toServerSetInput(server: {
@@ -325,6 +356,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
   const [planStartedAt, setPlanStartedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StoragePlanResponse | null>(null);
+  const [serverResolveState, setServerResolveState] = useState<Record<string, ServerResolveState>>({});
 
   useEffect(() => {
     const mainFromUrl = searchParams.get('main');
@@ -348,8 +380,21 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     (async () => {
       try {
         setLoadingServers(true);
-        const res = await serversApi.getList(500, 0, game, { full: true });
-        if (!cancelled) setServers(res.data ?? []);
+        const res = await serversApi.getList(5000, 0, game, { full: true });
+        if (!cancelled) {
+          const list = res.data ?? [];
+          setServers(list);
+          if (list.length) {
+            setProfile((prev) => {
+              const next = rememberServerNames(
+                prev,
+                list.map((s) => ({ id: s.id, name: s.name }))
+              );
+              saveStorageProfile(game, next);
+              return next;
+            });
+          }
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load servers');
       } finally {
@@ -371,25 +416,53 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
   useEffect(() => {
     if (!missingProfileServerIds.length) return;
     let cancelled = false;
+
+    setServerResolveState((prev) => {
+      const next = { ...prev };
+      for (const id of missingProfileServerIds) {
+        if (!next[id]) next[id] = 'loading';
+      }
+      return next;
+    });
+
     void (async () => {
       const loaded: Server[] = [];
+      const failed: string[] = [];
       await Promise.all(
         missingProfileServerIds.map(async (id) => {
           try {
             const res = await serversApi.getById(id, game);
             if (res.data) loaded.push(res.data);
+            else failed.push(id);
           } catch {
-            /* server offline or removed */
+            failed.push(id);
           }
         })
       );
-      if (!cancelled && loaded.length) {
+      if (cancelled) return;
+
+      if (loaded.length) {
         setServers((prev) => {
           const map = new Map(prev.map((s) => [s.id, s]));
           for (const s of loaded) map.set(s.id, s);
           return [...map.values()];
         });
+        setProfile((prev) => {
+          const next = rememberServerNames(
+            prev,
+            loaded.map((s) => ({ id: s.id, name: s.name }))
+          );
+          saveStorageProfile(game, next);
+          return next;
+        });
       }
+
+      setServerResolveState((prev) => {
+        const next = { ...prev };
+        for (const s of loaded) delete next[s.id];
+        for (const id of failed) next[id] = 'failed';
+        return next;
+      });
     })();
     return () => {
       cancelled = true;
@@ -487,6 +560,32 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     },
     [game]
   );
+
+  const selectMainServer = (server: Server) => {
+    setProfile((prev) => {
+      const next = rememberServerNames(
+        { ...prev, mainServerId: server.id },
+        [{ id: server.id, name: server.name }]
+      );
+      saveStorageProfile(game, next);
+      return next;
+    });
+  };
+
+  const toggleWantedServer = (serverId: string, server?: Server) => {
+    const exists = profile.wantedServerIds.includes(serverId);
+    const wantedServerIds = exists
+      ? profile.wantedServerIds.filter((id) => id !== serverId)
+      : [...profile.wantedServerIds, serverId];
+    setProfile((prev) => {
+      const base = { ...prev, wantedServerIds };
+      const next = server
+        ? rememberServerNames(base, [{ id: server.id, name: server.name }])
+        : base;
+      saveStorageProfile(game, next);
+      return next;
+    });
+  };
 
   const handlePresetChange = (presetId: ConsolePresetId) => {
     const preset = CONSOLE_PRESETS.find((p) => p.id === presetId);
@@ -734,9 +833,17 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                 </p>
                 {(() => {
                   const main = servers.find((s) => s.id === profile.mainServerId);
+                  const label = profile.mainServerId
+                    ? resolveServerLabel(
+                        profile.mainServerId,
+                        main,
+                        profile.serverNames,
+                        serverResolveState[profile.mainServerId]
+                      )
+                    : null;
                   return (
                     <p className="text-[10px] font-black text-white uppercase truncate">
-                      {main?.name ?? `Loading… (${profile.mainServerId.slice(0, 8)})`}
+                      {label?.title ?? '—'}
                     </p>
                   );
                 })()}

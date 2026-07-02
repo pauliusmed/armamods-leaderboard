@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
 import type { GameType } from '../api/client';
 import { parseServerConfig } from '../lib/parseServerConfig';
-import { auditDiscovery, sortAuditRowsWorstFirst } from '@audit-config';
+import { isAuditRemoveCandidate, sortAuditRowsWorstFirst } from '@audit-config';
 import { parseApiJson, runClientSideAudit } from '../lib/clientAudit';
 import { formatAuditReportJson, formatAuditReportText } from '../lib/auditReport';
 import { PAYPAL_DONATE_URL } from '../lib/siteLinks';
 import {
+  AUDIT_BUCKET_HINT,
+  AUDIT_BUCKET_SHORT,
   AUDIT_STATUS_HINT,
   AUDIT_STATUS_SHORT,
-  ZERO_NOW_HINT,
-  ZERO_NOW_SHORT,
 } from '../lib/auditLabels';
 
 type AuditStatus = 'dead' | 'risky' | 'warning' | 'ok' | 'niche' | 'unknown';
@@ -70,10 +70,17 @@ interface AuditResponse {
 }
 
 type InputMode = 'paste' | 'file';
-type AuditFilter = AuditStatus | 'all' | 'zero-now' | 'gems' | 'trash';
+type AuditFilter = 'remove' | 'review' | 'keep' | 'other' | 'all';
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
-const STATUS_ORDER: AuditStatus[] = ['dead', 'risky', 'warning', 'ok', 'niche', 'unknown'];
+const BUCKET_STYLE: Record<Exclude<AuditFilter, 'all'>, string> = {
+  remove: 'border-red-500/60 bg-red-950/30 text-red-300',
+  review: 'border-orange-500/50 bg-orange-950/20 text-orange-200',
+  keep: 'border-emerald-600/40 bg-emerald-950/15 text-emerald-200',
+  other: 'border-gray-700/40 bg-black/40 text-gray-500',
+};
+
+const BUCKET_ORDER: Exclude<AuditFilter, 'all'>[] = ['remove', 'review', 'keep', 'other'];
 
 const STATUS_STYLE: Record<AuditStatus, string> = {
   dead: 'border-red-500/60 bg-red-950/30 text-red-300',
@@ -128,124 +135,6 @@ function AuditDonateBanner() {
   );
 }
 
-function DiscoveryModCard({ row, tone }: { row: ModAuditRow; tone: 'gem' | 'trash' }) {
-  const border =
-    tone === 'gem'
-      ? 'border-emerald-600/40 bg-emerald-950/20'
-      : 'border-red-600/40 bg-red-950/15';
-  return (
-    <Link
-      to={`/mod/${row.modId}`}
-      className={`block border rounded-lg p-3 hover:bg-white/5 transition-colors ${border}`}
-    >
-      <div className="text-[9px] font-mono text-tactical-orange break-all">{row.modId}</div>
-      <div className="font-bold text-white text-sm truncate mt-0.5">{row.name}</div>
-      <div className="text-[10px] text-gray-400 mt-1 font-mono">
-        {AUDIT_STATUS_SHORT[row.status]} · {row.trendLabel} · now {row.currentPlayers} · 7d ~
-        {row.recentAvg ?? '—'}/day
-      </div>
-      {row.classificationHint && tone === 'trash' && (
-        <p className="text-[10px] text-amber-300/80 mt-1">{row.classificationHint}</p>
-      )}
-    </Link>
-  );
-}
-
-function AuditDiscoverySection({
-  gems,
-  trash,
-  risingPopular,
-  onFilterGems,
-  onFilterTrash,
-}: {
-  gems: ModAuditRow[];
-  trash: ModAuditRow[];
-  risingPopular: ModAuditRow[];
-  onFilterGems: () => void;
-  onFilterTrash: () => void;
-}) {
-  return (
-    <section className="border border-white/15 rounded-xl p-5 sm:p-6 space-y-6 bg-gradient-to-b from-white/[0.03] to-transparent">
-      <div>
-        <h2 className="text-sm font-black uppercase tracking-widest text-white">
-          Find gems vs trash
-        </h2>
-        <p className="text-[11px] text-gray-500 mt-1 max-w-2xl">
-          Popular rising/recovering mods in your list (ecosystem still wants them) vs mods worth removing
-          after 1.7. Click a column header to filter the full list.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={onFilterGems}
-            className="w-full text-left border border-emerald-600/50 bg-emerald-950/25 rounded-lg px-4 py-3 hover:ring-1 hover:ring-emerald-500/50"
-          >
-            <div className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
-              Gems — popular & rising / recovering
-            </div>
-            <div className="text-2xl font-black text-white mt-1">{gems.length}</div>
-            <div className="text-[10px] text-gray-500">≥25 players (now or last 7d) · OK status</div>
-          </button>
-          {gems.length ? (
-            <div className="grid sm:grid-cols-2 gap-2">
-              {gems.map((r) => (
-                <DiscoveryModCard key={r.modId} row={r} tone="gem" />
-              ))}
-            </div>
-          ) : (
-            <p className="text-[11px] text-gray-600">No clear “gem” signal in this config.</p>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={onFilterTrash}
-            className="w-full text-left border border-red-600/50 bg-red-950/25 rounded-lg px-4 py-3 hover:ring-1 hover:ring-red-500/50"
-          >
-            <div className="text-[10px] font-black uppercase tracking-widest text-red-300">
-              Trash — remove or verify first
-            </div>
-            <div className="text-2xl font-black text-white mt-1">{trash.length}</div>
-            <div className="text-[10px] text-gray-500">Dead, warning, or risky + declining</div>
-          </button>
-          {trash.length ? (
-            <div className="grid sm:grid-cols-2 gap-2">
-              {trash.map((r) => (
-                <DiscoveryModCard key={r.modId} row={r} tone="trash" />
-              ))}
-            </div>
-          ) : (
-            <p className="text-[11px] text-gray-600">Nothing in the trash bucket.</p>
-          )}
-        </div>
-      </div>
-
-      {risingPopular.length > 0 && (
-        <div className="border-t border-white/10 pt-4">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-2">
-            Rising + popular (strongest growth)
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {risingPopular.map((r) => (
-              <Link
-                key={r.modId}
-                to={`/mod/${r.modId}`}
-                className={`text-[10px] px-2 py-1 border rounded font-mono ${TREND_STYLE.rising}`}
-              >
-                {r.name} · {r.recentAvg ?? r.currentPlayers}/day · {r.modId}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
 export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
   const [inputMode, setInputMode] = useState<InputMode>('paste');
   const [configText, setConfigText] = useState('');
@@ -255,7 +144,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AuditResponse | null>(null);
-  const [filter, setFilter] = useState<AuditFilter>('all');
+  const [filter, setFilter] = useState<AuditFilter>('remove');
   const [progress, setProgress] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -288,46 +177,25 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
     [showCopyHint]
   );
 
-  const grouped = useMemo(() => {
-    if (!result) return new Map<AuditStatus, ModAuditRow[]>();
-    const map = new Map<AuditStatus, ModAuditRow[]>();
-    for (const row of result.data) {
-      if (!map.has(row.status)) map.set(row.status, []);
-      map.get(row.status)!.push(row);
-    }
-    for (const [, rows] of map) {
-      sortAuditRowsWorstFirst(rows);
-    }
-    return map;
-  }, [result]);
-
-  const zeroNowCount = useMemo(
-    () => result?.data.filter((r) => isZeroOnBm(r.currentPlayers)).length ?? 0,
-    [result]
-  );
-
-  const discovery = useMemo(() => {
-    if (!result) return { gems: [] as ModAuditRow[], trash: [] as ModAuditRow[], risingPopular: [] as ModAuditRow[] };
-    const h = result.meta.highlights;
-    if (h?.gems && h?.trash) {
-      return {
-        gems: h.gems,
-        trash: h.trash,
-        risingPopular: h.risingPopular ?? [],
-      };
-    }
-    return auditDiscovery(result.data);
+  const buckets = useMemo(() => {
+    if (!result) return null;
+    const remove = sortAuditRowsWorstFirst(result.data.filter(isAuditRemoveCandidate));
+    const removeIds = new Set(remove.map((r) => r.modId));
+    const review = sortAuditRowsWorstFirst(
+      result.data.filter((r) => r.status === 'risky' && !removeIds.has(r.modId))
+    );
+    const keep = sortAuditRowsWorstFirst(result.data.filter((r) => r.status === 'ok'));
+    const other = sortAuditRowsWorstFirst(
+      result.data.filter((r) => r.status === 'niche' || r.status === 'unknown')
+    );
+    return { remove, review, keep, other };
   }, [result]);
 
   const visibleRows = useMemo(() => {
-    if (!result) return [];
-    if (filter === 'gems') return discovery.gems;
-    if (filter === 'trash') return discovery.trash;
-    let rows = result.data;
-    if (filter === 'zero-now') rows = rows.filter((r) => isZeroOnBm(r.currentPlayers));
-    else if (filter !== 'all') rows = rows.filter((r) => r.status === filter);
-    return sortAuditRowsWorstFirst(rows);
-  }, [result, filter, discovery]);
+    if (!result || !buckets) return [];
+    if (filter === 'all') return sortAuditRowsWorstFirst(result.data);
+    return buckets[filter];
+  }, [result, filter, buckets]);
 
   const tryParsePreview = useCallback((text: string) => {
     if (!text.trim()) {
@@ -422,7 +290,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
       }
 
       setResult(auditResult);
-      setFilter('all');
+      setFilter('remove');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Audit failed');
     } finally {
@@ -446,16 +314,9 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           Server mod audit
         </h1>
         <p className="text-gray-400 text-sm leading-relaxed max-w-3xl">
-          <strong className="text-white">Paste</strong> or <strong className="text-white">upload</strong>{' '}
-          <code className="text-tactical-orange">config.json</code> – get a report in your browser. Your file is{' '}
-          <strong className="text-white">not stored</strong> on the server; only mod IDs and names are sent.
-        </p>
-        <p className="text-gray-500 text-xs leading-relaxed max-w-3xl border-l-2 border-white/10 pl-3">
-          <strong className="text-gray-400">Active servers:</strong>{' '}
-          <strong className="text-white">Now</strong> = only BattleMetrics servers online today with the mod.{' '}
-          <strong className="text-white">Daily averages</strong> = all BM servers seen that day. After 1.7 the
-          whole network is smaller – popular mods often show <strong className="text-white">Ecosystem dip</strong>{' '}
-          (not “declining”) when rank/share is still strong.
+          Find <strong className="text-white">broken or dead mods</strong> after Reforger 1.7 Partisan – paste or
+          upload <code className="text-tactical-orange">config.json</code>. Your file is{' '}
+          <strong className="text-white">not stored</strong>; only mod IDs are sent.
         </p>
       </header>
 
@@ -464,7 +325,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
         role="note"
       >
         <strong className="text-emerald-300">Privacy:</strong> config is parsed in your browser. Only{' '}
-        only <code className="text-emerald-400">modId</code> list is sent – mod names come from our database, not your
+        <code className="text-emerald-400">modId</code> list is sent – mod names come from our database, not your
         config (names in config.json are often wrong). No passwords, IPs, or full JSON are stored.
       </div>
 
@@ -621,36 +482,24 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            {STATUS_ORDER.map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setFilter(st)}
-                className={`p-3 border text-left rounded ${STATUS_STYLE[st]} ${filter === st ? 'ring-1 ring-white' : ''}`}
-              >
-                <div
-                  className="text-[9px] font-bold opacity-70"
-                  title={AUDIT_STATUS_HINT[st]}
+          {buckets && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              {BUCKET_ORDER.map((bucket) => (
+                <button
+                  key={bucket}
+                  type="button"
+                  onClick={() => setFilter(bucket)}
+                  title={AUDIT_BUCKET_HINT[bucket]}
+                  className={`p-3 border text-left rounded ${BUCKET_STYLE[bucket]} ${
+                    filter === bucket ? 'ring-1 ring-white' : ''
+                  }`}
                 >
-                  {AUDIT_STATUS_SHORT[st]}
-                </div>
-                <div className="text-2xl font-black">{result.meta.summary[st] ?? 0}</div>
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setFilter('zero-now')}
-              title={ZERO_NOW_HINT}
-              className={`p-3 border text-left rounded border-red-500/50 bg-red-950/25 text-red-200 col-span-2 sm:col-span-3 ${
-                filter === 'zero-now' ? 'ring-1 ring-red-400' : ''
-              }`}
-            >
-              <div className="text-[9px] font-bold opacity-70">{ZERO_NOW_SHORT}</div>
-              <div className="text-2xl font-black">{zeroNowCount}</div>
-              <div className="text-[9px] opacity-60 mt-1">{ZERO_NOW_HINT}</div>
-            </button>
-          </div>
+                  <div className="text-[9px] font-bold opacity-70">{AUDIT_BUCKET_SHORT[bucket]}</div>
+                  <div className="text-2xl font-black">{buckets[bucket].length}</div>
+                </button>
+              ))}
+            </div>
+          )}
 
           <button
             type="button"
@@ -659,10 +508,11 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           >
             Show all ({result.meta.modCount}) · {result.meta.durationMs}ms
           </button>
-          <p className="text-[10px] text-gray-600">
-            Order: <strong className="text-gray-400">Zero today</strong> → highest{' '}
-            <strong className="text-gray-400">−%</strong> → Remove / Empty / Monitor / Keep
-          </p>
+          {filter === 'remove' && buckets && buckets.remove.length > 0 && (
+            <p className="text-[11px] text-red-300/90">
+              Showing mods likely broken or safe to remove after 1.7 – worst first.
+            </p>
+          )}
 
           <div className="text-[11px] text-gray-500 border border-white/5 p-4 rounded bg-white/2 space-y-2">
             {result.meta.mode === 'client-fallback' && (
@@ -813,30 +663,13 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             ))}
           </div>
 
-          {filter !== 'all' &&
-            filter !== 'zero-now' &&
-            filter !== 'gems' &&
-            filter !== 'trash' &&
-            grouped.get(filter)?.length === 0 && (
-              <p className="text-gray-500 text-sm">No mods in this category.</p>
-            )}
-          {filter === 'zero-now' && zeroNowCount === 0 && (
-            <p className="text-gray-500 text-sm">No mods with exactly 0 players on BattleMetrics right now.</p>
+          {filter !== 'all' && buckets && buckets[filter].length === 0 && (
+            <p className="text-gray-500 text-sm">
+              {filter === 'remove'
+                ? 'No broken or failing mods detected – your config looks clean after 1.7.'
+                : `No mods in “${AUDIT_BUCKET_SHORT[filter]}”.`}
+            </p>
           )}
-          {filter === 'gems' && discovery.gems.length === 0 && (
-            <p className="text-gray-500 text-sm">No popular rising/recovering mods in this config.</p>
-          )}
-          {filter === 'trash' && discovery.trash.length === 0 && (
-            <p className="text-gray-500 text-sm">No trash-tier mods detected.</p>
-          )}
-
-          <AuditDiscoverySection
-            gems={discovery.gems}
-            trash={discovery.trash}
-            risingPopular={discovery.risingPopular}
-            onFilterGems={() => setFilter('gems')}
-            onFilterTrash={() => setFilter('trash')}
-          />
 
           <AuditDonateBanner />
         </>

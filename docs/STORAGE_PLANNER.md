@@ -120,10 +120,17 @@ Separate from SQE rank (quality/popularity):
 
 - **Modpack** column — estimated download size (desktop `lg+`; also under **Mods** on mobile)
 - **Console fit badge** — `Vanilla` · `≤25 GB` · `Heavy` (vs profile/filter limit)
-- **CONSOLE_FILTER** — All · Vanilla only · Fits PS5 25 GB · Fits Xbox X/S
+- **CONSOLE_FILTER** — All · Vanilla only · Fits PS5 25 GB · Fits Xbox X/S (via `ListFilterBar` — [UI_FILTERS.md](UI_FILTERS.md))
 - Sort by **MODPACK_SIZE**
 
 Servers with unknown sizes are excluded from strict “fits” filters.
+
+### Server detail mod stack (`/server/:id`)
+
+- Per-mod **download size** (from `GET /api/servers/:id/storage`)
+- **Size-tier filter** (Heavy ≥500 MB, etc.) to find storage hogs before switching servers
+- Same `ListFilterBar` as leaderboards — see [UI_FILTERS.md](UI_FILTERS.md)
+- CTA → Storage Planner with `?main={serverId}`
 
 ---
 

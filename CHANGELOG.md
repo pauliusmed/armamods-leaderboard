@@ -3,6 +3,16 @@
 - **UI** `/scenarios`: type badges, links to `/mod/:id` (workshop) or `/scenarios/official/:slug` (vanilla).
 - **Reference** `/scenarios/official`: all built-in Bohemia scenarios with `scenarioId` paths for server config.
 
+## [1.19.0] - 2026-07-02
+
+### 🎛️ Unified list filters
+- **`ListFilterBar`** (`web/src/components/ui/ListFilterBar.tsx`) — shared sticky filter toolbar for mods, servers, scenarios, and server-detail mod stack.
+- **English labels** everywhere: `// SEARCH`, `Activity: …`, `Sort: …`, `Console: Fits PS5 (25 GB)` (replaces mixed `PERSONNEL_IDX` / `SCAN FOR TITLES` variants).
+- **Server detail mod stack**: size-tier filter (heavy/medium/small/unknown), sort by deploy & share; filter logic in `web/src/lib/modListFilters.ts`.
+- **Mod leaderboard search**: query matches mod name, id, and cached workshop **author** (Reforger).
+- **Docs**: [docs/UI_FILTERS.md](docs/UI_FILTERS.md).
+- **`/audit`**: summary reduced to four buckets (Remove / Review / Keep / Low-no data); defaults to Remove list for post-1.7 broken mods.
+
 ## [1.18.0] - 2026-07-02
 
 ### 💾 Storage Planner (console mod space)
@@ -11,7 +21,7 @@
 - **UI** `/storage-planner`: server search on main + wanted lists, progressive size loading, per-section disk totals (GB).
 - **SEO landing** `/arma-reforger-console-mod-storage`: problem/solution copy, FAQ + JSON-LD, CTAs → planner (PS5/Xbox mod storage keywords).
 - **Sitemap**: `web/public/sitemap.xml` + `robots.txt` for search indexing.
-- **Server detail**: modpack size in hero, per-mod download size, link to Storage Planner with `?main=`.
+- **Server detail**: modpack size in hero, per-mod download size, link to Storage Planner with `?main=`; **Installed Mod Stack** filters via shared `ListFilterBar` (search, activity, rank, size tier, sort by deploy/share) — see [docs/UI_FILTERS.md](docs/UI_FILTERS.md).
 - **Fix**: workshop size parser reads `Version size` from SSR `<dl>` text (not only `__NEXT_DATA__`); uppercase mod GUID in fetch URL; `cacheOnly` plan mode for fast KV refresh while batch-loading sizes.
 - **Storage sizes source**: planner reads `sizeBytes` from leaderboard KV + `cache:mod-size:*` (no live workshop scrape); collector copies cached sizes into mod chunks each run.
 - **UX**: storage planner loading panel with progress bar, stage labels, and elapsed timer (no frozen `0/N` workshop counter).

@@ -150,7 +150,7 @@ npm test
 ```
 *Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`), storage planner math (`storage-calc`, `server-set-analysis`, `server-modpack`).*
 
-**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) (console mod sizes & planner), [CHANGELOG.md](CHANGELOG.md) (release notes).
+**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) (console mod sizes & planner), [docs/UI_FILTERS.md](docs/UI_FILTERS.md) (shared filter toolbar), [CHANGELOG.md](CHANGELOG.md) (release notes).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 

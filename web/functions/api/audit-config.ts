@@ -828,6 +828,16 @@ export function buildClassificationHint(
   return null;
 }
 
+/** Mods worth removing from config – same rules as audit “trash” highlights (full list, not top-N). */
+export function isAuditRemoveCandidate(row: ModAuditRow): boolean {
+  return (
+    row.status === 'dead' ||
+    row.status === 'warning' ||
+    (row.status === 'risky' &&
+      (row.trendPhase === 'declining' || isEffectivelyEmpty(row.currentPlayers)))
+  );
+}
+
 export function auditDiscovery(rows: ModAuditRow[]) {
   const MIN_GEM_POPULARITY = 25;
 
@@ -846,15 +856,7 @@ export function auditDiscovery(rows: ModAuditRow[]) {
     .sort((a, b) => modPopularityScore(b) - modPopularityScore(a))
     .slice(0, 12);
 
-  const trash = sortAuditRowsWorstFirst(
-    rows.filter(
-      (r) =>
-        r.status === 'dead' ||
-        r.status === 'warning' ||
-        (r.status === 'risky' &&
-          (r.trendPhase === 'declining' || isEffectivelyEmpty(r.currentPlayers)))
-    )
-  ).slice(0, 15);
+  const trash = sortAuditRowsWorstFirst(rows.filter(isAuditRemoveCandidate)).slice(0, 15);
 
   return { gems, trash, risingPopular };
 }

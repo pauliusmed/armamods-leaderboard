@@ -6,7 +6,9 @@ import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
+import { ListFilterBar } from './ui/ListFilterBar';
 import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '../lib/scenarioLinks';
+import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import type { GameType } from '../api/client';
 import type { ScenarioRankingEntry } from '../types';
 
@@ -148,46 +150,33 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
         </Link>
       </p>
 
-      <div className="bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl sticky top-28 z-40 transition-all hover:bg-zinc-900/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <div className="group">
-            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 group-hover:text-tactical-orange transition-colors italic">
-              // FILTER_SCENARIOS
-            </label>
-            <input
-              type="search"
-              placeholder="Scenario name…"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Search scenarios"
-              className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white placeholder-gray-700 uppercase tracking-widest text-[13px] rounded-none outline-none"
-            />
-            {searchInput && totalItems === 0 && (
+      <ListFilterBar
+        search={{
+          label: '// SEARCH',
+          value: searchInput,
+          onChange: setSearchInput,
+          placeholder: 'Search scenarios…',
+          ariaLabel: 'Search scenarios',
+          hint:
+            searchInput && totalItems === 0 ? (
               <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
                 No scenarios match &quot;{searchInput}&quot;
               </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic">
-              // DATA_METRIC
-            </label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              aria-label="Sort scenarios by"
-              className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[13px] rounded-none outline-none"
-            >
-              <option value="rank">LEADERBOARD_RANK</option>
-              <option value="players">TOTAL_PERSONNEL</option>
-              <option value="servers">DEPLOYMENT_IDX</option>
-              <option value="fill">CAPACITY_IDX</option>
-              <option value="name">IDENTIFIER_IDX</option>
-            </select>
-          </div>
-        </div>
-      </div>
+            ) : undefined,
+        }}
+        selects={[
+          {
+            id: 'sort',
+            label: '// SORT',
+            value: sortBy,
+            onChange: (v) => setSortBy(v as typeof sortBy),
+            options: SCENARIO_LIST_SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+            ariaLabel: 'Sort scenarios by',
+          },
+        ]}
+        onReset={resetFilters}
+        columns={2}
+      />
 
       <div className="border border-white/5 bg-black/40">
         <div className="overflow-x-auto">

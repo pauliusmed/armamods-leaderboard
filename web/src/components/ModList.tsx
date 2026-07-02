@@ -78,8 +78,8 @@ export function ModList({ game = 'reforger' }: ModListProps) {
           label: '// SEARCH',
           value: searchQuery,
           onChange: setSearchQuery,
-          placeholder: 'Search mods…',
-          ariaLabel: 'Search mods by name',
+          placeholder: 'Search mods or author…',
+          ariaLabel: 'Search mods by name, id, or workshop author',
         }}
         selects={[
           {

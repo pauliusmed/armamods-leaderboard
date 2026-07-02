@@ -23,3 +23,18 @@ export const AUDIT_STATUS_HINT: Record<AuditStatus, string> = {
 export const ZERO_NOW_SHORT = 'Zero today';
 export const ZERO_NOW_HINT =
   'Exactly 0 players on BattleMetrics right now (different from “a few per day” in averages)';
+
+/** Simplified audit buckets shown on /audit summary (internal status codes unchanged). */
+export const AUDIT_BUCKET_SHORT = {
+  remove: 'Remove',
+  review: 'Review',
+  keep: 'Keep',
+  other: 'Low / no data',
+} as const;
+
+export const AUDIT_BUCKET_HINT = {
+  remove: 'Broken, empty after 1.7, or declining – likely safe to drop from config',
+  review: 'Big drop since patch but still on some servers – verify before removing',
+  keep: 'Still used on BattleMetrics (or normal post-1.7 network dip)',
+  other: 'Too few players to judge, or not enough BM history',
+} as const;

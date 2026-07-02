@@ -244,6 +244,11 @@ app.get('/mods', async (c) => {
   const mods = await getChunkedData(c.env.TRENDING_KV, keys.MODS, isDefaultView ? 1 : undefined);
   let filtered = [...mods];
 
+  // Author lives in workshop KV cache — load before search so name/author queries work.
+  if (search && game !== 'arma3') {
+    await attachCachedAuthors(c.env.TRENDING_KV, game as ShareGame, filtered);
+  }
+
   if (search) {
     filtered = filtered.filter((m) => matchesModSearch(m, search));
   }

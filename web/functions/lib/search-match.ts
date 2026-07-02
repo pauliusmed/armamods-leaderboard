@@ -14,7 +14,10 @@ export function matchesServerSearch(
   return matchesAllSearchTokens(combined, query);
 }
 
-export function matchesModSearch(mod: { name?: string; id?: string }, query: string): boolean {
-  const combined = [mod.name, mod.id].filter(Boolean).join(' ');
+export function matchesModSearch(
+  mod: { name?: string; id?: string; author?: string | null },
+  query: string
+): boolean {
+  const combined = [mod.name, mod.id, mod.author].filter(Boolean).join(' ');
   return matchesAllSearchTokens(combined, query);
 }

@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   matchesAllSearchTokens,
+  matchesModSearch,
   matchesServerSearch,
 } from '../web/functions/lib/search-match.ts';
 
@@ -24,6 +25,27 @@ describe('matchesServerSearch', () => {
     assert.equal(
       matchesServerSearch({ name: 'My Server', ip: '1.2.3.4' }, '1.2.3'),
       true
+    );
+  });
+});
+
+describe('matchesModSearch', () => {
+  it('matches mod name and id', () => {
+    assert.equal(
+      matchesModSearch({ name: 'RHS Core', id: 'ABC-123' }, 'rhs'),
+      true
+    );
+    assert.equal(matchesModSearch({ name: 'RHS Core', id: 'ABC-123' }, 'abc-123'), true);
+  });
+
+  it('matches workshop author', () => {
+    assert.equal(
+      matchesModSearch({ name: 'Some Mod', id: 'X', author: 'Red Hammer Studios' }, 'red hammer'),
+      true
+    );
+    assert.equal(
+      matchesModSearch({ name: 'Some Mod', id: 'X', author: 'Red Hammer Studios' }, 'hammer rhs'),
+      false
     );
   });
 });

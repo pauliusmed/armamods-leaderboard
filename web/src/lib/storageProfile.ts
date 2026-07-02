@@ -7,6 +7,8 @@ export interface StorageProfile {
   availableGb: number;
   mainServerId: string | null;
   wantedServerIds: string[];
+  /** Last known server names — instant labels before list/API resolve. */
+  serverNames?: Record<string, string>;
 }
 
 export const CONSOLE_PRESETS: Array<{ id: ConsolePresetId; label: string; gb: number }> = [
@@ -26,6 +28,7 @@ export function loadStorageProfile(game: GameType): StorageProfile {
     availableGb: 25,
     mainServerId: null,
     wantedServerIds: [],
+    serverNames: {},
   };
   try {
     const raw = localStorage.getItem(profileKey(game));
@@ -36,6 +39,8 @@ export function loadStorageProfile(game: GameType): StorageProfile {
       availableGb: parsed.availableGb ?? fallback.availableGb,
       mainServerId: parsed.mainServerId ?? null,
       wantedServerIds: Array.isArray(parsed.wantedServerIds) ? parsed.wantedServerIds : [],
+      serverNames:
+        parsed.serverNames && typeof parsed.serverNames === 'object' ? parsed.serverNames : {},
     };
     // PS5 official Workshop cap is 25 GB (was 30 in early planner builds).
     if (profile.consolePreset === 'ps5' && profile.availableGb === 30) {
@@ -49,4 +54,16 @@ export function loadStorageProfile(game: GameType): StorageProfile {
 
 export function saveStorageProfile(game: GameType, profile: StorageProfile): void {
   localStorage.setItem(profileKey(game), JSON.stringify(profile));
+}
+
+export function rememberServerNames(
+  profile: StorageProfile,
+  entries: Array<{ id: string; name: string }>
+): StorageProfile {
+  if (!entries.length) return profile;
+  const serverNames = { ...profile.serverNames };
+  for (const { id, name } of entries) {
+    if (id && name) serverNames[id] = name;
+  }
+  return { ...profile, serverNames };
 }
