@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { TrendingMod } from '../types';
 import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
+import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
 import { workshopPageUrl } from '../lib/workshop';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
@@ -28,6 +29,10 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
   const delta = hasChange ? (prevRank as number) - (currentRank as number) : 0; // positive = rising
   const magnitude = Math.abs(delta);
   const workshopUrl = workshopPageUrl(mod.id, game);
+  const { status: workshopStatus, isUnavailable: workshopUnavailable } = useWorkshopStatus(
+    mod.id,
+    game
+  );
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
@@ -46,13 +51,16 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
       <td className="py-3 md:py-2.5 pr-4 align-middle">
         <div className="flex items-center gap-2.5 min-w-0">
           <ModThumbnail modId={mod.id} modName={mod.name} game={game} size="sm" />
-          <Link
-            to={`${gp}/mod/${mod.id}`}
-            className="min-w-0 text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
-            title={mod.name}
-          >
-            {mod.name}
-          </Link>
+          <div className="min-w-0">
+            <Link
+              to={`${gp}/mod/${mod.id}`}
+              className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1"
+              title={mod.name}
+            >
+              {mod.name}
+            </Link>
+            <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-0.5" />
+          </div>
         </div>
       </td>
 
@@ -88,15 +96,25 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
 
       {/* Workshop link */}
       <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle">
-        <a
-          href={workshopUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${mod.name} on the workshop`}
-          className="inline-block px-1 text-xs font-black text-gray-600 hover:text-tactical-orange transition-colors"
-        >
-          ↗
-        </a>
+        {workshopUnavailable ? (
+          <span
+            className="inline-block px-1 text-xs font-black text-amber-200/50 cursor-not-allowed"
+            title="Modas nebepasiekiamas Reforger Workshop"
+            aria-hidden
+          >
+            —
+          </span>
+        ) : (
+          <a
+            href={workshopUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${mod.name} on the workshop`}
+            className="inline-block px-1 text-xs font-black text-gray-600 hover:text-tactical-orange transition-colors"
+          >
+            ↗
+          </a>
+        )}
       </td>
     </tr>
   );

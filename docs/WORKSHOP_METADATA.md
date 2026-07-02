@@ -112,6 +112,7 @@ Co-deploy is computed in the collector (`scripts/collector.ts`) with **zero extr
 | GET | `/mods/:id/thumbnail` | `{ data: { url } }` | UI `ModThumbnail` (direct CDN) |
 | GET | `/mods/:id/dependencies` | `{ data: ModDependency[] }` | Mod detail dependency table |
 | GET | `/mods/:id/size` | `{ data: { sizeBytes } }` | Mod detail + Storage Planner |
+| GET | `/mods/:id/workshop-status` | `{ data: { status, checkedAt } }` | UI badge — available / unavailable / unknown |
 | GET | `/og/preview/mod/:id` | 302 → CDN URL | Discord, Twitter, OG bots |
 
 All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnails/deps are limited).
@@ -142,6 +143,24 @@ All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnai
 ### When R2 self-hosting might make sense
 
 Only if, after this architecture, CDN hotlinking is still too slow or blocked. That would be a separate phase (download on first resolve, serve from `*.reforgermods.com`).
+
+---
+
+## Workshop availability (removed / delisted mods)
+
+Mods deleted from Reforger Workshop still appear in BattleMetrics telemetry until servers drop them. That decline often shows up as **Falling** trending — a different signal from workshop removal.
+
+| Status | Meaning | KV TTL |
+|--------|---------|--------|
+| `available` | Workshop HTML contains a real `asset` record | 7 days |
+| `unavailable` | HTTP 404 or page without asset data | 48 hours |
+| `unknown` | Not yet checked, or transient fetch error | (not cached) |
+
+- KV key: `cache:workshop-status:{game}:{MODID}` → `{ status, checkedAt }`
+- API: `GET /api/mods/:id/workshop-status`
+- Mod detail also includes `workshopStatus` + `workshopStatusCheckedAt`
+- UI: **Nebe Workshop** badge on leaderboard/trending rows; banner on mod detail; Workshop CTA disabled when unavailable
+- Shorter TTL on `unavailable` so mods that return to Workshop are re-checked within ~2 days
 
 ---
 

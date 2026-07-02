@@ -13,4 +13,8 @@ export {
   resolveModGallery,
   resolveModThumbnailUrl,
   resolveModWorkshopDates,
+  resolveModWorkshopStatus,
+  isReforgerWorkshopPageAvailable,
+  type WorkshopAvailability,
+  type WorkshopStatusRecord,
 } from './workshop-fetch';

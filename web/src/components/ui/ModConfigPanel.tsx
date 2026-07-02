@@ -4,21 +4,32 @@ import { copyToClipboard } from '../../lib/clipboard';
 import { formatModConfigPreview, formatModConfigSnippet } from '../../lib/modConfig';
 import { workshopPageUrl, workshopLabel } from '../../lib/workshop';
 import { ModThumbnail } from './ModThumbnail';
+import { useWorkshopStatus } from './ModWorkshopStatus';
+import type { WorkshopAvailability } from '../../types';
 
 interface ModConfigPanelProps {
   modId: string;
   modName: string;
   game?: GameType;
+  workshopStatus?: WorkshopAvailability;
 }
 
 const BTN =
   'flex w-full items-center justify-center py-3 text-[11px] font-black uppercase tracking-widest transition-colors';
 
-export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigPanelProps) {
+export function ModConfigPanel({
+  modId,
+  modName,
+  game = 'reforger',
+  workshopStatus: initialWorkshopStatus,
+}: ModConfigPanelProps) {
   const [hint, setHint] = useState<string | null>(null);
   const copySnippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
   const previewSnippet = useMemo(() => formatModConfigPreview(modId, modName), [modId, modName]);
   const isReforger = game === 'reforger';
+  const { isUnavailable: workshopUnavailable } = useWorkshopStatus(modId, game, {
+    initialStatus: initialWorkshopStatus,
+  });
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(copySnippet);
@@ -55,14 +66,23 @@ export function ModConfigPanel({ modId, modName, game = 'reforger' }: ModConfigP
               >
                 Copy
               </button>
-              <a
-                href={workshopPageUrl(modId, game)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${BTN} border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
-              >
-                {workshopLabel(game)} ↗
-              </a>
+              {workshopUnavailable ? (
+                <span
+                  className={`${BTN} border-2 border-amber-500/30 bg-amber-500/10 text-amber-200/70 cursor-not-allowed`}
+                  title="Modas nebepasiekiamas Reforger Workshop"
+                >
+                  {workshopLabel(game)} (removed)
+                </span>
+              ) : (
+                <a
+                  href={workshopPageUrl(modId, game)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${BTN} border-2 border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange hover:bg-tactical-orange hover:text-black`}
+                >
+                  {workshopLabel(game)} ↗
+                </a>
+              )}
             </div>
           </div>
         )}

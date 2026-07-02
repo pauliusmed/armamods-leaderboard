@@ -22,6 +22,16 @@ export interface Mod {
   }[];
   /** Workshop version download size (bytes), from collector + KV cache. */
   sizeBytes?: number | null;
+  /** Reforger Workshop availability (on-demand scrape + KV cache). */
+  workshopStatus?: WorkshopAvailability;
+  workshopStatusCheckedAt?: string | null;
+}
+
+export type WorkshopAvailability = 'available' | 'unavailable' | 'unknown';
+
+export interface WorkshopStatus {
+  status: WorkshopAvailability;
+  checkedAt: string | null;
 }
 
 export interface ModGalleryImage {

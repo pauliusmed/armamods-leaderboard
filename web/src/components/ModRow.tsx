@@ -3,6 +3,7 @@ import type { Mod } from '../types';
 import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { ModAuthorCell } from './ui/ModAuthorCell';
+import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
 import { workshopPageUrl } from '../lib/workshop';
 import { formatBytes } from '../lib/formatBytes';
 
@@ -20,6 +21,10 @@ export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }
   const share = mod.marketShare ?? 0;
   const workshopUrl = workshopPageUrl(mod.id, game);
   const isLeaderboard = variant === 'leaderboard';
+  const { status: workshopStatus, isUnavailable: workshopUnavailable } = useWorkshopStatus(
+    mod.id,
+    game
+  );
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
@@ -44,6 +49,7 @@ export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }
             >
               {mod.name}
             </Link>
+            <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-1" />
             {isLeaderboard && (
               <span className="md:hidden">
                 <ModAuthorCell modId={mod.id} game={game} className="mt-0.5" />
@@ -91,14 +97,23 @@ export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }
 
       {isLeaderboard && (
         <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
-          <a
-            href={workshopUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
-          >
-            {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
-          </a>
+          {workshopUnavailable ? (
+            <span
+              className="inline-flex items-center justify-center px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed"
+              title="Modas nebepasiekiamas Reforger Workshop"
+            >
+              Workshop
+            </span>
+          ) : (
+            <a
+              href={workshopUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
+            >
+              {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
+            </a>
+          )}
         </td>
       )}
     </tr>

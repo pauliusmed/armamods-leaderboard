@@ -28,7 +28,7 @@ import {
   lookupModsByIds,
   type ShareGame,
 } from '../lib/share-meta';
-import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
+import { authorCacheKey, resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
 import { findServerById } from '../lib/server-lookup';
 import { analyzeStoragePlan } from '../lib/storage-calc';
 import { buildServerStoragePack } from '../lib/storage-service';
@@ -184,6 +184,43 @@ app.get('/stats', async (c) => {
   return response;
 });
 
+function matchesPlayerActivityFilter(totalPlayers: number, filter: string): boolean {
+  if (filter === 'high') return totalPlayers >= 500;
+  if (filter === 'medium') return totalPlayers >= 100 && totalPlayers < 500;
+  if (filter === 'low') return totalPlayers < 100;
+  return true;
+}
+
+/** Read cached workshop authors only — no live scrape during list sort. */
+async function attachCachedAuthors(
+  kv: KVNamespace,
+  game: ShareGame,
+  mods: Array<{ id: string; author?: string | null }>
+): Promise<void> {
+  if (game === 'arma3') return;
+
+  const batchSize = 100;
+  for (let i = 0; i < mods.length; i += batchSize) {
+    const slice = mods.slice(i, i + batchSize);
+    await Promise.all(
+      slice.map(async (mod) => {
+        if (mod.author) return;
+        const cached = await kv.get(authorCacheKey(game, mod.id), 'text');
+        if (cached) mod.author = cached;
+      })
+    );
+  }
+}
+
+function compareAuthors(a: string, b: string, dir: number): number {
+  const aa = (a || '').toLowerCase();
+  const ab = (b || '').toLowerCase();
+  if (!aa && !ab) return 0;
+  if (!aa) return 1;
+  if (!ab) return -1;
+  return dir * aa.localeCompare(ab);
+}
+
 app.get('/mods', async (c) => {
   const cache = await caches.open('armamods:mods');
   const cacheResponse = await cache.match(c.req.raw);
@@ -196,10 +233,14 @@ app.get('/mods', async (c) => {
   const search = c.req.query('search') || '';
   const sortBy = c.req.query('sortBy') || 'overall';
   const sortDir = c.req.query('sortDir') === 'desc' ? 'desc' : 'asc';
+  const playerFilter = c.req.query('playerFilter') || 'all';
 
-  // OPTIMIZATION: If no search and default sort, only fetch the first few chunks
-  // OPTIMIZATION: If no search and default sort, only fetch the first chunk (512KB)
-  const isDefaultView = !search && (sortBy === 'overall' || !sortBy) && sortDir === 'asc';
+  // Default view: rank asc, no search/filter — only first chunk (pre-sorted by rank).
+  const isDefaultView =
+    !search &&
+    playerFilter === 'all' &&
+    (sortBy === 'overall' || !sortBy) &&
+    sortDir === 'asc';
   const mods = await getChunkedData(c.env.TRENDING_KV, keys.MODS, isDefaultView ? 1 : undefined);
   let filtered = [...mods];
 
@@ -207,11 +248,20 @@ app.get('/mods', async (c) => {
     filtered = filtered.filter((m) => matchesModSearch(m, search));
   }
 
+  if (playerFilter !== 'all') {
+    filtered = filtered.filter((m) =>
+      matchesPlayerActivityFilter(m.totalPlayers || 0, playerFilter)
+    );
+  }
+
   const dir = sortDir === 'asc' ? 1 : -1;
   const byNum = (a: number, b: number) => dir * (a - b);
   const byStr = (a: string, b: string) => dir * (a || '').localeCompare(b || '');
 
-  if (sortBy === 'players') filtered.sort((a, b) => byNum(a.totalPlayers || 0, b.totalPlayers || 0));
+  if (sortBy === 'author') {
+    await attachCachedAuthors(c.env.TRENDING_KV, game as ShareGame, filtered);
+    filtered.sort((a, b) => compareAuthors(a.author || '', b.author || '', dir));
+  } else if (sortBy === 'players') filtered.sort((a, b) => byNum(a.totalPlayers || 0, b.totalPlayers || 0));
   else if (sortBy === 'servers') filtered.sort((a, b) => byNum(a.serverCount || 0, b.serverCount || 0));
   else if (sortBy === 'share') filtered.sort((a, b) => byNum(a.marketShare || 0, b.marketShare || 0));
   else if (sortBy === 'size') filtered.sort((a, b) => byNum(a.sizeBytes || 0, b.sizeBytes || 0));
@@ -266,12 +316,13 @@ app.get('/mods/:modId', async (c) => {
   if (!mod) return c.json({ error: 'Not found' }, 404);
 
   if (game === 'reforger') {
-    const [author, workshopDates, sizeBytes] = await Promise.all([
+    const [author, workshopDates, sizeBytes, workshopStatus] = await Promise.all([
       resolveModAuthor(c.env.TRENDING_KV, game, modId),
       resolveModWorkshopDates(c.env.TRENDING_KV, game, modId),
       mod.sizeBytes && mod.sizeBytes > 0
         ? Promise.resolve(mod.sizeBytes as number)
         : resolveModSizeBytes(c.env.TRENDING_KV, game, modId),
+      resolveModWorkshopStatus(c.env.TRENDING_KV, game, modId),
     ]);
     if (author) mod = { ...mod, author };
     if (workshopDates.created || workshopDates.modified) {
@@ -281,7 +332,12 @@ app.get('/mods/:modId', async (c) => {
         workshopModified: workshopDates.modified,
       };
     }
-    mod = { ...mod, sizeBytes: sizeBytes ?? mod.sizeBytes ?? null };
+    mod = {
+      ...mod,
+      sizeBytes: sizeBytes ?? mod.sizeBytes ?? null,
+      workshopStatus: workshopStatus.status,
+      workshopStatusCheckedAt: workshopStatus.checkedAt,
+    };
   }
 
   if (Array.isArray(mod.coDeployed) && mod.coDeployed.length > 0 && modChunksText.length > 0) {
@@ -604,6 +660,38 @@ async function fetchModHistoryPoints(
 
   return modHistory;
 }
+
+app.get('/mods/:modId/workshop-status', async (c) => {
+  const cache = await caches.open('armamods:mod_workshop_status');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+
+  if (game === 'arma3') {
+    const response = c.json({
+      data: { status: 'unknown', checkedAt: null },
+      meta: { modId, game, supported: false },
+    });
+    response.headers.set('Cache-Control', 'public, max-age=3600');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  }
+
+  const workshopStatus = await resolveModWorkshopStatus(c.env.TRENDING_KV, game, modId);
+  const response = c.json({
+    data: { status: workshopStatus.status, checkedAt: workshopStatus.checkedAt },
+    meta: { modId, game, supported: true },
+  });
+  const edgeMaxAge = workshopStatus.status === 'unavailable' ? 43200 : 86400;
+  response.headers.set(
+    'Cache-Control',
+    `public, max-age=${edgeMaxAge}, stale-while-revalidate=604800`
+  );
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
 
 app.get('/mods/:modId/author', async (c) => {
   const cache = await caches.open('armamods:mod_authors');

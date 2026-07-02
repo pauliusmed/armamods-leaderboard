@@ -6,6 +6,7 @@ import {
   parseReforgerGalleryFromHtml,
   parseReforgerDatesFromHtml,
   formatWorkshopDate,
+  isReforgerWorkshopPageAvailable,
 } from '../web/functions/lib/workshop-fetch.ts';
 
 const SAMPLE_NEXT = `<script id="__NEXT_DATA__" type="application/json">{
@@ -131,5 +132,28 @@ describe('parseReforgerGalleryFromHtml', () => {
 
   it('returns empty array when __NEXT_DATA__ is missing', () => {
     assert.deepEqual(parseReforgerGalleryFromHtml('<html></html>'), []);
+  });
+});
+
+describe('isReforgerWorkshopPageAvailable', () => {
+  it('returns true when asset id and name exist in __NEXT_DATA__', () => {
+    const html = `<script id="__NEXT_DATA__" type="application/json">{
+      "props": { "pageProps": { "asset": { "id": "ABC123", "name": "Test Mod" } } }
+    }</script>`;
+    assert.equal(isReforgerWorkshopPageAvailable(html), true);
+  });
+
+  it('returns false for empty or asset-less pages', () => {
+    assert.equal(isReforgerWorkshopPageAvailable('<html></html>'), false);
+    assert.equal(
+      isReforgerWorkshopPageAvailable(
+        `<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{}}}</script>`
+      ),
+      false
+    );
+  });
+
+  it('returns false when asset record lacks id or name', () => {
+    assert.equal(isReforgerWorkshopPageAvailable(SAMPLE_NEXT), false);
   });
 });

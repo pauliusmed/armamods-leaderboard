@@ -23,6 +23,19 @@ export interface WorkshopDates {
   modified: string | null;
 }
 
+/** Whether the mod page exists on Reforger Workshop (orthogonal to BM trending). */
+export type WorkshopAvailability = 'available' | 'unavailable' | 'unknown';
+
+export interface WorkshopStatusRecord {
+  status: WorkshopAvailability;
+  checkedAt: string;
+}
+
+export interface ReforgerWorkshopFetchResult {
+  html: string | null;
+  httpStatus: number | null;
+}
+
 export function reforgerWorkshopPageUrl(modId: string): string {
   const id = modId.trim().toUpperCase();
   return `https://reforger.armaplatform.com/workshop/${encodeURIComponent(id)}`;
@@ -52,7 +65,13 @@ export function sizeCacheKey(game: ShareGame, modId: string): string {
   return `cache:mod-size:${game}:${modId.toUpperCase()}`;
 }
 
+export function statusCacheKey(game: ShareGame, modId: string): string {
+  return `cache:workshop-status:${game}:${modId.toUpperCase()}`;
+}
+
 const WORKSHOP_KV_TTL = 604800; // 7 days
+/** Shorter TTL so mods that return to Workshop are picked up within ~2 days. */
+const WORKSHOP_STATUS_UNAVAILABLE_TTL = 172800; // 48 hours
 
 export function extractOgImageFromHtml(html: string): string | null {
   const patterns = [
@@ -297,7 +316,63 @@ export function parseReforgerDatesFromHtml(html: string): WorkshopDates {
   };
 }
 
-export async function fetchReforgerWorkshopHtml(modId: string): Promise<string | null> {
+/** True when workshop HTML contains a real asset record (not a dead/404 shell page). */
+export function isReforgerWorkshopPageAvailable(html: string): boolean {
+  const nextData = extractNextDataJson(html);
+  if (!nextData || typeof nextData !== 'object') return false;
+
+  const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
+    ?.pageProps;
+  if (!pageProps) return false;
+
+  const asset = pageProps.asset as { id?: string; name?: string } | undefined;
+  const id = asset?.id?.trim();
+  const name = asset?.name?.trim();
+  return Boolean(id && name);
+}
+
+async function readWorkshopStatusFromKv(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<WorkshopStatusRecord | null> {
+  const raw = await kv.get(statusCacheKey(game, modId), 'text');
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as WorkshopStatusRecord;
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      (parsed.status === 'available' || parsed.status === 'unavailable') &&
+      typeof parsed.checkedAt === 'string'
+    ) {
+      return parsed;
+    }
+  } catch {
+    /* refetch */
+  }
+  return null;
+}
+
+async function writeWorkshopStatusToKv(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string,
+  status: Exclude<WorkshopAvailability, 'unknown'>
+): Promise<WorkshopStatusRecord> {
+  const record: WorkshopStatusRecord = {
+    status,
+    checkedAt: new Date().toISOString(),
+  };
+  const ttl =
+    status === 'unavailable' ? WORKSHOP_STATUS_UNAVAILABLE_TTL : WORKSHOP_KV_TTL;
+  await kv.put(statusCacheKey(game, modId), JSON.stringify(record), { expirationTtl: ttl });
+  return record;
+}
+
+export async function fetchReforgerWorkshopPage(
+  modId: string
+): Promise<ReforgerWorkshopFetchResult> {
   try {
     const response = await fetch(reforgerWorkshopPageUrl(modId), {
       headers: {
@@ -310,13 +385,55 @@ export async function fetchReforgerWorkshopHtml(modId: string): Promise<string |
     });
     if (!response.ok) {
       console.warn('[WORKSHOP] fetch failed', modId, response.status);
-      return null;
+      return { html: null, httpStatus: response.status };
     }
-    return await response.text();
+    return { html: await response.text(), httpStatus: response.status };
   } catch (err) {
     console.warn('[WORKSHOP] fetch failed', modId, err);
-    return null;
+    return { html: null, httpStatus: null };
   }
+}
+
+export async function fetchReforgerWorkshopHtml(modId: string): Promise<string | null> {
+  const page = await fetchReforgerWorkshopPage(modId);
+  return page.html;
+}
+
+async function ensureWorkshopStatusFromPage(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string,
+  page: ReforgerWorkshopFetchResult
+): Promise<WorkshopStatusRecord | null> {
+  if (game === 'arma3') return null;
+
+  if (page.httpStatus === 404) {
+    return writeWorkshopStatusToKv(kv, game, modId, 'unavailable');
+  }
+
+  if (!page.html) return null;
+
+  const status = isReforgerWorkshopPageAvailable(page.html) ? 'available' : 'unavailable';
+  return writeWorkshopStatusToKv(kv, game, modId, status);
+}
+
+export async function resolveModWorkshopStatus(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<WorkshopStatusRecord> {
+  if (game === 'arma3') {
+    return { status: 'unknown', checkedAt: new Date().toISOString() };
+  }
+
+  const cached = await readWorkshopStatusFromKv(kv, game, modId);
+  if (cached) return cached;
+
+  const page = await fetchReforgerWorkshopPage(modId);
+  const written = await ensureWorkshopStatusFromPage(kv, game, modId, page);
+  if (written) return written;
+
+  return { status: 'unknown', checkedAt: new Date().toISOString() };
 }
 
 /** One HTML fetch populates thumbnail + dependency KV keys when either is missing. */
@@ -342,9 +459,20 @@ export async function ensureReforgerWorkshopMetadata(
     kv.get(datesKey, 'text'),
     kv.get(sizeKey, 'text'),
   ]);
-  if (ogCached && depsCached && authorCached && galleryCached && datesCached && sizeCached) return;
+  const statusCached = await readWorkshopStatusFromKv(kv, game, modId);
+  if (statusCached?.status === 'unavailable') return;
 
-  const html = await fetchReforgerWorkshopHtml(modId);
+  if (ogCached && depsCached && authorCached && galleryCached && datesCached && sizeCached) {
+    return;
+  }
+
+  const page = await fetchReforgerWorkshopPage(modId);
+  await ensureWorkshopStatusFromPage(kv, game, modId, page);
+
+  const statusAfter = await readWorkshopStatusFromKv(kv, game, modId);
+  if (statusAfter?.status === 'unavailable') return;
+
+  const html = page.html;
   if (!html) return;
 
   const writes: Promise<void>[] = [];
@@ -540,8 +668,18 @@ export async function ensureReforgerModSize(
     return Number.isFinite(n) && n > 0 ? n : null;
   }
 
-  const html = await fetchReforgerWorkshopHtml(normalizedId);
+  const page = await fetchReforgerWorkshopPage(normalizedId);
+  if (page.httpStatus === 404) {
+    await writeWorkshopStatusToKv(kv, game, normalizedId, 'unavailable');
+    return null;
+  }
+
+  const html = page.html;
   if (!html) return null;
+
+  if (isReforgerWorkshopPageAvailable(html)) {
+    await writeWorkshopStatusToKv(kv, game, normalizedId, 'available');
+  }
 
   const sizeBytes = parseReforgerSizeBytesFromHtml(html);
   if (sizeBytes) {

@@ -15,6 +15,7 @@
 - **Server list**: sortable column headers (Rank, Server, Players, Mods, Modpack); **Vanilla** label when modpack is empty; **console fit** badges (≤25 GB / Heavy), modpack size on mobile, filters for PS5 / Xbox S / X / vanilla-only.
 - **Storage planner**: PS5 preset corrected to **25 GB** (official Workshop allocation per Bohemia/Sony); similar-server suggestions with lower mod stack cost (`findStorageAlternatives`); **modpack set** feedback — clusters selected servers by mod family and suggests fitting combinations; deduplicated results UI (no double modpack-set block).
 - **Docs**: [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) — console mod sizes, API, planner UX, server list integration.
+- **Workshop availability**: `GET /api/mods/:id/workshop-status` — KV cache for removed/delisted Reforger mods (`unavailable` TTL 48h); **Nebe Workshop** badge on leaderboard + trending rows; mod detail banner + disabled Workshop CTA when unavailable (BM telemetry unchanged).
 
 ## [1.17.0] - 2026-06-30
 

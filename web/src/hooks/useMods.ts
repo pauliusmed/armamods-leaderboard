@@ -25,15 +25,13 @@ export function useMods(options: UseModsOptions = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
-  const apiSortBy = sortBy === 'author' || sortBy === 'size' ? 'overall' : sortBy;
-
   const loadMods = useCallback(async () => {
     try {
       setLoading(true);
       const offset = (currentPage - 1) * itemsPerPage;
 
       const [listData, statsData] = await Promise.all([
-        modsApi.getPopular(itemsPerPage, offset, searchQuery, apiSortBy, sortDir, game),
+        modsApi.getPopular(itemsPerPage, offset, searchQuery, sortBy, sortDir, game, playerFilter),
         modsApi.getGlobalStats(game)
       ]);
 
@@ -46,7 +44,7 @@ export function useMods(options: UseModsOptions = {}) {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchQuery, apiSortBy, sortDir, game]);
+  }, [currentPage, searchQuery, sortBy, sortDir, game, playerFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -57,25 +55,9 @@ export function useMods(options: UseModsOptions = {}) {
       loadMods();
     }, 300);
     return () => clearTimeout(timer);
-  }, [currentPage, searchQuery, apiSortBy, sortDir, loadMods]);
+  }, [currentPage, searchQuery, sortBy, sortDir, playerFilter, loadMods]);
 
-  const filteredMods = useMemo(() => {
-    if (!Array.isArray(mods)) return [];
-    
-    let filtered = [...mods];
-
-    if (playerFilter !== 'all') {
-      filtered = filtered.filter(mod => {
-        const players = mod.totalPlayers || 0;
-        if (playerFilter === 'high') return players >= 500;
-        if (playerFilter === 'medium') return players >= 100 && players < 500;
-        if (playerFilter === 'low') return players < 100;
-        return true;
-      });
-    }
-
-    return filtered;
-  }, [mods, playerFilter]);
+  const filteredMods = useMemo(() => (Array.isArray(mods) ? mods : []), [mods]);
 
   const resetFilters = () => {
     setSearchQuery('');

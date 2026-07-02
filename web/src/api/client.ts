@@ -21,6 +21,13 @@ const thumbnailInflight = new Map<string, Promise<string | null>>();
 /** Dedupe concurrent author lookups for the same mod. */
 const authorInflight = new Map<string, Promise<string | null>>();
 
+const WORKSHOP_STATUS_CLIENT_TTL = 172800000; // 48h — matches unavailable KV TTL
+
+const workshopStatusInflight = new Map<
+  string,
+  Promise<import('../types').WorkshopStatus>
+>();
+
 /** Dedupe concurrent gallery lookups for the same mod. */
 const galleryInflight = new Map<string, Promise<import('../types').ModGalleryImage[]>>();
 
@@ -44,12 +51,13 @@ export const modsApi = {
     search?: string,
     sortBy?: string,
     sortDir: 'asc' | 'desc' = 'asc',
-    game: GameType = 'reforger'
+    game: GameType = 'reforger',
+    playerFilter: string = 'all'
   ) => {
-    const key = `mods:${game}:${limit}:${offset}:${search}:${sortBy}:${sortDir}`;
+    const key = `mods:${game}:${limit}:${offset}:${search}:${sortBy}:${sortDir}:${playerFilter}`;
     return getCached(key, async () => {
       const response = await api.get<ApiResponse<Mod>>('mods', {
-        params: { limit, offset, search, sortBy, sortDir, game },
+        params: { limit, offset, search, sortBy, sortDir, game, playerFilter },
       });
       return response.data;
     });
@@ -157,6 +165,32 @@ export const modsApi = {
       .finally(() => authorInflight.delete(key));
 
     authorInflight.set(key, request);
+    return request;
+  },
+
+  getWorkshopStatus: async (
+    modId: string,
+    game: GameType = 'reforger'
+  ): Promise<import('../types').WorkshopStatus> => {
+    const key = `workshop-status:${game}:${modId}`;
+    const inflight = workshopStatusInflight.get(key);
+    if (inflight) return inflight;
+
+    const request = getCached(
+      key,
+      async () => {
+        const response = await api.get<{
+          data: import('../types').WorkshopStatus;
+          meta: { supported: boolean };
+        }>(`mods/${modId}/workshop-status`, { params: { game } });
+        return response.data.data ?? { status: 'unknown', checkedAt: null };
+      },
+      WORKSHOP_STATUS_CLIENT_TTL
+    )
+      .then((status) => status as import('../types').WorkshopStatus)
+      .finally(() => workshopStatusInflight.delete(key));
+
+    workshopStatusInflight.set(key, request);
     return request;
   },
 

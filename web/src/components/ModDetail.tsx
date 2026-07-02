@@ -23,6 +23,7 @@ import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { formatBytes } from '../lib/formatBytes';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModConfigPanel } from './ui/ModConfigPanel';
+import { ModWorkshopUnavailableBanner } from './ui/ModWorkshopStatus';
 import { ModRow } from './ModRow';
 import { ServerRow } from './ServerRow';
 import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
@@ -179,6 +180,12 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         ← [ Back to Registry ]
       </Link>
 
+      <ModWorkshopUnavailableBanner
+        game={game}
+        status={mod.workshopStatus ?? 'unknown'}
+        checkedAt={mod.workshopStatusCheckedAt}
+      />
+
       {/*
         Desktop: main content on the left, owner-tools panel as a sticky right
         rail so Copy/Workshop stay reachable while scrolling the long page.
@@ -246,6 +253,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               modId={mod.id}
               modName={mod.name}
               game={game}
+              workshopStatus={mod.workshopStatus}
             />
           </div>
 
@@ -574,6 +582,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               modId={mod.id}
               modName={mod.name}
               game={game}
+              workshopStatus={mod.workshopStatus}
             />
           </div>
         </aside>

@@ -1,6 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useMods } from '../hooks/useMods';
-import { useModAuthors } from '../hooks/useModAuthors';
 import { ModRow } from './ModRow';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
@@ -36,31 +35,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
     refresh
   } = useMods({ game });
 
-  const authors = useModAuthors(
-    filteredMods.map((m) => m.id),
-    game
-  );
-
-  const displayMods = useMemo(() => {
-    if (sortBy === 'author') {
-      const dir = sortDir === 'asc' ? 1 : -1;
-      return [...filteredMods].sort((a, b) => {
-        const aa = (authors[a.id] || '').toLowerCase();
-        const ab = (authors[b.id] || '').toLowerCase();
-        if (!aa && !ab) return 0;
-        if (!aa) return 1;
-        if (!ab) return -1;
-        return dir * aa.localeCompare(ab);
-      });
-    }
-    if (sortBy === 'size') {
-      const dir = sortDir === 'asc' ? 1 : -1;
-      return [...filteredMods].sort(
-        (a, b) => dir * ((a.sizeBytes ?? 0) - (b.sizeBytes ?? 0))
-      );
-    }
-    return filteredMods;
-  }, [filteredMods, sortBy, sortDir, authors]);
+  const itemsPerPage = 24;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -227,11 +202,11 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                 </tr>
               </thead>
               <tbody>
-                {displayMods.map((mod) => (
+                {filteredMods.map((mod, index) => (
                   <ModRow
                     key={mod.id}
                     mod={mod}
-                    rank={mod.overallRank}
+                    rank={sortBy === 'overall' ? mod.overallRank : (currentPage - 1) * itemsPerPage + index + 1}
                     game={game}
                     variant="leaderboard"
                   />
@@ -242,7 +217,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         </div>
       )}
 
-      {!initialLoading && displayMods.length > 0 && (
+      {!initialLoading && filteredMods.length > 0 && (
         <div className="mt-20">
           <DonationCard />
         </div>
