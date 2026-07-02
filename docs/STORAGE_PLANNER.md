@@ -84,6 +84,13 @@ Three-step wizard (profile in `localStorage`):
 2. **Installed library (proxy)** — server you are on now (for *To download* delta)
 3. **My servers** — multi-select; shared mods count once in combined total
 
+### Server list loading
+
+- On open, planner fetches up to **5000** servers from `GET /api/servers?full=1` (KV cache written by collector — not live BattleMetrics).
+- Saved selections (`mainServerId`, `wantedServerIds`) persist in `localStorage`; **server names** are cached there too for instant labels.
+- If a saved ID is not in the bulk list, the client calls `GET /api/servers/:id` (KV surgical lookup). Failure → **Not in network** (server removed from collector / offline), not infinite Loading.
+- Empty browse list with selections still showing Loading usually means **API/KV empty** (local dev without collector) or **stale IDs** — clear selection and pick from search.
+
 ### Results layout (no duplicate blocks)
 
 1. **Hero cards** — Combined modpack · Free space · To download · Status (FITS / OVER LIMIT)

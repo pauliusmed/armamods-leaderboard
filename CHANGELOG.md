@@ -25,6 +25,7 @@
 - **Fix**: workshop size parser reads `Version size` from SSR `<dl>` text (not only `__NEXT_DATA__`); uppercase mod GUID in fetch URL; `cacheOnly` plan mode for fast KV refresh while batch-loading sizes.
 - **Storage sizes source**: planner reads `sizeBytes` from leaderboard KV + `cache:mod-size:*` (no live workshop scrape); collector copies cached sizes into mod chunks each run.
 - **UX**: storage planner loading panel with progress bar, stage labels, and elapsed timer (no frozen `0/N` workshop counter).
+- **Storage planner server list**: loads up to 5000 servers from KV (was 500); caches server names in `localStorage`; shows **Not in network** when a saved ID is missing from collector data (no infinite Loading).
 - **Mod size surfaces**: download size on mod detail + leaderboard **Size** column (sortable); server list **Modpack** total (collector precomputes per server).
 - **Collector**: warms `cache:mod-size` for top 300 mods from workshop when cache is empty.
 - **Server list**: sortable column headers (Rank, Server, Players, Mods, Modpack); **Vanilla** label when modpack is empty; **console fit** badges (≤25 GB / Heavy), modpack size on mobile, filters for PS5 / Xbox S / X / vanilla-only.
