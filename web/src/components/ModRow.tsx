@@ -23,7 +23,8 @@ export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }
   const isLeaderboard = variant === 'leaderboard';
   const { status: workshopStatus, isUnavailable: workshopUnavailable } = useWorkshopStatus(
     mod.id,
-    game
+    game,
+    mod.workshopStatus ? { initialStatus: mod.workshopStatus } : undefined
   );
 
   return (

@@ -185,6 +185,7 @@ npm test
 - **Installed proxy** — no direct console API; user picks a BM server as “what I have”
 - **Similar servers** — MVP searches loaded server pool (up to ~5000), not a precomputed similarity index
 - **Arma 3** — no workshop size scrape in planner yet
+- **Plan API CPU** — mitigated by `ServerLookup` (single shard load per plan); see [PERFORMANCE.md](./PERFORMANCE.md)
 
 ---
 

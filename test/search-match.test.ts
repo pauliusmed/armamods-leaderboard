@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   matchesAllSearchTokens,
   matchesModSearch,
+  matchesModSearchByNameOrId,
   matchesServerSearch,
 } from '../web/functions/lib/search-match.ts';
 
@@ -45,6 +46,22 @@ describe('matchesModSearch', () => {
     );
     assert.equal(
       matchesModSearch({ name: 'Some Mod', id: 'X', author: 'Red Hammer Studios' }, 'hammer rhs'),
+      false
+    );
+  });
+});
+
+describe('matchesModSearchByNameOrId', () => {
+  it('ignores author field', () => {
+    assert.equal(
+      matchesModSearchByNameOrId({ name: 'RHS Core', id: 'ABC' }, 'rhs'),
+      true
+    );
+    assert.equal(
+      matchesModSearchByNameOrId(
+        { name: 'Unrelated', id: 'X' },
+        'red hammer'
+      ),
       false
     );
   });

@@ -27,24 +27,14 @@ function getServersKey(game: GameType): string {
   return game === 'arma3' ? 'cache:servers:arma3' : 'cache:servers';
 }
 
-/** Surgical KV scan for a single server object (same strategy as /servers/:id). */
-export async function findServerById(
-  kv: KVNamespace,
-  game: GameType,
+/** Parse one server object from preloaded shard text (testable without KV). */
+export function findServerInChunks(
+  chunksText: (string | null)[],
   serverId: string
-): Promise<Record<string, unknown> | null> {
-  const baseKey = getServersKey(game);
-  const meta = (await kv.get(`${baseKey}:meta`, 'json')) as { chunks?: number } | null;
-  if (!meta?.chunks) return null;
-
-  const chunkPromises = Array.from({ length: meta.chunks }, (_, i) =>
-    kv.get(`${baseKey}:${i}`, 'text')
-  );
-  const chunksText = await Promise.all(chunkPromises);
-
+): Record<string, unknown> | null {
+  const searchStr = `"id":"${serverId}"`;
   for (const chunkText of chunksText) {
-    if (!chunkText?.includes(`"id":"${serverId}"`)) continue;
-    const searchStr = `"id":"${serverId}"`;
+    if (!chunkText?.includes(searchStr)) continue;
     const idPos = chunkText.indexOf(searchStr);
     const startPos = chunkText.lastIndexOf('{', idPos);
     const endPos = findMatchingBrace(chunkText, startPos);
@@ -57,4 +47,47 @@ export async function findServerById(
     }
   }
   return null;
+}
+
+/** Loads server shards once — reuse for multiple IDs in the same request (e.g. storage plan). */
+export class ServerLookup {
+  private chunksText: (string | null)[] | null = null;
+
+  private constructor(
+    private readonly kv: KVNamespace,
+    private readonly game: GameType
+  ) {}
+
+  static async create(kv: KVNamespace, game: GameType): Promise<ServerLookup | null> {
+    const lookup = new ServerLookup(kv, game);
+    const loaded = await lookup.loadChunks();
+    return loaded ? lookup : null;
+  }
+
+  private async loadChunks(): Promise<boolean> {
+    const baseKey = getServersKey(this.game);
+    const meta = (await this.kv.get(`${baseKey}:meta`, 'json')) as { chunks?: number } | null;
+    if (!meta?.chunks) return false;
+
+    this.chunksText = await Promise.all(
+      Array.from({ length: meta.chunks }, (_, i) => this.kv.get(`${baseKey}:${i}`, 'text'))
+    );
+    return true;
+  }
+
+  findById(serverId: string): Record<string, unknown> | null {
+    if (!this.chunksText) return null;
+    return findServerInChunks(this.chunksText, serverId);
+  }
+}
+
+/** Surgical KV scan for a single server object (loads all shards once). */
+export async function findServerById(
+  kv: KVNamespace,
+  game: GameType,
+  serverId: string
+): Promise<Record<string, unknown> | null> {
+  const lookup = await ServerLookup.create(kv, game);
+  if (!lookup) return null;
+  return lookup.findById(serverId);
 }

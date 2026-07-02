@@ -3,6 +3,12 @@
 - **UI** `/scenarios`: type badges, links to `/mod/:id` (workshop) or `/scenarios/official/:slug` (vanilla).
 - **Reference** `/scenarios/official`: all built-in Bohemia scenarios with `scenarioId` paths for server config.
 
+### ⚡ Performance
+- **`ServerLookup`**: `POST /api/storage/plan` loads server KV shards once per request (was N× reload for main + wanted servers).
+- **Mod search**: two-pass filter — name/id first; author KV cache only when name/id returns zero hits.
+- **Client**: server list in-memory cache 5 min (aligned with edge).
+- **Docs**: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) — intentional trade-offs + known limits.
+
 ## [1.19.0] - 2026-07-02
 
 ### 🎛️ Unified list filters

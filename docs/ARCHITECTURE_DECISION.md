@@ -61,6 +61,8 @@ Kiekvienas istorijos taškas turi formatą:
 3. **Edge kėšavimas (Cache API)**: Cloudflare Cache API naudojamas visiems endpoint'ams su skirtingais TTL (5min – 1val).
 4. **Lazy Chunk Loading**: Sąrašų endpoint'ai krauna tik 1-ąjį bloką default view, pilną duomenų krūvį naudoja tik paieškai.
 
+Pilnas resursų žemėlapis, žinomi limitai ir `ServerLookup` optimizacija: [PERFORMANCE.md](./PERFORMANCE.md).
+
 ## Privalumai
 - **Žaibiškas greitis**: KV podėlis yra Edge lygio – vartotojas gauna duomenis iš arčiausių serverių be SQL lėtumo.
 - **Nulis „Writes“ klaidų**: Išvengta SQL „Database Locked“ problemų, būdingų D1 Beta stadijoje.

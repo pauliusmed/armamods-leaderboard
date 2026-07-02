@@ -220,7 +220,7 @@ export const serversApi = {
         params: { limit, offset, search, game, ...(full ? { full: '1' } : {}) },
       });
       return response.data;
-    }, 60000); // Servers cached for 1 min
+    }, 300000); // 5 min — matches edge cache on /api/servers
   },
 
   getById: async (serverId: string, game: GameType = 'reforger') => {

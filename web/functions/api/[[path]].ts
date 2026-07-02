@@ -29,10 +29,10 @@ import {
   type ShareGame,
 } from '../lib/share-meta';
 import { authorCacheKey, resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
-import { findServerById } from '../lib/server-lookup';
+import { findServerById, ServerLookup } from '../lib/server-lookup';
 import { analyzeStoragePlan } from '../lib/storage-calc';
 import { buildServerStoragePack } from '../lib/storage-service';
-import { matchesModSearch, matchesServerSearch } from '../lib/search-match';
+import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from '../lib/search-match';
 import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
 
 type Bindings = {
@@ -244,13 +244,17 @@ app.get('/mods', async (c) => {
   const mods = await getChunkedData(c.env.TRENDING_KV, keys.MODS, isDefaultView ? 1 : undefined);
   let filtered = [...mods];
 
-  // Author lives in workshop KV cache — load before search so name/author queries work.
-  if (search && game !== 'arma3') {
-    await attachCachedAuthors(c.env.TRENDING_KV, game as ShareGame, filtered);
-  }
-
+  // Author lives in workshop KV cache — only load when name/id search finds nothing.
   if (search) {
-    filtered = filtered.filter((m) => matchesModSearch(m, search));
+    const byNameOrId = filtered.filter((m) => matchesModSearchByNameOrId(m, search));
+    if (byNameOrId.length > 0) {
+      filtered = byNameOrId;
+    } else if (game !== 'arma3') {
+      await attachCachedAuthors(c.env.TRENDING_KV, game as ShareGame, filtered);
+      filtered = filtered.filter((m) => matchesModSearch(m, search));
+    } else {
+      filtered = [];
+    }
   }
 
   if (playerFilter !== 'all') {
@@ -1611,12 +1615,15 @@ app.post('/storage/plan', async (c) => {
     const availableBytes = Math.round(availableGb * 1024 ** 3);
     const kv = c.env.TRENDING_KV;
 
-    const mainRaw = await findServerById(kv, game, mainServerId);
+    const serverLookup = await ServerLookup.create(kv, game);
+    if (!serverLookup) return c.json({ error: 'Server data unavailable' }, 503);
+
+    const mainRaw = serverLookup.findById(mainServerId);
     if (!mainRaw) return c.json({ error: 'Main server not found' }, 404);
 
     const wantedRawList: Array<Record<string, unknown>> = [];
     for (const id of wantedServerIds) {
-      const server = await findServerById(kv, game, id);
+      const server = serverLookup.findById(id);
       if (!server) return c.json({ error: `Server not found: ${id}` }, 404);
       wantedRawList.push(server);
     }

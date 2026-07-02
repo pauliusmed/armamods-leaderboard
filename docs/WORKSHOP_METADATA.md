@@ -170,3 +170,4 @@ Mods deleted from Reforger Workshop still appear in BattleMetrics telemetry unti
 - [walkthrough.md](../walkthrough.md) — full system overview
 - [docs/ALGORITHM.md](./ALGORITHM.md) — co-deployment algorithm (BM, not workshop)
 - [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) — console modpack sizes & planner
+- [PERFORMANCE.md](./PERFORMANCE.md) — KV/edge/client resource usage & limits

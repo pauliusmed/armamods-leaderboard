@@ -21,3 +21,12 @@ export function matchesModSearch(
   const combined = [mod.name, mod.id, mod.author].filter(Boolean).join(' ');
   return matchesAllSearchTokens(combined, query);
 }
+
+/** Name/id only — used before loading author KV cache on mod list search. */
+export function matchesModSearchByNameOrId(
+  mod: { name?: string; id?: string },
+  query: string
+): boolean {
+  const combined = [mod.name, mod.id].filter(Boolean).join(' ');
+  return matchesAllSearchTokens(combined, query);
+}
