@@ -208,6 +208,17 @@ export const serversApi = {
       return response.data;
     }, 3600000);
   },
+
+  getStorage: async (serverId: string, game: GameType = 'reforger') => {
+    const key = `server-storage:${game}:${serverId}`;
+    return getCached(key, async () => {
+      const response = await api.get<{ data: import('../types').ServerStoragePack; meta: { disclaimer: string } }>(
+        `servers/${serverId}/storage`,
+        { params: { game } }
+      );
+      return response.data;
+    }, 300000);
+  },
 };
 
 export const scenariosApi = {
@@ -255,4 +266,21 @@ export const diagnosticsApi = {
       return response.data;
     }, 60000); // 1 min cache
   }
+};
+
+export const storageApi = {
+  plan: async (input: {
+    mainServerId: string;
+    wantedServerIds: string[];
+    availableGb: number;
+    game?: GameType;
+  }) => {
+    const response = await api.post<import('../types').StoragePlanResponse>('storage/plan', {
+      game: input.game ?? 'reforger',
+      mainServerId: input.mainServerId,
+      wantedServerIds: input.wantedServerIds,
+      availableGb: input.availableGb,
+    });
+    return response.data;
+  },
 };

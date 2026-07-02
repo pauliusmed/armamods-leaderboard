@@ -127,3 +127,63 @@ export interface ModHistory {
 }
 
 export type TrendPeriod = '7d' | '30d';
+
+export interface ModWithSize {
+  id: string;
+  name: string;
+  sizeBytes: number | null;
+}
+
+export interface ServerStoragePack {
+  id: string;
+  name: string;
+  mods: ModWithSize[];
+  knownBytes: number;
+  knownCount: number;
+  modCount: number;
+  estimatedBytes: number;
+  coverage: number;
+}
+
+export interface StoragePlanAnalysis {
+  wantedUnion: ModWithSize[];
+  toDownload: ModWithSize[];
+  canRemove: ModWithSize[];
+  overlap: ModWithSize[];
+  wanted: {
+    knownBytes: number;
+    knownCount: number;
+    modCount: number;
+    estimatedBytes: number;
+    coverage: number;
+  };
+  toDownloadSummary: {
+    knownBytes: number;
+    knownCount: number;
+    modCount: number;
+    estimatedBytes: number;
+  };
+  canRemoveSummary: {
+    knownBytes: number;
+    knownCount: number;
+    modCount: number;
+    estimatedBytes: number;
+  };
+  availableBytes: number;
+  fits: boolean;
+  bytesOver: number;
+  suggestedRemovals: ModWithSize[];
+  suggestedFreeBytes: number;
+}
+
+export interface StoragePlanResponse {
+  data: {
+    mainServer: ServerStoragePack;
+    wantedServers: ServerStoragePack[];
+    analysis: StoragePlanAnalysis;
+  };
+  meta: {
+    durationMs: number;
+    disclaimer: string;
+  };
+}

@@ -10,6 +10,8 @@ import { ReforgerHosting } from './components/ReforgerHosting';
 import { Arma3Hosting } from './components/Arma3Hosting';
 import { StatusPage } from './components/StatusPage';
 import { ConfigAuditPage } from './components/ConfigAuditPage';
+import { StoragePlannerPage } from './components/StoragePlannerPage';
+import { StoragePlannerLanding } from './components/StoragePlannerLanding';
 import { ScenarioList } from './components/ScenarioList';
 import { Layout } from './components/Layout';
 
@@ -77,6 +79,8 @@ function App() {
             <Route path="/hosting" element={<ReforgerHosting />} />
             <Route path="/status" element={<StatusPage game="reforger" />} />
             <Route path="/audit" element={<ConfigAuditPage game="reforger" />} />
+            <Route path="/storage-planner" element={<StoragePlannerPage game="reforger" />} />
+            <Route path="/arma-reforger-console-mod-storage" element={<StoragePlannerLanding />} />
             <Route path="/support" element={<SupportPage />} />
 
             {/* Arma 3 routes */}

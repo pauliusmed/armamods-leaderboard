@@ -26,7 +26,12 @@ export function Layout({ children }: LayoutProps) {
     }
   `;
 
-  const toolsActive = (!isArma3 && isActive('/audit')) || isActive(`${gp}/hosting`);
+  const toolsActive =
+    (!isArma3 &&
+      (isActive('/audit') ||
+        isActive('/storage-planner') ||
+        isActive('/arma-reforger-console-mod-storage'))) ||
+    isActive(`${gp}/hosting`);
   const toolsNavClass = `
     px-4 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 relative group/tools
     ${toolsActive
@@ -92,6 +97,15 @@ export function Layout({ children }: LayoutProps) {
                   >
                     <div className={`w-1 h-4 ${isActive('/audit') ? 'bg-tactical-orange' : 'bg-transparent'}`} />
                     <span className="text-[10px] font-black uppercase tracking-widest">Config Audit</span>
+                  </Link>
+                )}
+                {!isArma3 && (
+                  <Link
+                    to="/storage-planner"
+                    className={`flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors ${isActive('/storage-planner') ? 'text-tactical-orange' : 'text-gray-400'}`}
+                  >
+                    <div className={`w-1 h-4 ${isActive('/storage-planner') ? 'bg-tactical-orange' : 'bg-transparent'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Storage Planner</span>
                   </Link>
                 )}
                 <Link
@@ -253,6 +267,17 @@ export function Layout({ children }: LayoutProps) {
                     [ 🔍 Config Audit ]
                   </Link>
                 )}
+                {!isArma3 && (
+                  <Link
+                    to="/storage-planner"
+                    className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
+                      isActive('/storage-planner') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    [ 💾 Storage Planner ]
+                  </Link>
+                )}
                 <Link
                   to={`${gp}/hosting`}
                   className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
@@ -314,6 +339,9 @@ export function Layout({ children }: LayoutProps) {
                   <li><Link to={isArma3 ? "/arma3/servers" : "/servers"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Active Servers</Link></li>
                   <li><Link to={isArma3 ? "/arma3/scenarios" : "/scenarios"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Scenario Leaderboard</Link></li>
                   <li><Link to={isArma3 ? "/best-arma-3-hosting" : "/best-arma-reforger-hosting"} className="text-tactical-orange hover:underline transition-colors font-black uppercase tracking-widest text-[10px]">Best Hosting 2026</Link></li>
+                  {!isArma3 && (
+                    <li><Link to="/arma-reforger-console-mod-storage" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Console Mod Storage</Link></li>
+                  )}
                 </ul>
                 <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Support Project</Link>
               </div>

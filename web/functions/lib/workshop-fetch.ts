@@ -1,4 +1,5 @@
 import { defaultOgImage, lookupMod, type ShareGame } from './share-meta';
+import { parseHumanSizeToBytes } from './storage-format';
 
 export interface WorkshopDependency {
   id: string;
@@ -44,6 +45,10 @@ export function galleryCacheKey(game: ShareGame, modId: string): string {
 
 export function datesCacheKey(game: ShareGame, modId: string): string {
   return `cache:mod-dates:${game}:${modId.toUpperCase()}`;
+}
+
+export function sizeCacheKey(game: ShareGame, modId: string): string {
+  return `cache:mod-size:${game}:${modId.toUpperCase()}`;
 }
 
 const WORKSHOP_KV_TTL = 604800; // 7 days
@@ -175,6 +180,58 @@ export function formatWorkshopDate(iso: string): string | null {
   return `${day}.${month}.${year}`;
 }
 
+function pickPositiveNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return Math.round(value);
+    }
+  }
+  return null;
+}
+
+/** Latest version download size in bytes from workshop __NEXT_DATA__. */
+export function parseReforgerSizeBytesFromHtml(html: string): number | null {
+  const nextData = extractNextDataJson(html);
+  if (!nextData || typeof nextData !== 'object') return null;
+
+  const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
+    ?.pageProps;
+  if (!pageProps) return null;
+
+  const asset = pageProps.asset as Record<string, unknown> | undefined;
+  const avd = pageProps.assetVersionDetail as Record<string, unknown> | undefined;
+  const revision = avd?.revision as Record<string, unknown> | undefined;
+
+  const numeric = pickPositiveNumber(
+    avd?.size,
+    avd?.sizeBytes,
+    avd?.fileSize,
+    avd?.downloadSize,
+    revision?.size,
+    revision?.sizeBytes,
+    asset?.size,
+    asset?.sizeBytes,
+    asset?.fileSize
+  );
+  if (numeric) return numeric;
+
+  const stringFields = [
+    avd?.formattedSize,
+    avd?.sizeLabel,
+    avd?.versionSize,
+    asset?.formattedSize,
+    asset?.versionSize,
+  ];
+  for (const field of stringFields) {
+    if (typeof field === 'string') {
+      const bytes = parseHumanSizeToBytes(field);
+      if (bytes) return bytes;
+    }
+  }
+
+  return null;
+}
+
 export function parseReforgerDatesFromHtml(html: string): WorkshopDates {
   const nextData = extractNextDataJson(html);
   if (!nextData || typeof nextData !== 'object') {
@@ -225,14 +282,17 @@ export async function ensureReforgerWorkshopMetadata(
   const authorKey = authorCacheKey(game, modId);
   const galleryKey = galleryCacheKey(game, modId);
   const datesKey = datesCacheKey(game, modId);
-  const [ogCached, depsCached, authorCached, galleryCached, datesCached] = await Promise.all([
+  const sizeKey = sizeCacheKey(game, modId);
+  const [ogCached, depsCached, authorCached, galleryCached, datesCached, sizeCached] =
+    await Promise.all([
     kv.get(ogKey, 'text'),
     kv.get(depKey, 'text'),
     kv.get(authorKey, 'text'),
     kv.get(galleryKey, 'text'),
     kv.get(datesKey, 'text'),
+    kv.get(sizeKey, 'text'),
   ]);
-  if (ogCached && depsCached && authorCached && galleryCached && datesCached) return;
+  if (ogCached && depsCached && authorCached && galleryCached && datesCached && sizeCached) return;
 
   const html = await fetchReforgerWorkshopHtml(modId);
   if (!html) return;
@@ -281,6 +341,13 @@ export async function ensureReforgerWorkshopMetadata(
   if (!datesCached) {
     const dates = parseReforgerDatesFromHtml(html);
     writes.push(kv.put(datesKey, JSON.stringify(dates), { expirationTtl: WORKSHOP_KV_TTL }));
+  }
+
+  if (!sizeCached) {
+    const sizeBytes = parseReforgerSizeBytesFromHtml(html);
+    if (sizeBytes) {
+      writes.push(kv.put(sizeKey, String(sizeBytes), { expirationTtl: WORKSHOP_KV_TTL }));
+    }
   }
 
   await Promise.all(writes);
@@ -406,6 +473,73 @@ export async function resolveModDependencies(
   } catch {
     return [];
   }
+}
+
+export async function resolveModSizeBytes(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<number | null> {
+  if (game === 'arma3') return null;
+
+  const cacheKey = sizeCacheKey(game, modId);
+  const cached = await kv.get(cacheKey, 'text');
+  if (cached) {
+    const n = parseInt(cached, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
+  await ensureReforgerWorkshopMetadata(kv, game, modId);
+
+  const refreshed = await kv.get(cacheKey, 'text');
+  if (!refreshed) return null;
+  const n = parseInt(refreshed, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Resolve many mod sizes — reads KV first, scrapes up to maxFetch missing. */
+export async function resolveModSizesBatch(
+  kv: KVNamespace,
+  game: ShareGame,
+  modIds: string[],
+  options?: { maxFetch?: number }
+): Promise<Map<string, number | null>> {
+  const result = new Map<string, number | null>();
+  const uncached: string[] = [];
+
+  await Promise.all(
+    modIds.map(async (id) => {
+      const cacheKey = sizeCacheKey(game, id);
+      const cached = await kv.get(cacheKey, 'text');
+      if (cached) {
+        const n = parseInt(cached, 10);
+        result.set(id, Number.isFinite(n) && n > 0 ? n : null);
+        return;
+      }
+      uncached.push(id);
+    })
+  );
+
+  const maxFetch = options?.maxFetch ?? 12;
+  const toFetch = uncached.slice(0, maxFetch);
+
+  for (let i = 0; i < toFetch.length; i += 3) {
+    const batch = toFetch.slice(i, i + 3);
+    await Promise.all(
+      batch.map(async (id) => {
+        const bytes = await resolveModSizeBytes(kv, game, id);
+        result.set(id, bytes);
+      })
+    );
+  }
+
+  for (const id of uncached.slice(maxFetch)) {
+    result.set(id, null);
+  }
+  for (const id of modIds) {
+    if (!result.has(id)) result.set(id, null);
+  }
+  return result;
 }
 
 export function isDefaultOgImage(url: string): boolean {

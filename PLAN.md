@@ -50,8 +50,32 @@ This document outlines the strategic vision, current implementation status, and 
   - [x] Collector aggregation + `GET /api/scenarios` + drill-down `/api/scenarios/servers`.
   - [x] UI `/scenarios`, server detail deep-link `?s=`, nav **Tools** dropdown.
   - [ ] Scenario history / trending (future — would extend shared `history:*` shards).
+### 💾 Storage Planner (console mod space) — [IN PROGRESS]
+
+**Problem (SEO + product):** PS5/Xbox players can only keep mods for ~2–3 servers. They manually guess what to delete when switching between 5–6 community servers. Shared mods (RHS, WCS) inflate perceived size unless deduplicated.
+
+| Layer | Route | Role |
+|-------|-------|------|
+| **SEO landing** | `/arma-reforger-console-mod-storage` | Indexable content: problem, how-it-works, FAQ + JSON-LD, CTAs → tool |
+| **Tool** | `/storage-planner` | Wizard (localStorage profile, no auth) |
+| **Server hook** | `/server/:id` | Modpack size + deep-link `?main=` |
+
+- [x] **Workshop mod sizes**: Reforger scrape → KV `cache:mod-size:{game}:{modId}` (7d), unified `ensureReforgerWorkshopMetadata()`.
+- [x] **API**: `GET /api/mods/:id/size`, `GET /api/servers/:id/storage`, `POST /api/storage/plan`.
+- [x] **Storage Planner UI** + server detail modpack breakdown.
+- [x] **SEO landing page**: `/arma-reforger-console-mod-storage` — target keywords (console mod storage, PS5/Xbox, delete mods, server comparison).
+- [x] **Sitemap + robots.txt**: static `sitemap.xml` + `robots.txt` in `web/public/` (includes storage landing).
+- [ ] **SEO follow-ups**:
+  - [ ] Internal links from support page.
+  - [ ] `Which server combinations fit in X GB` auto-suggest (subset picker).
+  - [ ] Optional `noindex` on `/storage-planner` if landing becomes canonical (evaluate in Search Console).
+- [ ] **Arma 3**: Steam workshop sizes (later).
+
+---
+
 - [ ] **Arma Workshop Scraper (batch metadata)**:
-  - [ ] Author, file size, last update (collector-side enrichment, not per-page scrape).
+  - [x] File size (Reforger on-demand via workshop scrape — see Storage Planner above).
+  - [ ] Author, file size batch (collector-side), last update for Arma 3 / batch warm.
   - [ ] Categorization (Survival, Roleplay, PvP, MilSim).
 - [ ] **Mod Comparison Tool**: Side-by-side performance analytics for multiple mods.
 - [ ] **User Alerts**: Discord/Webhook notifications for mod developers when their mods hit "Trending".

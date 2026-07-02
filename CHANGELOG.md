@@ -1,3 +1,13 @@
+## [1.18.0] - 2026-07-02
+
+### 💾 Storage Planner (console mod space)
+- **Workshop mod sizes**: Reforger workshop scrape → KV `cache:mod-size:{game}:{modId}` (7d), unified with existing `ensureReforgerWorkshopMetadata()` fetch.
+- **API**: `GET /api/mods/:id/size`, `GET /api/servers/:id/storage`, `POST /api/storage/plan` — deduplicated combined size, download/remove suggestions.
+- **UI** `/storage-planner`: no-login wizard (localStorage profile) — console preset, main server proxy, multi-server selection, fit/over-limit analysis.
+- **SEO landing** `/arma-reforger-console-mod-storage`: problem/solution copy, FAQ + JSON-LD, CTAs → planner (PS5/Xbox mod storage keywords).
+- **Sitemap**: `web/public/sitemap.xml` + `robots.txt` for search indexing.
+- **Server detail**: modpack size in hero, per-mod download size, link to Storage Planner with `?main=`.
+
 ## [1.17.0] - 2026-06-30
 
 ### 🗺️ Scenario leaderboard + Tools navigacija

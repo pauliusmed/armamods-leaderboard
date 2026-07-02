@@ -9,7 +9,8 @@ import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
 import { TierBadge } from './ui/TierBadge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { Server, ServerMod } from '../types';
+import type { Server, ServerMod, ServerStoragePack } from '../types';
+import { formatBytes } from '../lib/formatBytes';
 
 interface ServerDetailProps {
   game?: GameType;
@@ -58,7 +59,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [selectedDays, setSelectedDays] = useState(30);
 
   const [modSearch, setModSearch] = useState('');
-  const [modSort, setModSort] = useState<'rank' | 'name' | 'players'>('players');
+  const [modSort, setModSort] = useState<'rank' | 'name' | 'players' | 'size'>('players');
   const [personnelFilter, setPersonnelFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
   const [rankFilter, setRankFilter] = useState<'all' | 'top100' | 'top500' | 'top1000'>('all');
   const [embedOpen, setEmbedOpen] = useState(false);
@@ -67,22 +68,27 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
 
   const [allServers, setAllServers] = useState<Server[]>([]);
+  const [storagePack, setStoragePack] = useState<ServerStoragePack | null>(null);
 
   const loadServer = useCallback(async (days: number, signal?: AbortSignal) => {
     if (!serverId) return;
     try {
       setLoading(true);
-      const [serverData, historyData, statsData, allServersData] = await Promise.all([
+      const [serverData, historyData, statsData, allServersData, storageData] = await Promise.all([
         serversApi.getById(serverId, game),
         serversApi.getHistory(serverId, days, game),
         modsApi.getGlobalStats(game),
-        serversApi.getList(100, 0, game).catch(() => ({ data: [] }))
+        serversApi.getList(100, 0, game).catch(() => ({ data: [] })),
+        game === 'reforger'
+          ? serversApi.getStorage(serverId, game).catch(() => null)
+          : Promise.resolve(null),
       ]);
 
       if (signal?.aborted) return;
 
       setServer(serverData.data);
       setAllServers(allServersData.data || []);
+      setStoragePack(storageData?.data ?? null);
       
       // Filter history: if latest data is older than 3 days, it's considered stale for servers
       const rawHistory = historyData.data || [];
@@ -170,6 +176,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const sortedAndFilteredMods = useMemo(() => {
     if (!server?.mods || !Array.isArray(server.mods)) return [];
 
+    const sizeById = new Map(storagePack?.mods.map((m) => [m.id, m.sizeBytes]) ?? []);
+
     const filtered = (server.mods as ServerMod[]).filter(m =>
       (m.name.toLowerCase().includes(modSearch.toLowerCase()) ||
        m.id.toLowerCase().includes(modSearch.toLowerCase()))
@@ -192,9 +200,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     return [...filtered].sort((a, b) => {
       if (modSort === 'name') return a.name.localeCompare(b.name);
       if (modSort === 'rank') return a.playerRank - b.playerRank;
+      if (modSort === 'size') {
+        return (sizeById.get(b.id) ?? 0) - (sizeById.get(a.id) ?? 0);
+      }
       return (b.totalPlayers || 0) - (a.totalPlayers || 0);
-    });
-  }, [server?.mods, modSearch, modSort, personnelFilter, rankFilter]);
+    }).map((mod) => ({
+      ...mod,
+      sizeBytes: sizeById.get(mod.id) ?? null,
+    }));
+  }, [server?.mods, modSearch, modSort, personnelFilter, rankFilter, storagePack]);
 
   if (loading) return <StatusState type="loading" />;
   if (error || !server) return (
@@ -324,12 +338,32 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         stats={[
           { label: 'Personnel Present', value: `${server.players || 0} / ${server.maxPlayers || 0}` },
           { label: 'Module Count', value: server.mods?.length || 0 },
+          ...(game === 'reforger' && storagePack
+            ? [{
+                label: 'Modpack Size',
+                value: `${formatBytes(storagePack.estimatedBytes)} (${Math.round(storagePack.coverage * 100)}%)`,
+              }]
+            : []),
           { label: 'Server Rank', value: `#${server.sqeRank || '-'}` },
           { label: 'Capacity Used', value: `${Math.round(fillPercent)}%` }
         ]}
         title="Field Intelligence Report"
         subtitle="Detailed analysis of deployed assets and personnel distribution"
       />
+
+      {game === 'reforger' && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+          <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest max-w-2xl">
+            Console player? Use Storage Planner to compare this server with others and see what fits your free space.
+          </p>
+          <Link
+            to={`/storage-planner?main=${encodeURIComponent(server.id)}`}
+            className="shrink-0 px-5 py-3 border border-tactical-orange/40 text-tactical-orange text-[10px] font-black uppercase tracking-[0.2em] hover:bg-tactical-orange hover:text-black transition-colors text-center"
+          >
+            Open Storage Planner →
+          </Link>
+        </div>
+      )}
 
       {/* Affiliate Section */}
       <AffiliateBanner />
@@ -551,6 +585,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 className="px-2 py-3 bg-zinc-900 border border-white/10 text-[8px] sm:text-[10px] font-black text-white uppercase tracking-widest cursor-pointer outline-none focus:border-tactical-orange transition-all col-span-2 sm:col-span-1"
               >
                 <option value="players" className="bg-zinc-900 text-white">Best Played</option>
+                <option value="size" className="bg-zinc-900 text-white">Largest</option>
                 <option value="rank" className="bg-zinc-900 text-white">Global Rank</option>
                 <option value="name" className="bg-zinc-900 text-white">Name</option>
               </select>
@@ -601,8 +636,14 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                         <p className="text-xs sm:text-xs font-black text-white font-mono">{(mod.totalPlayers || 0).toLocaleString()}</p>
                      </div>
                      <div className="space-y-0.5 sm:space-y-1">
-                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Deployments</p>
-                        <p className="text-xs sm:text-xs font-black text-white font-mono">{mod.serverCount || 0}</p>
+                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">
+                          {game === 'reforger' ? 'Download' : 'Deployments'}
+                        </p>
+                        <p className="text-xs sm:text-xs font-black text-white font-mono">
+                          {game === 'reforger'
+                            ? formatBytes((mod as ServerMod & { sizeBytes?: number | null }).sizeBytes)
+                            : mod.serverCount || 0}
+                        </p>
                      </div>
                   </div>
 

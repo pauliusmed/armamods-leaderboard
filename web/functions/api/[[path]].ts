@@ -27,7 +27,10 @@ import {
   defaultOgImage,
   type ShareGame,
 } from '../lib/share-meta';
-import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates } from '../lib/workshop-fetch';
+import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModSizeBytes } from '../lib/workshop-fetch';
+import { findServerById } from '../lib/server-lookup';
+import { analyzeStoragePlan } from '../lib/storage-calc';
+import { buildServerStoragePack } from '../lib/storage-service';
 import { matchesModSearch, matchesServerSearch } from '../lib/search-match';
 import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
 
@@ -739,6 +742,26 @@ app.get('/mods/:modId/dependencies', async (c) => {
   return response;
 });
 
+app.get('/mods/:modId/size', async (c) => {
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+
+  if (game === 'arma3') {
+    return c.json({
+      data: { sizeBytes: null },
+      meta: { supported: false, source: 'steam_workshop' },
+    });
+  }
+
+  const sizeBytes = await resolveModSizeBytes(c.env.TRENDING_KV, game, modId);
+  const response = c.json({
+    data: { sizeBytes },
+    meta: { supported: true, source: 'reforger_workshop', modId },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+  return response;
+});
+
 app.get('/mods/:modId/history', async (c) => {
   const cache = await caches.open('armamods:history');
   const cacheResponse = await cache.match(c.req.raw);
@@ -916,6 +939,37 @@ app.get('/servers/ranking', async (c) => {
   const response = c.json({ data: ranking });
   response.headers.set('Cache-Control', 'public, max-age=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
+});
+
+// Server modpack storage breakdown — must be before /servers/:serverId
+app.get('/servers/:serverId/storage', async (c) => {
+  const serverId = c.req.param('serverId');
+  const game = getGameFromQuery(c) as ShareGame;
+
+  if (game === 'arma3') {
+    return c.json({
+      error: 'Storage planner not yet supported for Arma 3',
+    }, 501);
+  }
+
+  const server = await findServerById(c.env.TRENDING_KV, game, serverId);
+  if (!server) return c.json({ error: 'Server not found' }, 404);
+
+  const pack = await buildServerStoragePack(c.env.TRENDING_KV, game, {
+    id: String(server.id),
+    name: String(server.name ?? 'Server'),
+    mods: Array.isArray(server.mods) ? server.mods as Array<{ id: string; name: string }> : [],
+  });
+
+  const response = c.json({
+    data: pack,
+    meta: {
+      disclaimer:
+        'Sizes from Reforger Workshop (version download). Partial coverage when sizes are not cached yet — refresh to load more.',
+    },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=300');
   return response;
 });
 
@@ -1413,6 +1467,97 @@ app.post('/audit/config', async (c) => {
       },
       500
     );
+  }
+});
+
+app.post('/storage/plan', async (c) => {
+  const start = Date.now();
+  try {
+    const body = await c.req.json<{
+      game?: GameType;
+      mainServerId?: string;
+      wantedServerIds?: string[];
+      availableGb?: number;
+    }>();
+
+    const game = body.game === 'arma3' ? 'arma3' : 'reforger';
+    if (game === 'arma3') {
+      return c.json({ error: 'Storage planner not yet supported for Arma 3' }, 501);
+    }
+
+    const mainServerId = body.mainServerId?.trim();
+    const wantedServerIds = Array.isArray(body.wantedServerIds)
+      ? [...new Set(body.wantedServerIds.map((id) => id.trim()).filter(Boolean))]
+      : [];
+    const availableGb = Number(body.availableGb);
+
+    if (!mainServerId) {
+      return c.json({ error: 'mainServerId is required' }, 400);
+    }
+    if (!wantedServerIds.length) {
+      return c.json({ error: 'wantedServerIds must include at least one server' }, 400);
+    }
+    if (!Number.isFinite(availableGb) || availableGb <= 0) {
+      return c.json({ error: 'availableGb must be a positive number' }, 400);
+    }
+
+    const availableBytes = Math.round(availableGb * 1024 ** 3);
+    const kv = c.env.TRENDING_KV;
+
+    const mainRaw = await findServerById(kv, game, mainServerId);
+    if (!mainRaw) return c.json({ error: 'Main server not found' }, 404);
+
+    const wantedRawList: Array<Record<string, unknown>> = [];
+    for (const id of wantedServerIds) {
+      const server = await findServerById(kv, game, id);
+      if (!server) return c.json({ error: `Server not found: ${id}` }, 404);
+      wantedRawList.push(server);
+    }
+
+    const maxFetch = Math.min(24, Math.max(12, wantedRawList.reduce((n, s) => {
+      const mods = Array.isArray(s.mods) ? s.mods.length : 0;
+      return n + mods;
+    }, 0)));
+
+    const mainPack = await buildServerStoragePack(kv, game, {
+      id: String(mainRaw.id),
+      name: String(mainRaw.name ?? 'Server'),
+      mods: Array.isArray(mainRaw.mods) ? mainRaw.mods as Array<{ id: string; name: string }> : [],
+    }, { maxFetch });
+
+    const wantedPacks = await Promise.all(
+      wantedRawList.map((server) =>
+        buildServerStoragePack(kv, game, {
+          id: String(server.id),
+          name: String(server.name ?? 'Server'),
+          mods: Array.isArray(server.mods) ? server.mods as Array<{ id: string; name: string }> : [],
+        }, { maxFetch })
+      )
+    );
+
+    const analysis = analyzeStoragePlan({
+      installedMods: mainPack.mods,
+      wantedServers: wantedPacks,
+      availableBytes,
+    });
+
+    const response = c.json({
+      data: {
+        mainServer: mainPack,
+        wantedServers: wantedPacks,
+        analysis,
+      },
+      meta: {
+        durationMs: Date.now() - start,
+        disclaimer:
+          'Installed library is approximated from your main server modpack. Sizes from Reforger Workshop; partial coverage when not all mods are cached yet.',
+      },
+    });
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
+  } catch (err: unknown) {
+    console.error('[STORAGE PLAN ERROR]', err);
+    return c.json({ error: 'Storage plan failed', message: err instanceof Error ? err.message : 'Unknown error' }, 500);
   }
 });
 
