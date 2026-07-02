@@ -1,3 +1,8 @@
+### 🗺️ Scenario classification (workshop vs official)
+- **Collector**: `buildScenarioRanking` now classifies each scenario — workshop mod via server-mod intersection, official via `#AR-` prefix + 31-entry static registry.
+- **UI** `/scenarios`: type badges, links to `/mod/:id` (workshop) or `/scenarios/official/:slug` (vanilla).
+- **Reference** `/scenarios/official`: all built-in Bohemia scenarios with `scenarioId` paths for server config.
+
 ## [1.18.0] - 2026-07-02
 
 ### 💾 Storage Planner (console mod space)

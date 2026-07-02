@@ -84,6 +84,8 @@ export interface Server {
   modpackCoverage?: number;
 }
 
+export type ScenarioKind = 'workshop' | 'official' | 'unknown';
+
 export interface ScenarioRankingEntry {
   name: string;
   rank: number;
@@ -96,6 +98,12 @@ export interface ScenarioRankingEntry {
     players: number;
     sqeRank: number | null;
   } | null;
+  kind?: ScenarioKind;
+  modId?: string;
+  modName?: string;
+  modConfidence?: number;
+  officialSlug?: string;
+  displayName?: string;
 }
 
 export interface ApiResponse<T> {

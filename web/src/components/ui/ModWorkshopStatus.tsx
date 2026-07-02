@@ -75,9 +75,9 @@ export function ModWorkshopStatusBadge({
   return (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-amber-200/90 bg-amber-500/10 border border-amber-500/30 ${className}`}
-      title="Modas nebepasiekiamas Reforger Workshop"
+      title="No longer on Reforger Workshop"
     >
-      Nebe Workshop
+      Off Workshop
     </span>
   );
 }
@@ -102,15 +102,14 @@ export function ModWorkshopUnavailableBanner({
       role="status"
     >
       <p className="font-black uppercase tracking-[0.2em] text-amber-200 mb-1">
-        Nebepasiekiamas Workshop
+        No longer on Workshop
       </p>
       <p>
-        Šis modas pašalintas arba nepasiekiamas oficialiame Reforger Workshop. Telemetrija vis dar
-        rodo serverius, kurie modą turi įdiegtą — reitingas gali kristi, kai savininkai jį
-        pašalina.
+        This mod was removed or is no longer available on the official Reforger Workshop. Telemetry
+        still shows servers that have it installed — rankings may drop as owners remove it.
         {checkedAt ? (
           <span className="block mt-1 text-[10px] text-amber-200/70 font-mono tabular-nums">
-            Patikrinta: {new Date(checkedAt).toLocaleString()}
+            Checked: {new Date(checkedAt).toLocaleString()}
           </span>
         ) : null}
       </p>

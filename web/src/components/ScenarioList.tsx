@@ -6,10 +6,59 @@ import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
+import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '../lib/scenarioLinks';
 import type { GameType } from '../api/client';
+import type { ScenarioRankingEntry } from '../types';
 
 interface ScenarioListProps {
   game?: GameType;
+}
+
+function ScenarioNameCell({
+  scenario,
+  isSelected,
+  gamePrefix,
+}: {
+  scenario: ScenarioRankingEntry;
+  isSelected: boolean;
+  gamePrefix: string;
+}) {
+  const detailHref = scenarioDetailHref(scenario, gamePrefix);
+  const label = scenario.displayName ?? scenario.name;
+
+  return (
+    <div className="space-y-1">
+      {detailHref ? (
+        <Link
+          to={detailHref}
+          onClick={(e) => e.stopPropagation()}
+          className={`block text-[13px] font-bold tracking-tight line-clamp-2 transition-colors ${
+            isSelected ? 'text-tactical-orange' : 'text-white hover:text-tactical-orange'
+          }`}
+        >
+          {label}
+        </Link>
+      ) : (
+        <span
+          className={`block text-[13px] font-bold tracking-tight line-clamp-2 transition-colors ${
+            isSelected ? 'text-tactical-orange' : 'text-white group-hover:text-tactical-orange'
+          }`}
+        >
+          {scenario.name}
+        </span>
+      )}
+      {scenario.name !== label && (
+        <span className="block text-[10px] text-gray-600 font-mono truncate">{scenario.name}</span>
+      )}
+      {scenario.kind !== 'unknown' && (
+        <span
+          className={`md:hidden inline-block text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 border ${scenarioKindBadgeClass(scenario.kind)}`}
+        >
+          {scenarioKindLabel(scenario.kind)}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
@@ -92,6 +141,13 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
         ]}
       />
 
+      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest -mt-6">
+        Workshop scenarios link to their mod page ·{' '}
+        <Link to={`${gp}/scenarios/official`} className="text-tactical-orange hover:underline">
+          Official scenarios reference
+        </Link>
+      </p>
+
       <div className="bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl sticky top-28 z-40 transition-all hover:bg-zinc-900/80">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
           <div className="group">
@@ -150,6 +206,9 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                 <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                   Players
                 </th>
+                <th className="hidden md:table-cell px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                  Type
+                </th>
                 <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                   Avg Fill
                 </th>
@@ -183,13 +242,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                       </span>
                     </td>
                     <td className="py-3 pr-4 align-middle">
-                      <span
-                        className={`block text-[13px] font-bold tracking-tight line-clamp-2 transition-colors ${
-                          isSelected ? 'text-tactical-orange' : 'text-white group-hover:text-tactical-orange'
-                        }`}
-                      >
-                        {scenario.name}
-                      </span>
+                      <ScenarioNameCell scenario={scenario} isSelected={isSelected} gamePrefix={gp} />
                     </td>
                     <td className="py-3 px-4 text-right align-middle">
                       <span className="font-mono text-sm tabular-nums text-gray-300">
@@ -200,6 +253,17 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                       <span className="font-mono text-sm tabular-nums text-white">
                         {scenario.totalPlayers.toLocaleString()}
                       </span>
+                    </td>
+                    <td className="hidden md:table-cell py-3 px-4 align-middle">
+                      {scenario.kind !== 'unknown' ? (
+                        <span
+                          className={`text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 border ${scenarioKindBadgeClass(scenario.kind)}`}
+                        >
+                          {scenarioKindLabel(scenario.kind)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-700">—</span>
+                      )}
                     </td>
                     <td className="hidden md:table-cell py-3 px-4 text-right align-middle">
                       <span className="font-mono text-sm tabular-nums text-gray-400">
@@ -237,11 +301,22 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                 // SCENARIO_DEPLOYMENTS
               </p>
               <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-                {selectedScenario.name}
+                {selectedScenario.displayName ?? selectedScenario.name}
               </h2>
+              {selectedScenario.displayName && selectedScenario.displayName !== selectedScenario.name && (
+                <p className="text-[10px] font-mono text-gray-600 mt-1">{selectedScenario.name}</p>
+              )}
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
                 {selectedScenario.serverCount} servers · {selectedScenario.totalPlayers.toLocaleString()} players
               </p>
+              {scenarioDetailHref(selectedScenario, gp) && (
+                <Link
+                  to={scenarioDetailHref(selectedScenario, gp)!}
+                  className="inline-block mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-tactical-orange border border-tactical-orange/30 hover:bg-tactical-orange/10 px-3 py-1.5 transition-colors"
+                >
+                  {selectedScenario.kind === 'workshop' ? 'Open workshop mod →' : 'Official scenario →'}
+                </Link>
+              )}
             </div>
             <button
               type="button"

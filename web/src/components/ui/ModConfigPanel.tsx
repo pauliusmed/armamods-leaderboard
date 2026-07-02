@@ -69,7 +69,7 @@ export function ModConfigPanel({
               {workshopUnavailable ? (
                 <span
                   className={`${BTN} border-2 border-amber-500/30 bg-amber-500/10 text-amber-200/70 cursor-not-allowed`}
-                  title="Modas nebepasiekiamas Reforger Workshop"
+                  title="No longer on Reforger Workshop"
                 >
                   {workshopLabel(game)} (removed)
                 </span>

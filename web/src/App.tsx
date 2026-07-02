@@ -13,6 +13,7 @@ import { ConfigAuditPage } from './components/ConfigAuditPage';
 import { StoragePlannerPage } from './components/StoragePlannerPage';
 import { StoragePlannerLanding } from './components/StoragePlannerLanding';
 import { ScenarioList } from './components/ScenarioList';
+import { OfficialScenariosPage } from './components/OfficialScenariosPage';
 import { Layout } from './components/Layout';
 
 interface Props {
@@ -76,6 +77,8 @@ function App() {
             <Route path="/mod/:modId" element={<ModDetail game="reforger" />} />
             <Route path="/trending" element={<TrendingPage game="reforger" />} />
             <Route path="/scenarios" element={<ScenarioList game="reforger" />} />
+            <Route path="/scenarios/official" element={<OfficialScenariosPage game="reforger" />} />
+            <Route path="/scenarios/official/:slug" element={<OfficialScenariosPage game="reforger" />} />
             <Route path="/hosting" element={<ReforgerHosting />} />
             <Route path="/status" element={<StatusPage game="reforger" />} />
             <Route path="/audit" element={<ConfigAuditPage game="reforger" />} />
@@ -90,6 +93,8 @@ function App() {
             <Route path="/arma3/mod/:modId" element={<ModDetail game="arma3" />} />
             <Route path="/arma3/trending" element={<TrendingPage game="arma3" />} />
             <Route path="/arma3/scenarios" element={<ScenarioList game="arma3" />} />
+            <Route path="/arma3/scenarios/official" element={<OfficialScenariosPage game="arma3" />} />
+            <Route path="/arma3/scenarios/official/:slug" element={<OfficialScenariosPage game="arma3" />} />
             <Route path="/arma3/hosting" element={<Arma3Hosting />} />
             <Route path="/arma3/status" element={<StatusPage game="arma3" />} />
             <Route path="/best-arma-reforger-hosting" element={<ReforgerHosting />} />

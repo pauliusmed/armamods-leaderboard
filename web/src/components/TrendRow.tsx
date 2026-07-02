@@ -99,7 +99,7 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
         {workshopUnavailable ? (
           <span
             className="inline-block px-1 text-xs font-black text-amber-200/50 cursor-not-allowed"
-            title="Modas nebepasiekiamas Reforger Workshop"
+            title="No longer on Reforger Workshop"
             aria-hidden
           >
             —

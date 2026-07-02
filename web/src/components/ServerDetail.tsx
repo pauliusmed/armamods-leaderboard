@@ -11,6 +11,19 @@ import { TierBadge } from './ui/TierBadge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
+import {
+  type ActivityFilter,
+  type RankFilter,
+  type SizeFilter,
+  type EmbeddedModSort,
+  ACTIVITY_FILTER_OPTIONS,
+  RANK_FILTER_OPTIONS,
+  SIZE_FILTER_OPTIONS,
+  EMBEDDED_MOD_SORT_OPTIONS,
+  filterServerMods,
+  sortServerMods,
+} from '../lib/modListFilters';
+import { ListFilterBar } from './ui/ListFilterBar';
 
 interface ServerDetailProps {
   game?: GameType;
@@ -59,9 +72,10 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [selectedDays, setSelectedDays] = useState(30);
 
   const [modSearch, setModSearch] = useState('');
-  const [modSort, setModSort] = useState<'rank' | 'name' | 'players' | 'size'>('players');
-  const [personnelFilter, setPersonnelFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
-  const [rankFilter, setRankFilter] = useState<'all' | 'top100' | 'top500' | 'top1000'>('all');
+  const [modSort, setModSort] = useState<EmbeddedModSort>('players');
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
+  const [rankFilter, setRankFilter] = useState<RankFilter>('all');
+  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [embedOpen, setEmbedOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -173,42 +187,33 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       .slice(0, 5);
   }, [server, allServers]);
 
+  const resetModFilters = useCallback(() => {
+    setModSearch('');
+    setActivityFilter('all');
+    setRankFilter('all');
+    setSizeFilter('all');
+    setModSort('players');
+  }, []);
+
   const sortedAndFilteredMods = useMemo(() => {
     if (!server?.mods || !Array.isArray(server.mods)) return [];
 
     const sizeById = new Map(storagePack?.mods.map((m) => [m.id, m.sizeBytes]) ?? []);
 
-    const filtered = (server.mods as ServerMod[]).filter(m =>
-      (m.name.toLowerCase().includes(modSearch.toLowerCase()) ||
-       m.id.toLowerCase().includes(modSearch.toLowerCase()))
-      &&
-      (
-        personnelFilter === 'all' ||
-        (personnelFilter === 'high' && m.totalPlayers >= 500) ||
-        (personnelFilter === 'medium' && m.totalPlayers >= 100 && m.totalPlayers < 500) ||
-        (personnelFilter === 'low' && m.totalPlayers < 100)
-      )
-      &&
-      (
-        rankFilter === 'all' ||
-        (rankFilter === 'top100' && m.playerRank <= 100) ||
-        (rankFilter === 'top500' && m.playerRank <= 500) ||
-        (rankFilter === 'top1000' && m.playerRank <= 1000)
-      )
-    );
-
-    return [...filtered].sort((a, b) => {
-      if (modSort === 'name') return a.name.localeCompare(b.name);
-      if (modSort === 'rank') return a.playerRank - b.playerRank;
-      if (modSort === 'size') {
-        return (sizeById.get(b.id) ?? 0) - (sizeById.get(a.id) ?? 0);
-      }
-      return (b.totalPlayers || 0) - (a.totalPlayers || 0);
-    }).map((mod) => ({
+    const withSize = (server.mods as ServerMod[]).map((mod) => ({
       ...mod,
       sizeBytes: sizeById.get(mod.id) ?? null,
     }));
-  }, [server?.mods, modSearch, modSort, personnelFilter, rankFilter, storagePack]);
+
+    const filtered = filterServerMods(withSize, {
+      search: modSearch,
+      activity: activityFilter,
+      rank: rankFilter,
+      size: sizeFilter,
+    });
+
+    return sortServerMods(filtered, modSort, totalServers);
+  }, [server?.mods, modSearch, modSort, activityFilter, rankFilter, sizeFilter, storagePack, totalServers]);
 
   if (loading) return <StatusState type="loading" />;
   if (error || !server) return (
@@ -545,64 +550,72 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       )}
 
       <section className="space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 pb-8">
-          <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter whitespace-nowrap">
+        <div className="border-b border-white/5 pb-6 space-y-6">
+          <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
             Installed Mod Stack
           </h2>
 
-          <div className="flex flex-col gap-3 w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="Filter modules..."
-              value={modSearch}
-              onChange={(e) => setModSearch(e.target.value)}
-              className="px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange transition-all w-full"
-            />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <select
-                value={personnelFilter}
-                onChange={(e) => setPersonnelFilter(e.target.value as typeof personnelFilter)}
-                className="px-2 py-3 bg-zinc-900 border border-white/10 text-[8px] sm:text-[10px] font-black text-white uppercase tracking-widest cursor-pointer outline-none focus:border-tactical-orange transition-all"
-              >
-                <option value="all" className="bg-zinc-900 text-white">Personnel: All</option>
-                <option value="high" className="bg-zinc-900 text-white">High (500+)</option>
-                <option value="medium" className="bg-zinc-900 text-white">Med (100+)</option>
-                <option value="low" className="bg-zinc-900 text-white">New/Low</option>
-              </select>
-              <select
-                value={rankFilter}
-                onChange={(e) => setRankFilter(e.target.value as typeof rankFilter)}
-                className="px-2 py-3 bg-zinc-900 border border-white/10 text-[8px] sm:text-[10px] font-black text-white uppercase tracking-widest cursor-pointer outline-none focus:border-tactical-orange transition-all"
-              >
-                <option value="all" className="bg-zinc-900 text-white">Rank: All</option>
-                <option value="top100" className="bg-zinc-900 text-white">Top 100</option>
-                <option value="top500" className="bg-zinc-900 text-white">Top 500</option>
-                <option value="top1000" className="bg-zinc-900 text-white">Top 1000</option>
-              </select>
-              <select
-                value={modSort}
-                onChange={(e) => setModSort(e.target.value as typeof modSort)}
-                className="px-2 py-3 bg-zinc-900 border border-white/10 text-[8px] sm:text-[10px] font-black text-white uppercase tracking-widest cursor-pointer outline-none focus:border-tactical-orange transition-all col-span-2 sm:col-span-1"
-              >
-                <option value="players" className="bg-zinc-900 text-white">Best Played</option>
-                <option value="size" className="bg-zinc-900 text-white">Largest</option>
-                <option value="rank" className="bg-zinc-900 text-white">Global Rank</option>
-                <option value="name" className="bg-zinc-900 text-white">Name</option>
-              </select>
-              <button
-                onClick={() => { setModSearch(''); setPersonnelFilter('all'); setRankFilter('all'); setModSort('players'); }}
-                className="px-2 py-3 border border-white/10 text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-tactical-orange transition-all"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
+          <ListFilterBar
+            sticky={false}
+            columns={game === 'reforger' ? 6 : 5}
+            search={{
+              label: '// SEARCH',
+              value: modSearch,
+              onChange: setModSearch,
+              placeholder: 'Search mods…',
+              ariaLabel: 'Search mods on this server',
+              hint:
+                sortedAndFilteredMods.length !== (server.mods?.length ?? 0) ? (
+                  <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
+                    Showing {sortedAndFilteredMods.length} of {server.mods?.length ?? 0} mods
+                  </p>
+                ) : undefined,
+            }}
+            selects={[
+              {
+                id: 'activity',
+                label: '// ACTIVITY',
+                value: activityFilter,
+                onChange: (v) => setActivityFilter(v as ActivityFilter),
+                options: ACTIVITY_FILTER_OPTIONS,
+                ariaLabel: 'Filter mods by player activity',
+              },
+              {
+                id: 'rank',
+                label: '// RANK',
+                value: rankFilter,
+                onChange: (v) => setRankFilter(v as RankFilter),
+                options: RANK_FILTER_OPTIONS,
+                ariaLabel: 'Filter mods by global player rank',
+              },
+              ...(game === 'reforger'
+                ? [
+                    {
+                      id: 'size',
+                      label: '// SIZE',
+                      value: sizeFilter,
+                      onChange: (v: string) => setSizeFilter(v as SizeFilter),
+                      options: SIZE_FILTER_OPTIONS,
+                      ariaLabel: 'Filter mods by download size',
+                    },
+                  ]
+                : []),
+              {
+                id: 'sort',
+                label: '// SORT',
+                value: modSort,
+                onChange: (v) => setModSort(v as EmbeddedModSort),
+                options: EMBEDDED_MOD_SORT_OPTIONS,
+                ariaLabel: 'Sort mods',
+              },
+            ]}
+            onReset={resetModFilters}
+          />
         </div>
 
         {sortedAndFilteredMods.length === 0 ? (
           <div className="p-20 text-center border-2 border-dashed border-white/5">
-            <p className="text-xl font-black text-gray-700 uppercase tracking-widest">No modules matching scan parameters</p>
-          </div>
+            <p className="text-xl font-black text-gray-700 uppercase tracking-widest">No mods match your filters</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {sortedAndFilteredMods.map(mod => {

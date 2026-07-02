@@ -100,7 +100,7 @@ export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }
           {workshopUnavailable ? (
             <span
               className="inline-flex items-center justify-center px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed"
-              title="Modas nebepasiekiamas Reforger Workshop"
+              title="No longer on Reforger Workshop"
             >
               Workshop
             </span>
