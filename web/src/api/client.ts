@@ -280,7 +280,15 @@ export const storageApi = {
       mainServerId: input.mainServerId,
       wantedServerIds: input.wantedServerIds,
       availableGb: input.availableGb,
-    });
+    }, { timeout: 120000 });
+    return response.data;
+  },
+
+  fetchSizes: async (modIds: string[], game: GameType = 'reforger') => {
+    const response = await api.post<{
+      data: Record<string, number | null>;
+      meta: { requested: number; known: number };
+    }>('storage/sizes', { game, modIds }, { timeout: 90000 });
     return response.data;
   },
 };

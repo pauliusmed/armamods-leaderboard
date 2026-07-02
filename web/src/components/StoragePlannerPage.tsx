@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { serversApi, storageApi, type GameType } from '../api/client';
-import type { Server, StoragePlanResponse } from '../types';
+import type { ModWithSize, Server, StoragePlanAnalysis, StoragePlanResponse } from '../types';
 import { SEO } from './ui/SEO';
 import { StatusState } from './ui/StatusState';
 import { Card, CardContent } from './ui/Card';
@@ -18,31 +18,93 @@ interface StoragePlannerPageProps {
   game?: GameType;
 }
 
+function sortModsBySize(mods: ModWithSize[]): ModWithSize[] {
+  return [...mods].sort((a, b) => (b.sizeBytes ?? 0) - (a.sizeBytes ?? 0));
+}
+
+function sectionTotals(mods: ModWithSize[]) {
+  let knownBytes = 0;
+  let knownCount = 0;
+  for (const mod of mods) {
+    if (mod.sizeBytes != null && mod.sizeBytes > 0) {
+      knownBytes += mod.sizeBytes;
+      knownCount++;
+    }
+  }
+  return { knownBytes, knownCount, modCount: mods.length };
+}
+
+function missingSizeModIds(analysis: StoragePlanAnalysis): string[] {
+  const ids = new Set<string>();
+  for (const mod of [...analysis.wantedUnion, ...analysis.toDownload, ...analysis.canRemove]) {
+    if (!mod.sizeBytes) ids.add(mod.id);
+  }
+  return [...ids];
+}
+
 function ModSizeList({
   mods,
   emptyLabel,
+  title,
 }: {
-  mods: Array<{ id: string; name: string; sizeBytes: number | null }>;
+  mods: ModWithSize[];
   emptyLabel: string;
+  title: string;
 }) {
-  if (!mods.length) {
+  const sorted = sortModsBySize(mods);
+  const totals = sectionTotals(sorted);
+
+  if (!sorted.length) {
     return <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">{emptyLabel}</p>;
   }
+
   return (
-    <ul className="space-y-2 max-h-64 overflow-y-auto">
-      {mods.map((mod) => (
-        <li
-          key={mod.id}
-          className="flex items-center justify-between gap-3 border border-white/5 bg-black/30 px-3 py-2"
-        >
-          <span className="text-[10px] font-bold text-white uppercase truncate">{mod.name}</span>
-          <span className="text-[10px] font-mono text-tactical-orange shrink-0">
-            {formatBytes(mod.sizeBytes)}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3 border border-tactical-orange/30 bg-tactical-orange/5 px-3 py-2">
+        <span className="text-[9px] font-black text-tactical-orange uppercase tracking-widest">{title}</span>
+        <span className="text-[10px] font-mono font-black text-white">
+          {formatBytes(totals.knownBytes)}
+          <span className="text-gray-500 font-bold text-[8px] ml-2">
+            ({totals.knownCount}/{totals.modCount} sized)
           </span>
-        </li>
-      ))}
-    </ul>
+        </span>
+      </div>
+      <ul className="space-y-2 max-h-72 overflow-y-auto">
+        {sorted.map((mod) => (
+          <li
+            key={mod.id}
+            className="flex items-center justify-between gap-3 border border-white/5 bg-black/30 px-3 py-2"
+          >
+            <span className="text-[10px] font-bold text-white uppercase truncate min-w-0">{mod.name}</span>
+            <span className="text-[10px] font-mono text-tactical-orange shrink-0 tabular-nums">
+              {formatBytes(mod.sizeBytes)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
+}
+
+async function loadPlanWithSizes(
+  input: Parameters<typeof storageApi.plan>[0],
+  onProgress: (msg: string) => void
+): Promise<StoragePlanResponse> {
+  let result = await storageApi.plan(input);
+  let missing = missingSizeModIds(result.data.analysis);
+  let round = 0;
+  const maxRounds = 6;
+
+  while (missing.length > 0 && round < maxRounds) {
+    const batch = missing.slice(0, 25);
+    onProgress(`Loading workshop sizes… ${result.meta.sizesKnown ?? 0}/${result.meta.sizesTotal ?? '?'} (${batch.length} mods)`);
+    await storageApi.fetchSizes(batch, input.game);
+    result = await storageApi.plan(input);
+    missing = missingSizeModIds(result.data.analysis);
+    round++;
+  }
+
+  return result;
 }
 
 export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProps) {
@@ -50,9 +112,11 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
   const [searchParams] = useSearchParams();
   const [profile, setProfile] = useState<StorageProfile>(() => loadStorageProfile(game));
   const [servers, setServers] = useState<Server[]>([]);
-  const [search, setSearch] = useState('');
+  const [mainSearch, setMainSearch] = useState('');
+  const [wantedSearch, setWantedSearch] = useState('');
   const [loadingServers, setLoadingServers] = useState(true);
   const [planning, setPlanning] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StoragePlanResponse | null>(null);
 
@@ -78,7 +142,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     (async () => {
       try {
         setLoadingServers(true);
-        const res = await serversApi.getList(200, 0, game, { full: true });
+        const res = await serversApi.getList(500, 0, game, { full: true });
         if (!cancelled) setServers(res.data ?? []);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load servers');
@@ -91,13 +155,65 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     };
   }, [game]);
 
-  const filteredServers = useMemo(() => {
-    const q = search.trim().toLowerCase();
+  useEffect(() => {
+    const q = mainSearch.trim();
+    if (q.length < 3) return;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await serversApi.getList(100, 0, game, { full: true, search: q });
+          const found = res.data ?? [];
+          if (!found.length) return;
+          setServers((prev) => {
+            const map = new Map(prev.map((s) => [s.id, s]));
+            for (const s of found) map.set(s.id, s);
+            return [...map.values()];
+          });
+        } catch {
+          /* keep cached list */
+        }
+      })();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [mainSearch, game]);
+
+  useEffect(() => {
+    const q = wantedSearch.trim();
+    if (q.length < 3) return;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await serversApi.getList(100, 0, game, { full: true, search: q });
+          const found = res.data ?? [];
+          if (!found.length) return;
+          setServers((prev) => {
+            const map = new Map(prev.map((s) => [s.id, s]));
+            for (const s of found) map.set(s.id, s);
+            return [...map.values()];
+          });
+        } catch {
+          /* keep cached list */
+        }
+      })();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [wantedSearch, game]);
+
+  const filteredMainServers = useMemo(() => {
+    const q = mainSearch.trim().toLowerCase();
     if (!q) return servers;
     return servers.filter(
       (s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
     );
-  }, [servers, search]);
+  }, [servers, mainSearch]);
+
+  const filteredWantedServers = useMemo(() => {
+    const q = wantedSearch.trim().toLowerCase();
+    if (!q) return servers;
+    return servers.filter(
+      (s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+    );
+  }, [servers, wantedSearch]);
 
   const updateProfile = useCallback(
     (patch: Partial<StorageProfile>) => {
@@ -136,20 +252,23 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
       return;
     }
     setError(null);
+    setProgress(null);
     setPlanning(true);
     try {
-      const data = await storageApi.plan({
+      const input = {
         game,
         mainServerId: profile.mainServerId,
         wantedServerIds: profile.wantedServerIds,
         availableGb: profile.availableGb,
-      });
+      };
+      const data = await loadPlanWithSizes(input, setProgress);
       setResult(data);
     } catch (err) {
       setResult(null);
       setError(err instanceof Error ? err.message : 'Plan failed');
     } finally {
       setPlanning(false);
+      setProgress(null);
     }
   };
 
@@ -190,8 +309,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
         </h1>
         <p className="text-sm text-gray-500 font-bold uppercase tracking-widest max-w-3xl leading-relaxed">
           Approximate your installed mods from a main server, pick servers you want to play, and see
-          combined download size, free-space fit, and safe-to-remove modules. No account required —
-          profile saved in your browser.
+          combined download size, free-space fit, and safe-to-remove modules.
         </p>
       </header>
 
@@ -240,30 +358,34 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             </p>
             <input
               type="text"
-              placeholder="Search servers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by server name or ID…"
+              value={mainSearch}
+              onChange={(e) => setMainSearch(e.target.value)}
               className="w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange"
             />
-            {loadingServers ? (
+            {loadingServers && !filteredMainServers.length ? (
               <StatusState type="loading" />
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-1 border border-white/5">
-                {filteredServers.slice(0, 80).map((server) => (
-                  <button
-                    key={server.id}
-                    type="button"
-                    onClick={() => updateProfile({ mainServerId: server.id })}
-                    className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
-                      profile.mainServerId === server.id
-                        ? 'bg-tactical-orange/20 text-tactical-orange'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    {server.name}
-                    <span className="block text-[8px] text-gray-600 font-mono">{server.mods?.length ?? 0} mods</span>
-                  </button>
-                ))}
+                {filteredMainServers.length === 0 ? (
+                  <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">No servers match</p>
+                ) : (
+                  filteredMainServers.slice(0, 100).map((server) => (
+                    <button
+                      key={server.id}
+                      type="button"
+                      onClick={() => updateProfile({ mainServerId: server.id })}
+                      className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                        profile.mainServerId === server.id
+                          ? 'bg-tactical-orange/20 text-tactical-orange'
+                          : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      {server.name}
+                      <span className="block text-[8px] text-gray-600 font-mono">{server.mods?.length ?? 0} mods</span>
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </CardContent>
@@ -276,30 +398,50 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
             Multi-select — shared mods (RHS, WCS…) count once in the combined total.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
-            {servers.slice(0, 120).map((server) => {
-              const checked = profile.wantedServerIds.includes(server.id);
-              return (
-                <label
-                  key={server.id}
-                  className={`flex items-start gap-3 px-3 py-3 border cursor-pointer transition-colors ${
-                    checked ? 'border-tactical-orange/50 bg-tactical-orange/5' : 'border-white/5 hover:border-white/20'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleWantedServer(server.id)}
-                    className="mt-1 accent-orange-500"
-                  />
-                  <span>
-                    <span className="block text-[10px] font-black text-white uppercase">{server.name}</span>
-                    <span className="text-[8px] text-gray-600 font-mono">{server.mods?.length ?? 0} mods</span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+          <input
+            type="text"
+            placeholder="Search servers to add…"
+            value={wantedSearch}
+            onChange={(e) => setWantedSearch(e.target.value)}
+            className="w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange"
+          />
+          {loadingServers && !filteredWantedServers.length ? (
+            <StatusState type="loading" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+              {filteredWantedServers.length === 0 ? (
+                <p className="col-span-full p-4 text-[10px] text-gray-600 font-bold uppercase">No servers match</p>
+              ) : (
+                filteredWantedServers.slice(0, 150).map((server) => {
+                  const checked = profile.wantedServerIds.includes(server.id);
+                  return (
+                    <label
+                      key={server.id}
+                      className={`flex items-start gap-3 px-3 py-3 border cursor-pointer transition-colors ${
+                        checked ? 'border-tactical-orange/50 bg-tactical-orange/5' : 'border-white/5 hover:border-white/20'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleWantedServer(server.id)}
+                        className="mt-1 accent-orange-500"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-[10px] font-black text-white uppercase truncate">{server.name}</span>
+                        <span className="text-[8px] text-gray-600 font-mono">{server.mods?.length ?? 0} mods</span>
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          )}
+          {profile.wantedServerIds.length > 0 && (
+            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+              Selected: {profile.wantedServerIds.length} server(s)
+            </p>
+          )}
           <button
             type="button"
             onClick={() => void runPlan()}
@@ -308,6 +450,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           >
             {planning ? 'Calculating…' : 'Analyze storage'}
           </button>
+          {progress && (
+            <p className="text-[10px] font-bold text-tactical-orange uppercase tracking-widest">{progress}</p>
+          )}
           {error && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">{error}</p>}
         </CardContent>
       </Card>
@@ -329,7 +474,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               {
                 label: 'To download',
                 value: formatBytes(analysis.toDownloadSummary.estimatedBytes),
-                sub: `${analysis.toDownload.length} new mods`,
+                sub: `${formatBytes(analysis.toDownloadSummary.knownBytes)} known · ${analysis.toDownload.length} mods`,
               },
               {
                 label: 'Status',
@@ -347,6 +492,12 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             ))}
           </div>
 
+          {analysis.wanted.coverage < 1 && (
+            <p className="text-[9px] text-yellow-600/90 font-bold uppercase tracking-widest">
+              Partial size data ({Math.round(analysis.wanted.coverage * 100)}%) — estimates use average of known mods.
+              Re-run analyze to load more workshop sizes.
+            </p>
+          )}
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -354,18 +505,26 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               <CardContent className="p-5 space-y-3">
                 <h3 className="text-sm font-black text-white uppercase">Safe to remove</h3>
                 <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-                  On your main server but not needed for selected targets
+                  On your main server but not needed for selected targets — frees disk space
                 </p>
-                <ModSizeList mods={analysis.canRemove} emptyLabel="Nothing removable" />
+                <ModSizeList
+                  mods={analysis.canRemove}
+                  emptyLabel="Nothing removable"
+                  title="Frees on disk"
+                />
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h3 className="text-sm font-black text-white uppercase">Need to download</h3>
                 <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-                  Required for selected servers, not on your main
+                  Required for selected servers — uses additional disk space
                 </p>
-                <ModSizeList mods={analysis.toDownload} emptyLabel="Already have all mods" />
+                <ModSizeList
+                  mods={analysis.toDownload}
+                  emptyLabel="Already have all mods"
+                  title="Uses on disk"
+                />
               </CardContent>
             </Card>
             <Card>
@@ -376,7 +535,11 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                 <p className="text-[8px] text-gray-600 uppercase tracking-widest">
                   Largest removable mods first
                 </p>
-                <ModSizeList mods={analysis.suggestedRemovals} emptyLabel="No suggestions" />
+                <ModSizeList
+                  mods={analysis.suggestedRemovals}
+                  emptyLabel="No suggestions"
+                  title="Suggested free"
+                />
               </CardContent>
             </Card>
           </div>

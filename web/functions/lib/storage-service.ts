@@ -17,13 +17,16 @@ export async function buildServerStoragePack(
   kv: KVNamespace,
   game: ShareGame,
   server: { id: string; name: string; mods?: Array<{ id: string; name: string }> },
-  options?: { maxFetch?: number }
+  options?: { maxFetch?: number; sizes?: Map<string, number | null> }
 ): Promise<ServerStoragePack> {
   const rawMods = Array.isArray(server.mods) ? server.mods : [];
   const modIds = rawMods.map((m) => m.id);
-  const sizes = await resolveModSizesBatch(kv, game, modIds, {
-    maxFetch: options?.maxFetch,
-  });
+  const sizes =
+    options?.sizes ??
+    (await resolveModSizesBatch(kv, game, modIds, {
+      maxFetch: options?.maxFetch,
+      concurrency: 8,
+    }));
 
   const mods: ModWithSize[] = rawMods.map((m) => ({
     id: m.id,

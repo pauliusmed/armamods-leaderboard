@@ -25,6 +25,11 @@ describe('parseReforgerSizeBytesFromHtml', () => {
     }</script>`;
     assert.equal(parseReforgerSizeBytesFromHtml(html), 119521);
   });
+
+  it('reads visible Version size label from HTML', () => {
+    const html = '<html><body>Version size116.72 KB</body></html>';
+    assert.equal(parseReforgerSizeBytesFromHtml(html), 119521);
+  });
 });
 
 describe('analyzeStoragePlan', () => {

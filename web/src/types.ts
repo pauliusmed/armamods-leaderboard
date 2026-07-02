@@ -184,6 +184,9 @@ export interface StoragePlanResponse {
   };
   meta: {
     durationMs: number;
+    sizeCoverage?: number;
+    sizesKnown?: number;
+    sizesTotal?: number;
     disclaimer: string;
   };
 }

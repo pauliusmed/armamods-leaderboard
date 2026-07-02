@@ -180,10 +180,44 @@ export function formatWorkshopDate(iso: string): string | null {
   return `${day}.${month}.${year}`;
 }
 
-function pickPositiveNumber(...values: unknown[]): number | null {
-  for (const value of values) {
+function findSizeInVersionObject(obj: unknown, depth = 0): number | null {
+  if (!obj || typeof obj !== 'object' || depth > 8) return null;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const found = findSizeInVersionObject(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  const record = obj as Record<string, unknown>;
+  const priorityKeys = [
+    'sizeBytes',
+    'size',
+    'fileSize',
+    'downloadSize',
+    'versionSize',
+    'totalSize',
+    'packageSize',
+    'patchSize',
+  ];
+
+  for (const key of priorityKeys) {
+    const value = record[key];
     if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
       return Math.round(value);
+    }
+    if (typeof value === 'string') {
+      const bytes = parseHumanSizeToBytes(value);
+      if (bytes) return bytes;
+    }
+  }
+
+  for (const value of Object.values(record)) {
+    if (value && typeof value === 'object') {
+      const found = findSizeInVersionObject(value, depth + 1);
+      if (found) return found;
     }
   }
   return null;
@@ -192,41 +226,23 @@ function pickPositiveNumber(...values: unknown[]): number | null {
 /** Latest version download size in bytes from workshop __NEXT_DATA__. */
 export function parseReforgerSizeBytesFromHtml(html: string): number | null {
   const nextData = extractNextDataJson(html);
-  if (!nextData || typeof nextData !== 'object') return null;
-
-  const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
-    ?.pageProps;
-  if (!pageProps) return null;
-
-  const asset = pageProps.asset as Record<string, unknown> | undefined;
-  const avd = pageProps.assetVersionDetail as Record<string, unknown> | undefined;
-  const revision = avd?.revision as Record<string, unknown> | undefined;
-
-  const numeric = pickPositiveNumber(
-    avd?.size,
-    avd?.sizeBytes,
-    avd?.fileSize,
-    avd?.downloadSize,
-    revision?.size,
-    revision?.sizeBytes,
-    asset?.size,
-    asset?.sizeBytes,
-    asset?.fileSize
-  );
-  if (numeric) return numeric;
-
-  const stringFields = [
-    avd?.formattedSize,
-    avd?.sizeLabel,
-    avd?.versionSize,
-    asset?.formattedSize,
-    asset?.versionSize,
-  ];
-  for (const field of stringFields) {
-    if (typeof field === 'string') {
-      const bytes = parseHumanSizeToBytes(field);
-      if (bytes) return bytes;
+  if (nextData && typeof nextData === 'object') {
+    const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
+      ?.pageProps;
+    if (pageProps) {
+      const avd = pageProps.assetVersionDetail;
+      const asset = pageProps.asset;
+      const fromAvd = findSizeInVersionObject(avd);
+      if (fromAvd) return fromAvd;
+      const fromAsset = findSizeInVersionObject(asset);
+      if (fromAsset) return fromAsset;
     }
+  }
+
+  // Visible workshop label fallback (SSR HTML)
+  const htmlMatch = html.match(/Version\s*size\s*([\d.,]+)\s*(B|KB|MB|GB|TB)\b/i);
+  if (htmlMatch) {
+    return parseHumanSizeToBytes(`${htmlMatch[1]} ${htmlMatch[2]}`);
   }
 
   return null;
@@ -475,7 +491,7 @@ export async function resolveModDependencies(
   }
 }
 
-export async function resolveModSizeBytes(
+export async function ensureReforgerModSize(
   kv: KVNamespace,
   game: ShareGame,
   modId: string
@@ -489,12 +505,22 @@ export async function resolveModSizeBytes(
     return Number.isFinite(n) && n > 0 ? n : null;
   }
 
-  await ensureReforgerWorkshopMetadata(kv, game, modId);
+  const html = await fetchReforgerWorkshopHtml(modId);
+  if (!html) return null;
 
-  const refreshed = await kv.get(cacheKey, 'text');
-  if (!refreshed) return null;
-  const n = parseInt(refreshed, 10);
-  return Number.isFinite(n) && n > 0 ? n : null;
+  const sizeBytes = parseReforgerSizeBytesFromHtml(html);
+  if (sizeBytes) {
+    await kv.put(cacheKey, String(sizeBytes), { expirationTtl: WORKSHOP_KV_TTL });
+  }
+  return sizeBytes;
+}
+
+export async function resolveModSizeBytes(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<number | null> {
+  return ensureReforgerModSize(kv, game, modId);
 }
 
 /** Resolve many mod sizes — reads KV first, scrapes up to maxFetch missing. */
@@ -502,7 +528,7 @@ export async function resolveModSizesBatch(
   kv: KVNamespace,
   game: ShareGame,
   modIds: string[],
-  options?: { maxFetch?: number }
+  options?: { maxFetch?: number; concurrency?: number }
 ): Promise<Map<string, number | null>> {
   const result = new Map<string, number | null>();
   const uncached: string[] = [];
@@ -520,14 +546,15 @@ export async function resolveModSizesBatch(
     })
   );
 
-  const maxFetch = options?.maxFetch ?? 12;
+  const maxFetch = options?.maxFetch ?? uncached.length;
+  const concurrency = options?.concurrency ?? 6;
   const toFetch = uncached.slice(0, maxFetch);
 
-  for (let i = 0; i < toFetch.length; i += 3) {
-    const batch = toFetch.slice(i, i + 3);
+  for (let i = 0; i < toFetch.length; i += concurrency) {
+    const batch = toFetch.slice(i, i + concurrency);
     await Promise.all(
       batch.map(async (id) => {
-        const bytes = await resolveModSizeBytes(kv, game, id);
+        const bytes = await ensureReforgerModSize(kv, game, id);
         result.set(id, bytes);
       })
     );

@@ -27,7 +27,7 @@ import {
   defaultOgImage,
   type ShareGame,
 } from '../lib/share-meta';
-import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModSizeBytes } from '../lib/workshop-fetch';
+import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
 import { findServerById } from '../lib/server-lookup';
 import { analyzeStoragePlan } from '../lib/storage-calc';
 import { buildServerStoragePack } from '../lib/storage-service';
@@ -1470,6 +1470,45 @@ app.post('/audit/config', async (c) => {
   }
 });
 
+app.post('/storage/sizes', async (c) => {
+  try {
+    const body = await c.req.json<{ game?: GameType; modIds?: string[] }>();
+    const game = body.game === 'arma3' ? 'arma3' : 'reforger';
+    if (game === 'arma3') {
+      return c.json({ error: 'Storage sizes not yet supported for Arma 3' }, 501);
+    }
+
+    const modIds = Array.isArray(body.modIds)
+      ? [...new Set(body.modIds.map((id) => id.trim().toUpperCase()).filter(Boolean))].slice(0, 30)
+      : [];
+    if (!modIds.length) {
+      return c.json({ error: 'modIds array is required' }, 400);
+    }
+
+    const sizes = await resolveModSizesBatch(c.env.TRENDING_KV, game, modIds, {
+      maxFetch: modIds.length,
+      concurrency: 8,
+    });
+
+    const data: Record<string, number | null> = {};
+    let known = 0;
+    for (const [id, bytes] of sizes) {
+      data[id] = bytes;
+      if (bytes != null && bytes > 0) known++;
+    }
+
+    const response = c.json({
+      data,
+      meta: { requested: modIds.length, known, source: 'reforger_workshop' },
+    });
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
+  } catch (err: unknown) {
+    console.error('[STORAGE SIZES ERROR]', err);
+    return c.json({ error: 'Size fetch failed', message: err instanceof Error ? err.message : 'Unknown' }, 500);
+  }
+});
+
 app.post('/storage/plan', async (c) => {
   const start = Date.now();
   try {
@@ -1514,16 +1553,29 @@ app.post('/storage/plan', async (c) => {
       wantedRawList.push(server);
     }
 
-    const maxFetch = Math.min(24, Math.max(12, wantedRawList.reduce((n, s) => {
-      const mods = Array.isArray(s.mods) ? s.mods.length : 0;
-      return n + mods;
-    }, 0)));
+    const modNameById = new Map<string, string>();
+    const collectMods = (raw: Record<string, unknown>) => {
+      const mods = Array.isArray(raw.mods) ? (raw.mods as Array<{ id: string; name: string }>) : [];
+      for (const mod of mods) {
+        if (mod?.id && !modNameById.has(mod.id)) {
+          modNameById.set(mod.id, mod.name ?? mod.id);
+        }
+      }
+    };
+    collectMods(mainRaw);
+    for (const server of wantedRawList) collectMods(server);
+
+    const allModIds = [...modNameById.keys()];
+    const sizes = await resolveModSizesBatch(kv, game, allModIds, {
+      maxFetch: Math.min(allModIds.length, 40),
+      concurrency: 8,
+    });
 
     const mainPack = await buildServerStoragePack(kv, game, {
       id: String(mainRaw.id),
       name: String(mainRaw.name ?? 'Server'),
       mods: Array.isArray(mainRaw.mods) ? mainRaw.mods as Array<{ id: string; name: string }> : [],
-    }, { maxFetch });
+    }, { sizes });
 
     const wantedPacks = await Promise.all(
       wantedRawList.map((server) =>
@@ -1531,9 +1583,11 @@ app.post('/storage/plan', async (c) => {
           id: String(server.id),
           name: String(server.name ?? 'Server'),
           mods: Array.isArray(server.mods) ? server.mods as Array<{ id: string; name: string }> : [],
-        }, { maxFetch })
+        }, { sizes })
       )
     );
+
+    const knownSizes = [...sizes.values()].filter((b) => b != null && b > 0).length;
 
     const analysis = analyzeStoragePlan({
       installedMods: mainPack.mods,
@@ -1549,8 +1603,11 @@ app.post('/storage/plan', async (c) => {
       },
       meta: {
         durationMs: Date.now() - start,
+        sizeCoverage: allModIds.length > 0 ? knownSizes / allModIds.length : 0,
+        sizesKnown: knownSizes,
+        sizesTotal: allModIds.length,
         disclaimer:
-          'Installed library is approximated from your main server modpack. Sizes from Reforger Workshop; partial coverage when not all mods are cached yet.',
+          'Installed library is approximated from your main server modpack. Sizes from Reforger Workshop version download.',
       },
     });
     response.headers.set('Cache-Control', 'no-store');
