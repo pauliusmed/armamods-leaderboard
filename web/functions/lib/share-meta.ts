@@ -94,25 +94,69 @@ function getKvKeys(game: ShareGame) {
 }
 
 export async function lookupMod(kv: KVNamespace, game: ShareGame, modId: string): Promise<any | null> {
+  const found = await lookupModsByIds(kv, game, [modId]);
+  const normalized = modId.trim().toUpperCase();
+  return found.get(normalized) ?? found.get(modId) ?? null;
+}
+
+/** Batch lookup mods from leaderboard KV shards (includes sizeBytes when collector wrote it). */
+export async function lookupModsByIds(
+  kv: KVNamespace,
+  game: ShareGame,
+  modIds: Iterable<string>
+): Promise<Map<string, Record<string, unknown>>> {
+  const wanted = new Map<string, string>();
+  for (const raw of modIds) {
+    const id = raw.trim();
+    if (!id) continue;
+    wanted.set(id.toUpperCase(), id);
+  }
+
+  const found = new Map<string, Record<string, unknown>>();
+  if (!wanted.size) return found;
+
   const keys = getKvKeys(game);
   const meta = (await kv.get(`${keys.MODS}:meta`, 'json')) as { chunks?: number } | null;
-  if (!meta?.chunks) return null;
+  if (!meta?.chunks) return found;
 
-  for (let i = 0; i < meta.chunks; i++) {
+  for (let i = 0; i < meta.chunks && found.size < wanted.size; i++) {
     const chunkText = await kv.get(`${keys.MODS}:${i}`, 'text');
-    if (!chunkText?.includes(`"id":"${modId}"`)) continue;
+    if (!chunkText) continue;
 
-    const searchStr = `"id":"${modId}"`;
-    const idPos = chunkText.indexOf(searchStr);
-    const startPos = chunkText.lastIndexOf('{', idPos);
-    const endPos = findMatchingBrace(chunkText, startPos);
-    if (startPos === -1 || endPos === -1) continue;
-
-    try {
-      return JSON.parse(chunkText.slice(startPos, endPos + 1));
-    } catch {
-      return null;
+    for (const [normalized, original] of wanted) {
+      if (found.has(normalized)) continue;
+      const variants = [normalized, original];
+      for (const variant of variants) {
+        const searchStr = `"id":"${variant}"`;
+        if (!chunkText.includes(searchStr)) continue;
+        const idPos = chunkText.indexOf(searchStr);
+        const startPos = chunkText.lastIndexOf('{', idPos);
+        const endPos = findMatchingBrace(chunkText, startPos);
+        if (startPos === -1 || endPos === -1) continue;
+        try {
+          const mod = JSON.parse(chunkText.slice(startPos, endPos + 1)) as Record<string, unknown>;
+          found.set(normalized, mod);
+        } catch {
+          /* skip malformed */
+        }
+        break;
+      }
     }
+  }
+
+  return found;
+}
+
+/** Read positive byte size from a leaderboard mod row. */
+export function modSizeBytesFromRecord(mod: Record<string, unknown> | null | undefined): number | null {
+  if (!mod) return null;
+  const value = mod.sizeBytes ?? mod.downloadSize ?? mod.fileSize;
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.round(value);
+  }
+  if (typeof value === 'string') {
+    const n = parseInt(value, 10);
+    if (Number.isFinite(n) && n > 0) return n;
   }
   return null;
 }

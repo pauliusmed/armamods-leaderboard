@@ -20,6 +20,7 @@ import {
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
+import { formatBytes } from '../lib/formatBytes';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModConfigPanel } from './ui/ModConfigPanel';
 import { ModRow } from './ModRow';
@@ -42,6 +43,7 @@ interface ModDetailData extends Mod {
   author?: string | null;
   workshopCreated?: string | null;
   workshopModified?: string | null;
+  sizeBytes?: number | null;
   servers: Server[];
 }
 
@@ -217,9 +219,20 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
                 </p>
               </div>
-              <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center shrink-0 self-start">
-                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-                <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+              <div className="flex flex-col sm:flex-row gap-3 shrink-0 self-start">
+                {game === 'reforger' && (
+                  <div className="px-6 py-4 bg-zinc-900 border border-white/10 text-center min-w-[120px]">
+                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
+                    <p className="text-xl font-black font-mono text-tactical-orange tabular-nums">
+                      {formatBytes(mod.sizeBytes)}
+                    </p>
+                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1">Workshop ver.</p>
+                  </div>
+                )}
+                <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center">
+                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                  <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+                </div>
               </div>
             </div>
 
@@ -240,8 +253,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             stats={[
               { label: 'Total Personnel', value: mod.stats?.totalPlayers || mod.totalPlayers || 0 },
               { label: 'Deployed Servers', value: mod.stats?.serverCount || mod.serverCount || 0 },
+              ...(game === 'reforger'
+                ? [{ label: 'Download Size', value: formatBytes(mod.sizeBytes) }]
+                : []),
               { label: 'Marketshare', value: `${(mod.stats?.marketShare || 0).toFixed(1)}%` },
-              { label: 'Overall Rank', value: `#${mod.stats?.overallRank || '-'}` }
+              { label: 'Overall Rank', value: `#${mod.stats?.overallRank || '-'}` },
             ]}
             title="Tactical Analytics"
             subtitle="Real-time module performance tracking across global network"

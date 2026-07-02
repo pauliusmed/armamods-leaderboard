@@ -30,6 +30,12 @@ describe('parseReforgerSizeBytesFromHtml', () => {
     const html = '<html><body>Version size116.72 KB</body></html>';
     assert.equal(parseReforgerSizeBytesFromHtml(html), 119521);
   });
+
+  it('reads Version size from workshop dl text blob', () => {
+    const html =
+      '<section><dl>Rating93%Version0.6.10Game Version1.7.0.41Version size67.24 KBSubscribers5,455Downloads12,345</dl></section>';
+    assert.equal(parseReforgerSizeBytesFromHtml(html), Math.round(67.24 * 1024));
+  });
 });
 
 describe('analyzeStoragePlan', () => {

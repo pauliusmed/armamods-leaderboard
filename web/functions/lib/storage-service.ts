@@ -24,8 +24,7 @@ export async function buildServerStoragePack(
   const sizes =
     options?.sizes ??
     (await resolveModSizesBatch(kv, game, modIds, {
-      maxFetch: options?.maxFetch,
-      concurrency: 8,
+      maxFetch: options?.maxFetch ?? 0,
     }));
 
   const mods: ModWithSize[] = rawMods.map((m) => ({

@@ -42,16 +42,24 @@ export function ModList({ game = 'reforger' }: ModListProps) {
   );
 
   const displayMods = useMemo(() => {
-    if (sortBy !== 'author') return filteredMods;
-    const dir = sortDir === 'asc' ? 1 : -1;
-    return [...filteredMods].sort((a, b) => {
-      const aa = (authors[a.id] || '').toLowerCase();
-      const ab = (authors[b.id] || '').toLowerCase();
-      if (!aa && !ab) return 0;
-      if (!aa) return 1;
-      if (!ab) return -1;
-      return dir * aa.localeCompare(ab);
-    });
+    if (sortBy === 'author') {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      return [...filteredMods].sort((a, b) => {
+        const aa = (authors[a.id] || '').toLowerCase();
+        const ab = (authors[b.id] || '').toLowerCase();
+        if (!aa && !ab) return 0;
+        if (!aa) return 1;
+        if (!ab) return -1;
+        return dir * aa.localeCompare(ab);
+      });
+    }
+    if (sortBy === 'size') {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      return [...filteredMods].sort(
+        (a, b) => dir * ((a.sizeBytes ?? 0) - (b.sizeBytes ?? 0))
+      );
+    }
+    return filteredMods;
   }, [filteredMods, sortBy, sortDir, authors]);
 
   useEffect(() => {
@@ -126,6 +134,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               <option value="author" className="bg-zinc-900 text-white">SORT: AUTHOR</option>
               <option value="players" className="bg-zinc-900 text-white">SORT: PERSONNEL</option>
               <option value="servers" className="bg-zinc-900 text-white">SORT: DEPLOY</option>
+              <option value="size" className="bg-zinc-900 text-white">SORT: SIZE</option>
               <option value="share" className="bg-zinc-900 text-white">SORT: SHARE</option>
             </select>
 
@@ -188,6 +197,15 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                   <SortableTh
                     label="Deploy"
                     sortKey="servers"
+                    activeSort={sortBy}
+                    sortDir={sortDir}
+                    onSort={(key) => toggleSort(key as ModSortBy)}
+                    align="right"
+                    className="hidden md:table-cell px-4"
+                  />
+                  <SortableTh
+                    label="Size"
+                    sortKey="size"
                     activeSort={sortBy}
                     sortDir={sortDir}
                     onSort={(key) => toggleSort(key as ModSortBy)}

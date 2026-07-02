@@ -3,7 +3,7 @@ import { modsApi, type GameType } from '../api/client';
 import type { Mod } from '../types';
 
 export type PlayerFilter = 'all' | 'high' | 'medium' | 'low';
-export type ModSortBy = 'overall' | 'players' | 'servers' | 'name' | 'share' | 'author';
+export type ModSortBy = 'overall' | 'players' | 'servers' | 'name' | 'share' | 'author' | 'size';
 export type SortDir = 'asc' | 'desc';
 
 interface UseModsOptions {
@@ -25,7 +25,7 @@ export function useMods(options: UseModsOptions = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
-  const apiSortBy = sortBy === 'author' ? 'overall' : sortBy;
+  const apiSortBy = sortBy === 'author' || sortBy === 'size' ? 'overall' : sortBy;
 
   const loadMods = useCallback(async () => {
     try {

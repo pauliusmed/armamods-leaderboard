@@ -20,6 +20,8 @@ export interface Mod {
     overallRank?: number;
     marketShare?: number;
   }[];
+  /** Workshop version download size (bytes), from collector + KV cache. */
+  sizeBytes?: number | null;
 }
 
 export interface ModGalleryImage {
@@ -63,6 +65,13 @@ export interface Server {
   /** Quality tier from tenure-weighted rank: S/A/B/C, or null if below cutoff / new. */
   sqeTier?: 'S' | 'A' | 'B' | 'C' | null;
   mods: ServerMod[];
+  /** Sum of known mod download sizes on this server (bytes). */
+  modpackKnownBytes?: number;
+  /** Estimated total modpack size when some mod sizes are missing (bytes). */
+  modpackEstimatedBytes?: number;
+  modpackSizedCount?: number;
+  modpackModCount?: number;
+  modpackCoverage?: number;
 }
 
 export interface ScenarioRankingEntry {

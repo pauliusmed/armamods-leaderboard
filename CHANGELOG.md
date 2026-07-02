@@ -7,6 +7,10 @@
 - **SEO landing** `/arma-reforger-console-mod-storage`: problem/solution copy, FAQ + JSON-LD, CTAs → planner (PS5/Xbox mod storage keywords).
 - **Sitemap**: `web/public/sitemap.xml` + `robots.txt` for search indexing.
 - **Server detail**: modpack size in hero, per-mod download size, link to Storage Planner with `?main=`.
+- **Fix**: workshop size parser reads `Version size` from SSR `<dl>` text (not only `__NEXT_DATA__`); uppercase mod GUID in fetch URL; `cacheOnly` plan mode for fast KV refresh while batch-loading sizes.
+- **Storage sizes source**: planner reads `sizeBytes` from leaderboard KV + `cache:mod-size:*` (no live workshop scrape); collector copies cached sizes into mod chunks each run.
+- **UX**: storage planner loading panel with progress bar, stage labels, and elapsed timer (no frozen `0/N` workshop counter).
+- **Mod size surfaces**: download size on mod detail + leaderboard **Size** column (sortable); server list **Modpack** total (collector precomputes per server).
 
 ## [1.17.0] - 2026-06-30
 

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Server } from '../types';
 import { TierBadge } from './ui/TierBadge';
+import { formatBytes } from '../lib/formatBytes';
 
 interface ServerRowProps {
   server: Server;
@@ -60,11 +61,27 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
         <span className="font-mono text-xs tabular-nums text-gray-600"> / {max}</span>
       </td>
 
-      {/* Mods — hidden on mobile */}
-      <td className="hidden md:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
+      {/* Mod count */}
+      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">
           {server.mods?.length ?? 0}
         </span>
+      </td>
+
+      {/* Modpack download size (estimated from cached workshop sizes) */}
+      <td className="hidden lg:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
+        <span className="font-mono text-xs tabular-nums text-tactical-orange/90" title={
+          server.modpackCoverage != null && server.modpackCoverage < 1
+            ? `${Math.round((server.modpackCoverage ?? 0) * 100)}% of mods sized — estimate`
+            : undefined
+        }>
+          {formatBytes(server.modpackEstimatedBytes ?? server.modpackKnownBytes)}
+        </span>
+        {server.modpackCoverage != null && server.modpackCoverage > 0 && server.modpackCoverage < 1 && (
+          <span className="block text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+            ~{Math.round(server.modpackCoverage * 100)}% sized
+          </span>
+        )}
       </td>
     </tr>
   );

@@ -86,6 +86,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
               <option value="rank">SQE_LEADERBOARD</option>
               <option value="players">PERSONNEL_IDX</option>
               <option value="mods">MODULE_IDX</option>
+              <option value="modpack">MODPACK_SIZE</option>
               <option value="name">IDENTIFIER_IDX</option>
             </select>
           </div>
@@ -100,7 +101,8 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                 <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Rank</th>
                 <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Server</th>
                 <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Players</th>
-                <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Mods</th>
+                <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Mods</th>
+                <th className="hidden lg:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Modpack</th>
               </tr>
             </thead>
             <tbody>

@@ -1,4 +1,4 @@
-import { defaultOgImage, lookupMod, type ShareGame } from './share-meta';
+import { defaultOgImage, lookupMod, lookupModsByIds, modSizeBytesFromRecord, type ShareGame } from './share-meta';
 import { parseHumanSizeToBytes } from './storage-format';
 
 export interface WorkshopDependency {
@@ -24,7 +24,8 @@ export interface WorkshopDates {
 }
 
 export function reforgerWorkshopPageUrl(modId: string): string {
-  return `https://reforger.armaplatform.com/workshop/${encodeURIComponent(modId)}`;
+  const id = modId.trim().toUpperCase();
+  return `https://reforger.armaplatform.com/workshop/${encodeURIComponent(id)}`;
 }
 
 export function ogImageCacheKey(game: ShareGame, modId: string): string {
@@ -223,26 +224,39 @@ function findSizeInVersionObject(obj: unknown, depth = 0): number | null {
   return null;
 }
 
-/** Latest version download size in bytes from workshop __NEXT_DATA__. */
+/** Parse "Version size67.24 KB" from workshop SSR markup (dl text blob). */
+export function parseVersionSizeFromWorkshopHtml(html: string): number | null {
+  // Workshop concatenates <dl> labels+values: "...Version size67.24 KBSubscribers..."
+  const dlMatch = html.match(
+    /Version\s*size\s*([\d.,]+)\s*(KB|MB|GB|TB|B)(?=\s*Subscribers|\s*Downloads|<|\s*$)/i
+  );
+  if (dlMatch) {
+    return parseHumanSizeToBytes(`${dlMatch[1]} ${dlMatch[2]}`);
+  }
+
+  const loose = html.match(/Version\s*size\s*([\d.,]+)\s*(KB|MB|GB|TB|B)/i);
+  if (loose) {
+    return parseHumanSizeToBytes(`${loose[1]} ${loose[2]}`);
+  }
+
+  return null;
+}
+
+/** Latest version download size in bytes from workshop HTML. */
 export function parseReforgerSizeBytesFromHtml(html: string): number | null {
+  const fromDl = parseVersionSizeFromWorkshopHtml(html);
+  if (fromDl) return fromDl;
+
   const nextData = extractNextDataJson(html);
   if (nextData && typeof nextData === 'object') {
     const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
       ?.pageProps;
     if (pageProps) {
-      const avd = pageProps.assetVersionDetail;
-      const asset = pageProps.asset;
-      const fromAvd = findSizeInVersionObject(avd);
+      const fromAvd = findSizeInVersionObject(pageProps.assetVersionDetail);
       if (fromAvd) return fromAvd;
-      const fromAsset = findSizeInVersionObject(asset);
+      const fromAsset = findSizeInVersionObject(pageProps.asset);
       if (fromAsset) return fromAsset;
     }
-  }
-
-  // Visible workshop label fallback (SSR HTML)
-  const htmlMatch = html.match(/Version\s*size\s*([\d.,]+)\s*(B|KB|MB|GB|TB)\b/i);
-  if (htmlMatch) {
-    return parseHumanSizeToBytes(`${htmlMatch[1]} ${htmlMatch[2]}`);
   }
 
   return null;
@@ -272,12 +286,17 @@ export async function fetchReforgerWorkshopHtml(modId: string): Promise<string |
   try {
     const response = await fetch(reforgerWorkshopPageUrl(modId), {
       headers: {
-        'User-Agent': 'facebookexternalhit/1.1',
-        Accept: 'text/html',
+        'User-Agent':
+          'Mozilla/5.0 (compatible; ReforgerMods/1.0; +https://reforgermods.com)',
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
       },
       cf: { cacheTtl: 86400, cacheEverything: true },
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn('[WORKSHOP] fetch failed', modId, response.status);
+      return null;
+    }
     return await response.text();
   } catch (err) {
     console.warn('[WORKSHOP] fetch failed', modId, err);
@@ -498,14 +517,15 @@ export async function ensureReforgerModSize(
 ): Promise<number | null> {
   if (game === 'arma3') return null;
 
-  const cacheKey = sizeCacheKey(game, modId);
+  const normalizedId = modId.trim().toUpperCase();
+  const cacheKey = sizeCacheKey(game, normalizedId);
   const cached = await kv.get(cacheKey, 'text');
   if (cached) {
     const n = parseInt(cached, 10);
     return Number.isFinite(n) && n > 0 ? n : null;
   }
 
-  const html = await fetchReforgerWorkshopHtml(modId);
+  const html = await fetchReforgerWorkshopHtml(normalizedId);
   if (!html) return null;
 
   const sizeBytes = parseReforgerSizeBytesFromHtml(html);
@@ -520,10 +540,23 @@ export async function resolveModSizeBytes(
   game: ShareGame,
   modId: string
 ): Promise<number | null> {
+  const leaderboard = await lookupModsByIds(kv, game, [modId]);
+  const fromLeaderboard = modSizeBytesFromRecord(
+    leaderboard.get(modId.trim().toUpperCase()) ?? leaderboard.get(modId)
+  );
+  if (fromLeaderboard) return fromLeaderboard;
+
+  const cacheKey = sizeCacheKey(game, modId);
+  const cached = await kv.get(cacheKey, 'text');
+  if (cached) {
+    const n = parseInt(cached, 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
   return ensureReforgerModSize(kv, game, modId);
 }
 
-/** Resolve many mod sizes — reads KV first, scrapes up to maxFetch missing. */
+/** Resolve many mod sizes — leaderboard → KV cache → optional workshop scrape. */
 export async function resolveModSizesBatch(
   kv: KVNamespace,
   game: ShareGame,
@@ -533,21 +566,42 @@ export async function resolveModSizesBatch(
   const result = new Map<string, number | null>();
   const uncached: string[] = [];
 
+  const leaderboard = await lookupModsByIds(kv, game, modIds);
+
   await Promise.all(
     modIds.map(async (id) => {
-      const cacheKey = sizeCacheKey(game, id);
+      const normalizedId = id.trim().toUpperCase();
+      const fromLeaderboard = modSizeBytesFromRecord(
+        leaderboard.get(normalizedId) ?? leaderboard.get(id)
+      );
+      if (fromLeaderboard) {
+        result.set(id, fromLeaderboard);
+        return;
+      }
+
+      const cacheKey = sizeCacheKey(game, normalizedId);
       const cached = await kv.get(cacheKey, 'text');
       if (cached) {
         const n = parseInt(cached, 10);
-        result.set(id, Number.isFinite(n) && n > 0 ? n : null);
-        return;
+        if (Number.isFinite(n) && n > 0) {
+          result.set(id, n);
+          return;
+        }
       }
       uncached.push(id);
     })
   );
 
-  const maxFetch = options?.maxFetch ?? uncached.length;
-  const concurrency = options?.concurrency ?? 6;
+  const maxFetch = options?.maxFetch ?? 0;
+  if (maxFetch <= 0 || game === 'arma3') {
+    for (const id of uncached) result.set(id, null);
+    for (const id of modIds) {
+      if (!result.has(id)) result.set(id, null);
+    }
+    return result;
+  }
+
+  const concurrency = options?.concurrency ?? 8;
   const toFetch = uncached.slice(0, maxFetch);
 
   for (let i = 0; i < toFetch.length; i += concurrency) {

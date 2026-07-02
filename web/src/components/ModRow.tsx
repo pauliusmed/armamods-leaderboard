@@ -4,6 +4,7 @@ import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { ModAuthorCell } from './ui/ModAuthorCell';
 import { workshopPageUrl } from '../lib/workshop';
+import { formatBytes } from '../lib/formatBytes';
 
 interface ModRowProps {
   mod: Mod;
@@ -66,6 +67,12 @@ export function ModRow({ mod, rank, game = 'reforger', variant = 'leaderboard' }
 
       <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
         <span className="font-mono text-sm tabular-nums text-gray-300">{mod.serverCount}</span>
+      </td>
+
+      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
+        <span className="font-mono text-xs tabular-nums text-gray-400">
+          {formatBytes(mod.sizeBytes)}
+        </span>
       </td>
 
       <td className="hidden md:table-cell py-3 md:py-2.5 pl-4 pr-4 align-middle">

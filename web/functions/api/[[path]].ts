@@ -25,6 +25,7 @@ import {
 import { resolveHistoryQuery, type GameType as HistoryGameType } from './history-query';
 import {
   defaultOgImage,
+  lookupModsByIds,
   type ShareGame,
 } from '../lib/share-meta';
 import { resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
@@ -213,6 +214,7 @@ app.get('/mods', async (c) => {
   if (sortBy === 'players') filtered.sort((a, b) => byNum(a.totalPlayers || 0, b.totalPlayers || 0));
   else if (sortBy === 'servers') filtered.sort((a, b) => byNum(a.serverCount || 0, b.serverCount || 0));
   else if (sortBy === 'share') filtered.sort((a, b) => byNum(a.marketShare || 0, b.marketShare || 0));
+  else if (sortBy === 'size') filtered.sort((a, b) => byNum(a.sizeBytes || 0, b.sizeBytes || 0));
   else if (sortBy === 'name') filtered.sort((a, b) => byStr(a.name || '', b.name || ''));
   else filtered.sort((a, b) => byNum(a.overallRank || 9999, b.overallRank || 9999));
 
@@ -264,9 +266,12 @@ app.get('/mods/:modId', async (c) => {
   if (!mod) return c.json({ error: 'Not found' }, 404);
 
   if (game === 'reforger') {
-    const [author, workshopDates] = await Promise.all([
+    const [author, workshopDates, sizeBytes] = await Promise.all([
       resolveModAuthor(c.env.TRENDING_KV, game, modId),
       resolveModWorkshopDates(c.env.TRENDING_KV, game, modId),
+      mod.sizeBytes && mod.sizeBytes > 0
+        ? Promise.resolve(mod.sizeBytes as number)
+        : resolveModSizeBytes(c.env.TRENDING_KV, game, modId),
     ]);
     if (author) mod = { ...mod, author };
     if (workshopDates.created || workshopDates.modified) {
@@ -276,6 +281,7 @@ app.get('/mods/:modId', async (c) => {
         workshopModified: workshopDates.modified,
       };
     }
+    mod = { ...mod, sizeBytes: sizeBytes ?? mod.sizeBytes ?? null };
   }
 
   if (Array.isArray(mod.coDeployed) && mod.coDeployed.length > 0 && modChunksText.length > 0) {
@@ -517,37 +523,6 @@ function scanMultipleModsHistory(historyText: string, modIds: Set<string>): Map<
     if (pos <= modsStartPos) pos = historyText.indexOf(searchStr, nextTimePos + 1);
   }
   return modHistory;
-}
-
-async function lookupModsByIds(
-  kv: KVNamespace,
-  keys: ReturnType<typeof getKVKeys>,
-  modIds: Set<string>
-): Promise<Map<string, any>> {
-  const found = new Map<string, any>();
-  const meta = (await kv.get(`${keys.MODS}:meta`, 'json')) as { chunks?: number } | null;
-  if (!meta?.chunks) return found;
-
-  for (let i = 0; i < meta.chunks && found.size < modIds.size; i++) {
-    const chunkText = await kv.get(`${keys.MODS}:${i}`, 'text');
-    if (!chunkText) continue;
-    for (const modId of modIds) {
-      if (found.has(modId)) continue;
-      const searchStr = `"id":"${modId}"`;
-      if (!chunkText.includes(searchStr)) continue;
-      const idPos = chunkText.indexOf(searchStr);
-      const startPos = chunkText.lastIndexOf('{', idPos);
-      const endPos = findMatchingBrace(chunkText, startPos);
-      if (startPos !== -1 && endPos !== -1) {
-        try {
-          found.set(modId, JSON.parse(chunkText.slice(startPos, endPos + 1)));
-        } catch {
-          /* skip */
-        }
-      }
-    }
-  }
-  return found;
 }
 
 // Helper to fill gaps (zeros) in history data with average values
@@ -1366,7 +1341,7 @@ app.post('/audit/config', async (c) => {
   const keys = getKVKeys(game);
   const configIds = new Set(parsedMods.map((m) => m.modId));
 
-  const modMapRaw = await lookupModsByIds(c.env.TRENDING_KV, keys, configIds);
+  const modMapRaw = await lookupModsByIds(c.env.TRENDING_KV, game, configIds);
   const modMap = new Map(
     [...modMapRaw.entries()].map(([id, m]) => [
       id,
@@ -1418,7 +1393,7 @@ app.post('/audit/config', async (c) => {
   const rows = sortAuditRowsWorstFirst(
     parsedMods.map((mod) => {
       const history = historyFor(mod.modId);
-      const live = modMap.get(mod.modId) ?? null;
+      const live = modMap.get(mod.modId.toUpperCase()) ?? modMap.get(mod.modId) ?? null;
       return buildModAuditRow(mod, history, live, REFORGER_PATCH_17, buildOpts);
     })
   );
@@ -1479,7 +1454,7 @@ app.post('/storage/sizes', async (c) => {
     }
 
     const modIds = Array.isArray(body.modIds)
-      ? [...new Set(body.modIds.map((id) => id.trim().toUpperCase()).filter(Boolean))].slice(0, 30)
+      ? [...new Set(body.modIds.map((id) => id.trim().toUpperCase()).filter(Boolean))].slice(0, 40)
       : [];
     if (!modIds.length) {
       return c.json({ error: 'modIds array is required' }, 400);
@@ -1487,7 +1462,7 @@ app.post('/storage/sizes', async (c) => {
 
     const sizes = await resolveModSizesBatch(c.env.TRENDING_KV, game, modIds, {
       maxFetch: modIds.length,
-      concurrency: 8,
+      concurrency: 10,
     });
 
     const data: Record<string, number | null> = {};
@@ -1566,10 +1541,7 @@ app.post('/storage/plan', async (c) => {
     for (const server of wantedRawList) collectMods(server);
 
     const allModIds = [...modNameById.keys()];
-    const sizes = await resolveModSizesBatch(kv, game, allModIds, {
-      maxFetch: Math.min(allModIds.length, 40),
-      concurrency: 8,
-    });
+    const sizes = await resolveModSizesBatch(kv, game, allModIds, { maxFetch: 0 });
 
     const mainPack = await buildServerStoragePack(kv, game, {
       id: String(mainRaw.id),
@@ -1607,7 +1579,7 @@ app.post('/storage/plan', async (c) => {
         sizesKnown: knownSizes,
         sizesTotal: allModIds.length,
         disclaimer:
-          'Installed library is approximated from your main server modpack. Sizes from Reforger Workshop version download.',
+          'Installed library is approximated from your main server modpack. Sizes from leaderboard / workshop cache (no live scrape).',
       },
     });
     response.headers.set('Cache-Control', 'no-store');

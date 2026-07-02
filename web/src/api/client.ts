@@ -280,7 +280,7 @@ export const storageApi = {
       mainServerId: input.mainServerId,
       wantedServerIds: input.wantedServerIds,
       availableGb: input.availableGb,
-    }, { timeout: 120000 });
+    }, { timeout: 60000 });
     return response.data;
   },
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { serversApi, storageApi, type GameType } from '../api/client';
-import type { ModWithSize, Server, StoragePlanAnalysis, StoragePlanResponse } from '../types';
+import type { ModWithSize, Server, StoragePlanResponse } from '../types';
 import { SEO } from './ui/SEO';
 import { StatusState } from './ui/StatusState';
 import { Card, CardContent } from './ui/Card';
@@ -32,14 +32,6 @@ function sectionTotals(mods: ModWithSize[]) {
     }
   }
   return { knownBytes, knownCount, modCount: mods.length };
-}
-
-function missingSizeModIds(analysis: StoragePlanAnalysis): string[] {
-  const ids = new Set<string>();
-  for (const mod of [...analysis.wantedUnion, ...analysis.toDownload, ...analysis.canRemove]) {
-    if (!mod.sizeBytes) ids.add(mod.id);
-  }
-  return [...ids];
 }
 
 function ModSizeList({
@@ -86,25 +78,100 @@ function ModSizeList({
   );
 }
 
-async function loadPlanWithSizes(
-  input: Parameters<typeof storageApi.plan>[0],
-  onProgress: (msg: string) => void
-): Promise<StoragePlanResponse> {
-  let result = await storageApi.plan(input);
-  let missing = missingSizeModIds(result.data.analysis);
-  let round = 0;
-  const maxRounds = 6;
+const PLAN_LOADING_STAGES = [
+  'Loading server modpacks…',
+  'Reading mod sizes from leaderboard cache…',
+  'Deduplicating shared mods (RHS, WCS…)…',
+  'Calculating download vs free space…',
+] as const;
 
-  while (missing.length > 0 && round < maxRounds) {
-    const batch = missing.slice(0, 25);
-    onProgress(`Loading workshop sizes… ${result.meta.sizesKnown ?? 0}/${result.meta.sizesTotal ?? '?'} (${batch.length} mods)`);
-    await storageApi.fetchSizes(batch, input.game);
-    result = await storageApi.plan(input);
-    missing = missingSizeModIds(result.data.analysis);
-    round++;
-  }
+function estimateUnionModCount(
+  servers: Server[],
+  mainServerId: string | null,
+  wantedServerIds: string[]
+): number {
+  const ids = new Set<string>();
+  const addServer = (serverId: string) => {
+    const server = servers.find((s) => s.id === serverId);
+    for (const mod of server?.mods ?? []) {
+      if (mod?.id) ids.add(mod.id.toUpperCase());
+    }
+  };
+  if (mainServerId) addServer(mainServerId);
+  for (const id of wantedServerIds) addServer(id);
+  return ids.size;
+}
 
-  return result;
+function StoragePlanLoading({
+  modEstimate,
+  startedAt,
+}: {
+  modEstimate: number;
+  startedAt: number;
+}) {
+  const [tick, setTick] = useState(0);
+  const [barPercent, setBarPercent] = useState(12);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setBarPercent((p) => (p >= 90 ? p : p + (p < 50 ? 3 : p < 75 ? 1.5 : 0.4)));
+    }, 700);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const stage = PLAN_LOADING_STAGES[Math.min(Math.floor(tick / 3), PLAN_LOADING_STAGES.length - 1)];
+  const modLabel = modEstimate > 0 ? `~${modEstimate} unique mods` : 'your modpack';
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="space-y-3 border border-tactical-orange/40 bg-tactical-orange/5 px-4 py-4"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1 min-w-0">
+          <p className="text-[10px] font-black text-tactical-orange uppercase tracking-widest">{stage}</p>
+          <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+            Analyzing {modLabel} — reading cached sizes, not downloading mods
+          </p>
+        </div>
+        <span className="text-[10px] font-mono font-black text-white tabular-nums shrink-0">{elapsed}s</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden border border-white/10 bg-black/50">
+        <div
+          className="h-full bg-gradient-to-r from-tactical-orange/80 to-tactical-orange transition-[width] duration-500 ease-out"
+          style={{ width: `${barPercent}%` }}
+        />
+      </div>
+      <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+        Large modpacks can take 15–45s on first load — progress bar moves while the server works
+      </p>
+    </div>
+  );
+}
+
+function StoragePlanResultsSkeleton() {
+  return (
+    <section className="space-y-8 animate-pulse" aria-hidden="true">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-zinc-900 border border-white/10 p-5 h-24" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-zinc-900 border border-white/10 h-64" />
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProps) {
@@ -116,7 +183,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
   const [wantedSearch, setWantedSearch] = useState('');
   const [loadingServers, setLoadingServers] = useState(true);
   const [planning, setPlanning] = useState(false);
-  const [progress, setProgress] = useState<string | null>(null);
+  const [planStartedAt, setPlanStartedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StoragePlanResponse | null>(null);
 
@@ -242,6 +309,11 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     updateProfile({ wantedServerIds });
   };
 
+  const estimatedModCount = useMemo(
+    () => estimateUnionModCount(servers, profile.mainServerId, profile.wantedServerIds),
+    [servers, profile.mainServerId, profile.wantedServerIds]
+  );
+
   const runPlan = async () => {
     if (!profile.mainServerId) {
       setError('Select your current server first.');
@@ -252,23 +324,22 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
       return;
     }
     setError(null);
-    setProgress(null);
+    setPlanStartedAt(Date.now());
     setPlanning(true);
     try {
-      const input = {
+      const data = await storageApi.plan({
         game,
         mainServerId: profile.mainServerId,
         wantedServerIds: profile.wantedServerIds,
         availableGb: profile.availableGb,
-      };
-      const data = await loadPlanWithSizes(input, setProgress);
+      });
       setResult(data);
     } catch (err) {
       setResult(null);
       setError(err instanceof Error ? err.message : 'Plan failed');
     } finally {
       setPlanning(false);
-      setProgress(null);
+      setPlanStartedAt(null);
     }
   };
 
@@ -450,15 +521,17 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           >
             {planning ? 'Calculating…' : 'Analyze storage'}
           </button>
-          {progress && (
-            <p className="text-[10px] font-bold text-tactical-orange uppercase tracking-widest">{progress}</p>
+          {planning && planStartedAt != null && (
+            <StoragePlanLoading modEstimate={estimatedModCount} startedAt={planStartedAt} />
           )}
           {error && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">{error}</p>}
         </CardContent>
       </Card>
 
+      {planning && !analysis && <StoragePlanResultsSkeleton />}
+
       {analysis && result && (
-        <section className="space-y-8">
+        <section className={`space-y-8 ${planning ? 'opacity-40 pointer-events-none' : ''}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
@@ -495,7 +568,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           {analysis.wanted.coverage < 1 && (
             <p className="text-[9px] text-yellow-600/90 font-bold uppercase tracking-widest">
               Partial size data ({Math.round(analysis.wanted.coverage * 100)}%) — estimates use average of known mods.
-              Re-run analyze to load more workshop sizes.
+              Missing sizes appear after the next collector run (leaderboard) or when a mod page was opened (workshop cache).
             </p>
           )}
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>

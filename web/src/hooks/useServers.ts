@@ -3,7 +3,7 @@ import { serversApi, modsApi, type GameType } from '../api/client';
 import { matchesServerSearch } from '../lib/searchMatch';
 import type { Server } from '../types';
 
-export type ServerSortBy = 'rank' | 'players' | 'name' | 'mods';
+export type ServerSortBy = 'rank' | 'players' | 'name' | 'mods' | 'modpack';
 
 interface UseServersOptions {
   game?: GameType;
@@ -84,6 +84,10 @@ export function useServers(options: UseServersOptions = {}) {
         if (sortBy === 'players') return b.players - a.players;
         if (sortBy === 'name') return a.name.localeCompare(b.name);
         if (sortBy === 'mods') return (b.mods?.length ?? 0) - (a.mods?.length ?? 0);
+        if (sortBy === 'modpack') {
+          return (b.modpackEstimatedBytes ?? b.modpackKnownBytes ?? 0) -
+            (a.modpackEstimatedBytes ?? a.modpackKnownBytes ?? 0);
+        }
         return 0;
       });
   }, [servers, searchInput, sortBy]);

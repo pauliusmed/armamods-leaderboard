@@ -132,6 +132,78 @@ function extractScenarioName(
   return null;
 }
 
+/** Copy workshop download sizes from KV into leaderboard mod rows (no live scrape). */
+async function attachModSizesFromKvCache(
+  kv: CloudflareKVClient,
+  game: GameType,
+  modList: Array<{ id: string; sizeBytes?: number | null }>
+): Promise<void> {
+  const gameKey = game === 'arma3' ? 'arma3' : 'reforger';
+  const concurrency = 25;
+  let attached = 0;
+
+  for (let i = 0; i < modList.length; i += concurrency) {
+    const batch = modList.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (mod) => {
+        const key = `cache:mod-size:${gameKey}:${mod.id.toUpperCase()}`;
+        try {
+          const raw = await kv.get(key, 'json');
+          const n = typeof raw === 'number' ? raw : parseInt(String(raw ?? ''), 10);
+          if (Number.isFinite(n) && n > 0) {
+            mod.sizeBytes = n;
+            attached++;
+          }
+        } catch {
+          /* cache miss */
+        }
+      })
+    );
+  }
+
+  console.log(`  - sizeBytes attached: ${attached}/${modList.length} from workshop KV cache`);
+}
+
+function attachServerModpackSizes(
+  serverList: Array<{
+    mods?: Array<{ id: string }>;
+    modpackKnownBytes?: number;
+    modpackEstimatedBytes?: number;
+    modpackSizedCount?: number;
+    modpackModCount?: number;
+    modpackCoverage?: number;
+  }>,
+  modSizeById: Map<string, number>
+): void {
+  let withSizes = 0;
+  for (const server of serverList) {
+    const mods = server.mods ?? [];
+    let knownBytes = 0;
+    let knownCount = 0;
+    for (const mod of mods) {
+      const size =
+        modSizeById.get(mod.id.toUpperCase()) ?? modSizeById.get(mod.id) ?? 0;
+      if (size > 0) {
+        knownBytes += size;
+        knownCount++;
+      }
+    }
+    const modCount = mods.length;
+    let estimatedBytes = knownBytes;
+    if (knownCount > 0 && knownCount < modCount) {
+      const avg = knownBytes / knownCount;
+      estimatedBytes = Math.round(knownBytes + avg * (modCount - knownCount));
+    }
+    server.modpackKnownBytes = knownBytes;
+    server.modpackEstimatedBytes = estimatedBytes;
+    server.modpackSizedCount = knownCount;
+    server.modpackModCount = modCount;
+    server.modpackCoverage = modCount > 0 ? knownCount / modCount : 0;
+    if (knownCount > 0) withSizes++;
+  }
+  console.log(`  - modpack sizes attached: ${withSizes}/${serverList.length} servers`);
+}
+
 interface ServerMod {
   serverId: string;
   modId: string;
@@ -315,6 +387,17 @@ interface ServerMod {
       coDeployed
     };
   });
+
+  // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
+  await attachModSizesFromKvCache(kv, game, modList);
+
+  const modSizeById = new Map<string, number>();
+  for (const m of modList) {
+    if (typeof m.sizeBytes === 'number' && m.sizeBytes > 0) {
+      modSizeById.set(m.id.toUpperCase(), m.sizeBytes);
+    }
+  }
+  attachServerModpackSizes(serverList, modSizeById);
 
   // Update server mods with ranks
   for (const server of serverList) {
