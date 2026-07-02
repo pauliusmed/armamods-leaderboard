@@ -14,9 +14,117 @@ import {
   type StorageProfile,
 } from '../lib/storageProfile';
 import { findStorageAlternatives } from '../../functions/lib/server-storage-similarity';
+import {
+  analyzeServerSets,
+  type ServerSetFeedback,
+  type ServerSetInput,
+} from '../../functions/lib/server-set-analysis';
 
 interface StoragePlannerPageProps {
   game?: GameType;
+}
+
+function truncateServerName(name: string, max = 52): string {
+  return name.length > max ? `${name.slice(0, max)}…` : name;
+}
+
+function toServerSetInput(server: {
+  id: string;
+  name: string;
+  mods?: Array<{ id: string; name: string }>;
+  modpackEstimatedBytes?: number | null;
+}): ServerSetInput {
+  return {
+    id: server.id,
+    name: server.name,
+    mods: server.mods ?? [],
+    modpackEstimatedBytes: server.modpackEstimatedBytes,
+  };
+}
+
+function ServerSetFeedbackPanel({
+  feedback,
+  onApplySet,
+  planning,
+}: {
+  feedback: ServerSetFeedback;
+  onApplySet?: (serverIds: string[]) => void;
+  planning?: boolean;
+}) {
+  return (
+    <div className="space-y-4 border border-violet-500/30 bg-violet-950/20 px-4 py-4">
+      <div className="space-y-1">
+        <h3 className="text-[10px] font-black text-violet-300 uppercase tracking-widest">Modpack sets</h3>
+        <p className="text-[8px] text-gray-600 uppercase tracking-widest">
+          Selected union ~{formatBytes(feedback.allSelectedBytes)}
+          {feedback.allSelectedFits ? ' · fits your limit' : ` · over by ${formatBytes(feedback.bytesOver)}`}
+        </p>
+      </div>
+
+      <ul className="space-y-2">
+        {feedback.guidance.map((line) => (
+          <li key={line} className="text-[9px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed">
+            → {line}
+          </li>
+        ))}
+      </ul>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {feedback.clusters.map((cluster) => (
+          <div key={cluster.id} className="border border-white/10 bg-black/30 px-3 py-3 space-y-2">
+            <p className="text-[9px] font-black text-white uppercase tracking-widest">{cluster.label}</p>
+            <p className="text-[8px] text-gray-500 font-mono uppercase">
+              ~{formatBytes(cluster.estimatedUnionBytes)} · {cluster.modCount} mods
+              {cluster.serverIds.length > 1 ? ` · ${cluster.internalOverlapPercent}% similar` : ''}
+            </p>
+            <ul className="space-y-1 max-h-24 overflow-y-auto">
+              {cluster.serverNames.map((name, i) => (
+                <li key={cluster.serverIds[i]} className="text-[8px] text-gray-600 truncate uppercase">
+                  {truncateServerName(name)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {feedback.fittingSets.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[8px] font-black text-violet-300/90 uppercase tracking-widest">
+            Examples that fit in {formatBytes(feedback.availableBytes)}
+          </p>
+          <div className="flex flex-col gap-2">
+            {feedback.fittingSets.map((set) => (
+              <div
+                key={set.serverIds.join(',')}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border border-white/10 bg-black/20 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black text-white uppercase">
+                    {set.serverIds.length === 1 ? '1 server' : `${set.serverIds.length} servers`} · ~
+                    {formatBytes(set.estimatedUnionBytes)}
+                  </p>
+                  <p className="text-[8px] text-gray-600 truncate uppercase">
+                    {set.serverNames.map((n) => truncateServerName(n, 36)).join(' + ')}
+                  </p>
+                </div>
+                {onApplySet && (
+                  <button
+                    type="button"
+                    disabled={planning}
+                    onClick={() => onApplySet(set.serverIds)}
+                    className="shrink-0 px-3 py-2 text-[8px] font-black uppercase tracking-widest border border-violet-500/50 text-violet-200 hover:bg-violet-500/20 disabled:opacity-50"
+                  >
+                    Use this set
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function sortModsBySize(mods: ModWithSize[]): ModWithSize[] {
@@ -388,6 +496,60 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     });
   }, [result, servers, sizeById]);
 
+  const setFeedback = useMemo((): ServerSetFeedback | null => {
+    if (profile.wantedServerIds.length === 0) return null;
+
+    const selectedServers = profile.wantedServerIds
+      .map((id) => {
+        const fromList = servers.find((s) => s.id === id);
+        if (fromList) return toServerSetInput(fromList);
+        const fromPlan = result?.data.wantedServers.find((s) => s.id === id);
+        if (fromPlan) {
+          return toServerSetInput({
+            id: fromPlan.id,
+            name: fromPlan.name,
+            mods: fromPlan.mods,
+            modpackEstimatedBytes: fromPlan.estimatedBytes,
+          });
+        }
+        return null;
+      })
+      .filter((s): s is ServerSetInput => s != null);
+
+    if (!selectedServers.length) return null;
+
+    const mainFromList = profile.mainServerId
+      ? servers.find((s) => s.id === profile.mainServerId)
+      : null;
+    const mainFromPlan = result?.data.mainServer;
+    const mainServer = mainFromList
+      ? toServerSetInput(mainFromList)
+      : mainFromPlan
+        ? toServerSetInput({
+            id: mainFromPlan.id,
+            name: mainFromPlan.name,
+            mods: mainFromPlan.mods,
+            modpackEstimatedBytes: mainFromPlan.estimatedBytes,
+          })
+        : null;
+
+    return analyzeServerSets({
+      selectedServers,
+      mainServer,
+      availableBytes: Math.round(profile.availableGb * 1024 ** 3),
+      sizeById,
+    });
+  }, [profile, servers, result, sizeById]);
+
+  const applyServerSet = async (serverIds: string[]) => {
+    const nextProfile = { ...profile, wantedServerIds: serverIds };
+    setProfile(nextProfile);
+    saveStorageProfile(game, nextProfile);
+    if (nextProfile.mainServerId) {
+      await runPlan(nextProfile);
+    }
+  };
+
   const analysis = result?.data.analysis;
 
   if (game === 'arma3') {
@@ -558,6 +720,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               Selected: {profile.wantedServerIds.length} server(s)
             </p>
           )}
+          {setFeedback && profile.wantedServerIds.length >= 2 && (
+            <ServerSetFeedbackPanel feedback={setFeedback} />
+          )}
           <button
             type="button"
             onClick={() => void runPlan()}
@@ -577,6 +742,13 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
 
       {analysis && result && (
         <section className={`space-y-8 ${planning ? 'opacity-40 pointer-events-none' : ''}`}>
+          {setFeedback && (
+            <ServerSetFeedbackPanel
+              feedback={setFeedback}
+              planning={planning}
+              onApplySet={(ids) => void applyServerSet(ids)}
+            />
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
@@ -680,7 +852,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                 <h3 className="text-sm font-black text-white uppercase">Safe to remove</h3>
                 <p className="text-[8px] text-gray-600 uppercase tracking-widest">
                   {!analysis.fits && analysis.bytesOver > 0
-                    ? `Over limit by ${formatBytes(analysis.bytesOver)} — delete manually (~${formatBytes(analysis.suggestedFreeBytes)} from top items)`
+                    ? analysis.suggestedFreeBytes > 0
+                      ? `Over limit by ${formatBytes(analysis.bytesOver)} — delete manually (~${formatBytes(analysis.suggestedFreeBytes)} from top items)`
+                      : `Over limit by ${formatBytes(analysis.bytesOver)} — delete manually (sizes unknown for removable mods)`
                     : 'Not needed for any selected server — delete manually to free disk space'}
                 </p>
                 <ModSizeList
