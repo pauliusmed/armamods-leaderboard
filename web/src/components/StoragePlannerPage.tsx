@@ -595,14 +595,6 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     });
   };
 
-  const toggleWantedServer = (serverId: string) => {
-    const exists = profile.wantedServerIds.includes(serverId);
-    const wantedServerIds = exists
-      ? profile.wantedServerIds.filter((id) => id !== serverId)
-      : [...profile.wantedServerIds, serverId];
-    updateProfile({ wantedServerIds });
-  };
-
   const estimatedModCount = useMemo(
     () => estimateUnionModCount(servers, profile.mainServerId, profile.wantedServerIds),
     [servers, profile.mainServerId, profile.wantedServerIds]
@@ -854,13 +846,17 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-1 border border-white/5">
                 {filteredMainServers.length === 0 ? (
-                  <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">No servers match</p>
+                  <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">
+                    {servers.length === 0
+                      ? 'Server list empty — check API / collector'
+                      : 'No servers match search'}
+                  </p>
                 ) : (
                   filteredMainServers.slice(0, 100).map((server) => (
                     <button
                       key={server.id}
                       type="button"
-                      onClick={() => updateProfile({ mainServerId: server.id })}
+                      onClick={() => selectMainServer(server)}
                       className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
                         profile.mainServerId === server.id
                           ? 'bg-tactical-orange/20 text-tactical-orange'
@@ -899,6 +895,12 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {profile.wantedServerIds.map((serverId) => {
                   const server = servers.find((s) => s.id === serverId);
+                  const label = resolveServerLabel(
+                    serverId,
+                    server,
+                    profile.serverNames,
+                    serverResolveState[serverId]
+                  );
                   return (
                     <label
                       key={serverId}
@@ -907,15 +909,21 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                       <input
                         type="checkbox"
                         checked
-                        onChange={() => toggleWantedServer(serverId)}
+                        onChange={() => toggleWantedServer(serverId, server)}
                         className="mt-1 accent-orange-500"
                       />
                       <span className="min-w-0">
                         <span className="block text-[10px] font-black text-white uppercase truncate">
-                          {server?.name ?? `Loading… (${serverId.slice(0, 8)})`}
+                          {label.title}
                         </span>
-                        <span className="text-[8px] text-gray-600 font-mono">
-                          {server ? `${server.mods?.length ?? 0} mods` : 'fetching from API'}
+                        <span
+                          className={`text-[8px] font-mono ${
+                            serverResolveState[serverId] === 'failed'
+                              ? 'text-red-400'
+                              : 'text-gray-600'
+                          }`}
+                        >
+                          {label.sub}
                         </span>
                       </span>
                     </label>
@@ -950,7 +958,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                     <input
                       type="checkbox"
                       checked={false}
-                      onChange={() => toggleWantedServer(server.id)}
+                      onChange={() => toggleWantedServer(server.id, server)}
                       className="mt-1 accent-orange-500"
                     />
                     <span className="min-w-0">
