@@ -135,3 +135,37 @@ export const EMBEDDED_MOD_SORT_OPTIONS: Array<{ value: EmbeddedModSort; label: s
   { value: 'share', label: 'Sort: Share' },
   { value: 'name', label: 'Sort: Name' },
 ];
+
+export const MOD_LEADERBOARD_SORT_OPTIONS = [
+  { value: 'overall', label: 'Sort: Rank' },
+  { value: 'name', label: 'Sort: Name' },
+  { value: 'author', label: 'Sort: Author' },
+  { value: 'players', label: 'Sort: Personnel' },
+  { value: 'servers', label: 'Sort: Deploy' },
+  { value: 'size', label: 'Sort: Size' },
+  { value: 'share', label: 'Sort: Share' },
+] as const;
+
+export const SERVER_LIST_SORT_OPTIONS = [
+  { value: 'rank', label: 'Sort: Rank' },
+  { value: 'players', label: 'Sort: Players' },
+  { value: 'mods', label: 'Sort: Mod Count' },
+  { value: 'modpack', label: 'Sort: Modpack Size' },
+  { value: 'name', label: 'Sort: Name' },
+] as const;
+
+export const CONSOLE_FIT_FILTER_OPTIONS = [
+  { value: 'all', label: 'Console: All Servers' },
+  { value: 'vanilla', label: 'Console: Vanilla Only' },
+  { value: 'ps5', label: 'Console: Fits PS5 (25 GB)' },
+  { value: 'xbox-x', label: 'Console: Fits Xbox X (40 GB)' },
+  { value: 'xbox-s', label: 'Console: Fits Xbox S (20 GB)' },
+] as const;
+
+export const SCENARIO_LIST_SORT_OPTIONS = [
+  { value: 'rank', label: 'Sort: Rank' },
+  { value: 'players', label: 'Sort: Players' },
+  { value: 'servers', label: 'Sort: Servers' },
+  { value: 'fill', label: 'Sort: Avg Fill' },
+  { value: 'name', label: 'Sort: Name' },
+] as const;

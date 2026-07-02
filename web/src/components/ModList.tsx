@@ -7,8 +7,10 @@ import { StatsHero } from './ui/StatsHero';
 import { ModListSkeleton } from './ui/ModListSkeleton';
 import { DonationCard } from './DonationCard';
 import { SortableTh } from './ui/SortableTh';
+import { ListFilterBar } from './ui/ListFilterBar';
 import type { GameType } from '../api/client';
 import type { ModSortBy } from '../hooks/useMods';
+import { ACTIVITY_FILTER_OPTIONS, MOD_LEADERBOARD_SORT_OPTIONS } from '../lib/modListFilters';
 
 interface ModListProps {
   game?: GameType;
@@ -71,57 +73,35 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         ]}
       />
 
-      <div className="sticky top-[72px] sm:top-[84px] z-30 mb-12">
-        <div className="p-2 bg-zinc-950/60 backdrop-blur-md border border-white/5 flex flex-col md:flex-row items-center gap-4 transition-all">
-          <div className="relative flex-1 w-full flex items-center px-4">
-             <span className="text-gray-700 font-mono text-xs mr-4" aria-hidden="true">📡</span>
-            <input
-              type="search"
-              placeholder="SCAN FOR TITLES..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search mods by name"
-              className="w-full py-3 bg-transparent text-[13px] font-bold text-white uppercase tracking-widest outline-none transition-all placeholder:text-gray-800 font-mono"
-            />
-          </div>
-
-          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full md:w-auto pr-2 min-w-0">
-            <select
-              value={playerFilter}
-              onChange={(e) => setPlayerFilter(e.target.value as any)}
-              aria-label="Filter by player activity"
-              className="w-full sm:flex-1 sm:min-w-0 px-4 py-3 bg-white/5 border border-white/5 text-xs font-black text-gray-500 uppercase tracking-widest cursor-pointer hover:bg-white/10 hover:text-white transition-all outline-none"
-            >
-              <option value="all">PERSONNEL: ALL</option>
-              <option value="high">ACTIVITY: HIGH</option>
-              <option value="medium">ACTIVITY: MEDIUM</option>
-              <option value="low">ACTIVITY: LOW</option>
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) => toggleSort(e.target.value as typeof sortBy)}
-              aria-label="Sort mods by"
-              className="w-full sm:flex-1 sm:min-w-0 px-4 py-3 bg-zinc-900 border border-white/10 text-xs font-black text-white uppercase tracking-widest cursor-pointer hover:bg-zinc-800 hover:border-tactical-orange transition-all outline-none"
-            >
-              <option value="overall" className="bg-zinc-900 text-white">SORT: RANK</option>
-              <option value="name" className="bg-zinc-900 text-white">SORT: NAME</option>
-              <option value="author" className="bg-zinc-900 text-white">SORT: AUTHOR</option>
-              <option value="players" className="bg-zinc-900 text-white">SORT: PERSONNEL</option>
-              <option value="servers" className="bg-zinc-900 text-white">SORT: DEPLOY</option>
-              <option value="size" className="bg-zinc-900 text-white">SORT: SIZE</option>
-              <option value="share" className="bg-zinc-900 text-white">SORT: SHARE</option>
-            </select>
-
-            <button
-              onClick={resetFilters}
-              className="w-full sm:w-auto px-6 py-3 border border-white/5 hover:bg-white/5 text-xs font-black text-gray-700 hover:text-tactical-orange uppercase tracking-widest transition-all italic"
-            >
-              [ RST ]
-            </button>
-          </div>
-        </div>
-      </div>
+      <ListFilterBar
+        search={{
+          label: '// SEARCH',
+          value: searchQuery,
+          onChange: setSearchQuery,
+          placeholder: 'Search mods…',
+          ariaLabel: 'Search mods by name',
+        }}
+        selects={[
+          {
+            id: 'activity',
+            label: '// ACTIVITY',
+            value: playerFilter,
+            onChange: (v) => setPlayerFilter(v as typeof playerFilter),
+            options: ACTIVITY_FILTER_OPTIONS,
+            ariaLabel: 'Filter mods by player activity',
+          },
+          {
+            id: 'sort',
+            label: '// SORT',
+            value: sortBy,
+            onChange: (v) => toggleSort(v as ModSortBy),
+            options: MOD_LEADERBOARD_SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+            ariaLabel: 'Sort mods by',
+          },
+        ]}
+        onReset={resetFilters}
+        columns={3}
+      />
 
       {initialLoading ? (
         <ModListSkeleton />
