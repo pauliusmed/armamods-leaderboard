@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { serversApi, modsApi, type GameType } from '../api/client';
 import { matchesServerSearch } from '../lib/searchMatch';
+import { matchesConsoleFilter, type ConsoleFitFilter } from '../lib/serverModpack';
+import { loadStorageProfile } from '../lib/storageProfile';
 import type { Server } from '../types';
+
+export type { ConsoleFitFilter };
 
 export type ServerSortBy = 'rank' | 'players' | 'name' | 'mods' | 'modpack';
 export type ServerSortDir = 'asc' | 'desc';
@@ -25,6 +29,7 @@ export function useServers(options: UseServersOptions = {}) {
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<ServerSortBy>('rank');
   const [sortDir, setSortDir] = useState<ServerSortDir>('asc');
+  const [consoleFilter, setConsoleFilter] = useState<ConsoleFitFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
@@ -63,7 +68,7 @@ export function useServers(options: UseServersOptions = {}) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchInput, sortBy, sortDir]);
+  }, [searchInput, sortBy, sortDir, consoleFilter]);
 
   const toggleSort = useCallback((column: ServerSortBy) => {
     if (sortBy === column) {
@@ -89,6 +94,9 @@ export function useServers(options: UseServersOptions = {}) {
         if (query && !matchesServerSearch(server, query)) {
           return false;
         }
+        if (game === 'reforger' && !matchesConsoleFilter(server, consoleFilter)) {
+          return false;
+        }
         return true;
       })
       .sort((a, b) => {
@@ -104,7 +112,16 @@ export function useServers(options: UseServersOptions = {}) {
         if (sortBy === 'modpack') return dir * (modpackSortBytes(a) - modpackSortBytes(b));
         return 0;
       });
-  }, [servers, searchInput, sortBy, sortDir]);
+  }, [servers, searchInput, sortBy, sortDir, consoleFilter, game]);
+
+  const consoleLimitGb = useMemo(() => {
+    if (consoleFilter === 'ps5') return 25;
+    if (consoleFilter === 'xbox-x') return 40;
+    if (consoleFilter === 'xbox-s') return 20;
+    return loadStorageProfile(game).availableGb;
+  }, [consoleFilter, game]);
+
+  const consoleLimitBytes = Math.round(consoleLimitGb * 1024 ** 3);
 
   const paginatedServers = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -128,6 +145,7 @@ export function useServers(options: UseServersOptions = {}) {
     setSearchInput('');
     setSortBy('rank');
     setSortDir('asc');
+    setConsoleFilter('all');
     setCurrentPage(1);
   };
 
@@ -145,6 +163,10 @@ export function useServers(options: UseServersOptions = {}) {
     setSortBy,
     sortDir,
     toggleSort,
+    consoleFilter,
+    setConsoleFilter,
+    consoleLimitGb,
+    consoleLimitBytes,
     currentPage,
     setCurrentPage,
     totalPages,

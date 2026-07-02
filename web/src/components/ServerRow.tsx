@@ -1,11 +1,16 @@
 import { Link } from 'react-router-dom';
 import type { Server } from '../types';
 import { TierBadge } from './ui/TierBadge';
+import { ConsoleFitBadge } from './ui/ConsoleFitBadge';
 import { formatBytes } from '../lib/formatBytes';
+import { serverModpackBytes } from '../lib/serverModpack';
 
 interface ServerRowProps {
   server: Server;
   game?: string;
+  showConsoleFit?: boolean;
+  consoleLimitGb?: number;
+  consoleLimitBytes?: number;
 }
 
 /**
@@ -14,7 +19,13 @@ interface ServerRowProps {
  * twice: in the personnel bar AND in a Deployed/Total-Cap grid). Here each
  * value appears once; current players is emphasised for scanning.
  */
-export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
+export function ServerRow({
+  server,
+  game = 'reforger',
+  showConsoleFit = false,
+  consoleLimitGb = 25,
+  consoleLimitBytes = 25 * 1024 ** 3,
+}: ServerRowProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const rank = server.sqeRank;
   const isTop3 = rank != null && rank <= 3;
@@ -23,6 +34,7 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
 
   const modCount = server.mods?.length ?? 0;
   const isVanilla = modCount === 0;
+  const modpackBytes = serverModpackBytes(server);
 
   return (
     <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
@@ -50,11 +62,20 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
           <span className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1">
             {server.name}
           </span>
-          {server.scenarioName && (
-            <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-gray-600 line-clamp-1 mt-0.5">
-              {server.scenarioName}
-            </span>
-          )}
+          <span className="flex flex-wrap items-center gap-2 mt-0.5">
+            {server.scenarioName && (
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-600 line-clamp-1 min-w-0">
+                {server.scenarioName}
+              </span>
+            )}
+            {showConsoleFit && (
+              <ConsoleFitBadge
+                server={server}
+                limitGb={consoleLimitGb}
+                limitBytes={consoleLimitBytes}
+              />
+            )}
+          </span>
         </Link>
       </td>
 
@@ -64,17 +85,31 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
         <span className="font-mono text-xs tabular-nums text-gray-600"> / {max}</span>
       </td>
 
-      {/* Mod count */}
-      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
-        <span className="font-mono text-sm tabular-nums text-gray-300">
-          {modCount}
-        </span>
-      </td>
-
-      {/* Modpack download size (estimated from cached workshop sizes) */}
-      <td className="hidden lg:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
+      {/* Mod count + mobile modpack size */}
+      <td className="py-3 md:py-2.5 px-4 text-right align-middle">
         {isVanilla ? (
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vanilla</span>
+        ) : (
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="font-mono text-sm tabular-nums text-gray-300">{modCount}</span>
+            <span
+              className="lg:hidden font-mono text-[9px] tabular-nums text-tactical-orange/90"
+              title={
+                server.modpackCoverage != null && server.modpackCoverage < 1
+                  ? `${Math.round((server.modpackCoverage ?? 0) * 100)}% of mods sized — estimate`
+                  : undefined
+              }
+            >
+              {formatBytes(modpackBytes)}
+            </span>
+          </div>
+        )}
+      </td>
+
+      {/* Modpack download size (desktop) */}
+      <td className="hidden lg:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
+        {isVanilla ? (
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">—</span>
         ) : (
           <>
             <span
@@ -85,7 +120,7 @@ export function ServerRow({ server, game = 'reforger' }: ServerRowProps) {
                   : undefined
               }
             >
-              {formatBytes(server.modpackEstimatedBytes ?? server.modpackKnownBytes)}
+              {formatBytes(modpackBytes)}
             </span>
             {server.modpackCoverage != null && server.modpackCoverage > 0 && server.modpackCoverage < 1 && (
               <span className="block text-[8px] font-bold text-gray-600 uppercase tracking-widest">

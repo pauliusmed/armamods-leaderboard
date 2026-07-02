@@ -51,47 +51,77 @@ function ServerSetFeedbackPanel({
   onApplySet?: (serverIds: string[]) => void;
   planning?: boolean;
 }) {
+  const guidance = feedback.guidance.filter((line) => {
+    if (feedback.allSelectedFits && line.includes('full selection should fit')) return false;
+    if (
+      feedback.mainOverlapPercent != null &&
+      feedback.mainOverlapPercent < 25 &&
+      line.includes('installed-library proxy')
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  const showMainOverlapWarning =
+    feedback.mainOverlapPercent != null && feedback.mainOverlapPercent < 25;
+  const showClusters =
+    feedback.clusters.length > 1 ||
+    feedback.clusters.some((cluster) => cluster.serverIds.length > 1);
+  const showFittingSets = !feedback.allSelectedFits && feedback.fittingSets.length > 0;
+
+  if (!showClusters && !showFittingSets && guidance.length === 0 && !showMainOverlapWarning) {
+    return null;
+  }
+
   return (
     <div className="space-y-4 border border-violet-500/30 bg-violet-950/20 px-4 py-4">
-      <div className="space-y-1">
-        <h3 className="text-[10px] font-black text-violet-300 uppercase tracking-widest">Modpack sets</h3>
-        <p className="text-[8px] text-gray-600 uppercase tracking-widest">
-          Selected union ~{formatBytes(feedback.allSelectedBytes)}
-          {feedback.allSelectedFits ? ' · fits your limit' : ` · over by ${formatBytes(feedback.bytesOver)}`}
+      <h3 className="text-[10px] font-black text-violet-300 uppercase tracking-widest">
+        Server groups
+      </h3>
+
+      {showMainOverlapWarning && (
+        <p className="text-[9px] font-bold text-amber-400/90 uppercase tracking-wide leading-relaxed border border-amber-500/30 bg-amber-950/20 px-3 py-2">
+          Step 2 server shares only {feedback.mainOverlapPercent}% mods with your selection — pick the
+          server you actually have on disk, or &quot;To download&quot; will look far too high.
         </p>
-      </div>
+      )}
 
-      <ul className="space-y-2">
-        {feedback.guidance.map((line) => (
-          <li key={line} className="text-[9px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed">
-            → {line}
-          </li>
-        ))}
-      </ul>
+      {guidance.length > 0 && (
+        <ul className="space-y-2">
+          {guidance.map((line) => (
+            <li key={line} className="text-[9px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed">
+              → {line}
+            </li>
+          ))}
+        </ul>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {feedback.clusters.map((cluster) => (
-          <div key={cluster.id} className="border border-white/10 bg-black/30 px-3 py-3 space-y-2">
-            <p className="text-[9px] font-black text-white uppercase tracking-widest">{cluster.label}</p>
-            <p className="text-[8px] text-gray-500 font-mono uppercase">
-              ~{formatBytes(cluster.estimatedUnionBytes)} · {cluster.modCount} mods
-              {cluster.serverIds.length > 1 ? ` · ${cluster.internalOverlapPercent}% similar` : ''}
-            </p>
-            <ul className="space-y-1 max-h-24 overflow-y-auto">
-              {cluster.serverNames.map((name, i) => (
-                <li key={cluster.serverIds[i]} className="text-[8px] text-gray-600 truncate uppercase">
-                  {truncateServerName(name)}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      {showClusters && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {feedback.clusters.map((cluster) => (
+            <div key={cluster.id} className="border border-white/10 bg-black/30 px-3 py-3 space-y-2">
+              <p className="text-[9px] font-black text-white uppercase tracking-widest">{cluster.label}</p>
+              <p className="text-[8px] text-gray-500 font-mono uppercase">
+                ~{formatBytes(cluster.estimatedUnionBytes)} · {cluster.modCount} mods
+                {cluster.serverIds.length > 1 ? ` · ${cluster.internalOverlapPercent}% similar` : ''}
+              </p>
+              <ul className="space-y-1 max-h-24 overflow-y-auto">
+                {cluster.serverNames.map((name, i) => (
+                  <li key={cluster.serverIds[i]} className="text-[8px] text-gray-600 truncate uppercase">
+                    {truncateServerName(name)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {feedback.fittingSets.length > 0 && (
+      {showFittingSets && (
         <div className="space-y-2">
           <p className="text-[8px] font-black text-violet-300/90 uppercase tracking-widest">
-            Examples that fit in {formatBytes(feedback.availableBytes)}
+            Smaller combinations that fit in {formatBytes(feedback.availableBytes)}
           </p>
           <div className="flex flex-col gap-2">
             {feedback.fittingSets.map((set) => (
@@ -718,10 +748,10 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           {profile.wantedServerIds.length > 0 && (
             <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
               Selected: {profile.wantedServerIds.length} server(s)
+              {profile.wantedServerIds.length >= 2 && !analysis
+                ? ' — run Analyze for combined size and fit'
+                : ''}
             </p>
-          )}
-          {setFeedback && profile.wantedServerIds.length >= 2 && (
-            <ServerSetFeedbackPanel feedback={setFeedback} />
           )}
           <button
             type="button"
@@ -742,13 +772,6 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
 
       {analysis && result && (
         <section className={`space-y-8 ${planning ? 'opacity-40 pointer-events-none' : ''}`}>
-          {setFeedback && (
-            <ServerSetFeedbackPanel
-              feedback={setFeedback}
-              planning={planning}
-              onApplySet={(ids) => void applyServerSet(ids)}
-            />
-          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
@@ -789,6 +812,14 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             </p>
           )}
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>
+
+          {setFeedback && profile.wantedServerIds.length >= 2 && (
+            <ServerSetFeedbackPanel
+              feedback={setFeedback}
+              planning={planning}
+              onApplySet={(ids) => void applyServerSet(ids)}
+            />
+          )}
 
           {storageAlternatives.length > 0 && (
             <Card className="border-l-4 border-l-sky-500/80">

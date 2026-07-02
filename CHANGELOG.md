@@ -12,8 +12,8 @@
 - **UX**: storage planner loading panel with progress bar, stage labels, and elapsed timer (no frozen `0/N` workshop counter).
 - **Mod size surfaces**: download size on mod detail + leaderboard **Size** column (sortable); server list **Modpack** total (collector precomputes per server).
 - **Collector**: warms `cache:mod-size` for top 300 mods from workshop when cache is empty.
-- **Server list**: sortable column headers (Rank, Server, Players, Mods, Modpack); **Vanilla** label when modpack is empty.
-- **Storage planner**: PS5 preset corrected to **25 GB** (official Workshop allocation per Bohemia/Sony); similar-server suggestions with lower mod stack cost (`findStorageAlternatives`); **modpack set** feedback — clusters selected servers by mod family and suggests fitting combinations.
+- **Server list**: sortable column headers (Rank, Server, Players, Mods, Modpack); **Vanilla** label when modpack is empty; **console fit** badges (≤25 GB / Heavy), modpack size on mobile, filters for PS5 / Xbox S / X / vanilla-only.
+- **Storage planner**: PS5 preset corrected to **25 GB** (official Workshop allocation per Bohemia/Sony); similar-server suggestions with lower mod stack cost (`findStorageAlternatives`); **modpack set** feedback — clusters selected servers by mod family and suggests fitting combinations; deduplicated results UI (no double modpack-set block).
 
 ## [1.17.0] - 2026-06-30
 

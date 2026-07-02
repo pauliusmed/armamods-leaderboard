@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useServers } from '../hooks/useServers';
+import { Link } from 'react-router-dom';
+import { useServers, type ConsoleFitFilter } from '../hooks/useServers';
 import { ServerRow } from './ServerRow';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
@@ -24,6 +25,10 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     sortBy,
     sortDir,
     toggleSort,
+    consoleFilter,
+    setConsoleFilter,
+    consoleLimitGb,
+    consoleLimitBytes,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -55,7 +60,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
       />
 
       <div className="bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl sticky top-28 z-40 transition-all hover:bg-zinc-900/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div className={`grid grid-cols-1 gap-4 items-end ${game === 'reforger' ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
           <div className="group">
             <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 group-hover:text-tactical-orange transition-colors italic">// SCAN_REMOTE_SERVERS</label>
             <input
@@ -96,7 +101,41 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
               <option value="name">IDENTIFIER_IDX</option>
             </select>
           </div>
+
+          {game === 'reforger' && (
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic">
+                // CONSOLE_FILTER
+              </label>
+              <select
+                value={consoleFilter}
+                onChange={(e) => setConsoleFilter(e.target.value as ConsoleFitFilter)}
+                aria-label="Filter servers by console mod storage"
+                className="w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white appearance-none cursor-pointer uppercase tracking-widest text-[13px] rounded-none outline-none"
+              >
+                <option value="all">ALL_SERVERS</option>
+                <option value="vanilla">VANILLA_ONLY</option>
+                <option value="ps5">FITS_PS5_25GB</option>
+                <option value="xbox-x">FITS_XBOX_X_40GB</option>
+                <option value="xbox-s">FITS_XBOX_S_20GB</option>
+              </select>
+              {consoleFilter !== 'all' && (
+                <p className="mt-2 text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+                  {totalItems} match · unknown sizes excluded from fit filter
+                </p>
+              )}
+            </div>
+          )}
         </div>
+        {game === 'reforger' && (
+          <p className="mt-3 text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+            Modpack = estimated download size ·{' '}
+            <Link to="/storage-planner" className="text-tactical-orange hover:underline">
+              Storage Planner
+            </Link>{' '}
+            for multi-server planning
+          </p>
+        )}
       </div>
 
       <div className="border border-white/5 bg-black/40">
@@ -136,7 +175,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                   sortDir={sortDir}
                   onSort={(key) => toggleSort(key as ServerSortBy)}
                   align="right"
-                  className="hidden md:table-cell px-4"
+                  className="px-4"
                 />
                 <SortableTh
                   label="Modpack"
@@ -151,7 +190,14 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
             </thead>
             <tbody>
               {filteredServers.map((server) => (
-                <ServerRow key={server.id} server={server} game={game} />
+                <ServerRow
+                  key={server.id}
+                  server={server}
+                  game={game}
+                  showConsoleFit={game === 'reforger'}
+                  consoleLimitGb={consoleLimitGb}
+                  consoleLimitBytes={consoleLimitBytes}
+                />
               ))}
             </tbody>
           </table>
