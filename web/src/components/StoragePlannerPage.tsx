@@ -997,8 +997,14 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             {[
               {
                 label: 'Combined modpack',
-                value: formatBytes(analysis.wanted.estimatedBytes),
-                sub: `${analysis.wanted.modCount} mods · ${Math.round(analysis.wanted.coverage * 100)}% sized`,
+                value:
+                  analysis.wanted.coverage >= 1
+                    ? formatBytes(analysis.wanted.estimatedBytes)
+                    : formatBytes(analysis.wanted.knownBytes),
+                sub:
+                  analysis.wanted.coverage >= 1
+                    ? `${analysis.wanted.modCount} mods · fully sized`
+                    : `~${formatBytes(analysis.wanted.estimatedBytes)} est. · ${analysis.wanted.modCount} mods · ${Math.round(analysis.wanted.coverage * 100)}% sized`,
               },
               {
                 label: 'Your free space',
@@ -1007,13 +1013,25 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               },
               {
                 label: 'To download',
-                value: formatBytes(analysis.toDownloadSummary.estimatedBytes),
-                sub: `${formatBytes(analysis.toDownloadSummary.knownBytes)} known · ${analysis.toDownload.length} mods`,
+                value:
+                  analysis.toDownloadSummary.modCount === 0
+                    ? formatBytes(0)
+                    : analysis.toDownloadSummary.knownCount < analysis.toDownloadSummary.modCount
+                      ? formatBytes(analysis.toDownloadSummary.knownBytes)
+                      : formatBytes(analysis.toDownloadSummary.estimatedBytes),
+                sub:
+                  analysis.toDownloadSummary.knownCount < analysis.toDownloadSummary.modCount
+                    ? `~${formatBytes(analysis.toDownloadSummary.estimatedBytes)} est. · ${analysis.toDownload.length} mods`
+                    : `${analysis.toDownload.length} mods`,
               },
               {
                 label: 'Status',
                 value: analysis.fits ? 'FITS' : 'OVER LIMIT',
-                sub: analysis.fits ? 'Combination OK' : `+${formatBytes(analysis.bytesOver)} needed`,
+                sub: analysis.fits
+                  ? analysis.fitBasis === 'known'
+                    ? 'OK (known sizes only)'
+                    : 'Combination OK'
+                  : `+${formatBytes(analysis.bytesOver)} needed`,
               },
             ].map((item) => (
               <div key={item.label} className="bg-zinc-900 border border-white/10 p-5 space-y-1">
@@ -1028,8 +1046,9 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
 
           {analysis.wanted.coverage < 1 && (
             <p className="text-[9px] text-yellow-600/90 font-bold uppercase tracking-widest">
-              Partial size data ({Math.round(analysis.wanted.coverage * 100)}%) — estimates use average of known mods.
-              Missing sizes appear after the next collector run (leaderboard) or when a mod page was opened (workshop cache).
+              Partial size data ({Math.round(analysis.wanted.coverage * 100)}%) — hero shows known total;
+              ~estimate uses average of sized mods (can overshoot vs console).
+              Missing sizes backfill after collector runs or when a mod page is opened.
             </p>
           )}
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>

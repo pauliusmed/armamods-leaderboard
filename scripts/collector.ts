@@ -209,6 +209,69 @@ async function warmTopModSizesFromWorkshop(
   console.log(`  - workshop warm: ${warmed}/${missing.length} top-mod fetches (cap ${limit})`);
 }
 
+/** Warm workshop sizes for mods on active servers (beyond global top-300). */
+async function warmServerModpackModSizes(
+  kv: CloudflareKVClient,
+  game: GameType,
+  serverList: Array<{ players?: number; mods?: Array<{ id: string }> }>,
+  modList: Array<{ id: string; sizeBytes?: number | null }>,
+  limit = 500
+): Promise<void> {
+  if (game !== 'reforger') return;
+
+  const sizedIds = new Set(
+    modList
+      .filter((m) => typeof m.sizeBytes === 'number' && m.sizeBytes > 0)
+      .map((m) => m.id.toUpperCase())
+  );
+
+  const orderedServers = [...serverList].sort((a, b) => (b.players ?? 0) - (a.players ?? 0));
+  const missingIds: string[] = [];
+  const seen = new Set<string>();
+
+  for (const server of orderedServers) {
+    if ((server.players ?? 0) <= 0) continue;
+    for (const mod of server.mods ?? []) {
+      const upper = mod.id.toUpperCase();
+      if (sizedIds.has(upper) || seen.has(upper)) continue;
+      seen.add(upper);
+      missingIds.push(mod.id);
+      if (missingIds.length >= limit) break;
+    }
+    if (missingIds.length >= limit) break;
+  }
+
+  if (!missingIds.length) {
+    console.log('  - server modpack warm: skipped (all active-server mods sized)');
+    return;
+  }
+
+  let warmed = 0;
+  const concurrency = 6;
+  for (let i = 0; i < missingIds.length; i += concurrency) {
+    const batch = missingIds.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (modId) => {
+        const key = `cache:mod-size:reforger:${modId.toUpperCase()}`;
+        try {
+          const html = await fetchReforgerWorkshopHtml(modId);
+          const bytes = html ? parseReforgerSizeBytesFromHtml(html) : null;
+          if (bytes && bytes > 0) {
+            await kv.put(key, String(bytes));
+            const row = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
+            if (row) row.sizeBytes = bytes;
+            warmed++;
+          }
+        } catch {
+          /* skip failed fetch */
+        }
+      })
+    );
+    await sleep(250);
+  }
+  console.log(`  - server modpack warm: ${warmed}/${missingIds.length} fetches (cap ${limit})`);
+}
+
 function attachServerModpackSizes(
   serverList: Array<{
     mods?: Array<{ id: string }>;
@@ -436,6 +499,7 @@ interface ServerMod {
   // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
   await attachModSizesFromKvCache(kv, game, modList);
   await warmTopModSizesFromWorkshop(kv, game, modList, 300);
+  await warmServerModpackModSizes(kv, game, serverList, modList, 500);
 
   const modSizeById = new Map<string, number>();
   for (const m of modList) {

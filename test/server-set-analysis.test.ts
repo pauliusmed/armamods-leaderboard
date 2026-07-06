@@ -79,4 +79,30 @@ describe('analyzeServerSets', () => {
     assert.equal(feedback.allSelectedFits, false);
     assert.ok(feedback.guidance.some((g) => g.includes('mod families')));
   });
+
+  it('fits selection when extrapolation overshoots but known sizes fit', () => {
+    const heavy = 2 * 1024 ** 3;
+    const sizeById = new Map<string, number | null>();
+    const mods = [
+      ...Array.from({ length: 9 }, (_, i) => {
+        const id = `H${i}`;
+        sizeById.set(id, heavy);
+        return mod(id, `Heavy ${i}`);
+      }),
+      ...Array.from({ length: 91 }, (_, i) => {
+        const id = `U${i}`;
+        sizeById.set(id, null);
+        return mod(id, `Unknown ${i}`);
+      }),
+    ];
+
+    const feedback = analyzeServerSets({
+      selectedServers: [{ id: 's1', name: 'Heavy stack', mods }],
+      availableBytes: 25 * 1024 ** 3,
+      sizeById,
+    });
+
+    assert.equal(feedback.allSelectedFits, true);
+    assert.equal(feedback.allSelectedBytes, 9 * heavy);
+  });
 });

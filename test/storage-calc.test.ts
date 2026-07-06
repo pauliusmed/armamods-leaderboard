@@ -1,6 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeStoragePlan, deduplicateMods } from '../web/functions/lib/storage-calc.ts';
+import {
+  analyzeStoragePlan,
+  deduplicateMods,
+  estimateTotalBytes,
+  fitBytesForSummary,
+  SIZE_COVERAGE_FIT_THRESHOLD,
+} from '../web/functions/lib/storage-calc.ts';
 import { formatBytes, parseHumanSizeToBytes } from '../web/functions/lib/storage-format.ts';
 import { parseReforgerSizeBytesFromHtml } from '../web/functions/lib/workshop-fetch.ts';
 
@@ -53,7 +59,7 @@ describe('parseReforgerSizeBytesFromHtml', () => {
 });
 
 describe('analyzeStoragePlan', () => {
-  const mod = (id: string, name: string, sizeBytes: number) => ({ id, name, sizeBytes });
+  const mod = (id: string, name: string, sizeBytes: number | null) => ({ id, name, sizeBytes });
 
   it('deduplicates shared mods across servers', () => {
     const union = deduplicateMods([
@@ -76,6 +82,84 @@ describe('analyzeStoragePlan', () => {
     assert.equal(analysis.toDownload[0].id, 'C');
     assert.equal(analysis.canRemove.length, 2);
     assert.ok(analysis.fits);
+  });
+
+  it('uses conservative known-only fit when coverage is partial', () => {
+    const heavy = 2 * 1024 ** 3;
+    const withNullSizes = [
+      ...Array.from({ length: 9 }, (_, i) => mod(`H${i}`, `Heavy ${i}`, heavy)),
+      ...Array.from({ length: 91 }, (_, i) => mod(`U${i}`, `Unknown ${i}`, null)),
+    ];
+
+    const analysis = analyzeStoragePlan({
+      installedMods: [],
+      wantedServers: [{ id: 's1', name: 'Heavy stack', mods: withNullSizes }],
+      availableBytes: 25 * 1024 ** 3,
+    });
+
+    assert.equal(analysis.wanted.knownCount, 9);
+    assert.ok(analysis.wanted.estimatedBytes > analysis.wanted.knownBytes);
+    assert.equal(analysis.fitBasis, 'known');
+    assert.ok(analysis.fits);
+    assert.equal(analysis.fitBytes, 9 * heavy);
+  });
+
+  it('uses estimated fit when coverage meets threshold', () => {
+    const mods = Array.from({ length: 15 }, (_, i) =>
+      mod(`M${i}`, `Mod ${i}`, 2 * 1024 ** 3)
+    );
+    const analysis = analyzeStoragePlan({
+      installedMods: [],
+      wantedServers: [{ id: 's1', name: 'Full', mods }],
+      availableBytes: 25 * 1024 ** 3,
+    });
+
+    assert.equal(analysis.wanted.coverage, 1);
+    assert.equal(analysis.fitBasis, 'estimated');
+    assert.equal(analysis.fits, false);
+    assert.equal(analysis.fitBytes, 30 * 1024 ** 3);
+  });
+});
+
+describe('estimateTotalBytes', () => {
+  it('extrapolates unknown mods from average of known', () => {
+    const total = estimateTotalBytes({
+      knownBytes: 10_000_000_000,
+      knownCount: 10,
+      modCount: 100,
+    });
+    assert.equal(total, 100_000_000_000);
+  });
+});
+
+describe('fitBytesForSummary', () => {
+  it('prefers known bytes below coverage threshold', () => {
+    const summary = { knownBytes: 17 * 1024 ** 3, knownCount: 88, modCount: 128 };
+    const fit = fitBytesForSummary(summary);
+    assert.equal(fit.basis, 'known');
+    assert.equal(fit.bytes, summary.knownBytes);
+  });
+
+  it('uses estimated bytes at full coverage', () => {
+    const summary = { knownBytes: 20 * 1024 ** 3, knownCount: 100, modCount: 100 };
+    const fit = fitBytesForSummary(summary);
+    assert.equal(fit.basis, 'estimated');
+    assert.equal(fit.bytes, 20 * 1024 ** 3);
+  });
+
+  it('uses estimated when no sizes known', () => {
+    const fit = fitBytesForSummary(
+      { knownBytes: 0, knownCount: 0, modCount: 50 },
+      24 * 1024 ** 3
+    );
+    assert.equal(fit.basis, 'estimated');
+    assert.equal(fit.bytes, 24 * 1024 ** 3);
+  });
+});
+
+describe('SIZE_COVERAGE_FIT_THRESHOLD', () => {
+  it('is 90 percent', () => {
+    assert.equal(SIZE_COVERAGE_FIT_THRESHOLD, 0.9);
   });
 });
 

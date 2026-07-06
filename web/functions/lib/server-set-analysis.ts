@@ -1,4 +1,10 @@
-import { deduplicateMods, estimateTotalBytes, sumKnownBytes, type ModWithSize } from './storage-calc';
+import {
+  deduplicateMods,
+  estimateTotalBytes,
+  fitBytesForSummary,
+  sumKnownBytes,
+  type ModWithSize,
+} from './storage-calc';
 import { modOverlapPercent } from './server-storage-similarity';
 
 export interface ServerSetInput {
@@ -60,9 +66,23 @@ function modsWithSizes(
 export function estimateServerSetUnion(
   servers: ServerSetInput[],
   sizeById: Map<string, number | null>
-): { estimatedBytes: number; modCount: number; coverage: number } {
+): {
+  estimatedBytes: number;
+  knownBytes: number;
+  fitBytes: number;
+  fitBasis: 'known' | 'estimated';
+  modCount: number;
+  coverage: number;
+} {
   if (servers.length === 0) {
-    return { estimatedBytes: 0, modCount: 0, coverage: 0 };
+    return {
+      estimatedBytes: 0,
+      knownBytes: 0,
+      fitBytes: 0,
+      fitBasis: 'estimated',
+      modCount: 0,
+      coverage: 0,
+    };
   }
 
   const union = modsWithSizes(servers, sizeById);
@@ -84,10 +104,16 @@ export function estimateServerSetUnion(
     }
   }
 
+  const coverage = union.length > 0 ? summary.knownCount / union.length : 0;
+  const { bytes: fitBytes, basis: fitBasis } = fitBytesForSummary(summary, estimatedBytes);
+
   return {
     estimatedBytes,
+    knownBytes: summary.knownBytes,
+    fitBytes,
+    fitBasis,
     modCount: union.length,
-    coverage: union.length > 0 ? summary.knownCount / union.length : 0,
+    coverage,
   };
 }
 
@@ -166,12 +192,12 @@ export function findFittingServerSets(input: {
   for (let mask = 1; mask < total; mask++) {
     const subset = servers.filter((_, i) => (mask & (1 << i)) !== 0);
     const union = estimateServerSetUnion(subset, sizeById);
-    const fits = union.estimatedBytes <= availableBytes;
+    const fits = union.fitBytes <= availableBytes;
     if (!fits) continue;
     results.push({
       serverIds: subset.map((s) => s.id),
       serverNames: subset.map((s) => s.name),
-      estimatedUnionBytes: union.estimatedBytes,
+      estimatedUnionBytes: union.fitBytes,
       modCount: union.modCount,
       fits: true,
     });
@@ -196,8 +222,8 @@ export function analyzeServerSets(input: {
   const selected = input.selectedServers;
 
   const allUnion = estimateServerSetUnion(selected, sizeById);
-  const allSelectedFits = allUnion.estimatedBytes <= input.availableBytes;
-  const bytesOver = Math.max(0, allUnion.estimatedBytes - input.availableBytes);
+  const allSelectedFits = allUnion.fitBytes <= input.availableBytes;
+  const bytesOver = Math.max(0, allUnion.fitBytes - input.availableBytes);
 
   const clusterGroups = clusterServersByModpack(selected);
   const clusters: ModpackCluster[] = clusterGroups.map((group, index) => {
@@ -266,7 +292,7 @@ export function analyzeServerSets(input: {
     clusters,
     fittingSets,
     allSelectedFits,
-    allSelectedBytes: allUnion.estimatedBytes,
+    allSelectedBytes: allUnion.fitBytes,
     availableBytes: input.availableBytes,
     bytesOver,
     guidance,

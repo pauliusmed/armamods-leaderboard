@@ -46,6 +46,31 @@ export function estimateTotalBytes(summary: ByteSummary): number {
   return Math.round(avg * summary.modCount);
 }
 
+/** Use estimated totals for fit only when most mods have workshop sizes. */
+export const SIZE_COVERAGE_FIT_THRESHOLD = 0.9;
+
+export function coverageFromSummary(summary: ByteSummary): number {
+  return summary.modCount > 0 ? summary.knownCount / summary.modCount : 0;
+}
+
+/**
+ * Bytes for limit checks. Partial coverage uses known sum only — extrapolation
+ * inflates heavy stacks when unknown mods are mostly small frameworks.
+ */
+export function fitBytesForSummary(
+  summary: ByteSummary,
+  estimatedBytes?: number
+): { bytes: number; basis: 'known' | 'estimated' } {
+  const estimated = estimatedBytes ?? estimateTotalBytes(summary);
+  if (summary.knownCount === 0) {
+    return { bytes: estimated, basis: 'estimated' };
+  }
+  if (coverageFromSummary(summary) >= SIZE_COVERAGE_FIT_THRESHOLD) {
+    return { bytes: estimated, basis: 'estimated' };
+  }
+  return { bytes: summary.knownBytes, basis: 'known' };
+}
+
 export interface StoragePlanAnalysis {
   wantedUnion: ModWithSize[];
   toDownload: ModWithSize[];
@@ -56,6 +81,8 @@ export interface StoragePlanAnalysis {
   canRemoveSummary: ByteSummary & { estimatedBytes: number };
   availableBytes: number;
   fits: boolean;
+  fitBytes: number;
+  fitBasis: 'known' | 'estimated';
   bytesOver: number;
   suggestedRemovals: ModWithSize[];
   suggestedFreeBytes: number;
@@ -79,9 +106,11 @@ export function analyzeStoragePlan(input: {
   const wantedEstimated = estimateTotalBytes(wanted);
   const toDownloadSummary = sumKnownBytes(toDownload);
   const canRemoveSummary = sumKnownBytes(canRemove);
+  const wantedCoverage = coverageFromSummary(wanted);
+  const { bytes: fitBytes, basis: fitBasis } = fitBytesForSummary(wanted, wantedEstimated);
 
-  const fits = wantedEstimated <= input.availableBytes;
-  const bytesOver = Math.max(0, wantedEstimated - input.availableBytes);
+  const fits = fitBytes <= input.availableBytes;
+  const bytesOver = Math.max(0, fitBytes - input.availableBytes);
 
   const suggestedRemovals = [...canRemove]
     .filter((m) => m.sizeBytes != null && m.sizeBytes > 0)
@@ -103,7 +132,7 @@ export function analyzeStoragePlan(input: {
     wanted: {
       ...wanted,
       estimatedBytes: wantedEstimated,
-      coverage: wanted.modCount > 0 ? wanted.knownCount / wanted.modCount : 0,
+      coverage: wantedCoverage,
     },
     toDownloadSummary: {
       ...toDownloadSummary,
@@ -115,6 +144,8 @@ export function analyzeStoragePlan(input: {
     },
     availableBytes: input.availableBytes,
     fits,
+    fitBytes,
+    fitBasis,
     bytesOver,
     suggestedRemovals: bytesOver > 0 ? trimmedRemovals : [],
     suggestedFreeBytes: bytesOver > 0 ? suggestedFreeBytes : 0,

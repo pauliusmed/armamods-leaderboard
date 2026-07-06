@@ -198,6 +198,8 @@ export interface StoragePlanAnalysis {
   };
   availableBytes: number;
   fits: boolean;
+  fitBytes: number;
+  fitBasis: 'known' | 'estimated';
   bytesOver: number;
   suggestedRemovals: ModWithSize[];
   suggestedFreeBytes: number;
