@@ -53,6 +53,15 @@ export function authorCacheKey(game: ShareGame, modId: string): string {
   return `cache:mod-author:${game}:${modId.toUpperCase()}`;
 }
 
+export function workshopCopyCacheKey(game: ShareGame, modId: string): string {
+  return `cache:mod-copy:${game}:${modId.toUpperCase()}`;
+}
+
+export interface WorkshopCopy {
+  summary: string | null;
+  description: string | null;
+}
+
 export function galleryCacheKey(game: ShareGame, modId: string): string {
   return `cache:mod-gallery:${game}:${modId.toUpperCase()}`;
 }
@@ -188,6 +197,55 @@ export function parseReforgerAuthorFromHtml(html: string): string | null {
   const author = (pageProps.asset as { author?: { username?: string } } | undefined)?.author
     ?.username;
   return typeof author === 'string' && author.trim() ? author.trim() : null;
+}
+
+export function parseReforgerWorkshopCopyFromHtml(html: string): WorkshopCopy {
+  const nextData = extractNextDataJson(html);
+  if (!nextData || typeof nextData !== 'object') {
+    return { summary: null, description: null };
+  }
+
+  const pageProps = (nextData as { props?: { pageProps?: Record<string, unknown> } }).props
+    ?.pageProps;
+  if (!pageProps) return { summary: null, description: null };
+
+  const asset = pageProps.asset as { summary?: string; description?: string } | undefined;
+  const summary =
+    typeof asset?.summary === 'string' && asset.summary.trim() ? asset.summary.trim() : null;
+  const description =
+    typeof asset?.description === 'string' && asset.description.trim()
+      ? asset.description.trim()
+      : null;
+
+  return { summary, description };
+}
+
+/** Persist size + author + workshop copy from one HTML fetch (collector warm path). */
+export async function cacheReforgerFieldsFromWorkshopHtml(
+  kv: { put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void> },
+  modId: string,
+  html: string
+): Promise<{ sizeBytes: number | null; author: string | null; copy: WorkshopCopy }> {
+  const sizeBytes = parseReforgerSizeBytesFromHtml(html);
+  const author = parseReforgerAuthorFromHtml(html);
+  const copy = parseReforgerWorkshopCopyFromHtml(html);
+  const ttl = { expirationTtl: WORKSHOP_KV_TTL };
+
+  if (sizeBytes && sizeBytes > 0) {
+    await kv.put(sizeCacheKey('reforger', modId), String(sizeBytes), ttl);
+  }
+  if (author) {
+    await kv.put(authorCacheKey('reforger', modId), author, ttl);
+  }
+  if (copy.summary || copy.description) {
+    await kv.put(workshopCopyCacheKey('reforger', modId), JSON.stringify(copy), ttl);
+  }
+
+  return {
+    sizeBytes: sizeBytes && sizeBytes > 0 ? sizeBytes : null,
+    author,
+    copy,
+  };
 }
 
 /** Workshop Created / Last Modified — DD.MM.YYYY like the official page. */
@@ -447,14 +505,16 @@ export async function ensureReforgerWorkshopMetadata(
   const ogKey = ogImageCacheKey(game, modId);
   const depKey = depsCacheKey(game, modId);
   const authorKey = authorCacheKey(game, modId);
+  const copyKey = workshopCopyCacheKey(game, modId);
   const galleryKey = galleryCacheKey(game, modId);
   const datesKey = datesCacheKey(game, modId);
   const sizeKey = sizeCacheKey(game, modId);
-  const [ogCached, depsCached, authorCached, galleryCached, datesCached, sizeCached] =
+  const [ogCached, depsCached, authorCached, copyCached, galleryCached, datesCached, sizeCached] =
     await Promise.all([
     kv.get(ogKey, 'text'),
     kv.get(depKey, 'text'),
     kv.get(authorKey, 'text'),
+    kv.get(copyKey, 'text'),
     kv.get(galleryKey, 'text'),
     kv.get(datesKey, 'text'),
     kv.get(sizeKey, 'text'),
@@ -462,7 +522,7 @@ export async function ensureReforgerWorkshopMetadata(
   const statusCached = await readWorkshopStatusFromKv(kv, game, modId);
   if (statusCached?.status === 'unavailable') return;
 
-  if (ogCached && depsCached && authorCached && galleryCached && datesCached && sizeCached) {
+  if (ogCached && depsCached && authorCached && copyCached && galleryCached && datesCached && sizeCached) {
     return;
   }
 
@@ -488,6 +548,13 @@ export async function ensureReforgerWorkshopMetadata(
     const author = parseReforgerAuthorFromHtml(html);
     if (author) {
       writes.push(kv.put(authorKey, author, { expirationTtl: WORKSHOP_KV_TTL }));
+    }
+  }
+
+  if (!copyCached) {
+    const copy = parseReforgerWorkshopCopyFromHtml(html);
+    if (copy.summary || copy.description) {
+      writes.push(kv.put(copyKey, JSON.stringify(copy), { expirationTtl: WORKSHOP_KV_TTL }));
     }
   }
 
@@ -560,6 +627,42 @@ export async function resolveModAuthor(
 
   await ensureReforgerWorkshopMetadata(kv, game, modId);
   return (await kv.get(cacheKey, 'text')) || null;
+}
+
+export async function resolveModWorkshopCopy(
+  kv: KVNamespace,
+  game: ShareGame,
+  modId: string
+): Promise<WorkshopCopy> {
+  const empty: WorkshopCopy = { summary: null, description: null };
+  if (game === 'arma3') return empty;
+
+  const cacheKey = workshopCopyCacheKey(game, modId);
+  const cached = await kv.get(cacheKey, 'text');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached) as WorkshopCopy;
+      return {
+        summary: parsed.summary ?? null,
+        description: parsed.description ?? null,
+      };
+    } catch {
+      /* refetch */
+    }
+  }
+
+  await ensureReforgerWorkshopMetadata(kv, game, modId);
+  const refreshed = await kv.get(cacheKey, 'text');
+  if (!refreshed) return empty;
+  try {
+    const parsed = JSON.parse(refreshed) as WorkshopCopy;
+    return {
+      summary: parsed.summary ?? null,
+      description: parsed.description ?? null,
+    };
+  } catch {
+    return empty;
+  }
 }
 
 export async function resolveModGallery(

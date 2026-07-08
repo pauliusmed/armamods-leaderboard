@@ -1,3 +1,15 @@
+- [CHANGELOG.md](../CHANGELOG.md) — release notes (v1.18.0+)
+
+## [1.20.0] - 2026-07-06
+
+### 💾 Storage Planner — size accuracy
+- **Conservative fit**: `fitBytesForSummary` uses known-only bytes for FITS/OVER LIMIT when below 90% mods have workshop sizes (`SIZE_COVERAGE_FIT_THRESHOLD`); avoids false over-limit on heavy stacks with partial cache.
+- **Hero UI**: Combined modpack shows **known** total + `~est.` subtitle when coverage incomplete; Status notes `OK (known sizes only)` when fit is conservative.
+- **Collector**: `warmServerModpackModSizes` — workshop scrape for up to 500 mods on active servers (beyond global top-300 warm).
+- **API**: `analysis.fitBytes`, `analysis.fitBasis` on `POST /api/storage/plan`.
+- **Tests**: conservative fit + partial-coverage server-set cases in `storage-calc.test.ts`, `server-set-analysis.test.ts`.
+- **Docs**: [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) — known vs estimated totals, fit logic.
+
 ### 🗺️ Scenario classification (workshop vs official)
 - **Collector**: `buildScenarioRanking` now classifies each scenario — workshop mod via server-mod intersection, official via `#AR-` prefix + 31-entry static registry.
 - **UI** `/scenarios`: type badges, links to `/mod/:id` (workshop) or `/scenarios/official/:slug` (vanilla).

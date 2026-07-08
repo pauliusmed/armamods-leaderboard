@@ -40,12 +40,24 @@ Each run:
 
 1. `attachModSizesFromKvCache` — copies existing `cache:mod-size:*` into mod records
 2. `warmTopModSizesFromWorkshop` — scrapes workshop for **top 300** ranked mods missing cache
-3. `attachServerModpackSizes` — per server:
+3. `warmServerModpackModSizes` — scrapes workshop for up to **500** mods on **active servers** (players > 0) still missing cache (niche server stacks beyond global top-300)
+4. `attachServerModpackSizes` — per server:
    - `modpackKnownBytes` — sum of known mod sizes
    - `modpackEstimatedBytes` — extrapolates when some mods lack sizes (average of known)
    - `modpackCoverage` — fraction of mods with a known size
 
 These fields are written into server shards and exposed on `GET /api/servers`.
+
+### Known vs estimated totals
+
+| Surface | What it sums |
+|---------|----------------|
+| Hero **Combined modpack** (partial coverage) | **Known** bytes primary; `~X est.` subtitle from `estimateTotalBytes` |
+| Hero **Combined modpack** (100% sized) | Full known sum (= estimate) |
+| **To download** / **Safe to remove** lists | Known bytes in section header (`N/M sized`); `—` per mod = no cache yet |
+| **FITS / OVER LIMIT** | `fitBytes` — see fit logic below |
+
+When coverage is incomplete, `estimateTotalBytes` extrapolates unknown mods using the **average of known mods**. On heavy stacks (WCS, RHS) that often **overshoots** console disk usage because unknown mods are usually small frameworks. The UI and fit check account for this (see Algorithms).
 
 ---
 
@@ -72,7 +84,7 @@ These fields are written into server shards and exposed on `GET /api/servers`.
 **`mainServerId`** — modpack treated as *already on disk* (proxy for auto-download delta).  
 **`wantedServerIds`** — union of modpacks the player wants to play (deduplicated).
 
-Response includes `analysis`: `wantedUnion`, `toDownload`, `canRemove`, `fits`, `bytesOver`, etc.
+Response includes `analysis`: `wantedUnion`, `toDownload`, `canRemove`, `fits`, `fitBytes`, `fitBasis` (`known` | `estimated`), `bytesOver`, etc.
 
 ---
 
@@ -93,7 +105,7 @@ Three-step wizard (profile in `localStorage`):
 
 ### Results layout (no duplicate blocks)
 
-1. **Hero cards** — Combined modpack · Free space · To download · Status (FITS / OVER LIMIT)
+1. **Hero cards** — Combined modpack (known + `~est.` when partial) · Free space · To download · Status (FITS / OVER LIMIT)
 2. **Server groups** (if ≥2 servers) — mod families (WCS+RHS, CIE, …), warnings, fitting subsets when over limit
 3. **Less download / delete hassle** — similar servers with smaller stack (`findStorageAlternatives`)
 4. **Safe to remove** — manual cleanup (mods not in any selected server)
@@ -148,7 +160,15 @@ Servers with unknown sizes are excluded from strict “fits” filters.
 - `wantedUnion` = deduplicated mods across all wanted servers
 - `toDownload` = wanted mods not in main server's modpack
 - `canRemove` = main mods not in wanted union
-- `fits` = `estimateTotalBytes(wantedUnion) ≤ availableBytes`
+- `estimateTotalBytes` = known sum, or `avg(known) × modCount` when sizes are missing
+- `fitBytesForSummary` (`SIZE_COVERAGE_FIT_THRESHOLD` = **0.9**):
+  - **≥90% sized** → `fitBytes` = estimated total (full extrapolation)
+  - **<90% sized** → `fitBytes` = **known bytes only** (conservative — avoids false OVER LIMIT when extrapolation inflates heavy stacks)
+  - **0 sized** → falls back to estimated (collector modpack totals in server-set path)
+- `fits` = `fitBytes ≤ availableBytes`
+- `bytesOver` = `max(0, fitBytes − availableBytes)`
+
+`server-set-analysis.ts` uses the same `fitBytesForSummary` for cluster totals and fitting subsets.
 
 ### Server groups (`analyzeServerSets`)
 
@@ -172,7 +192,7 @@ For each wanted server, search network candidates (client: loaded server list) w
 npm test
 ```
 
-- `test/storage-calc.test.ts` — size parsing, plan analysis
+- `test/storage-calc.test.ts` — size parsing, plan analysis, `fitBytesForSummary`, conservative fit
 - `test/server-set-analysis.test.ts` — clustering, fitting subsets
 - `test/server-storage-similarity.test.ts` — alternative recommendations
 - `test/server-modpack.test.ts` — console fit filters
@@ -181,7 +201,9 @@ npm test
 
 ## Known limitations
 
-- **Coverage** — only mods with cached/scraped sizes count precisely; estimates use average mod size
+- **Coverage** — only mods with cached/scraped sizes count in known totals; `~est.` extrapolates from average known mod size (can overshoot console on heavy stacks)
+- **Fit check** — conservative (known-only) below 90% coverage; may show FITS before all unknown mods are sized (unknown mods assumed 0 for limit check)
+- **Download delta** — `toDownload` / `canRemove` mod lists are reliable for *which* mods change; section GB totals sum known sizes only until backfill completes
 - **Installed proxy** — no direct console API; user picks a BM server as “what I have”
 - **Similar servers** — MVP searches loaded server pool (up to ~5000), not a precomputed similarity index
 - **Arma 3** — no workshop size scrape in planner yet

@@ -24,6 +24,8 @@ import {
   sortServerMods,
 } from '../lib/modListFilters';
 import { ListFilterBar } from './ui/ListFilterBar';
+import { ModRow } from './ModRow';
+import { toModRow } from './ui/ModDataTable';
 
 interface ServerDetailProps {
   game?: GameType;
@@ -625,83 +627,66 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {sortedAndFilteredMods.map(mod => {
-              const marketshare = totalServers > 0 ? ((mod.serverCount || 0) / totalServers) * 100 : 0;
-              return (
-              <Card key={mod.id} className="border-l-4 border-l-zinc-800 hover:border-l-tactical-orange transition-all group overflow-hidden">
-                <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 relative">
-                  <div className="space-y-2 sm:space-y-3">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-2 sm:pb-3">
-                      <div className="space-y-0.5 sm:space-y-1">
-                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Player Rank</p>
-                        <p className="text-base sm:text-lg font-black text-white font-mono">#{mod.playerRank}</p>
-                      </div>
-                      <div className="space-y-0.5 sm:space-y-1 text-right">
-                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Server Rank</p>
-                        <p className="text-base sm:text-lg font-black text-white font-mono">#{mod.serverRank}</p>
-                      </div>
-                    </div>
-
-                    <Link to={`${gp}/mod/${mod.id}`}>
-                      <h3 className="text-base sm:text-lg font-black text-white uppercase leading-tight group-hover:text-tactical-orange transition-colors line-clamp-2">
-                        {mod.name}
-                      </h3>
-                    </Link>
-                    <p className="text-[7px] sm:text-[9px] font-mono text-gray-600 uppercase tracking-widest truncate">{mod.id}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 sm:gap-4 border-t border-white/5 pt-3 sm:pt-4">
-                     <div className="space-y-0.5 sm:space-y-1">
-                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Personnel</p>
-                        <p className="text-xs sm:text-xs font-black text-white font-mono">{(mod.totalPlayers || 0).toLocaleString()}</p>
-                     </div>
-                     <div className="space-y-0.5 sm:space-y-1">
-                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">
-                          {game === 'reforger' ? 'Download' : 'Deployments'}
-                        </p>
-                        <p className="text-xs sm:text-xs font-black text-white font-mono">
-                          {game === 'reforger'
-                            ? formatBytes((mod as ServerMod & { sizeBytes?: number | null }).sizeBytes)
-                            : mod.serverCount || 0}
-                        </p>
-                     </div>
-                  </div>
-
-                  <div className="border-t border-white/5 pt-2 sm:pt-3">
-                    <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">Marketshare</p>
-                    <div className="flex items-center gap-2 sm:gap-3 mt-1">
-                      <div className="flex-1 h-1.5 sm:h-2 bg-white/5 overflow-hidden">
-                        <div
-                          className="h-full bg-tactical-orange transition-all duration-500"
-                          style={{ width: `${Math.min(marketshare, 100)}%` }}
-                        />
-                      </div>
-                      <p className="text-[10px] sm:text-xs font-black text-tactical-orange font-mono">{marketshare.toFixed(1)}%</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-2">
-                    <Link
-                      to={`${gp}/mod/${mod.id}`}
-                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/5 border border-white/10 text-[8px] sm:text-[9px] font-black text-gray-400 text-center uppercase tracking-widest hover:bg-tactical-orange hover:text-black transition-all"
-                    >
-                      Module Intel
-                    </Link>
-                    <a
-                      href={/^\d+$/.test(mod.id)
-                        ? `https://steamcommunity.com/sharedfiles/filedetails/?id=${mod.id}`
-                        : `https://reforger.armaplatform.com/workshop/${mod.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-3 bg-white/5 border border-white/10 text-[8px] sm:text-[9px] font-black text-gray-400 uppercase tracking-widest hover:bg-white hover:text-black transition-all text-center"
-                    >
-                      Workshop ↗
-                    </a>
-                  </div>
-                </CardContent>
-              </Card>
-            )})}
+          <div className="border border-white/5 bg-black/40">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Rank
+                    </th>
+                    <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Module
+                    </th>
+                    <th className="hidden md:table-cell px-3 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Author
+                    </th>
+                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Personnel
+                    </th>
+                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Deploy
+                    </th>
+                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Size
+                    </th>
+                    <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Share
+                    </th>
+                    <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Workshop
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedAndFilteredMods.map((mod) => {
+                    const marketShare =
+                      totalServers > 0 ? ((mod.serverCount || 0) / totalServers) * 100 : 0;
+                    return (
+                      <ModRow
+                        key={mod.id}
+                        mod={{
+                          ...toModRow({
+                            id: mod.id,
+                            name: mod.name,
+                            totalPlayers: mod.totalPlayers,
+                            serverCount: mod.serverCount,
+                            overallRank: mod.overallRank,
+                            marketShare,
+                          }),
+                          sizeBytes: mod.sizeBytes,
+                          playerRank: mod.playerRank,
+                          serverRank: mod.serverRank,
+                        }}
+                        rank={modSort === 'rank' ? mod.playerRank : mod.overallRank}
+                        game={game}
+                        variant="leaderboard"
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>

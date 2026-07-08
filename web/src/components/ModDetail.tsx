@@ -22,6 +22,7 @@ import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { formatBytes } from '../lib/formatBytes';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
+import { ModWorkshopCopy } from './ui/ModWorkshopCopy';
 import { ModConfigPanel } from './ui/ModConfigPanel';
 import { ModWorkshopUnavailableBanner } from './ui/ModWorkshopStatus';
 import { ModRow } from './ModRow';
@@ -44,6 +45,8 @@ interface ModDetailData extends Mod {
   author?: string | null;
   workshopCreated?: string | null;
   workshopModified?: string | null;
+  workshopSummary?: string | null;
+  workshopDescription?: string | null;
   sizeBytes?: number | null;
   servers: Server[];
 }
@@ -168,7 +171,10 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
     <div className="animate-in fade-in duration-700">
       <SEO
         title={`${mod.name} - Statistics & Trends`}
-        description={`${mod.name}: ${mod.totalPlayers?.toLocaleString() ?? 0} players on ${mod.serverCount ?? 0} BattleMetrics servers. Rank #${mod.stats?.overallRank || mod.overallRank || '—'}.`}
+        description={
+          mod.workshopSummary ??
+          `${mod.name}: ${mod.totalPlayers?.toLocaleString() ?? 0} players on ${mod.serverCount ?? 0} BattleMetrics servers. Rank #${mod.stats?.overallRank || mod.overallRank || '—'}.`
+        }
         keywords={`${mod.name}, Arma Reforger Mods, Arma 3 Mods, Mod Statistics, ${mod.author || ''}`}
         url={modPageUrl(mod.id, game)}
         image={modPreviewImageUrl(mod.id, game)}
@@ -222,9 +228,15 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     )}
                   </div>
                 )}
-                <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
-                  Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
-                </p>
+                {mod.workshopSummary ? (
+                  <p className="text-sm sm:text-base text-gray-300 leading-relaxed max-w-3xl">
+                    {mod.workshopSummary}
+                  </p>
+                ) : (
+                  <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
+                    Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
+                  </p>
+                )}
               </div>
               <div className="flex flex-col sm:flex-row gap-3 shrink-0 self-start">
                 {game === 'reforger' && (
@@ -244,6 +256,14 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             </div>
 
             <ModWorkshopGallery modId={mod.id} modName={mod.name} game={game} />
+
+            {game === 'reforger' && mod.workshopDescription && (
+              <ModWorkshopCopy
+                modId={mod.id}
+                game={game}
+                description={mod.workshopDescription}
+              />
+            )}
           </header>
 
           {/* Mobile: owner-tools panel inline, high up under the gallery.

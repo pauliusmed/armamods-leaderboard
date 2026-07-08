@@ -28,7 +28,7 @@ import {
   lookupModsByIds,
   type ShareGame,
 } from '../lib/share-meta';
-import { authorCacheKey, resolveModDependencies, resolveModAuthor, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
+import { authorCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
 import { findServerById, ServerLookup } from '../lib/server-lookup';
 import { analyzeStoragePlan } from '../lib/storage-calc';
 import { buildServerStoragePack } from '../lib/storage-service';
@@ -250,8 +250,14 @@ app.get('/mods', async (c) => {
     if (byNameOrId.length > 0) {
       filtered = byNameOrId;
     } else if (game !== 'arma3') {
-      await attachCachedAuthors(c.env.TRENDING_KV, game as ShareGame, filtered);
-      filtered = filtered.filter((m) => matchesModSearch(m, search));
+      // Fast path: author already on leaderboard rows (collector embeds after warm).
+      const withEmbeddedAuthor = filtered.filter((m) => m.author && matchesModSearch(m, search));
+      if (withEmbeddedAuthor.length > 0) {
+        filtered = withEmbeddedAuthor;
+      } else {
+        await attachCachedAuthors(c.env.TRENDING_KV, game as ShareGame, filtered);
+        filtered = filtered.filter((m) => matchesModSearch(m, search));
+      }
     } else {
       filtered = [];
     }
@@ -325,15 +331,18 @@ app.get('/mods/:modId', async (c) => {
   if (!mod) return c.json({ error: 'Not found' }, 404);
 
   if (game === 'reforger') {
-    const [author, workshopDates, sizeBytes, workshopStatus] = await Promise.all([
+    const [author, workshopDates, sizeBytes, workshopStatus, workshopCopy] = await Promise.all([
       resolveModAuthor(c.env.TRENDING_KV, game, modId),
       resolveModWorkshopDates(c.env.TRENDING_KV, game, modId),
       mod.sizeBytes && mod.sizeBytes > 0
         ? Promise.resolve(mod.sizeBytes as number)
         : resolveModSizeBytes(c.env.TRENDING_KV, game, modId),
       resolveModWorkshopStatus(c.env.TRENDING_KV, game, modId),
+      resolveModWorkshopCopy(c.env.TRENDING_KV, game, modId),
     ]);
     if (author) mod = { ...mod, author };
+    if (workshopCopy.summary) mod = { ...mod, workshopSummary: workshopCopy.summary };
+    if (workshopCopy.description) mod = { ...mod, workshopDescription: workshopCopy.description };
     if (workshopDates.created || workshopDates.modified) {
       mod = {
         ...mod,

@@ -18,7 +18,7 @@ import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
 import {
   fetchReforgerWorkshopHtml,
-  parseReforgerSizeBytesFromHtml,
+  cacheReforgerFieldsFromWorkshopHtml,
 } from '../web/functions/lib/workshop-fetch.ts';
 
 type BattleMetricsServer = Awaited<ReturnType<BattleMetricsService['fetchAllServers']>>[number];
@@ -76,7 +76,7 @@ export class CloudflareKVClient {
     }
   }
 
-  async get(key: string, type: 'json'): Promise<any> {
+  async get(key: string, type: 'json' | 'text' = 'json'): Promise<any> {
     const response = await fetch(this.baseUrl(`/values/${key}`), {
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
@@ -87,7 +87,8 @@ export class CloudflareKVClient {
       throw new Error(`KV get failed: ${response.status}`);
     }
     const text = await response.text();
-    return type === 'json' ? JSON.parse(text) : text;
+    if (type === 'text') return text;
+    return JSON.parse(text);
   }
 }
 
@@ -136,6 +137,40 @@ function extractScenarioName(
   return null;
 }
 
+/** Copy cached workshop authors into leaderboard mod rows (no live scrape). */
+async function attachModAuthorsFromKvCache(
+  kv: CloudflareKVClient,
+  game: GameType,
+  modList: Array<{ id: string; author?: string | null }>
+): Promise<void> {
+  if (game !== 'reforger') return;
+
+  const concurrency = 25;
+  let attached = 0;
+
+  for (let i = 0; i < modList.length; i += concurrency) {
+    const batch = modList.slice(i, i + concurrency);
+    await Promise.all(
+      batch.map(async (mod) => {
+        if (mod.author) return;
+        const key = `cache:mod-author:reforger:${mod.id.toUpperCase()}`;
+        try {
+          const raw = await kv.get(key, 'text');
+          const author = typeof raw === 'string' ? raw.trim() : null;
+          if (author) {
+            mod.author = author;
+            attached++;
+          }
+        } catch {
+          /* cache miss */
+        }
+      })
+    );
+  }
+
+  console.log(`  - author attached: ${attached}/${modList.length} from workshop KV cache`);
+}
+
 /** Copy workshop download sizes from KV into leaderboard mod rows (no live scrape). */
 async function attachModSizesFromKvCache(
   kv: CloudflareKVClient,
@@ -172,15 +207,15 @@ async function attachModSizesFromKvCache(
 async function warmTopModSizesFromWorkshop(
   kv: CloudflareKVClient,
   game: GameType,
-  modList: Array<{ id: string; overallRank: number; sizeBytes?: number | null }>,
+  modList: Array<{ id: string; overallRank: number; sizeBytes?: number | null; author?: string | null }>,
   limit = 300
 ): Promise<void> {
   if (game !== 'reforger') return;
 
   const top = [...modList].sort((a, b) => a.overallRank - b.overallRank).slice(0, limit);
-  const missing = top.filter((m) => !m.sizeBytes || m.sizeBytes <= 0);
+  const missing = top.filter((m) => (!m.sizeBytes || m.sizeBytes <= 0) || !m.author);
   if (!missing.length) {
-    console.log(`  - workshop warm: skipped (top ${limit} already sized)`);
+    console.log(`  - workshop warm: skipped (top ${limit} already sized + authored)`);
     return;
   }
 
@@ -190,15 +225,13 @@ async function warmTopModSizesFromWorkshop(
     const batch = missing.slice(i, i + concurrency);
     await Promise.all(
       batch.map(async (mod) => {
-        const key = `cache:mod-size:reforger:${mod.id.toUpperCase()}`;
         try {
           const html = await fetchReforgerWorkshopHtml(mod.id);
-          const bytes = html ? parseReforgerSizeBytesFromHtml(html) : null;
-          if (bytes && bytes > 0) {
-            await kv.put(key, String(bytes));
-            mod.sizeBytes = bytes;
-            warmed++;
-          }
+          if (!html) return;
+          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, mod.id, html);
+          if (sizeBytes) mod.sizeBytes = sizeBytes;
+          if (author) mod.author = author;
+          if (sizeBytes || author) warmed++;
         } catch {
           /* skip failed fetch */
         }
@@ -214,14 +247,20 @@ async function warmServerModpackModSizes(
   kv: CloudflareKVClient,
   game: GameType,
   serverList: Array<{ players?: number; mods?: Array<{ id: string }> }>,
-  modList: Array<{ id: string; sizeBytes?: number | null }>,
+  modList: Array<{ id: string; sizeBytes?: number | null; author?: string | null }>,
   limit = 500
 ): Promise<void> {
   if (game !== 'reforger') return;
 
-  const sizedIds = new Set(
+  const fullyCachedIds = new Set(
     modList
-      .filter((m) => typeof m.sizeBytes === 'number' && m.sizeBytes > 0)
+      .filter(
+        (m) =>
+          typeof m.sizeBytes === 'number' &&
+          m.sizeBytes > 0 &&
+          typeof m.author === 'string' &&
+          m.author.length > 0
+      )
       .map((m) => m.id.toUpperCase())
   );
 
@@ -233,7 +272,7 @@ async function warmServerModpackModSizes(
     if ((server.players ?? 0) <= 0) continue;
     for (const mod of server.mods ?? []) {
       const upper = mod.id.toUpperCase();
-      if (sizedIds.has(upper) || seen.has(upper)) continue;
+      if (fullyCachedIds.has(upper) || seen.has(upper)) continue;
       seen.add(upper);
       missingIds.push(mod.id);
       if (missingIds.length >= limit) break;
@@ -252,16 +291,16 @@ async function warmServerModpackModSizes(
     const batch = missingIds.slice(i, i + concurrency);
     await Promise.all(
       batch.map(async (modId) => {
-        const key = `cache:mod-size:reforger:${modId.toUpperCase()}`;
         try {
           const html = await fetchReforgerWorkshopHtml(modId);
-          const bytes = html ? parseReforgerSizeBytesFromHtml(html) : null;
-          if (bytes && bytes > 0) {
-            await kv.put(key, String(bytes));
-            const row = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
-            if (row) row.sizeBytes = bytes;
-            warmed++;
+          if (!html) return;
+          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, modId, html);
+          const row = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
+          if (row) {
+            if (sizeBytes) row.sizeBytes = sizeBytes;
+            if (author) row.author = author;
           }
+          if (sizeBytes || author) warmed++;
         } catch {
           /* skip failed fetch */
         }
@@ -498,6 +537,7 @@ interface ServerMod {
 
   // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
   await attachModSizesFromKvCache(kv, game, modList);
+  await attachModAuthorsFromKvCache(kv, game, modList);
   await warmTopModSizesFromWorkshop(kv, game, modList, 300);
   await warmServerModpackModSizes(kv, game, serverList, modList, 500);
 

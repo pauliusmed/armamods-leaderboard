@@ -25,6 +25,10 @@ export interface Mod {
   /** Reforger Workshop availability (on-demand scrape + KV cache). */
   workshopStatus?: WorkshopAvailability;
   workshopStatusCheckedAt?: string | null;
+  /** Short workshop blurb from official Reforger page. */
+  workshopSummary?: string | null;
+  /** Full workshop description text from official Reforger page. */
+  workshopDescription?: string | null;
 }
 
 export type WorkshopAvailability = 'available' | 'unavailable' | 'unknown';

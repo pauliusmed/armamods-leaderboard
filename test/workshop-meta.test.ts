@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseReforgerAuthorFromHtml,
+  parseReforgerWorkshopCopyFromHtml,
   parseReforgerDependenciesFromHtml,
   parseReforgerGalleryFromHtml,
   parseReforgerDatesFromHtml,
@@ -14,6 +15,8 @@ const SAMPLE_NEXT = `<script id="__NEXT_DATA__" type="application/json">{
     "pageProps": {
       "asset": {
         "author": { "username": "Worst Case Scenario" },
+        "summary": "The WCS Armament addon introduces a robust weapon system for vehicles in Arma Reforger.",
+        "description": "Documentation coming soon. Join https://discord.gg/armawcs for developer support.",
         "createdAt": "2024-10-15T12:00:00.000Z",
         "updatedAt": "2026-06-19T08:30:00.000Z",
         "previews": [
@@ -71,6 +74,21 @@ describe('parseReforgerDependenciesFromHtml', () => {
 
   it('returns empty array when __NEXT_DATA__ is missing', () => {
     assert.deepEqual(parseReforgerDependenciesFromHtml('<html></html>'), []);
+  });
+});
+
+describe('parseReforgerWorkshopCopyFromHtml', () => {
+  it('extracts summary and description from asset metadata', () => {
+    const copy = parseReforgerWorkshopCopyFromHtml(SAMPLE_NEXT);
+    assert.equal(copy.summary, 'The WCS Armament addon introduces a robust weapon system for vehicles in Arma Reforger.');
+    assert.match(copy.description ?? '', /Documentation coming soon/);
+  });
+
+  it('returns nulls when asset copy is missing', () => {
+    assert.deepEqual(parseReforgerWorkshopCopyFromHtml('<html></html>'), {
+      summary: null,
+      description: null,
+    });
   });
 });
 
