@@ -68,8 +68,8 @@ export function ModWorkshopGallery({
 
   const label = modName ?? 'Mod';
   const hasMultiple = images.length > 1;
-  const navBtn = isInline ? 'w-7 h-7 text-sm' : 'w-9 h-9';
-  const footerPad = isInline ? 'py-2' : 'py-3';
+  const navBtn = isInline ? 'w-8 h-8 text-base' : 'w-9 h-9';
+  const footerPad = isInline ? 'py-2.5' : 'py-3';
 
   return (
     <section
@@ -96,7 +96,9 @@ export function ModWorkshopGallery({
               alt=""
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
-              className="w-full h-full object-contain object-center"
+              className={`w-full h-full object-center ${
+                isInline ? 'object-cover' : 'object-contain'
+              }`}
             />
           </a>
         ))}
