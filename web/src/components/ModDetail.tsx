@@ -198,8 +198,8 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       */}
       <div className="w-full min-w-0 space-y-12">
           <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-              <div className="space-y-3 min-w-0 flex-1">
+            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+              <div className="space-y-3 min-w-0 flex-1 order-1">
                 <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
                   // MODULE_IDENTIFIER: {mod.id}
                 </span>
@@ -236,7 +236,17 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   </p>
                 )}
               </div>
-              <div className="flex flex-col gap-3 shrink-0 self-start w-full sm:w-auto lg:w-64 xl:w-72">
+
+              <div className="order-2 w-full max-w-[220px] mx-auto sm:max-w-[260px] lg:mx-0 lg:w-44 xl:w-52 shrink-0 self-start">
+                <ModWorkshopGallery
+                  modId={mod.id}
+                  modName={mod.name}
+                  game={game}
+                  variant="inline"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 shrink-0 self-start w-full sm:w-auto lg:w-64 xl:w-72 order-3">
                 <div className="flex flex-col sm:flex-row gap-3">
                   {game === 'reforger' && (
                     <div className="px-6 py-4 bg-zinc-900 border border-white/10 text-center min-w-[120px]">
@@ -262,8 +272,6 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 </div>
               </div>
             </div>
-
-            <ModWorkshopGallery modId={mod.id} modName={mod.name} game={game} />
 
             {game === 'reforger' && mod.workshopDescription && (
               <ModWorkshopCopy
