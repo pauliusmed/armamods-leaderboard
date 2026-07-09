@@ -28,7 +28,7 @@ import {
   lookupModsByIds,
   type ShareGame,
 } from '../lib/share-meta';
-import { authorCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
+import { authorCacheKey, ogImageCacheKey, statusCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
 import { findServerById, ServerLookup } from '../lib/server-lookup';
 import { findReverseDependentsOnServer } from '../lib/reverse-deps';
 import { analyzeStoragePlan } from '../lib/storage-calc';
@@ -213,6 +213,61 @@ async function attachCachedAuthors(
   }
 }
 
+type ListModRow = {
+  id: string;
+  author?: string | null;
+  thumbnail?: string | null;
+  workshopStatus?: string;
+  workshopStatusCheckedAt?: string | null;
+};
+
+/** Embed cached workshop fields for one leaderboard page — avoids N per-row API calls. */
+async function attachCachedListFields(
+  kv: KVNamespace,
+  game: ShareGame,
+  mods: ListModRow[]
+): Promise<void> {
+  if (game === 'arma3' || mods.length === 0) return;
+
+  await Promise.all(
+    mods.map(async (mod) => {
+      const needsAuthor = mod.author === undefined;
+      const needsThumb = mod.thumbnail === undefined;
+      const needsStatus = mod.workshopStatus === undefined;
+
+      const [author, thumb, statusRaw] = await Promise.all([
+        needsAuthor ? kv.get(authorCacheKey(game, mod.id), 'text') : null,
+        needsThumb ? kv.get(ogImageCacheKey(game, mod.id), 'text') : null,
+        needsStatus ? kv.get(statusCacheKey(game, mod.id), 'text') : null,
+      ]);
+
+      if (needsAuthor) mod.author = author ?? null;
+      if (needsThumb) mod.thumbnail = thumb ?? null;
+
+      if (needsStatus) {
+        if (statusRaw) {
+          try {
+            const parsed = JSON.parse(statusRaw) as {
+              status?: string;
+              checkedAt?: string | null;
+            };
+            if (parsed.status === 'available' || parsed.status === 'unavailable') {
+              mod.workshopStatus = parsed.status;
+              mod.workshopStatusCheckedAt = parsed.checkedAt ?? null;
+            } else {
+              mod.workshopStatus = 'unknown';
+            }
+          } catch {
+            mod.workshopStatus = 'unknown';
+          }
+        } else {
+          mod.workshopStatus = 'unknown';
+        }
+      }
+    })
+  );
+}
+
 function compareAuthors(a: string, b: string, dir: number): number {
   const aa = (a || '').toLowerCase();
   const ab = (b || '').toLowerCase();
@@ -284,8 +339,13 @@ app.get('/mods', async (c) => {
   else if (sortBy === 'name') filtered.sort((a, b) => byStr(a.name || '', b.name || ''));
   else filtered.sort((a, b) => byNum(a.overallRank || 9999, b.overallRank || 9999));
 
+  const page = filtered.slice(offset, offset + limit);
+  if (game !== 'arma3') {
+    await attachCachedListFields(c.env.TRENDING_KV, game as ShareGame, page);
+  }
+
   const response = c.json({ 
-    data: filtered.slice(offset, offset + limit), 
+    data: page, 
     meta: { total: filtered.length, limit, offset } 
   });
 
@@ -738,6 +798,39 @@ app.get('/mods/:modId/author', async (c) => {
   response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
+});
+
+app.get('/mods/:modId/thumbnail/img', async (c) => {
+  const cache = await caches.open('armamods:mod_thumb_img');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const game = getGameFromQuery(c) as ShareGame;
+  const modId = c.req.param('modId');
+  const width = Math.min(128, Math.max(32, parseInt(c.req.query('w') || '64', 10) || 64));
+  const url = await resolveModThumbnailUrl(c.env.TRENDING_KV, game, modId);
+
+  if (!url || url.includes('og-image')) {
+    return c.redirect(defaultOgImage(), 302);
+  }
+
+  try {
+    const imageResponse = await fetch(url, {
+      cf: { image: { width, height: width, fit: 'cover', quality: 75 } },
+    } as RequestInit);
+    if (!imageResponse.ok) throw new Error('upstream');
+
+    const response = new Response(imageResponse.body, {
+      headers: {
+        'Content-Type': imageResponse.headers.get('Content-Type') || 'image/jpeg',
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    });
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  } catch {
+    return c.redirect(url, 302);
+  }
 });
 
 app.get('/mods/:modId/thumbnail', async (c) => {

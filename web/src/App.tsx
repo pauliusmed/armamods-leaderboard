@@ -1,21 +1,41 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ModList } from './components/ModList';
 import { ServerList } from './components/ServerList';
-import { ServerDetail } from './components/ServerDetail';
-import { ModDetail } from './components/ModDetail';
 import { TrendingPage } from './components/TrendingPage';
 import { SupportPage } from './components/SupportPage';
 import { ReforgerHosting } from './components/ReforgerHosting';
 import { Arma3Hosting } from './components/Arma3Hosting';
 import { StatusPage } from './components/StatusPage';
-import { ConfigAuditPage } from './components/ConfigAuditPage';
-import { DependencyBlockersPage } from './components/DependencyBlockersPage';
-import { StoragePlannerPage } from './components/StoragePlannerPage';
-import { StoragePlannerLanding } from './components/StoragePlannerLanding';
 import { ScenarioList } from './components/ScenarioList';
-import { OfficialScenariosPage } from './components/OfficialScenariosPage';
 import { Layout } from './components/Layout';
+import { StatusState } from './components/ui/StatusState';
+
+const ServerDetail = lazy(() =>
+  import('./components/ServerDetail').then((m) => ({ default: m.ServerDetail }))
+);
+const ModDetail = lazy(() =>
+  import('./components/ModDetail').then((m) => ({ default: m.ModDetail }))
+);
+const ConfigAuditPage = lazy(() =>
+  import('./components/ConfigAuditPage').then((m) => ({ default: m.ConfigAuditPage }))
+);
+const DependencyBlockersPage = lazy(() =>
+  import('./components/DependencyBlockersPage').then((m) => ({ default: m.DependencyBlockersPage }))
+);
+const StoragePlannerPage = lazy(() =>
+  import('./components/StoragePlannerPage').then((m) => ({ default: m.StoragePlannerPage }))
+);
+const StoragePlannerLanding = lazy(() =>
+  import('./components/StoragePlannerLanding').then((m) => ({ default: m.StoragePlannerLanding }))
+);
+const OfficialScenariosPage = lazy(() =>
+  import('./components/OfficialScenariosPage').then((m) => ({ default: m.OfficialScenariosPage }))
+);
+
+function RouteFallback() {
+  return <StatusState type="loading" />;
+}
 
 interface Props {
   children?: ReactNode;
@@ -70,38 +90,40 @@ function App() {
     <ErrorBoundary>
       <Router>
         <Layout>
-          <Routes>
-            {/* Reforger routes (default) */}
-            <Route path="/" element={<ModList game="reforger" />} />
-            <Route path="/servers" element={<ServerList game="reforger" />} />
-            <Route path="/server/:serverId" element={<ServerDetail game="reforger" />} />
-            <Route path="/mod/:modId" element={<ModDetail game="reforger" />} />
-            <Route path="/trending" element={<TrendingPage game="reforger" />} />
-            <Route path="/scenarios" element={<ScenarioList game="reforger" />} />
-            <Route path="/scenarios/official" element={<OfficialScenariosPage game="reforger" />} />
-            <Route path="/scenarios/official/:slug" element={<OfficialScenariosPage game="reforger" />} />
-            <Route path="/hosting" element={<ReforgerHosting />} />
-            <Route path="/status" element={<StatusPage game="reforger" />} />
-            <Route path="/audit" element={<ConfigAuditPage game="reforger" />} />
-            <Route path="/dependency-blockers" element={<DependencyBlockersPage game="reforger" />} />
-            <Route path="/storage-planner" element={<StoragePlannerPage game="reforger" />} />
-            <Route path="/arma-reforger-console-mod-storage" element={<StoragePlannerLanding />} />
-            <Route path="/support" element={<SupportPage />} />
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              {/* Reforger routes (default) */}
+              <Route path="/" element={<ModList game="reforger" />} />
+              <Route path="/servers" element={<ServerList game="reforger" />} />
+              <Route path="/server/:serverId" element={<ServerDetail game="reforger" />} />
+              <Route path="/mod/:modId" element={<ModDetail game="reforger" />} />
+              <Route path="/trending" element={<TrendingPage game="reforger" />} />
+              <Route path="/scenarios" element={<ScenarioList game="reforger" />} />
+              <Route path="/scenarios/official" element={<OfficialScenariosPage game="reforger" />} />
+              <Route path="/scenarios/official/:slug" element={<OfficialScenariosPage game="reforger" />} />
+              <Route path="/hosting" element={<ReforgerHosting />} />
+              <Route path="/status" element={<StatusPage game="reforger" />} />
+              <Route path="/audit" element={<ConfigAuditPage game="reforger" />} />
+              <Route path="/dependency-blockers" element={<DependencyBlockersPage game="reforger" />} />
+              <Route path="/storage-planner" element={<StoragePlannerPage game="reforger" />} />
+              <Route path="/arma-reforger-console-mod-storage" element={<StoragePlannerLanding />} />
+              <Route path="/support" element={<SupportPage />} />
 
-            {/* Arma 3 routes */}
-            <Route path="/arma3" element={<ModList game="arma3" />} />
-            <Route path="/arma3/servers" element={<ServerList game="arma3" />} />
-            <Route path="/arma3/server/:serverId" element={<ServerDetail game="arma3" />} />
-            <Route path="/arma3/mod/:modId" element={<ModDetail game="arma3" />} />
-            <Route path="/arma3/trending" element={<TrendingPage game="arma3" />} />
-            <Route path="/arma3/scenarios" element={<ScenarioList game="arma3" />} />
-            <Route path="/arma3/scenarios/official" element={<OfficialScenariosPage game="arma3" />} />
-            <Route path="/arma3/scenarios/official/:slug" element={<OfficialScenariosPage game="arma3" />} />
-            <Route path="/arma3/hosting" element={<Arma3Hosting />} />
-            <Route path="/arma3/status" element={<StatusPage game="arma3" />} />
-            <Route path="/best-arma-reforger-hosting" element={<ReforgerHosting />} />
-            <Route path="/best-arma-3-hosting" element={<Arma3Hosting />} />
-          </Routes>
+              {/* Arma 3 routes */}
+              <Route path="/arma3" element={<ModList game="arma3" />} />
+              <Route path="/arma3/servers" element={<ServerList game="arma3" />} />
+              <Route path="/arma3/server/:serverId" element={<ServerDetail game="arma3" />} />
+              <Route path="/arma3/mod/:modId" element={<ModDetail game="arma3" />} />
+              <Route path="/arma3/trending" element={<TrendingPage game="arma3" />} />
+              <Route path="/arma3/scenarios" element={<ScenarioList game="arma3" />} />
+              <Route path="/arma3/scenarios/official" element={<OfficialScenariosPage game="arma3" />} />
+              <Route path="/arma3/scenarios/official/:slug" element={<OfficialScenariosPage game="arma3" />} />
+              <Route path="/arma3/hosting" element={<Arma3Hosting />} />
+              <Route path="/arma3/status" element={<StatusPage game="arma3" />} />
+              <Route path="/best-arma-reforger-hosting" element={<ReforgerHosting />} />
+              <Route path="/best-arma-3-hosting" element={<Arma3Hosting />} />
+            </Routes>
+          </Suspense>
         </Layout>
       </Router>
     </ErrorBoundary>

@@ -248,6 +248,8 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     game={game}
                     size="lg"
                     className="shrink-0"
+                    thumbnailUrl={mod.thumbnail}
+                    priority="eager"
                   />
                   <div className="min-w-0 space-y-3 flex-1">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter leading-none break-words">

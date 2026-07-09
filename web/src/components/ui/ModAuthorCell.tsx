@@ -7,14 +7,27 @@ interface ModAuthorCellProps {
   modId: string;
   game?: GameType;
   className?: string;
+  /** When provided, skips per-row author API (leaderboard list embeds this). */
+  author?: string | null;
 }
 
 /** Lazy workshop author — KV-cached on the edge, client-cached 7d. */
-export function ModAuthorCell({ modId, game = 'reforger', className = '' }: ModAuthorCellProps) {
-  const [author, setAuthor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(game === 'reforger');
+export function ModAuthorCell({
+  modId,
+  game = 'reforger',
+  className = '',
+  author: authorProp,
+}: ModAuthorCellProps) {
+  const [author, setAuthor] = useState<string | null>(authorProp ?? null);
+  const [loading, setLoading] = useState(game === 'reforger' && authorProp === undefined);
 
   useEffect(() => {
+    if (authorProp !== undefined) {
+      setAuthor(authorProp);
+      setLoading(false);
+      return;
+    }
+
     if (game !== 'reforger') {
       setLoading(false);
       return;
@@ -38,7 +51,7 @@ export function ModAuthorCell({ modId, game = 'reforger', className = '' }: ModA
     return () => {
       cancelled = true;
     };
-  }, [modId, game]);
+  }, [modId, game, authorProp]);
 
   if (game !== 'reforger') {
     return <span className={`text-gray-700 text-xs ${className}`}>—</span>;

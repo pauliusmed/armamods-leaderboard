@@ -16,6 +16,18 @@ export function modThumbnailUrl(modId: string, game: GameType = 'reforger'): str
   return `/api/og/preview/mod/${encodeURIComponent(modId)}?game=${game}`;
 }
 
+/**
+ * Resized workshop thumbnail for list rows — avoids multi-MB CDN originals in <img>.
+ * Falls back to redirect when Cloudflare Image Resizing is unavailable.
+ */
+export function modListThumbnailUrl(
+  modId: string,
+  game: GameType = 'reforger',
+  width = 64
+): string {
+  return `/api/mods/${encodeURIComponent(modId)}/thumbnail/img?game=${game}&w=${width}`;
+}
+
 export function workshopLabel(game: GameType = 'reforger'): string {
   return game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop';
 }

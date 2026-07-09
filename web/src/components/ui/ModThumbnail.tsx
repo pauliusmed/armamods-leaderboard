@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { GameType } from '../../api/client';
-import { modsApi } from '../../api/client';
+import { modListThumbnailUrl } from '../../lib/workshop';
+
+const SIZE_PX = { sm: 64, md: 96, lg: 128 } as const;
 
 const SIZE_CLASS = {
   sm: 'w-8 h-8 text-[10px]',
@@ -14,6 +16,10 @@ interface ModThumbnailProps {
   game?: GameType;
   size?: keyof typeof SIZE_CLASS;
   className?: string;
+  /** CDN URL from leaderboard list — skips extra API round-trips. */
+  thumbnailUrl?: string | null;
+  /** Hero/detail thumbnails should load immediately, not wait for scroll. */
+  priority?: 'eager' | 'lazy';
 }
 
 function fallbackInitial(modName?: string): string {
@@ -49,64 +55,69 @@ function Placeholder({ sizeClass, className }: { sizeClass: string; className: s
   );
 }
 
-/**
- * Resolves workshop CDN URL once (JSON API + client cache), then loads image
- * directly from Bohemia CDN — skips per-image 302 through our Worker.
- * Falls back to /api/og/preview when the JSON endpoint is unavailable.
- */
 export function ModThumbnail({
   modId,
   modName,
   game = 'reforger',
   size = 'sm',
   className = '',
+  thumbnailUrl,
+  priority = 'lazy',
 }: ModThumbnailProps) {
-  const [src, setSrc] = useState<string | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [failed, setFailed] = useState(false);
+  const [visible, setVisible] = useState(priority === 'eager');
+  const rootRef = useRef<HTMLSpanElement>(null);
   const sizeClass = SIZE_CLASS[size];
+  const resolvedSrc =
+    thumbnailUrl && priority === 'eager'
+      ? thumbnailUrl
+      : modListThumbnailUrl(modId, game, SIZE_PX[size]);
 
   useEffect(() => {
-    let cancelled = false;
-    setSrc(null);
-    setStatus('loading');
+    setFailed(false);
+    setVisible(priority === 'eager');
+  }, [modId, game, thumbnailUrl, priority]);
 
-    modsApi
-      .getThumbnailUrl(modId, game)
-      .then((url) => {
-        if (cancelled) return;
-        if (!url || url.includes('/og-image.png')) {
-          setStatus('failed');
-          return;
+  useEffect(() => {
+    if (priority === 'eager') return;
+    const node = rootRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
         }
-        setSrc(url);
-        setStatus('ready');
-      })
-      .catch(() => {
-        if (!cancelled) setStatus('failed');
-      });
+      },
+      { rootMargin: '120px' }
+    );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [modId, game]);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [modId, priority]);
 
-  if (status === 'loading') {
-    return <Placeholder sizeClass={sizeClass} className={className} />;
-  }
-
-  if (status === 'failed' || !src) {
+  if (failed) {
     return <Fallback modName={modName} sizeClass={sizeClass} className={className} />;
   }
 
   return (
-    <img
-      src={src}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      fetchPriority="low"
-      onError={() => setStatus('failed')}
-      className={`${sizeClass} shrink-0 object-cover border border-white/10 bg-black/60 ${className}`}
-    />
+    <span ref={rootRef} className={`inline-flex shrink-0 ${className}`}>
+      {visible ? (
+        <img
+          src={resolvedSrc}
+          alt=""
+          loading={priority === 'eager' ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={priority === 'eager' ? 'high' : 'low'}
+          width={size === 'lg' ? 96 : size === 'md' ? 48 : 32}
+          height={size === 'lg' ? 96 : size === 'md' ? 48 : 32}
+          onError={() => setFailed(true)}
+          className={`${sizeClass} object-cover border border-white/10 bg-black/60`}
+        />
+      ) : (
+        <Placeholder sizeClass={sizeClass} className="" />
+      )}
+    </span>
   );
 }

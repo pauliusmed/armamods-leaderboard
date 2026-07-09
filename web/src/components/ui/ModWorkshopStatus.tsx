@@ -18,17 +18,17 @@ export function useWorkshopStatus(
   );
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(
-    game === 'reforger' && !options?.initialStatus
+    game === 'reforger' && options?.initialStatus === undefined
   );
 
   useEffect(() => {
-    if (game !== 'reforger') {
+    if (options?.initialStatus !== undefined) {
+      setStatus(options.initialStatus);
       setLoading(false);
       return;
     }
 
-    if (options?.initialStatus) {
-      setStatus(options.initialStatus);
+    if (game !== 'reforger') {
       setLoading(false);
       return;
     }
