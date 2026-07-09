@@ -69,12 +69,12 @@ web/
     history-query.ts       maps ?days= → KV history key + slice
     _middleware.ts         request logging
   functions/lib/           shared helpers (share-meta, search-match, scenario-ranking,
-                           storage-calc, server-set-analysis, workshop-fetch)
+                           storage-calc, server-set-analysis, server-uptime-history, workshop-fetch)
   src/
     api/client.ts          axios client with in-memory TTL cache
     components/            pages (ModList, ServerList, StoragePlannerPage, …)
-    hooks/                 useMods, useServers, useScenarios
-    lib/                   site links, storageProfile, serverModpack, parseServerConfig
+    hooks/                 useMods, useServers, useScenarios, useModFavorites
+    lib/                   siteCopy, modFavorites, serverUptimeChart, storageProfile, …
 test/                      node:test unit tests (findMatchingBrace, EMA, audit, …)
 docs/                      ALGORITHM.md, architecture decisions, case study
 .github/workflows/         ci, collector (cron), deploy
@@ -107,7 +107,10 @@ Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`. Two phases:
    `attachServerModpackSizes`): copies/scrapes workshop version sizes into
    `cache:mod-size:{game}:{id}`; computes `modpackEstimatedBytes` per server for
    the leaderboard and Storage Planner.
-9. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
+9. **Server uptime samples** — each history point records per-server `online` (hourly)
+   or merged `on`/`n` (daily/weekly) for availability charts; `bmLastSeenAt` on
+   server shards for “last seen online” hints. See [docs/SERVER_UPTIME.md](./docs/SERVER_UPTIME.md).
+10. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
 
 **`trending`** (run after collect):
 Reads the previous history point, computes `trendScore = rankDelta × positionWeight
@@ -127,7 +130,8 @@ suffix, Arma 3 uses `:arma3`):
 | `cache:stats`, `cache:lastUpdate` | global counts |
 | `cache:trending:{daily\|weekly\|monthly}` | precomputed trending |
 | `cache:mod-size:{game}:{MODID}` | workshop version download size (7d) |
-| `history:{hourly\|daily\|weekly\|monthly\|yearly}:{game}:{i}` | sharded time series |
+| `cache:server_bm_last_seen:{game}` | last collector scan when each server was online |
+| `history:{hourly\|daily\|weekly\|monthly\|yearly}:{game}:{i}` | sharded time series (mods + servers incl. uptime samples) |
 
 Sharding exists because KV values are capped at 25 MB; 5 MB chunks keep individual
 reads well within Worker CPU/memory limits.
@@ -156,6 +160,9 @@ Recharts.
 - Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302).
 - Letter fallback when no workshop preview exists.
 - **`CopyModConfigButton`** — one-click `game.mods[]` snippet on leaderboard, trending, and mod/server detail.
+- **`FavoriteModButton`** — ★ bookmarks (up to 20 mods/game in `localStorage`); pinned rows on leaderboard/trending.
+- **`siteCopy.ts`** — centralized user-facing strings (“network scan”, “live network data”) instead of vendor names in UI.
+- **Server detail** — rank/players chart with rose offline bands (`ReferenceArea`); `BmLastSeenHint` on list/detail.
 
 **Edge** (`web/functions/lib/workshop-fetch.ts`):
 - `ensureReforgerWorkshopMetadata()` — **one** workshop HTML fetch fills both `cache:og-image:*` (thumbnail URL) and `cache:mod-deps:*` (dependencies JSON) on cache miss.
@@ -228,7 +235,7 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 | GET | `/servers` | paginated server list |
 | GET | `/servers/:id` | single server detail |
 | GET | `/servers/:id/storage` | modpack size breakdown (per-mod bytes) |
-| GET | `/servers/:id/history` | server rank/players time series |
+| GET | `/servers/:id/history` | server rank/players + uptime (`uptimeRatio`, `mostlyOffline`) |
 | GET | `/servers/ranking` | top-200 SQE leaderboard |
 | GET | `/scenarios` | scenario leaderboard (KV; live fallback if key missing) |
 | GET | `/scenarios/servers?name=` | servers running a given scenario |
@@ -287,6 +294,7 @@ npm test
 Covers the pieces where correctness is non-obvious: `findMatchingBrace` surgical
 extraction, EMA smoothing/clamping, scenario aggregation (`buildScenarioRanking`),
 storage planner (`storage-calc`, `server-set-analysis`, `server-modpack`),
+server uptime merge/classify (`server-uptime-history`),
 audit-config heuristics, history-query resolution, share-meta, and search matching.
 
 ---

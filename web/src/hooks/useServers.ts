@@ -86,7 +86,7 @@ export function useServers(options: UseServersOptions = {}) {
     loadServers();
   }, [loadServers]);
 
-  const filteredServers = useMemo(() => {
+  const allFilteredServers = useMemo(() => {
     if (!Array.isArray(servers)) return [];
 
     const query = searchInput.trim();
@@ -120,6 +120,14 @@ export function useServers(options: UseServersOptions = {}) {
       });
   }, [servers, searchInput, sortBy, sortDir, consoleFilter, bmStatusFilter, game]);
 
+  const paginatedServers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return allFilteredServers.slice(start, start + itemsPerPage);
+  }, [allFilteredServers, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(allFilteredServers.length / itemsPerPage);
+  const searchQuery = searchInput.trim();
+
   const consoleLimitGb = useMemo(() => {
     if (consoleFilter === 'ps5') return 25;
     if (consoleFilter === 'xbox-x') return 40;
@@ -129,22 +137,14 @@ export function useServers(options: UseServersOptions = {}) {
 
   const consoleLimitBytes = Math.round(consoleLimitGb * 1024 ** 3);
 
-  const paginatedServers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredServers.slice(start, start + itemsPerPage);
-  }, [filteredServers, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
-  const searchQuery = searchInput.trim();
-
   const stats = useMemo(
     () => ({
-      totalServers: searchQuery ? filteredServers.length : totalServers,
+      totalServers: searchQuery ? allFilteredServers.length : totalServers,
       totalPlayers: globalStats.totalPlayers,
       fullServers: globalStats.fullServers,
       totalPages,
     }),
-    [totalServers, globalStats, totalPages, searchQuery, filteredServers.length]
+    [totalServers, globalStats, totalPages, searchQuery, allFilteredServers.length]
   );
 
   const resetFilters = () => {
@@ -158,8 +158,9 @@ export function useServers(options: UseServersOptions = {}) {
 
   return {
     servers,
+    allFilteredServers,
     filteredServers: paginatedServers,
-    totalItems: filteredServers.length,
+    totalItems: allFilteredServers.length,
     loading,
     initialLoading: loading && servers.length === 0,
     error,

@@ -48,6 +48,16 @@ A production-grade, highly-optimized data aggregation and visualization platform
 * **Solution**: Workshop version sizes → KV `cache:mod-size:*`; collector attaches `modpackEstimatedBytes` per server; **Storage Planner** (`/storage-planner`) compares installed proxy vs wanted servers; server list shows modpack GB + console fit filters.
 * **Result**: Console players see fit/over-limit before joining; server leaderboard exposes size as a dimension separate from SQE rank. See [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md).
 
+### 8. Server Uptime History & Majority-Scan Safeguard (v1.22+)
+* **Problem**: Server history charts showed rank/players only; a brief restart could misleadingly imply a full day offline if naïvely bucketed.
+* **Solution**: Collector stores an **online sample** per run in shared `history:*` shards (`on`/`n` for daily/weekly, `online` for hourly). Days/weeks are marked offline only when **&lt;50%** of scans saw the server up.
+* **Result**: Server detail charts overlay rose offline bands on rank/players; tooltip shows uptime % or hourly scan status. See [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md).
+
+### 9. Client-Side Mod Favorites (v1.22+)
+* **Problem**: Players revisit the same mods across leaderboard, trending, and detail — no lightweight bookmarking without accounts.
+* **Solution**: `localStorage` favorites (up to 20 per game), ★ on rows and detail, pinned block on leaderboard/trending page 1.
+* **Result**: Zero backend cost; instant recall for repeat lookups.
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -148,9 +158,9 @@ To ensure the integrity of the math scoring models and surgical parser:
 ```bash
 npm test
 ```
-*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`), storage planner math (`storage-calc`, `server-set-analysis`, `server-modpack`).*
+*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`), storage planner math (`storage-calc`, `server-set-analysis`, `server-modpack`), server uptime history (`server-uptime-history`).*
 
-**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) (console mod sizes & planner), [docs/UI_FILTERS.md](docs/UI_FILTERS.md) (shared filter toolbar), [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (KV/cache trade-offs), [CHANGELOG.md](CHANGELOG.md) (release notes).
+**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) (console mod sizes & planner), [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) (offline bands & scan aggregation), [docs/UI_FILTERS.md](docs/UI_FILTERS.md) (shared filter toolbar), [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (KV/cache trade-offs), [CHANGELOG.md](CHANGELOG.md) (release notes).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 

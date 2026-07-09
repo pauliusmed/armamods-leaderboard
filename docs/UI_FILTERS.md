@@ -21,11 +21,12 @@ Shared option labels live in `web/src/lib/modListFilters.ts` so server detail an
 
 | Page | Route | Controls |
 |------|-------|----------|
-| Mod leaderboard | `/`, `/arma3` | Search (name, id, **author** on Reforger) · Activity · Sort · Reset |
-| Trending | `/trending` | Rising / Falling / New tables — same filter vocabulary where applicable |
-| Server network | `/servers` | Search · Sort · **BM status** (online/offline) · Console fit (Reforger) · Reset |
+| Mod leaderboard | `/`, `/arma3` | Search (name, id, **author** on Reforger) · Activity · Sort · Reset · **★ Favorites** block (page 1, no search) |
+| Trending | `/trending` | Rising / Falling / New tables — same filter vocabulary; **★ Favorites** above active category |
+| Server network | `/servers` | Search · Sort · **Status** (online/offline) · Console fit (Reforger) · Reset · **★** column · **Favorites** pin (page 1, default filters) |
 | Scenario leaderboard | `/scenarios` | Search · Sort · Reset |
 | Server detail mod stack | `/server/:id` | Search · Activity · Rank · **Size** (Reforger) · Sort · Reset |
+| Server detail history | `/server/:id` | 24H / 1M / 1Y chart — rank, players, **offline bands** (see [SERVER_UPTIME.md](SERVER_UPTIME.md)) |
 
 ### Server detail — extra filters
 
@@ -42,12 +43,22 @@ Shared **Actions** column on mod list tables (leaderboard + trending):
 
 | Control | Component | Behavior |
 |---------|-----------|----------|
+| **★** | `FavoriteModButton` | Toggle mod bookmark (`localStorage`, max 20/game); sync via `useModFavorites` |
+| **★** (servers) | `FavoriteServerButton` | Toggle server bookmark (`useServerFavorites`, max 20/game) |
 | **Copy** | `CopyModConfigButton` | Copies `game.mods[]` snippet (`modId` + `name`) to clipboard |
 | **Workshop ↗** | link | Opens Reforger Workshop page (`workshopPageUrl`) |
+
+Mod detail **Co-deploy** table (`CoDeployTable`): **Shared servers** (count on same network), % of deploys, network rank — not global Personnel/Deploy from mod leaderboard rows.
+
+Server list/detail: **`BmLastSeenHint`** — “last seen online” from collector scans (`bmLastSeenAt`).
+
+Copy targets use `touchTargets.ts` (44px min on mobile).
 
 Server detail header: **Copy mods** — full modpack as chained `game.mods[]` blocks.
 
 Mod detail hero: compact `ModConfigPanel` with the same single-mod copy.
+
+User-facing labels for data sources: `web/src/lib/siteCopy.ts` (avoid vendor names in primary UI).
 
 ## Label convention
 
@@ -83,4 +94,4 @@ Size tiers (server detail, Reforger):
 3. Use `sticky={false}` when the bar sits mid-page (detail sections).
 4. Keep server-side vs client-side filtering unchanged — this doc covers UI only.
 
-See also: [STORAGE_PLANNER.md](STORAGE_PLANNER.md) (server detail mod sizes + planner link).
+See also: [STORAGE_PLANNER.md](STORAGE_PLANNER.md) (server detail mod sizes + planner link), [SERVER_UPTIME.md](SERVER_UPTIME.md) (offline chart bands).

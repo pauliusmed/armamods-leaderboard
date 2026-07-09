@@ -1,22 +1,22 @@
 import { FavoriteStarButton } from './FavoriteStarButton';
 
-interface FavoriteModButtonProps {
+interface FavoriteServerButtonProps {
   active: boolean;
-  modName: string;
+  serverName: string;
   onToggle: () => void;
   className?: string;
 }
 
-export function FavoriteModButton({
+export function FavoriteServerButton({
   active,
-  modName,
+  serverName,
   onToggle,
   className = '',
-}: FavoriteModButtonProps) {
+}: FavoriteServerButtonProps) {
   return (
     <FavoriteStarButton
       active={active}
-      itemName={modName}
+      itemName={serverName}
       onToggle={onToggle}
       className={className}
     />

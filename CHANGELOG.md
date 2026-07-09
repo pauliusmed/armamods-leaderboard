@@ -26,11 +26,29 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Layout** — vienas `<h1>` per puslapį (`StatsHero`); logo `<p>`.
 - **Touch targets** — Copy/Workshop/favorite mygtukai 44px mobile; galerijos dots su padding.
 
+- **`CoDeployTable`** — mod detail shows **shared server count** for co-deployed mods (not global leaderboard Personnel/Deploy).
+
 ### 📉 Server uptime history (grafikas)
 - Collector saugo **online** pavyzdį kiekvienam scan (~2h); dienoms/savaitėms agreguoja `on/n`.
 - **Saugiklis** — diena/savaitė pažymima offline tik jei &lt;50% scanų matė serverį online (trumpas restartas nepažymi visos dienos).
 - **Server detail** grafikas — rožiniai `ReferenceArea` offline periodams; tooltip rodo uptime % arba hourly „Online/Offline at scan“.
 - **`server-uptime-history.ts`** — merge, classify, `buildOfflineBands`; testai `test/server-uptime-history.test.ts`.
+- **Docs:** [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md), [docs/UI_FILTERS.md](docs/UI_FILTERS.md) (favorites, co-deploy table).
+
+## [1.22.1] - 2026-07-09
+
+### 🐛 Mod detail Overall Rank
+- **`extractModFromChunks`** (`mod-lookup.ts`) — mod detail API nebegrąžina `coDeployed` snippet'o iš kito mod'o JSON; ieškoma pilno įrašo su `overallRank` / `totalPlayers`.
+- Pataisytas WCS_NATO ir kiti modai, kurių ID anksčiau shard'e pasitaikydavo tik co-deploy bloke prieš tikrą įrašą.
+
+### 🎨 Mod leaderboard pagination
+- Puslapių mygtukai **po lentele** (ne po donation bloku); bendras `Pagination` su numeriais kaip `/servers`.
+- Donation kortelė atskirta `border-t` — apačioje po navigacija.
+
+### ⭐ Server favorites (localStorage)
+- **`FavoriteServerButton`** — ★ ant server list ir server detail (kaip modams).
+- **`useServerFavorites`** — iki 20 serverių per žaidimą; pinned blokas `/servers` (1 puslapis, default filtrai).
+- Bendras **`FavoriteStarButton`** mod ir server ★ mygtukams.
 
 ## [1.21.0] - 2026-07-09
 

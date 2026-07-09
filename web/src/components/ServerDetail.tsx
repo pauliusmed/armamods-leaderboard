@@ -10,6 +10,8 @@ import { StatsHero } from './ui/StatsHero';
 import { TierBadge } from './ui/TierBadge';
 import { ServerStatusBadge } from './ui/ServerStatusBadge';
 import { BmLastSeenHint } from './ui/BmLastSeenHint';
+import { FavoriteServerButton } from './ui/FavoriteServerButton';
+import { useServerFavorites } from '../hooks/useServerFavorites';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
@@ -90,6 +92,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const gp = game === 'reforger' ? '' : `/${game}`;
+  const { isFavorite, toggle } = useServerFavorites(game);
 
   const [allServers, setAllServers] = useState<Server[]>([]);
   const [storagePack, setStoragePack] = useState<ServerStoragePack | null>(null);
@@ -275,9 +278,17 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/10 pb-12">
           <div className="space-y-4">
             <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">// SERVER_NODE: {server.id}</span>
-            <h1 className="text-6xl font-black text-white uppercase tracking-tighter leading-none">
-              {server.name}
-            </h1>
+            <div className="flex flex-wrap items-start gap-4">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none flex-1 min-w-0">
+                {server.name}
+              </h1>
+              <FavoriteServerButton
+                active={isFavorite(server.id)}
+                serverName={server.name}
+                onToggle={() => toggle(server.id)}
+                className="shrink-0 mt-1"
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <ServerStatusBadge status={server.bmStatus} size="md" />
               <BmLastSeenHint status={server.bmStatus} lastSeenAt={server.bmLastSeenAt} />

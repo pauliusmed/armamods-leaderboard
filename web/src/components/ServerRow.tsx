@@ -5,6 +5,7 @@ import { ConsoleFitBadge } from './ui/ConsoleFitBadge';
 import { ServerStatusBadge } from './ui/ServerStatusBadge';
 import { BmLastSeenHint } from './ui/BmLastSeenHint';
 import { CopyServerModsButton } from './ui/CopyServerModsButton';
+import { FavoriteServerButton } from './ui/FavoriteServerButton';
 import { formatBytes } from '../lib/formatBytes';
 import { serverModpackBytes } from '../lib/serverModpack';
 
@@ -14,6 +15,9 @@ interface ServerRowProps {
   showConsoleFit?: boolean;
   consoleLimitGb?: number;
   consoleLimitBytes?: number;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  pinned?: boolean;
 }
 
 /**
@@ -28,6 +32,9 @@ export function ServerRow({
   showConsoleFit = false,
   consoleLimitGb = 25,
   consoleLimitBytes = 25 * 1024 ** 3,
+  isFavorite = false,
+  onToggleFavorite,
+  pinned = false,
 }: ServerRowProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const rank = server.sqeRank;
@@ -40,7 +47,11 @@ export function ServerRow({
   const modpackBytes = serverModpackBytes(server);
 
   return (
-    <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+    <tr
+      className={`group border-b border-white/5 hover:bg-white/[0.03] transition-colors ${
+        pinned ? 'bg-tactical-orange/[0.04]' : ''
+      }`}
+    >
       {/* SQE rank + tier */}
       <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <div className="flex items-center gap-2">
@@ -144,6 +155,16 @@ export function ServerRow({
           </>
         )}
       </td>
+
+      {onToggleFavorite && (
+        <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
+          <FavoriteServerButton
+            active={isFavorite}
+            serverName={server.name}
+            onToggle={onToggleFavorite}
+          />
+        </td>
+      )}
     </tr>
   );
 }

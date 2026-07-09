@@ -77,6 +77,14 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 
 Heavy routes (`ModDetail`, `ServerDetail`, Storage Planner, Audit, Dependency Blockers) are `React.lazy()` in `App.tsx` — smaller initial JS bundle for list pages.
 
+### Mod favorites (client-only, v1.22+)
+
+`web/src/lib/modFavorites.ts` — no KV/API; up to 20 mod IDs per game in `localStorage`. Zero edge cost.
+
+### Server uptime in history shards (v1.22+)
+
+Collector adds `online` / `on` / `n` per server in `history:*` without extra KV keys. API enriches `GET /servers/:id/history` via `parseServerHistoryFields`. Details: [SERVER_UPTIME.md](./SERVER_UPTIME.md).
+
 ### Browser hints
 
 `index.html` includes `preconnect` to `ar-gcp-cdn.bistudio.com` for faster CDN handshakes on detail/OG paths.
@@ -108,3 +116,4 @@ npm test
 - `test/server-lookup.test.ts` — `findServerInChunks`
 - `test/search-match.test.ts` — `matchesModSearchByNameOrId`
 - `test/storage-calc.test.ts` — planner math
+- `test/server-uptime-history.test.ts` — uptime merge, offline bands

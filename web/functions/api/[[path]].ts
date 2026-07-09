@@ -36,6 +36,7 @@ import { buildServerStoragePack } from '../lib/storage-service';
 import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from '../lib/search-match';
 import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
 import { parseServerHistoryFields } from '../lib/server-uptime-history';
+import { extractModFromChunks } from '../lib/mod-lookup';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -467,7 +468,7 @@ app.get('/mods/:modId', async (c) => {
                     if (serverStr.includes(`"${modId}"`)) {
                         try {
                             const s = JSON.parse(serverStr);
-                            if (s.mods && s.mods.some((m: any) => m.id === modId)) {
+                            if (s.mods && s.mods.some((m: any) => String(m.id).toUpperCase() === modId.toUpperCase())) {
                                 modServers.push(s);
                                 if (modServers.length >= MAX_SERVERS_PER_MOD) break;
                             }
@@ -508,32 +509,6 @@ function findMatchingBrace(text: string, openPos: number): number {
     if (ch === '}') { depth--; if (depth === 0) return i; }
   }
   return -1;
-}
-
-function extractModFromChunks(chunksText: (string | null)[], modId: string): any | null {
-  const candidates = modId === modId.toUpperCase()
-    ? [modId]
-    : [modId, modId.toUpperCase(), modId.toLowerCase()];
-  const seen = new Set<string>();
-
-  for (const id of candidates) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    const searchStr = `"id":"${id}"`;
-    for (const chunkText of chunksText) {
-      if (!chunkText?.includes(searchStr)) continue;
-      const idPos = chunkText.indexOf(searchStr);
-      const startPos = chunkText.lastIndexOf('{', idPos);
-      const endPos = findMatchingBrace(chunkText, startPos);
-      if (startPos === -1 || endPos === -1) continue;
-      try {
-        return JSON.parse(chunkText.slice(startPos, endPos + 1));
-      } catch {
-        /* try next chunk */
-      }
-    }
-  }
-  return null;
 }
 
 // Splits a JSON array of objects into individual object strings without parsing it.

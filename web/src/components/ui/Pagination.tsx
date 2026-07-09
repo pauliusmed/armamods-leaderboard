@@ -2,6 +2,8 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  /** Footer label, e.g. "Module Slice" on mod leaderboard */
+  sliceLabel?: string;
   className?: string;
 }
 
@@ -9,6 +11,7 @@ export function Pagination({
   currentPage,
   totalPages,
   onPageChange,
+  sliceLabel = 'Network Slice',
   className = ''
 }: PaginationProps) {
   if (totalPages <= 1) return null;
@@ -21,7 +24,7 @@ export function Pagination({
   };
 
   return (
-    <div className={`flex flex-col items-center gap-6 pb-12 ${className}`}>
+    <div className={`flex flex-col items-center gap-4 sm:gap-6 ${className}`}>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
@@ -62,7 +65,7 @@ export function Pagination({
       </div>
 
       <p className="px-8 py-3 bg-black/40 border border-white/5 text-xs font-mono text-gray-500 uppercase tracking-widest">
-        Network Slice <span className="text-white font-black">{currentPage}</span> / {totalPages}
+        {sliceLabel} <span className="text-white font-black">{currentPage}</span> / {totalPages}
       </p>
     </div>
   );

@@ -8,6 +8,7 @@ import { SEO } from './ui/SEO';
 import { StatsHero } from './ui/StatsHero';
 import { ModListSkeleton } from './ui/ModListSkeleton';
 import { DonationCard } from './DonationCard';
+import { Pagination } from './ui/Pagination';
 import { SortableTh } from './ui/SortableTh';
 import { ListFilterBar } from './ui/ListFilterBar';
 import type { GameType } from '../api/client';
@@ -249,38 +250,24 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               </tbody>
             </table>
           </div>
+          {totalPages > 1 && (
+            <div className="border-t border-white/5">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                sliceLabel="Module Slice"
+                className="py-6 pb-8"
+              />
+            </div>
+          )}
         </div>
         </div>
       )}
 
       {!initialLoading && (listMods.length > 0 || pinnedMods.length > 0) && (
-        <div className="mt-20">
+        <div className="border-t border-white/5 pt-10">
           <DonationCard />
-        </div>
-      )}
-
-      {!initialLoading && totalPages > 1 && (
-        <div className="mt-20 flex flex-col sm:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 pb-12">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="w-full sm:w-auto px-6 sm:px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
-          >
-            <span className="sm:hidden">← Prev</span>
-            <span className="hidden sm:inline">← Previous Intel</span>
-          </button>
-          <span className="w-full sm:w-auto text-center px-6 sm:px-8 py-4 bg-black/40 border border-white/5 text-xs font-mono text-gray-500 uppercase tracking-widest">
-            <span className="sm:hidden">Page <span className="text-white font-black">{currentPage}</span> / {totalPages}</span>
-            <span className="hidden sm:inline">Module Slice <span className="text-white font-black">{currentPage}</span> / {totalPages}</span>
-          </span>
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="w-full sm:w-auto px-6 sm:px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
-          >
-            <span className="sm:hidden">Next →</span>
-            <span className="hidden sm:inline">Next Sector →</span>
-          </button>
         </div>
       )}
     </div>

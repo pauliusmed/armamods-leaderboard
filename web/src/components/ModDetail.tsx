@@ -335,7 +335,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     }`}
                   >
                     <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-                    <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+                    <p className="text-3xl font-black text-white">#{mod.stats?.overallRank ?? mod.overallRank ?? '—'}</p>
                   </div>
                 </div>
                 <div className="hidden lg:block">

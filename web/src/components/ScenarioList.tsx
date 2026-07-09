@@ -281,7 +281,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
         </div>
       </div>
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="pb-12" />
 
       {selectedScenario && (
         <section className="space-y-6 animate-in fade-in duration-500">

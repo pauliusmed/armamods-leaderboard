@@ -1,6 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useServers, type ConsoleFitFilter, type BmStatusFilter } from '../hooks/useServers';
+import { useServerFavorites } from '../hooks/useServerFavorites';
+import {
+  excludeFavoriteServersFromList,
+  usePinnedFavoriteServers,
+} from '../hooks/usePinnedFavoriteServers';
 import { ServerRow } from './ServerRow';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
@@ -19,6 +24,7 @@ interface ServerListProps {
 
 export function ServerList({ game = 'reforger' }: ServerListProps) {
   const {
+    allFilteredServers,
     filteredServers,
     totalItems,
     initialLoading,
@@ -42,6 +48,25 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     stats,
     refresh
   } = useServers({ game });
+
+  const { favoriteIds, toggle, isFavorite } = useServerFavorites(game);
+  const showFavoritesPin =
+    currentPage === 1 &&
+    !searchQuery &&
+    consoleFilter === 'all' &&
+    bmStatusFilter === 'all' &&
+    sortBy === 'rank' &&
+    sortDir === 'asc';
+  const { pinnedServers, loadingPinned } = usePinnedFavoriteServers(
+    game,
+    favoriteIds,
+    allFilteredServers,
+    showFavoritesPin
+  );
+  const listServers = useMemo(
+    () => excludeFavoriteServersFromList(game, filteredServers, favoriteIds, showFavoritesPin),
+    [game, filteredServers, favoriteIds, showFavoritesPin]
+  );
 
   // Scroll to top when page changes
   useEffect(() => {
@@ -142,6 +167,44 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         }
       />
 
+      <div className="space-y-4">
+        {showFavoritesPin && (pinnedServers.length > 0 || loadingPinned) && (
+          <div className="border border-tactical-orange/25 bg-tactical-orange/[0.03]">
+            <div className="px-4 py-2.5 border-b border-tactical-orange/20">
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange">
+                ★ Favorites · pinned to top
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <tbody>
+                  {loadingPinned && pinnedServers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                        Loading favorites…
+                      </td>
+                    </tr>
+                  ) : (
+                    pinnedServers.map((server) => (
+                      <ServerRow
+                        key={`fav-${server.id}`}
+                        server={server}
+                        game={game}
+                        showConsoleFit={game === 'reforger'}
+                        consoleLimitGb={consoleLimitGb}
+                        consoleLimitBytes={consoleLimitBytes}
+                        pinned
+                        isFavorite={isFavorite(server.id)}
+                        onToggleFavorite={() => toggle(server.id)}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       <div className="border border-white/5 bg-black/40">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -190,10 +253,13 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                   align="right"
                   className="hidden lg:table-cell pl-4 pr-4"
                 />
+                <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                  ★
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredServers.map((server) => (
+              {listServers.map((server) => (
                 <ServerRow
                   key={server.id}
                   server={server}
@@ -201,18 +267,25 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                   showConsoleFit={game === 'reforger'}
                   consoleLimitGb={consoleLimitGb}
                   consoleLimitBytes={consoleLimitBytes}
+                  isFavorite={isFavorite(server.id)}
+                  onToggleFavorite={() => toggle(server.id)}
                 />
               ))}
             </tbody>
           </table>
         </div>
+        {totalPages > 1 && (
+          <div className="border-t border-white/5">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              className="py-6 pb-8"
+            />
+          </div>
+        )}
       </div>
-
-      <Pagination 
-        currentPage={currentPage} 
-        totalPages={totalPages} 
-        onPageChange={setCurrentPage} 
-      />
+      </div>
     </div>
   );
 }

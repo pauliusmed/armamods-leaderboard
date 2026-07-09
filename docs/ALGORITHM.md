@@ -168,7 +168,9 @@ Tiers use letters rather than evocative names (e.g. "Apex", "Vanguard") delibera
 
 ### History
 
-Server rank history is stored in the shared history shards alongside mod data. Each time point includes `"servers": { "serverId": rank }`, enabling the SQE Rank chart on server detail pages without separate storage or expensive calculations.
+Server rank history is stored in the shared history shards alongside mod data. Each time point includes server entries with **rank**, **players**, and (v1.22+) **uptime samples** (`online` hourly; `on`/`n` aggregated daily/weekly), enabling rank/players charts and offline shading on server detail without separate storage.
+
+A day/week is marked **mostly offline** only when fewer than 50% of collector scans saw the server up — so brief restarts do not paint the whole period offline. Full spec: [SERVER_UPTIME.md](./SERVER_UPTIME.md).
 
 The history API supports dynamic temporal scaling:
 - **24H (Hourly)**: Swings baseKey to `history:hourly:${game}` (slices the last 24 entries).
@@ -298,6 +300,8 @@ Related: `server-set-analysis.ts` (cluster by Jaccard overlap, fitting subsets),
 `server-storage-similarity.ts` (lower-cost similar servers).
 
 Full product/API documentation: [STORAGE_PLANNER.md](./STORAGE_PLANNER.md).
+
+Server availability charts (separate from SQE rank): [SERVER_UPTIME.md](./SERVER_UPTIME.md).
 
 ---
 

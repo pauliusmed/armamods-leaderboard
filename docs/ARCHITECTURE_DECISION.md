@@ -35,6 +35,7 @@ cache:trending:monthly     — 30d trending pre-calculated
 cache:ranking:servers      — TOP 200 serverių leaderboard
 cache:ranking:scenarios:{game} — Scenario leaderboard (rank, serverCount, totalPlayers, topServer)
 cache:server_sqe:{game}    — Kompaktinis SQE indeksas API enrichment
+cache:server_bm_last_seen:{game} — Paskutinis collector scan, kai serveris buvo online
 cache:og-image:*           — Workshop thumbnail CDN URL (on-demand, 7d)
 cache:mod-deps:*           — Workshop dependencies JSON (on-demand, 7d)
 
@@ -50,9 +51,20 @@ Kiekvienas istorijos taškas turi formatą:
 {
   "time": "2026-05-14",
   "mods": { "modId": { "p": 100, "s": 5, "r": 3 } },
-  "servers": { "serverId": 5 }
+  "servers": {
+    "serverId": {
+      "rank": 5,
+      "players": 32,
+      "online": true,
+      "on": 5,
+      "n": 6
+    }
+  }
 }
 ```
+
+- **Legacy** server įrašai gali būti tik skaičius (`"serverId": 5`) — API vis dar palaiko.
+- **Uptime** (`online` hourly; `on`/`n` daily+): žr. [SERVER_UPTIME.md](./SERVER_UPTIME.md) (v1.22+).
 
 ## API Optimization Strategies
 
@@ -74,3 +86,4 @@ Pilnas resursų žemėlapis, žinomi limitai ir `ServerLookup` optimizacija: [PE
 - 2026-05-13: Peak Aggregation, sharding, chirurginis JSON išskleidimas.
 - 2026-05-14: Serverių istorijos suliejimas su modų istorija, pašalinant atskirą `history:server_scores` blob'ą.
 - 2026-06-30: Scenario leaderboard (`cache:ranking:scenarios:{game}`) — agregacija collector run metu, API read-only.
+- 2026-07-09: Serverių uptime pavyzdžiai (`on`/`n`/`online`) bendroje `history:*` struktūroje — offline grafikas be papildomų KV raktų.
