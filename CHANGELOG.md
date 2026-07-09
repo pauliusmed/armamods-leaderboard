@@ -2,6 +2,36 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.0] - 2026-07-09
+
+### ⭐ Mod favorites (localStorage)
+- **`FavoriteModButton`** — ★ ant mod leaderboard, trending ir mod detail.
+- **`useModFavorites`** — iki 20 modų per žaidimą, `localStorage`, sync tarp komponentų.
+- **Mod leaderboard** — favorites blokas viršuje (1 puslapis, be paieškos); dedupe iš pagrindinio sąrašo.
+- **Trending** — favorites blokas virš aktyvios kategorijos.
+
+### 🏷️ Owned voice (mažiau „BattleMetrics“ UI)
+- **`siteCopy.ts`** — centralizuotas vartotojo tekstas (`live network data`, `network scan`).
+- Footer atributacija vietoj „DataSource: BattleMetrics“ visur header'yje.
+- Mod detail, scenarios, storage landing, server status — neutralūs aprašymai.
+
+### 🤝 Co-deploy fix
+- **`CoDeployTable`** — rodo **Shared servers** (`count`), ne globalų Personnel/Deploy.
+- Collector: uppercase `modId`, teisingi pavadinimai co-deploy sąraše.
+
+### 🟢 Server last seen online
+- **`bmLastSeenAt`** — collector saugo paskutinį online scan laiką; **`BmLastSeenHint`** server list/detail.
+
+### ♿ Accessibility
+- **Layout** — vienas `<h1>` per puslapį (`StatsHero`); logo `<p>`.
+- **Touch targets** — Copy/Workshop/favorite mygtukai 44px mobile; galerijos dots su padding.
+
+### 📉 Server uptime history (grafikas)
+- Collector saugo **online** pavyzdį kiekvienam scan (~2h); dienoms/savaitėms agreguoja `on/n`.
+- **Saugiklis** — diena/savaitė pažymima offline tik jei &lt;50% scanų matė serverį online (trumpas restartas nepažymi visos dienos).
+- **Server detail** grafikas — rožiniai `ReferenceArea` offline periodams; tooltip rodo uptime % arba hourly „Online/Offline at scan“.
+- **`server-uptime-history.ts`** — merge, classify, `buildOfflineBands`; testai `test/server-uptime-history.test.ts`.
+
 ## [1.21.0] - 2026-07-09
 
 ### 📋 Server config copy (one-click `game.mods[]`)

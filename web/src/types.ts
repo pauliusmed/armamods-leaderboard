@@ -77,6 +77,8 @@ export interface Server {
   maxPlayers: number;
   /** BattleMetrics attributes.status (online / offline / dead / …). */
   bmStatus?: BmServerStatus | null;
+  /** ISO timestamp — last collector run when BM reported this server online. */
+  bmLastSeenAt?: string | null;
   /** Active scenario/mission from BattleMetrics (Reforger scenarioName or Arma 3 map·mission). */
   scenarioName?: string | null;
   sqePoints?: number;

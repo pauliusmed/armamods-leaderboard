@@ -9,9 +9,15 @@ import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
 import { TierBadge } from './ui/TierBadge';
 import { ServerStatusBadge } from './ui/ServerStatusBadge';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BmLastSeenHint } from './ui/BmLastSeenHint';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
+import {
+  buildOfflineBands,
+  uptimeTooltipLabel,
+  type ServerHistoryPoint,
+} from '../lib/serverUptimeChart';
 import {
   type ActivityFilter,
   type RankFilter,
@@ -69,7 +75,7 @@ function escapeMarkdownAlt(value: string): string {
 export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const { serverId } = useParams<{ serverId: string }>();
   const [server, setServer] = useState<Server | null>(null);
-  const [history, setHistory] = useState<{ time: string; points: number; rank: number | null; players: number | null }[]>([]);
+  const [history, setHistory] = useState<ServerHistoryPoint[]>([]);
   const [totalServers, setTotalServers] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,13 +125,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
       // Filter leading empty data for servers
       if (filteredHistory.length > 0) {
-        const firstActiveIndex = filteredHistory.findIndex(h => (h.points || 0) > 0 || h.rank !== null || (h.players ?? 0) > 0);
+        const firstActiveIndex = filteredHistory.findIndex(
+          h => h.rank !== null || (h.players ?? 0) > 0 || h.uptimeRatio !== null
+        );
         if (firstActiveIndex !== -1) {
           filteredHistory = filteredHistory.slice(firstActiveIndex);
         }
       }
 
-      setHistory(filteredHistory);
+      setHistory(filteredHistory as ServerHistoryPoint[]);
       setTotalServers(statsData?.totalServers || 1);
       setError(null);
     } catch (err) {
@@ -144,6 +152,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     loadServer(selectedDays, controller.signal);
     return () => controller.abort();
   }, [serverId, selectedDays, loadServer]);
+
+  const offlineBands = useMemo(() => buildOfflineBands(history), [history]);
 
   const similarServers = useMemo(() => {
     if (!server || !allServers || allServers.length === 0) return [];
@@ -270,11 +280,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             </h1>
             <div className="flex flex-wrap items-center gap-3">
               <ServerStatusBadge status={server.bmStatus} size="md" />
-              {server.bmStatus && server.bmStatus !== 'online' && (
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
-                  Last seen via BattleMetrics scan
-                </span>
-              )}
+              <BmLastSeenHint status={server.bmStatus} lastSeenAt={server.bmLastSeenAt} />
             </div>
             <p className="text-xl font-mono text-gray-500 font-bold uppercase tracking-widest">
               {server.ip}:{server.port}
@@ -428,9 +434,37 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                   <span className="text-[8px] opacity-50 font-medium">Server may be offline or monitoring was suspended</span>
                 </div>
               ) : (
+                <div className="flex flex-col h-full gap-3">
+                  <div className="flex flex-wrap items-center gap-4 text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-4 h-0.5 bg-[#f97316] rounded" aria-hidden />
+                      Server rank
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-4 h-0.5 bg-[#22c55e] rounded" aria-hidden />
+                      Players
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-sm bg-rose-500/25 border border-rose-500/40" aria-hidden />
+                      Mostly offline (&lt;50% scans)
+                    </span>
+                  </div>
+                  <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                    {offlineBands.map((band, i) => (
+                      <ReferenceArea
+                        key={`offline-${i}`}
+                        x1={band.x1}
+                        x2={band.x2}
+                        yAxisId="rank"
+                        fill="rgb(244 63 94 / 0.15)"
+                        stroke="rgb(244 63 94 / 0.3)"
+                        strokeOpacity={0.4}
+                        ifOverflow="extendDomain"
+                      />
+                    ))}
                     <XAxis
                       dataKey="time"
                       stroke="#666"
@@ -475,9 +509,27 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}
                       itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                       labelStyle={{ color: '#666', fontSize: '10px', fontWeight: 'bold', marginBottom: '8px' }}
-                      formatter={(value: any, name: any) => {
-                        if (name === 'Server Rank') return [`#${value}`, name];
-                        return [Number(value).toLocaleString(), name];
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        const point = payload[0]?.payload as ServerHistoryPoint | undefined;
+                        const uptime = point ? uptimeTooltipLabel(point, selectedDays === 1) : null;
+                        return (
+                          <div className="rounded border border-[#333] bg-[#18181b] px-3 py-2 text-xs">
+                            <p className="text-[10px] font-bold text-[#666] uppercase mb-2">
+                              {label ? new Date(String(label)).toLocaleString() : ''}
+                            </p>
+                            {payload.map((entry) => (
+                              <p key={String(entry.dataKey)} style={{ color: entry.color, fontWeight: 'bold' }}>
+                                {entry.name === 'Server Rank'
+                                  ? `Server Rank: #${entry.value}`
+                                  : `${entry.name}: ${Number(entry.value ?? 0).toLocaleString()}`}
+                              </p>
+                            ))}
+                            {uptime && (
+                              <p className="text-rose-400/90 mt-2 text-[10px] font-bold uppercase">{uptime}</p>
+                            )}
+                          </div>
+                        );
                       }}
                     />
                     <Line
@@ -502,12 +554,14 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Analysis Glossary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
               <div className="w-1 h-full bg-[#f97316]" />
               <div>
@@ -523,6 +577,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Active Player Load</h4>
                 <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
                   Raw personnel count over time. <span className="text-[#22c55e]">Higher is better</span> – direct indicator of server popularity.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
+              <div className="w-1 h-full bg-rose-500/70" />
+              <div>
+                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Offline periods</h4>
+                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                  Rose shading when a day or week was <span className="text-rose-400">mostly offline</span> (&lt;50% of network scans saw the server up). Brief restarts do not mark the whole period offline.
                 </p>
               </div>
             </div>

@@ -11,6 +11,7 @@ import type { GameType } from '../api/client';
 import type { ServerSortBy } from '../hooks/useServers';
 import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import { BM_STATUS_FILTER_OPTIONS } from '../lib/serverStatus';
+import { SERVER_STATUS_FILTER_ARIA } from '../lib/siteCopy';
 
 interface ServerListProps {
   game?: GameType;
@@ -104,7 +105,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
             value: bmStatusFilter,
             onChange: (v: string) => setBmStatusFilter(v as BmStatusFilter),
             options: BM_STATUS_FILTER_OPTIONS,
-            ariaLabel: 'Filter servers by BattleMetrics status',
+            ariaLabel: SERVER_STATUS_FILTER_ARIA,
           },
           ...(game === 'reforger'
             ? [

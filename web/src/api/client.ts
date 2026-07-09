@@ -236,7 +236,7 @@ export const serversApi = {
   getHistory: async (serverId: string, days = 30, game: GameType = 'reforger') => {
     const key = `server-history:${game}:${serverId}:${days}`;
     return getCached(key, async () => {
-      const response = await api.get<{ data: { time: string; points: number; rank: number | null; players: number | null }[] }>(`servers/${serverId}/history`, {
+      const response = await api.get<{ data: import('../lib/serverUptimeChart').ServerHistoryPoint[] }>(`servers/${serverId}/history`, {
         params: { days, game }
       });
       return response.data;

@@ -3,6 +3,7 @@ import type { Server } from '../types';
 import { TierBadge } from './ui/TierBadge';
 import { ConsoleFitBadge } from './ui/ConsoleFitBadge';
 import { ServerStatusBadge } from './ui/ServerStatusBadge';
+import { BmLastSeenHint } from './ui/BmLastSeenHint';
 import { CopyServerModsButton } from './ui/CopyServerModsButton';
 import { formatBytes } from '../lib/formatBytes';
 import { serverModpackBytes } from '../lib/serverModpack';
@@ -66,6 +67,11 @@ export function ServerRow({
           </span>
           <span className="flex flex-wrap items-center gap-2 mt-0.5">
             <ServerStatusBadge status={server.bmStatus} />
+            <BmLastSeenHint
+              status={server.bmStatus}
+              lastSeenAt={server.bmLastSeenAt}
+              className="hidden sm:inline max-w-[14rem] truncate"
+            />
             {server.scenarioName && (
               <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-600 line-clamp-1 min-w-0">
                 {server.scenarioName}

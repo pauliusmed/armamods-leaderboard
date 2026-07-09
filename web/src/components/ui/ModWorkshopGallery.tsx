@@ -93,7 +93,7 @@ export function ModWorkshopGallery({
 
   const label = modName ?? 'Mod';
   const hasMultiple = images.length > 1;
-  const navBtn = isInline ? 'w-8 h-8 text-base' : 'w-9 h-9';
+  const navBtn = isInline ? 'w-11 h-11 sm:w-8 sm:h-8 text-base' : 'w-11 h-11 sm:w-9 sm:h-9';
   const footerPad = isInline ? 'py-2.5' : 'py-3';
   const frameClass = isInline ? 'aspect-[4/3]' : 'aspect-square';
 
@@ -175,14 +175,18 @@ export function ModWorkshopGallery({
               key={image.url}
               type="button"
               onClick={() => setActive(index)}
-              className={`h-1.5 rounded-full transition-all ${
-                index === active
-                  ? 'w-6 bg-tactical-orange'
-                  : 'w-1.5 bg-white/20 hover:bg-white/40'
-              }`}
+              className="p-3 flex items-center justify-center"
               aria-label={`Screenshot ${index + 1}`}
               aria-current={index === active ? 'true' : undefined}
-            />
+            >
+              <span
+                className={`block h-1.5 rounded-full transition-all ${
+                  index === active
+                    ? 'w-6 bg-tactical-orange'
+                    : 'w-1.5 bg-white/20 hover:bg-white/40'
+                }`}
+              />
+            </button>
           ))}
           <span className="ml-2 text-[9px] text-gray-600 font-black uppercase tracking-[0.2em]">
             {active + 1} / {images.length}

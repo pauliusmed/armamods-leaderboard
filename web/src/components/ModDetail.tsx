@@ -19,17 +19,20 @@ import {
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
+import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE } from '../lib/siteCopy';
 import { ModAuthorLink } from './ui/ModAuthorLink';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { formatBytes } from '../lib/formatBytes';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModWorkshopCopy } from './ui/ModWorkshopCopy';
 import { ModConfigPanel } from './ui/ModConfigPanel';
+import { FavoriteModButton } from './ui/FavoriteModButton';
+import { useModFavorites } from '../hooks/useModFavorites';
 import { ModWorkshopUnavailableBanner } from './ui/ModWorkshopStatus';
-import { ModRow } from './ModRow';
-import { ServerRow } from './ServerRow';
 import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
-import { ModDataTable, ServerDataTable, toModRow } from './ui/ModDataTable';
+import { CoDeployTable } from './ui/CoDeployTable';
+import { ServerDataTable } from './ui/ModDataTable';
+import { ServerRow } from './ServerRow';
 import { Pagination } from './ui/Pagination';
 import type { Mod, Server, ModHistory, ModDependency } from '../types';
 
@@ -71,6 +74,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [selectedDays, setSelectedDays] = useState(30);
   const [heroGalleryVisible, setHeroGalleryVisible] = useState(false);
   const [serversPage, setServersPage] = useState(1);
+  const { isFavorite, toggle } = useModFavorites(game);
 
   useEffect(() => {
     setHeroGalleryVisible(false);
@@ -205,7 +209,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         title={`${mod.name} - Statistics & Trends`}
         description={
           mod.workshopSummary ??
-          `${mod.name}: ${mod.totalPlayers?.toLocaleString() ?? 0} players on ${mod.serverCount ?? 0} BattleMetrics servers. Rank #${mod.stats?.overallRank || mod.overallRank || '—'}.`
+          MOD_DETAIL_SEO_PLAYERS(
+            mod.totalPlayers ?? 0,
+            mod.serverCount ?? 0,
+            mod.stats?.overallRank || mod.overallRank || '—'
+          )
         }
         keywords={`${mod.name}, Arma Reforger Mods, Arma 3 Mods, Mod Statistics, ${mod.author || ''}`}
         url={modPageUrl(mod.id, game)}
@@ -252,9 +260,17 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     priority="eager"
                   />
                   <div className="min-w-0 space-y-3 flex-1">
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter leading-none break-words">
-                      {mod.name}
-                    </h1>
+                    <div className="flex flex-wrap items-start gap-3">
+                      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter leading-none break-words flex-1 min-w-0">
+                        {mod.name}
+                      </h1>
+                      <FavoriteModButton
+                        active={isFavorite(mod.id)}
+                        modName={mod.name}
+                        onToggle={() => toggle(mod.id)}
+                        className="shrink-0 mt-1"
+                      />
+                    </div>
                     {mod.author && (
                       <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
                         Workshop author ·{' '}
@@ -283,7 +299,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   </p>
                 ) : (
                   <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
-                    Live telemetry from BattleMetrics · Workshop has subscribe counts; we show who is playing now
+                    {MOD_DETAIL_LIVE_FALLBACK}
                   </p>
                 )}
               </div>
@@ -636,21 +652,15 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   🤝 Frequently Deployed Together
                 </h2>
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
-                  Statistical co-occurrence on BattleMetrics servers — popular pairings, not required dependencies
+                  {CO_DEPLOY_SUBTITLE}
                 </p>
               </div>
 
-              <ModDataTable>
-                {mod.coDeployed.map((other) => (
-                  <ModRow
-                    key={other.id}
-                    mod={toModRow(other)}
-                    rank={other.overallRank || undefined}
-                    game={game}
-                    variant="embedded"
-                  />
-                ))}
-              </ModDataTable>
+              <CoDeployTable
+                items={mod.coDeployed}
+                parentServerCount={mod.serverCount ?? mod.stats?.serverCount ?? 0}
+                game={game}
+              />
             </section>
           )}
 

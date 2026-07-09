@@ -1,5 +1,6 @@
 import type { BmServerStatus } from '../../types';
 import { BM_STATUS_SHORT } from '../../lib/serverStatus';
+import { SERVER_STATUS_TITLE } from '../../lib/siteCopy';
 
 const STATUS_STYLE: Record<BmServerStatus, string> = {
   online: 'border-emerald-600/50 bg-emerald-950/30 text-emerald-300',
@@ -31,7 +32,7 @@ export function ServerStatusBadge({
   return (
     <span
       className={`inline-flex items-center font-black uppercase tracking-[0.12em] border ${pad} ${STATUS_STYLE[status]} ${className}`}
-      title={`BattleMetrics status: ${label}`}
+      title={SERVER_STATUS_TITLE(label)}
     >
       {label}
     </span>

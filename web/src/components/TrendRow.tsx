@@ -4,7 +4,9 @@ import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
 import { CopyModConfigButton } from './ui/CopyModConfigButton';
+import { FavoriteModButton } from './ui/FavoriteModButton';
 import { workshopPageUrl } from '../lib/workshop';
+import { TOUCH_TARGET_BUTTON, TOUCH_TARGET_GAP } from '../lib/touchTargets';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
 
@@ -12,6 +14,9 @@ interface TrendRowProps {
   mod: TrendingMod;
   category: TrendCategory;
   game?: GameType;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  pinned?: boolean;
 }
 
 /**
@@ -19,7 +24,14 @@ interface TrendRowProps {
  * that is the whole point of trending: rank movement (green up / red down),
  * or a "New" badge for freshly detected mods.
  */
-export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
+export function TrendRow({
+  mod,
+  category,
+  game = 'reforger',
+  isFavorite = false,
+  onToggleFavorite,
+  pinned = false,
+}: TrendRowProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const rank = mod.overallRank ?? mod.currentRank;
   const isTop3 = rank != null && rank <= 3;
@@ -36,7 +48,11 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
   );
 
   return (
-    <tr className="group border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+    <tr
+      className={`group border-b border-white/5 hover:bg-white/[0.03] transition-colors ${
+        pinned ? 'bg-tactical-orange/[0.04]' : ''
+      }`}
+    >
       {/* Rank */}
       <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
@@ -97,13 +113,20 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
 
       {/* Actions */}
       <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
-        <div className="inline-flex items-center justify-end gap-1.5">
+        <div className={`inline-flex items-center justify-end ${TOUCH_TARGET_GAP}`}>
+          {onToggleFavorite && (
+            <FavoriteModButton
+              active={isFavorite}
+              modName={mod.name}
+              onToggle={onToggleFavorite}
+            />
+          )}
           {game === 'reforger' && (
             <CopyModConfigButton modId={mod.id} modName={mod.name} />
           )}
           {workshopUnavailable ? (
             <span
-              className="inline-flex items-center justify-center px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed"
+              className={`${TOUCH_TARGET_BUTTON} px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed`}
               title="No longer on Reforger Workshop"
             >
               Workshop
@@ -114,7 +137,7 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Open ${mod.name} on ${game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop'}`}
-              className="inline-flex items-center justify-center px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
+              className={`${TOUCH_TARGET_BUTTON} px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors`}
             >
               {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
             </a>

@@ -53,3 +53,27 @@ export const BM_STATUS_SHORT: Record<BmServerStatus, string> = {
   invalid: 'INVALID',
   unknown: '—',
 };
+
+/** Human-readable last-seen-online label for offline BM statuses. */
+export function formatBmLastSeenAt(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export function describeBmLastSeenOnline(
+  status: BmServerStatus | null | undefined,
+  lastSeenAt: string | null | undefined
+): string | null {
+  if (isBmServerOnline(status)) return null;
+  const when = formatBmLastSeenAt(lastSeenAt);
+  if (when) return `Last seen online · ${when} (network scan)`;
+  return 'Last seen via network scan — no online record in our data yet';
+}

@@ -129,14 +129,18 @@ export function GalleryLightbox({
                 key={item.url}
                 type="button"
                 onClick={() => onActiveChange(index)}
-                className={`h-1.5 rounded-full transition-all ${
-                  index === active
-                    ? 'w-6 bg-tactical-orange'
-                    : 'w-1.5 bg-white/20 hover:bg-white/40'
-                }`}
+                className="p-3 flex items-center justify-center"
                 aria-label={`Screenshot ${index + 1}`}
                 aria-current={index === active ? 'true' : undefined}
-              />
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all ${
+                    index === active
+                      ? 'w-6 bg-tactical-orange'
+                      : 'w-1.5 bg-white/20 hover:bg-white/40'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

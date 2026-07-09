@@ -8,6 +8,7 @@ import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { ListFilterBar } from './ui/ListFilterBar';
 import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '../lib/scenarioLinks';
+import { SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/siteCopy';
 import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import type { GameType } from '../api/client';
 import type { ScenarioRankingEntry } from '../types';
@@ -116,7 +117,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
       <StatusState
         type="empty"
         message="No scenario data"
-        details="BattleMetrics has not reported active scenarios yet."
+        details={SCENARIO_EMPTY}
         onAction={resetFilters}
         actionText="Reset Filters"
       />
@@ -134,7 +135,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
 
       <StatsHero
         title="Scenario Leaderboard"
-        subtitle="Aggregated by active mission from BattleMetrics telemetry"
+        subtitle={SCENARIO_SUBTITLE}
         stats={[
           { label: 'Scenarios', value: stats.uniqueScenarios },
           { label: 'Servers', value: stats.totalServers },

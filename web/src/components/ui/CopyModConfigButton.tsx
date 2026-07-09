@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { copyToClipboard } from '../../lib/clipboard';
 import { formatModConfigSnippet } from '../../lib/modConfig';
+import { TOUCH_TARGET_BUTTON } from '../../lib/touchTargets';
 
 interface CopyModConfigButtonProps {
   modId: string;
@@ -25,7 +26,7 @@ export function CopyModConfigButton({ modId, modName, className = '' }: CopyModC
       type="button"
       onClick={() => void handleCopy()}
       aria-label={`Copy ${modName} config snippet`}
-      className={`inline-flex items-center justify-center px-2.5 py-1.5 border text-[9px] font-black uppercase tracking-widest transition-colors ${
+      className={`${TOUCH_TARGET_BUTTON} px-2.5 py-1.5 sm:py-1.5 border text-[9px] font-black uppercase tracking-widest transition-colors ${
         hint === 'copied'
           ? 'border-white/20 bg-white text-black'
           : hint === 'failed'

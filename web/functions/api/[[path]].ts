@@ -35,6 +35,7 @@ import { analyzeStoragePlan } from '../lib/storage-calc';
 import { buildServerStoragePack } from '../lib/storage-service';
 import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from '../lib/search-match';
 import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
+import { parseServerHistoryFields } from '../lib/server-uptime-history';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -510,17 +511,26 @@ function findMatchingBrace(text: string, openPos: number): number {
 }
 
 function extractModFromChunks(chunksText: (string | null)[], modId: string): any | null {
-  const searchStr = `"id":"${modId}"`;
-  for (const chunkText of chunksText) {
-    if (!chunkText?.includes(searchStr)) continue;
-    const idPos = chunkText.indexOf(searchStr);
-    const startPos = chunkText.lastIndexOf('{', idPos);
-    const endPos = findMatchingBrace(chunkText, startPos);
-    if (startPos === -1 || endPos === -1) continue;
-    try {
-      return JSON.parse(chunkText.slice(startPos, endPos + 1));
-    } catch {
-      /* try next chunk */
+  const candidates = modId === modId.toUpperCase()
+    ? [modId]
+    : [modId, modId.toUpperCase(), modId.toLowerCase()];
+  const seen = new Set<string>();
+
+  for (const id of candidates) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const searchStr = `"id":"${id}"`;
+    for (const chunkText of chunksText) {
+      if (!chunkText?.includes(searchStr)) continue;
+      const idPos = chunkText.indexOf(searchStr);
+      const startPos = chunkText.lastIndexOf('{', idPos);
+      const endPos = findMatchingBrace(chunkText, startPos);
+      if (startPos === -1 || endPos === -1) continue;
+      try {
+        return JSON.parse(chunkText.slice(startPos, endPos + 1));
+      } catch {
+        /* try next chunk */
+      }
     }
   }
   return null;
@@ -1444,25 +1454,26 @@ app.get('/servers/:serverId/history', async (c) => {
   const serversKey = '"servers":{';
   const timeKey = '"time":"';
 
-  function extractServerHistory(block: string, id: string): { rank: number | null; players: number | null } {
+  function extractServerHistory(block: string, id: string) {
     const serverSearchKey = `"${id}":`;
     const serverPos = block.indexOf(serverSearchKey);
-    if (serverPos === -1) return { rank: null, players: null };
+    if (serverPos === -1) {
+      return { rank: null, players: null, points: 0, uptimeRatio: null, mostlyOffline: false, online: null };
+    }
 
     const valueStart = serverPos + serverSearchKey.length;
     const char = block[valueStart];
 
     if (char === '{') {
       const endPos = findMatchingBrace(block, valueStart);
-      if (endPos === -1) return { rank: null, players: null };
+      if (endPos === -1) {
+        return { rank: null, players: null, points: 0, uptimeRatio: null, mostlyOffline: false, online: null };
+      }
       try {
-        const obj = JSON.parse(block.slice(valueStart, endPos + 1));
-        return {
-          rank: typeof obj.rank === 'number' ? obj.rank : null,
-          players: typeof obj.players === 'number' ? obj.players : null,
-        };
+        const obj = JSON.parse(block.slice(valueStart, endPos + 1)) as Record<string, unknown>;
+        return { points: 0, ...parseServerHistoryFields(obj) };
       } catch {
-        return { rank: null, players: null };
+        return { rank: null, players: null, points: 0, uptimeRatio: null, mostlyOffline: false, online: null };
       }
     }
 
@@ -1470,7 +1481,7 @@ app.get('/servers/:serverId/history', async (c) => {
     let numEnd = valueStart;
     while (numEnd < block.length && block[numEnd] !== ',' && block[numEnd] !== '}') numEnd++;
     const parsed = parseInt(block.slice(valueStart, numEnd));
-    return { rank: parsed > 0 ? parsed : null, players: null };
+    return { rank: parsed > 0 ? parsed : null, players: null, points: 0, uptimeRatio: null, mostlyOffline: false, online: null };
   }
 
   const daysString = c.req.query('days') || '30';
@@ -1522,9 +1533,9 @@ app.get('/servers/:serverId/history', async (c) => {
       const blockEnd = nextTimeIdx === -1 ? shardText.length : nextTimeIdx;
       const block = shardText.slice(serversIdx, blockEnd);
 
-      const { rank, players } = extractServerHistory(block, serverId);
+      const { rank, players, uptimeRatio, mostlyOffline, online } = extractServerHistory(block, serverId);
 
-      serverHistory.push({ time, points: 0, rank, players });
+      serverHistory.push({ time, points: 0, rank, players, uptimeRatio, mostlyOffline, online });
       searchPos = blockEnd;
     }
   }

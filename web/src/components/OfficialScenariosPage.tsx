@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { OFFICIAL_SCENARIOS, getOfficialScenarioBySlug } from '../../functions/lib/official-scenarios';
 import { SEO } from './ui/SEO';
 import type { GameType } from '../api/client';
+import { OFFICIAL_SCENARIOS_BM_NOTE } from '../lib/siteCopy';
 
 interface OfficialScenariosPageProps {
   game?: GameType;
@@ -87,7 +88,7 @@ export function OfficialScenariosPage({ game = 'reforger' }: OfficialScenariosPa
           Official Scenarios
         </h1>
         <p className="mt-2 text-sm text-gray-500 max-w-2xl">
-          {OFFICIAL_SCENARIOS.length} built-in missions from Bohemia. BattleMetrics labels many of these with a{' '}
+          {OFFICIAL_SCENARIOS.length} {OFFICIAL_SCENARIOS_BM_NOTE}{' '}
           <code className="text-gray-400">#AR-</code> prefix — they are not Workshop mods.
         </p>
       </div>

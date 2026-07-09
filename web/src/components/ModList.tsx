@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMods } from '../hooks/useMods';
+import { useModFavorites } from '../hooks/useModFavorites';
+import { excludeFavoriteModsFromList, usePinnedFavoriteMods } from '../hooks/usePinnedFavoriteMods';
 import { ModRow } from './ModRow';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
@@ -36,6 +38,20 @@ export function ModList({ game = 'reforger' }: ModListProps) {
     stats,
     refresh
   } = useMods({ game });
+
+  const { favoriteIds, toggle, isFavorite } = useModFavorites(game);
+  const showFavoritesPin =
+    currentPage === 1 && !searchQuery.trim() && playerFilter === 'all';
+  const { pinnedMods, loadingPinned } = usePinnedFavoriteMods(
+    game,
+    favoriteIds,
+    filteredMods,
+    showFavoritesPin
+  );
+  const listMods = useMemo(
+    () => excludeFavoriteModsFromList(game, filteredMods, favoriteIds, showFavoritesPin),
+    [game, filteredMods, favoriteIds, showFavoritesPin]
+  );
 
   const itemsPerPage = 24;
 
@@ -105,9 +121,46 @@ export function ModList({ game = 'reforger' }: ModListProps) {
 
       {initialLoading ? (
         <ModListSkeleton />
-      ) : filteredMods.length === 0 ? (
+      ) : filteredMods.length === 0 && pinnedMods.length === 0 ? (
         <StatusState type="empty" message="No matches found" details="No mods match your current filter settings. Try resetting them." onAction={resetFilters} actionText="Clear Filters" />
       ) : (
+        <div className="space-y-4">
+          {showFavoritesPin && (pinnedMods.length > 0 || loadingPinned) && (
+            <div className="border border-tactical-orange/25 bg-tactical-orange/[0.03]">
+              <div className="px-4 py-2.5 border-b border-tactical-orange/20">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange">
+                  ★ Favorites · pinned to top
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {loadingPinned && pinnedMods.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                          Loading favorites…
+                        </td>
+                      </tr>
+                    ) : (
+                      pinnedMods.map((mod) => (
+                        <ModRow
+                          key={`fav-${mod.id}`}
+                          mod={mod}
+                          rank={mod.overallRank}
+                          game={game}
+                          variant="leaderboard"
+                          pinned
+                          isFavorite={isFavorite(mod.id)}
+                          onToggleFavorite={() => toggle(mod.id)}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
         <div
           className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}
           aria-busy={loading}
@@ -182,22 +235,25 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredMods.map((mod, index) => (
+                {listMods.map((mod, index) => (
                   <ModRow
                     key={mod.id}
                     mod={mod}
                     rank={sortBy === 'overall' ? mod.overallRank : (currentPage - 1) * itemsPerPage + index + 1}
                     game={game}
                     variant="leaderboard"
+                    isFavorite={isFavorite(mod.id)}
+                    onToggleFavorite={() => toggle(mod.id)}
                   />
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+        </div>
       )}
 
-      {!initialLoading && filteredMods.length > 0 && (
+      {!initialLoading && (listMods.length > 0 || pinnedMods.length > 0) && (
         <div className="mt-20">
           <DonationCard />
         </div>

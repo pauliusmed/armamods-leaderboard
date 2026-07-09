@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { DATA_SOURCE_ATTRIBUTION, DATA_SYNC_NOTE } from '../lib/siteCopy';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -56,9 +57,9 @@ export function Layout({ children }: LayoutProps) {
                 {isArma3 ? 'A3' : 'AR'}
               </div>
               <div className="min-w-0 space-y-0.5 sm:space-y-1">
-                <h1 className="text-base sm:text-xl font-black text-white tracking-[0.1em] uppercase leading-none truncate">
+                <p className="text-base sm:text-xl font-black text-white tracking-[0.1em] uppercase leading-none truncate">
                   Arma <span className="text-tactical-orange">{isArma3 ? '3' : 'Mods'}</span>
-                </h1>
+                </p>
                 <p className="text-[7px] sm:text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] hidden sm:block truncate">
                   {isArma3 ? 'Legacy Combat Intel' : 'Mission Intelligence Center'}
                 </p>
@@ -371,9 +372,13 @@ export function Layout({ children }: LayoutProps) {
             <div className="space-y-4 sm:space-y-6">
               <h3 className="font-black text-white uppercase tracking-[0.3em] text-[10px] border-b border-white/10 pb-4">Infrastructure</h3>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] leading-loose">
-                DataSource: <span className="text-gray-300">BattleMetrics</span><br/>
+                Registry: <span className="text-gray-300">reforgermods</span><br/>
+                Sync: <span className="text-gray-300">~2h network scan</span><br/>
                 Compute: <span className="text-gray-300">Edge Workers</span><br/>
                 Hosting: <a href={isArma3 ? "https://empowerservers.com/games/arma3/?aff=294" : "https://empowerservers.com/games/arma-reforger/?aff=294"} target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">High-Performance Nodes</a>
+              </p>
+              <p className="text-gray-600 text-[9px] font-medium normal-case tracking-normal leading-relaxed">
+                {DATA_SYNC_NOTE}. {DATA_SOURCE_ATTRIBUTION}.
               </p>
             </div>
           </div>

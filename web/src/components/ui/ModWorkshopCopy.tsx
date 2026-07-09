@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameType } from '../../api/client';
 import { workshopPageUrl, workshopLabel } from '../../lib/workshop';
+import { WORKSHOP_NOT_NETWORK_STATS } from '../../lib/siteCopy';
 
 const COLLAPSE_CHARS = 320;
 
@@ -35,7 +36,7 @@ export function ModWorkshopCopy({
             Workshop Intel
           </h2>
           <p className="text-[9px] font-bold uppercase tracking-widest text-gray-600 mt-1">
-            Summary & description from {workshopLabel(game)} — not BattleMetrics stats
+            {WORKSHOP_NOT_NETWORK_STATS(workshopLabel(game))}
           </p>
         </div>
         <a

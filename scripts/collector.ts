@@ -16,7 +16,11 @@
 import 'dotenv/config';
 import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
-import { normalizeBmServerStatus } from '../web/functions/lib/server-status.js';
+import { normalizeBmServerStatus, isBmServerOnline } from '../web/functions/lib/server-status.js';
+import {
+  isServerOnlineSample,
+  mergeServerHistorySnapshot,
+} from '../web/functions/lib/server-uptime-history.js';
 import {
   fetchReforgerWorkshopHtml,
   cacheReforgerFieldsFromWorkshopHtml,
@@ -116,6 +120,7 @@ function getKVKeys(game: GameType) {
     LAST_UPDATE: `cache:lastUpdate${suffix}`,
     TRENDING: `cache:trending${suffix}`,
     SCENARIO_RANKING: `cache:ranking:scenarios:${game}`,
+    SERVER_BM_LAST_SEEN: `cache:server_bm_last_seen:${game}`,
   };
 }
 
@@ -136,6 +141,52 @@ function extractScenarioName(
   if (typeof mission === 'string' && mission.trim()) return mission.trim();
   if (typeof map === 'string' && map.trim()) return map.trim();
   return null;
+}
+
+/** Persist last collector run when each server had BM status online (or players > 0). */
+async function attachBmLastSeenTimestamps(
+  kv: CloudflareKVClient,
+  game: GameType,
+  serverList: Array<{
+    id: string;
+    bmStatus?: string | null;
+    players?: number;
+    bmLastSeenAt?: string | null;
+  }>,
+  runAt: string,
+  lastSeenKey: string
+): Promise<void> {
+  let map: Record<string, string> = {};
+  try {
+    const raw = await kv.get(lastSeenKey, 'json');
+    if (raw && typeof raw === 'object') map = raw as Record<string, string>;
+  } catch {
+    // start fresh
+  }
+
+  const serverIds = new Set(serverList.map((s) => s.id));
+
+  for (const server of serverList) {
+    const status = normalizeBmServerStatus(server.bmStatus);
+    const online = isBmServerOnline(status) || (server.players ?? 0) > 0;
+    if (online) {
+      map[server.id] = runAt;
+      server.bmLastSeenAt = runAt;
+    } else {
+      server.bmLastSeenAt = map[server.id] ?? null;
+    }
+  }
+
+  const pruned: Record<string, string> = {};
+  for (const [id, ts] of Object.entries(map)) {
+    if (serverIds.has(id)) pruned[id] = ts;
+  }
+
+  try {
+    await kv.put(lastSeenKey, JSON.stringify(pruned));
+  } catch (err) {
+    console.log(`[BM_LAST_SEEN] Could not persist last-seen map.`, err);
+  }
 }
 
 /** Copy cached workshop authors into leaderboard mod rows (no live scrape). */
@@ -412,7 +463,10 @@ interface ServerMod {
         name: modNames[idx] || `Mod ${mid}`
       }));
     } else {
-      gameMods = attributes.details?.reforger?.mods || [];
+      gameMods = (attributes.details?.reforger?.mods || []).map((sm) => ({
+        modId: String(sm.modId).toUpperCase(),
+        name: sm.name,
+      }));
     }
 
     serverList.push({
@@ -512,6 +566,7 @@ interface ServerMod {
   modList = modList.map(m => {
     const serverIds = modToServersMap.get(m.id) || [];
     const freq = new Map<string, { name: string; count: number }>();
+    const modNameById = new Map(modList.map((row) => [row.id, row.name]));
     
     for (const serverId of serverIds) {
       const otherMods = serverToModsMap.get(serverId) || [];
@@ -521,13 +576,17 @@ interface ServerMod {
         if (existing) {
           existing.count++;
         } else {
-          freq.set(other.id, { name: other.name, count: 1 });
+          freq.set(other.id, { name: modNameById.get(other.id) ?? other.name, count: 1 });
         }
       }
     }
 
     const coDeployed = Array.from(freq.entries())
-      .map(([id, data]) => ({ id, name: data.name, count: data.count }))
+      .map(([id, data]) => ({
+        id,
+        name: modNameById.get(id) ?? data.name,
+        count: data.count,
+      }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
@@ -596,6 +655,9 @@ interface ServerMod {
     console.log(`[SERVER_SCORING] Running for ${game} (pre-write)...`);
     const serverRanks = await runServerScoring(game, kv, serverList, modList);
 
+    const runAt = new Date().toISOString();
+    await attachBmLastSeenTimestamps(kv, game, serverList, runAt, KV_KEYS.SERVER_BM_LAST_SEEN);
+
     // Sort servers by players (descending) before sharding
     serverList.sort((a, b) => (b.players || 0) - (a.players || 0));
 
@@ -651,11 +713,15 @@ interface ServerMod {
       statsMap[m.id] = { p: m.totalPlayers, s: m.serverCount, r: m.overallRank };
     }
 
-    // Server history snapshot (rank + players) for shared history
-    const serverHistoryMap: Record<string, { rank: number; players: number }> = {};
+    // Server history snapshot (rank + players + uptime samples) for shared history
+    const serverHistoryMap: Record<string, { rank: number; players: number; online: boolean }> = {};
     for (const s of serverList) {
       if (s.sqeRank) {
-        serverHistoryMap[s.id] = { rank: s.sqeRank, players: s.players || 0 };
+        serverHistoryMap[s.id] = {
+          rank: s.sqeRank,
+          players: s.players || 0,
+          online: isServerOnlineSample(s.bmStatus, s.players, isBmServerOnline),
+        };
       }
     }
 
@@ -724,18 +790,12 @@ interface ServerMod {
             mergedMods[id] = current;
           }
         }
-        // Merge server history (keep best rank and peak players)
-        const mergedServers: Record<string, { rank: number; players: number }> = { ...(existingPoint.servers || {}) };
+        // Merge server history (peak rank/players + uptime sample counts)
+        const mergedServers: Record<string, { rank: number; players: number; online: boolean; on?: number; n?: number }> = {
+          ...(existingPoint.servers || {}),
+        };
         for (const [id, data] of Object.entries(serverHistoryMap)) {
-          const existing = mergedServers[id];
-          if (existing) {
-            mergedServers[id] = {
-              rank: Math.min(existing.rank, data.rank), // Lower rank is better
-              players: Math.max(existing.players, data.players), // Peak players
-            };
-          } else {
-            mergedServers[id] = data;
-          }
+          mergedServers[id] = mergeServerHistorySnapshot(mergedServers[id], data);
         }
         history[existingIndex] = { time: timeLabel, mods: mergedMods, servers: mergedServers };
       } else if (existingIndex !== -1) {

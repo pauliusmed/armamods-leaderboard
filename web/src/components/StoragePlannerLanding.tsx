@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
+import { STORAGE_LANDING_SOURCES } from '../lib/siteCopy';
 
 const FAQ = [
   {
@@ -155,7 +156,7 @@ export function StoragePlannerLanding() {
           Ready to compare your servers?
         </h2>
         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-          Live server mod lists from BattleMetrics · Workshop download sizes · No account required
+          {STORAGE_LANDING_SOURCES}
         </p>
         <Link
           to="/storage-planner"
