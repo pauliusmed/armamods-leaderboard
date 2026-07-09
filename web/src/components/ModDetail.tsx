@@ -65,6 +65,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
+  const [heroGalleryVisible, setHeroGalleryVisible] = useState(false);
+
+  useEffect(() => {
+    setHeroGalleryVisible(false);
+  }, [modId]);
 
   const loadMod = useCallback(async (days: number, signal?: AbortSignal) => {
     if (!modId) return;
@@ -198,8 +203,14 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       */}
       <div className="w-full min-w-0 space-y-12">
           <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
-            <div className="flex flex-col lg:grid lg:grid-cols-3 lg:items-start gap-6 lg:gap-8">
-              <div className="space-y-3 min-w-0 order-1">
+            <div
+              className={`flex flex-col gap-6 lg:gap-8 lg:items-start ${
+                heroGalleryVisible
+                  ? 'lg:grid lg:grid-cols-3'
+                  : 'lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]'
+              }`}
+            >
+              <div className="space-y-4 min-w-0 order-1">
                 <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
                   // MODULE_IDENTIFIER: {mod.id}
                 </span>
@@ -213,7 +224,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   </p>
                 )}
                 {(mod.workshopCreated || mod.workshopModified) && (
-                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
                     {mod.workshopCreated && (
                       <span>
                         Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
@@ -237,27 +248,36 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 )}
               </div>
 
-              <div className="order-2 min-w-0 w-full self-stretch">
+              <div
+                className={`order-2 min-w-0 w-full ${
+                  heroGalleryVisible ? 'lg:border-x lg:border-white/5 lg:px-6' : 'hidden'
+                }`}
+              >
                 <ModWorkshopGallery
                   modId={mod.id}
                   modName={mod.name}
                   game={game}
                   variant="inline"
+                  onVisibilityChange={setHeroGalleryVisible}
                 />
               </div>
 
               <div className="flex flex-col gap-3 min-w-0 w-full order-3">
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="grid grid-cols-2 gap-3 w-full">
                   {game === 'reforger' && (
-                    <div className="px-6 py-4 bg-zinc-900 border border-white/10 text-center min-w-[120px]">
+                    <div className="px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px]">
                       <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
-                      <p className="text-xl font-black font-mono text-tactical-orange tabular-nums">
+                      <p className="text-lg sm:text-xl font-black font-mono text-tactical-orange tabular-nums leading-none">
                         {formatBytes(mod.sizeBytes)}
                       </p>
-                      <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1">Workshop ver.</p>
+                      <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1.5">Workshop ver.</p>
                     </div>
                   )}
-                  <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center">
+                  <div
+                    className={`px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px] ${
+                      game !== 'reforger' ? 'col-span-2' : ''
+                    }`}
+                  >
                     <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
                     <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
                   </div>

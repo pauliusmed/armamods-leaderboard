@@ -3,12 +3,25 @@ import type { GameType } from '../../api/client';
 import { modsApi } from '../../api/client';
 import type { ModGalleryImage } from '../../types';
 
+function isLandscapeImage(image: ModGalleryImage): boolean {
+  return Boolean(image.width && image.height && image.width > image.height);
+}
+
+/** Hero inline prefers screenshots; workshop preview icon is usually first and square. */
+function pickInlineGalleryImages(gallery: ModGalleryImage[]): ModGalleryImage[] {
+  const landscapes = gallery.filter(isLandscapeImage);
+  if (landscapes.length > 0) return landscapes;
+  if (gallery.length > 1) return gallery.slice(1);
+  return gallery;
+}
+
 interface ModWorkshopGalleryProps {
   modId: string;
   modName?: string;
   game?: GameType;
   /** inline = compact square in mod hero row; standalone = full-width block below hero */
   variant?: 'inline' | 'standalone';
+  onVisibilityChange?: (visible: boolean) => void;
 }
 
 export function ModWorkshopGallery({
@@ -16,6 +29,7 @@ export function ModWorkshopGallery({
   modName,
   game = 'reforger',
   variant = 'standalone',
+  onVisibilityChange,
 }: ModWorkshopGalleryProps) {
   const [images, setImages] = useState<ModGalleryImage[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'hidden'>('loading');
@@ -45,7 +59,12 @@ export function ModWorkshopGallery({
           setStatus('hidden');
           return;
         }
-        setImages(gallery);
+        const chosen = isInline ? pickInlineGalleryImages(gallery) : gallery;
+        if (chosen.length === 0) {
+          setStatus('hidden');
+          return;
+        }
+        setImages(chosen);
         setStatus('ready');
       })
       .catch(() => {
@@ -56,6 +75,11 @@ export function ModWorkshopGallery({
       cancelled = true;
     };
   }, [modId, game, isInline]);
+
+  useEffect(() => {
+    onVisibilityChange?.(status === 'ready' && images.length > 0);
+    return () => onVisibilityChange?.(false);
+  }, [status, images.length, onVisibilityChange]);
 
   const go = useCallback(
     (delta: number) => {
@@ -70,6 +94,12 @@ export function ModWorkshopGallery({
   const hasMultiple = images.length > 1;
   const navBtn = isInline ? 'w-8 h-8 text-base' : 'w-9 h-9';
   const footerPad = isInline ? 'py-2.5' : 'py-3';
+  const useLandscapeFrame = isInline && images.some(isLandscapeImage);
+  const frameClass = useLandscapeFrame
+    ? 'aspect-[4/3]'
+    : isInline
+      ? 'aspect-square max-w-[220px] mx-auto'
+      : 'aspect-square';
 
   return (
     <section
@@ -78,7 +108,7 @@ export function ModWorkshopGallery({
       }`}
       aria-label={`${label} workshop gallery`}
     >
-      <div className="relative w-full aspect-square bg-black overflow-hidden">
+      <div className={`relative w-full ${frameClass} bg-zinc-950 overflow-hidden`}>
         {images.map((image, index) => (
           <a
             key={image.url}
@@ -97,7 +127,7 @@ export function ModWorkshopGallery({
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
               className={`w-full h-full object-center ${
-                isInline ? 'object-cover' : 'object-contain'
+                isInline && useLandscapeFrame ? 'object-cover' : 'object-contain'
               }`}
             />
           </a>
