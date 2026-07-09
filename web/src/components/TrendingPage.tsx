@@ -198,7 +198,9 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
                     <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Change</th>
                     <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Personnel</th>
                     <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Deploy</th>
-                    <th className="pl-2 pr-4 py-3" aria-label="Workshop link" />
+                    <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

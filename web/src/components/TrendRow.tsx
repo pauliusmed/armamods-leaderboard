@@ -3,6 +3,7 @@ import type { TrendingMod } from '../types';
 import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
+import { CopyModConfigButton } from './ui/CopyModConfigButton';
 import { workshopPageUrl } from '../lib/workshop';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
@@ -94,27 +95,31 @@ export function TrendRow({ mod, category, game = 'reforger' }: TrendRowProps) {
         <span className="font-mono text-sm tabular-nums text-gray-300">{mod.serverCount}</span>
       </td>
 
-      {/* Workshop link */}
-      <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle">
-        {workshopUnavailable ? (
-          <span
-            className="inline-block px-1 text-xs font-black text-amber-200/50 cursor-not-allowed"
-            title="No longer on Reforger Workshop"
-            aria-hidden
-          >
-            —
-          </span>
-        ) : (
-          <a
-            href={workshopUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Open ${mod.name} on the workshop`}
-            className="inline-block px-1 text-xs font-black text-gray-600 hover:text-tactical-orange transition-colors"
-          >
-            ↗
-          </a>
-        )}
+      {/* Actions */}
+      <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
+        <div className="inline-flex items-center justify-end gap-1.5">
+          {game === 'reforger' && (
+            <CopyModConfigButton modId={mod.id} modName={mod.name} />
+          )}
+          {workshopUnavailable ? (
+            <span
+              className="inline-flex items-center justify-center px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed"
+              title="No longer on Reforger Workshop"
+            >
+              Workshop
+            </span>
+          ) : (
+            <a
+              href={workshopUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${mod.name} on ${game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop'}`}
+              className="inline-flex items-center justify-center px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
+            >
+              {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
+            </a>
+          )}
+        </div>
       </td>
     </tr>
   );
