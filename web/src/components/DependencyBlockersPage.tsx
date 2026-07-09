@@ -5,8 +5,13 @@ import type { ReverseDepsAnalysis, Server } from '../types';
 import { SEO } from './ui/SEO';
 import { StatsHero } from './ui/StatsHero';
 import { StatusState } from './ui/StatusState';
-import { ListFilterBar } from './ui/ListFilterBar';
 import { workshopPageUrl } from '../lib/workshop';
+
+const pickerInputClass =
+  'w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange placeholder:text-gray-700';
+
+const pickerLabelClass =
+  'block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic';
 
 interface DependencyBlockersPageProps {
   game?: GameType;
@@ -71,22 +76,32 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
     };
   }, [serverId, game]);
 
-  const serverOptions = useMemo(() => {
+  const filteredServers = useMemo(() => {
     const q = serverSearch.trim().toLowerCase();
     const list = q
       ? servers.filter((s) => s.name.toLowerCase().includes(q) || s.id.includes(q))
       : servers;
-    return list.slice(0, 80);
+    return list.slice(0, 100);
   }, [servers, serverSearch]);
 
-  const modOptions = useMemo(() => {
+  const filteredMods = useMemo(() => {
     const mods = serverDetail?.mods ?? [];
     const q = modSearch.trim().toLowerCase();
     const list = q
       ? mods.filter((m) => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q))
       : mods;
-    return [...list].sort((a, b) => a.name.localeCompare(b.name));
+    return [...list].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 200);
   }, [serverDetail?.mods, modSearch]);
+
+  const selectedServer = useMemo(
+    () => servers.find((s) => s.id === serverId) ?? serverDetail,
+    [servers, serverId, serverDetail]
+  );
+
+  const selectedMod = useMemo(
+    () => serverDetail?.mods?.find((m) => m.id.toUpperCase() === targetModId.toUpperCase()),
+    [serverDetail?.mods, targetModId]
+  );
 
   const runAnalysis = useCallback(async () => {
     if (!serverId || !targetModId) return;
@@ -139,87 +154,121 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
         ]}
       />
 
-      <ListFilterBar
-        sticky={false}
-        columns={2}
-        search={{
-          label: '// SERVER',
-          value: serverSearch,
-          onChange: setServerSearch,
-          placeholder: 'Search servers by name or ID…',
-          ariaLabel: 'Search servers',
-          hint: serverId ? (
-            <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
-              Selected: {serverDetail?.name ?? serverId}
+      <section className="bg-zinc-900/50 p-4 border border-white/5 space-y-3">
+        <label htmlFor="dep-blockers-server-search" className={pickerLabelClass}>
+          // SERVER
+        </label>
+        <input
+          id="dep-blockers-server-search"
+          type="search"
+          placeholder="Search servers by name or ID…"
+          value={serverSearch}
+          onChange={(e) => setServerSearch(e.target.value)}
+          aria-label="Search servers"
+          className={pickerInputClass}
+        />
+        {serverId && (
+          <div className="border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+            <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest mb-1">
+              Selected server
             </p>
-          ) : undefined,
-        }}
-        selects={[
-          {
-            id: 'server',
-            label: '// PICK SERVER',
-            value: serverId,
-            onChange: (v) => {
-              setServerId(v);
-              setTargetModId('');
-              setResult(null);
-            },
-            options: [
-              { value: '', label: 'Select server…' },
-              ...serverOptions.map((s) => ({
-                value: s.id,
-                label: `${s.name.slice(0, 48)}${s.name.length > 48 ? '…' : ''}`,
-              })),
-            ],
-            ariaLabel: 'Select server',
-          },
-        ]}
-      />
-
-      {loadingServer && serverId && (
-        <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
-          Loading server mod list…
-        </p>
-      )}
+            <p className="text-[10px] font-black text-white uppercase truncate">
+              {selectedServer?.name ?? serverId}
+            </p>
+            {loadingServer && (
+              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 animate-pulse">
+                Loading mod list…
+              </p>
+            )}
+          </div>
+        )}
+        {loadingServers && !filteredServers.length ? (
+          <StatusState type="loading" />
+        ) : (
+          <div className="max-h-48 overflow-y-auto space-y-1 border border-white/5">
+            {filteredServers.length === 0 ? (
+              <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">No servers match search</p>
+            ) : (
+              filteredServers.map((server) => (
+                <button
+                  key={server.id}
+                  type="button"
+                  onClick={() => {
+                    setServerId(server.id);
+                    setTargetModId('');
+                    setResult(null);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                    serverId === server.id
+                      ? 'bg-tactical-orange/20 text-tactical-orange'
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {server.name}
+                  <span className="block text-[8px] text-gray-600 font-mono">
+                    {server.mods?.length ?? 0} mods · {server.id}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </section>
 
       {serverDetail && (
-        <ListFilterBar
-          sticky={false}
-          columns={2}
-          search={{
-            label: '// MOD TO REMOVE',
-            value: modSearch,
-            onChange: setModSearch,
-            placeholder: 'Search mods on this server…',
-            ariaLabel: 'Search mods on server',
-          }}
-          selects={[
-            {
-              id: 'mod',
-              label: '// TARGET MOD',
-              value: targetModId,
-              onChange: setTargetModId,
-              options: [
-                { value: '', label: 'Select mod…' },
-                ...modOptions.slice(0, 200).map((m) => ({
-                  value: m.id,
-                  label: m.name.length > 56 ? `${m.name.slice(0, 56)}…` : m.name,
-                })),
-              ],
-              ariaLabel: 'Select mod to remove',
-            },
-          ]}
-          footer={
-            <button
-              type="button"
-              disabled={!targetModId || analyzing}
-              onClick={() => void runAnalysis()}
-              className="px-6 py-3 bg-tactical-orange text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-white transition-colors"
-            >
-              {analyzing ? 'Scanning…' : 'Find blockers'}
-            </button>
-          }
-        />
+        <section className="bg-zinc-900/50 p-4 border border-white/5 space-y-3">
+          <label htmlFor="dep-blockers-mod-search" className={pickerLabelClass}>
+            // MOD TO REMOVE
+          </label>
+          <input
+            id="dep-blockers-mod-search"
+            type="search"
+            placeholder="Search mods installed on this server…"
+            value={modSearch}
+            onChange={(e) => setModSearch(e.target.value)}
+            aria-label="Search mods on server"
+            className={pickerInputClass}
+          />
+          {targetModId && (
+            <div className="border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+              <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest mb-1">
+                Target mod
+              </p>
+              <p className="text-[10px] font-black text-white uppercase truncate">
+                {selectedMod?.name ?? targetModId}
+              </p>
+            </div>
+          )}
+          <div className="max-h-56 overflow-y-auto space-y-1 border border-white/5">
+            {filteredMods.length === 0 ? (
+              <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">No mods match search</p>
+            ) : (
+              filteredMods.map((mod) => (
+                <button
+                  key={mod.id}
+                  type="button"
+                  onClick={() => setTargetModId(mod.id)}
+                  className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                    targetModId.toUpperCase() === mod.id.toUpperCase()
+                      ? 'bg-tactical-orange/20 text-tactical-orange'
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {mod.name}
+                  <span className="block text-[8px] text-gray-600 font-mono">{mod.id}</span>
+                </button>
+              ))
+            )}
+          </div>
+          <button
+            type="button"
+            disabled={!targetModId || analyzing}
+            onClick={() => void runAnalysis()}
+            className="px-6 py-3 bg-tactical-orange text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-white transition-colors"
+          >
+            {analyzing ? 'Scanning…' : 'Find blockers'}
+          </button>
+        </section>
       )}
 
       {error && <StatusState type="error" message={error} onAction={() => void runAnalysis()} actionText="Retry" />}
