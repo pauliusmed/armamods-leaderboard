@@ -48,7 +48,7 @@ export function ModRow({
         pinned ? 'bg-tactical-orange/[0.04]' : ''
       }`}
     >
-      <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
+      <td className="w-14 py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
             isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
@@ -86,28 +86,28 @@ export function ModRow({
       </td>
 
       {isLeaderboard && (
-        <td className="hidden md:table-cell py-3 md:py-2.5 px-3 align-middle max-w-[140px]">
+        <td className="hidden md:table-cell w-[140px] max-w-[140px] py-3 md:py-2.5 px-3 align-middle">
           <ModAuthorCell modId={mod.id} game={game} author={mod.author} />
         </td>
       )}
 
-      <td className="py-3 md:py-2.5 px-4 text-right align-middle">
+      <td className="w-[5.5rem] py-3 md:py-2.5 px-4 text-right align-middle tabular-nums">
         <span className="font-mono text-sm tabular-nums text-white">
           {(mod.totalPlayers || 0).toLocaleString()}
         </span>
       </td>
 
-      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
+      <td className="hidden md:table-cell w-[4.5rem] py-3 md:py-2.5 px-4 text-right align-middle tabular-nums">
         <span className="font-mono text-sm tabular-nums text-gray-300">{mod.serverCount}</span>
       </td>
 
-      <td className="hidden md:table-cell py-3 md:py-2.5 px-4 text-right align-middle">
+      <td className="hidden md:table-cell w-[5rem] py-3 md:py-2.5 px-4 text-right align-middle tabular-nums">
         <span className="font-mono text-xs tabular-nums text-gray-400">
           {formatBytes(mod.sizeBytes)}
         </span>
       </td>
 
-      <td className="hidden md:table-cell py-3 md:py-2.5 pl-4 pr-4 align-middle">
+      <td className="hidden md:table-cell w-[7.5rem] py-3 md:py-2.5 pl-4 pr-4 align-middle">
         <div className="flex items-center justify-end gap-3">
           <span className="font-mono text-xs tabular-nums text-tactical-orange/80">
             {share.toFixed(1)}%
@@ -122,7 +122,7 @@ export function ModRow({
       </td>
 
       {isLeaderboard && (
-        <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
+        <td className="w-[11rem] py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
           <div className={`inline-flex items-center justify-end ${TOUCH_TARGET_GAP}`}>
             {onToggleFavorite && (
               <FavoriteModButton

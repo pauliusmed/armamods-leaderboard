@@ -9,7 +9,7 @@ import { StatsHero } from './ui/StatsHero';
 import { ModListSkeleton } from './ui/ModListSkeleton';
 import { DonationCard } from './DonationCard';
 import { Pagination } from './ui/Pagination';
-import { SortableTh } from './ui/SortableTh';
+import { ModLeaderboardHead, MOD_LEADERBOARD_COL_COUNT } from './ui/ModLeaderboardHead';
 import { ListFilterBar } from './ui/ListFilterBar';
 import type { GameType } from '../api/client';
 import type { ModSortBy } from '../hooks/useMods';
@@ -125,20 +125,30 @@ export function ModList({ game = 'reforger' }: ModListProps) {
       ) : filteredMods.length === 0 && pinnedMods.length === 0 ? (
         <StatusState type="empty" message="No matches found" details="No mods match your current filter settings. Try resetting them." onAction={resetFilters} actionText="Clear Filters" />
       ) : (
-        <div className="space-y-4">
-          {showFavoritesPin && (pinnedMods.length > 0 || loadingPinned) && (
-            <div className="border border-tactical-orange/25 bg-tactical-orange/[0.03]">
-              <div className="px-4 py-2.5 border-b border-tactical-orange/20">
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange">
-                  ★ Favorites · pinned to top
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <tbody>
+        <div
+          className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}
+          aria-busy={loading}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed border-collapse">
+              <ModLeaderboardHead sortBy={sortBy} sortDir={sortDir} onSort={toggleSort} />
+              <tbody>
+                {showFavoritesPin && (pinnedMods.length > 0 || loadingPinned) && (
+                  <>
+                    <tr className="border-b border-tactical-orange/20 bg-tactical-orange/[0.03]">
+                      <td
+                        colSpan={MOD_LEADERBOARD_COL_COUNT}
+                        className="px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange"
+                      >
+                        ★ Favorites · pinned to top
+                      </td>
+                    </tr>
                     {loadingPinned && pinnedMods.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                        <td
+                          colSpan={MOD_LEADERBOARD_COL_COUNT}
+                          className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse"
+                        >
                           Loading favorites…
                         </td>
                       </tr>
@@ -156,86 +166,8 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                         />
                       ))
                     )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-        <div
-          className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}
-          aria-busy={loading}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <SortableTh
-                    label="Rank"
-                    sortKey="overall"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    className="pl-4 pr-2"
-                  />
-                  <SortableTh
-                    label="Module"
-                    sortKey="name"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    className="pr-4"
-                  />
-                  <SortableTh
-                    label="Author"
-                    sortKey="author"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    className="hidden md:table-cell px-3"
-                  />
-                  <SortableTh
-                    label="Personnel"
-                    sortKey="players"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    align="right"
-                    className="px-4"
-                  />
-                  <SortableTh
-                    label="Deploy"
-                    sortKey="servers"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    align="right"
-                    className="hidden md:table-cell px-4"
-                  />
-                  <SortableTh
-                    label="Size"
-                    sortKey="size"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    align="right"
-                    className="hidden md:table-cell px-4"
-                  />
-                  <SortableTh
-                    label="Share"
-                    sortKey="share"
-                    activeSort={sortBy}
-                    sortDir={sortDir}
-                    onSort={(key) => toggleSort(key as ModSortBy)}
-                    align="right"
-                    className="hidden md:table-cell pl-4 pr-4"
-                  />
-                  <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </>
+                )}
                 {listMods.map((mod, index) => (
                   <ModRow
                     key={mod.id}
@@ -261,7 +193,6 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               />
             </div>
           )}
-        </div>
         </div>
       )}
 

@@ -50,6 +50,10 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **`useServerFavorites`** — iki 20 serverių per žaidimą; pinned blokas `/servers` (1 puslapis, default filtrai).
 - Bendras **`FavoriteStarButton`** mod ir server ★ mygtukams.
 
+### 🎨 Mod leaderboard column alignment
+- Viena lentelė favorites + sąrašui (`ModLeaderboardHead`); `table-fixed` ir sutampantys `th`/`td` plotiai.
+- Share header `mirrorBar` — lygiuojasi su % ir progress bar.
+
 ## [1.21.0] - 2026-07-09
 
 ### 📋 Server config copy (one-click `game.mods[]`)

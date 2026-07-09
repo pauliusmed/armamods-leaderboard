@@ -7,6 +7,8 @@ interface SortableThProps {
   sortDir: SortDir;
   onSort: (key: string) => void;
   align?: 'left' | 'right';
+  /** Match Share row layout (label over %, spacer over progress bar). */
+  mirrorBar?: boolean;
   className?: string;
 }
 
@@ -17,6 +19,7 @@ export function SortableTh({
   sortDir,
   onSort,
   align = 'left',
+  mirrorBar = false,
   className = '',
 }: SortableThProps) {
   const active = activeSort === sortKey;
@@ -26,19 +29,22 @@ export function SortableTh({
     <th
       scope="col"
       aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
-      className={`${align === 'right' ? 'text-right' : 'text-left'} ${className}`}
+      className={className}
     >
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`w-full py-3 text-[11px] font-black uppercase tracking-[0.1em] transition-colors ${
-          align === 'right' ? 'text-right' : 'text-left'
+        className={`flex items-center gap-3 py-3 text-[11px] font-black uppercase tracking-widest transition-colors ${
+          align === 'right' ? 'ml-auto' : ''
         } ${active ? 'text-tactical-orange' : 'text-gray-600 hover:text-gray-400'}`}
       >
-        {label}
-        <span className="font-mono" aria-hidden>
-          {arrow}
+        <span>
+          {label}
+          <span className="font-mono" aria-hidden>
+            {arrow}
+          </span>
         </span>
+        {mirrorBar && <span className="w-16 shrink-0" aria-hidden />}
       </button>
     </th>
   );
