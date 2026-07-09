@@ -12,7 +12,7 @@
     "trending": "tsx scripts/collector.ts trending",
     "trending:arma3": "tsx scripts/collector.ts trending --game=arma3",
     "trending:push": "tsx scripts/collector.ts trending",
-    "test": "tsx --test test/utils.test.ts test/audit-config.test.ts test/history-query.test.ts test/share-meta.test.ts test/search-match.test.ts test/workshop.test.ts test/workshop-meta.test.ts test/mod-config.test.ts test/scenario-ranking.test.ts test/storage-calc.test.ts test/server-storage-similarity.test.ts test/server-set-analysis.test.ts test/server-modpack.test.ts test/mod-list-filters.test.ts test/server-lookup.test.ts"
+    "test": "tsx --test test/utils.test.ts test/audit-config.test.ts test/history-query.test.ts test/share-meta.test.ts test/search-match.test.ts test/workshop.test.ts test/workshop-meta.test.ts test/mod-config.test.ts test/scenario-ranking.test.ts test/storage-calc.test.ts test/server-storage-similarity.test.ts test/server-set-analysis.test.ts test/server-modpack.test.ts test/mod-list-filters.test.ts test/server-lookup.test.ts test/reverse-deps.test.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -30,6 +30,7 @@ import {
 } from '../lib/share-meta';
 import { authorCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
 import { findServerById, ServerLookup } from '../lib/server-lookup';
+import { findReverseDependentsOnServer } from '../lib/reverse-deps';
 import { analyzeStoragePlan } from '../lib/storage-calc';
 import { buildServerStoragePack } from '../lib/storage-service';
 import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from '../lib/search-match';
@@ -1021,6 +1022,53 @@ app.get('/servers/ranking', async (c) => {
   response.headers.set('Cache-Control', 'public, max-age=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
+});
+
+// Reverse workshop dependency lookup — must be before /servers/:serverId
+app.get('/servers/:serverId/reverse-deps/:targetModId', async (c) => {
+  const serverId = c.req.param('serverId');
+  const targetModId = c.req.param('targetModId');
+  const game = getGameFromQuery(c) as ShareGame;
+
+  if (game === 'arma3') {
+    return c.json({
+      error: 'Workshop dependency lookup is Reforger-only',
+    }, 501);
+  }
+
+  const server = await findServerById(c.env.TRENDING_KV, game, serverId);
+  if (!server) return c.json({ error: 'Server not found' }, 404);
+
+  const mods = Array.isArray(server.mods)
+    ? (server.mods as Array<{ id: string; name: string }>)
+    : [];
+
+  try {
+    const analysis = await findReverseDependentsOnServer(
+      c.env.TRENDING_KV,
+      game,
+      mods,
+      targetModId
+    );
+
+    const response = c.json({
+      data: analysis,
+      meta: {
+        serverId,
+        serverName: server.name,
+        disclaimer:
+          'Workshop-declared dependencies only — not co-deploy stats. Uncached mods may appear after first workshop scrape.',
+      },
+    });
+    response.headers.set('Cache-Control', 'public, max-age=900');
+    return response;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Analysis failed';
+    if (message.includes('not on server')) {
+      return c.json({ error: 'Target mod is not installed on this server' }, 400);
+    }
+    return c.json({ error: message }, 500);
+  }
 });
 
 // Server modpack storage breakdown — must be before /servers/:serverId

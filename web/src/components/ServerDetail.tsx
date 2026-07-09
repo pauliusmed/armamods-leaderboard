@@ -359,16 +359,24 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       />
 
       {game === 'reforger' && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 px-1">
           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest max-w-2xl">
             Console player? Use Storage Planner to compare this server with others and see what fits your free space.
           </p>
-          <Link
-            to={`/storage-planner?main=${encodeURIComponent(server.id)}`}
-            className="shrink-0 px-5 py-3 border border-tactical-orange/40 text-tactical-orange text-[10px] font-black uppercase tracking-[0.2em] hover:bg-tactical-orange hover:text-black transition-colors text-center"
-          >
-            Open Storage Planner →
-          </Link>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to={`/dependency-blockers?server=${encodeURIComponent(server.id)}`}
+              className="px-5 py-3 border border-white/10 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] hover:border-tactical-orange hover:text-tactical-orange transition-colors text-center"
+            >
+              Dependency Blockers →
+            </Link>
+            <Link
+              to={`/storage-planner?main=${encodeURIComponent(server.id)}`}
+              className="px-5 py-3 border border-tactical-orange/40 text-tactical-orange text-[10px] font-black uppercase tracking-[0.2em] hover:bg-tactical-orange hover:text-black transition-colors text-center"
+            >
+              Open Storage Planner →
+            </Link>
+          </div>
         </div>
       )}
 

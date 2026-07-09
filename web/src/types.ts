@@ -223,3 +223,17 @@ export interface StoragePlanResponse {
     disclaimer: string;
   };
 }
+
+export interface ReverseDepHit {
+  id: string;
+  name: string;
+  dependencies: ModDependency[];
+}
+
+export interface ReverseDepsAnalysis {
+  target: { id: string; name: string };
+  dependents: ReverseDepHit[];
+  uncachedModIds: string[];
+  serverModCount: number;
+  scannedCount: number;
+}

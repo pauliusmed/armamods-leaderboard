@@ -253,6 +253,19 @@ export const serversApi = {
       return response.data;
     }, 300000);
   },
+
+  getReverseDeps: async (serverId: string, targetModId: string, game: GameType = 'reforger') => {
+    const key = `reverse-deps:${game}:${serverId}:${targetModId.toUpperCase()}`;
+    return getCached(key, async () => {
+      const response = await api.get<{
+        data: import('../types').ReverseDepsAnalysis;
+        meta: { serverId: string; serverName: string; disclaimer: string };
+      }>(`servers/${serverId}/reverse-deps/${encodeURIComponent(targetModId)}`, {
+        params: { game },
+      });
+      return response.data;
+    }, 900000);
+  },
 };
 
 export const scenariosApi = {

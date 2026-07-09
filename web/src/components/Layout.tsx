@@ -29,6 +29,7 @@ export function Layout({ children }: LayoutProps) {
   const toolsActive =
     (!isArma3 &&
       (isActive('/audit') ||
+        isActive('/dependency-blockers') ||
         isActive('/storage-planner') ||
         isActive('/arma-reforger-console-mod-storage'))) ||
     isActive(`${gp}/hosting`);
@@ -97,6 +98,15 @@ export function Layout({ children }: LayoutProps) {
                   >
                     <div className={`w-1 h-4 ${isActive('/audit') ? 'bg-tactical-orange' : 'bg-transparent'}`} />
                     <span className="text-[10px] font-black uppercase tracking-widest">Config Audit</span>
+                  </Link>
+                )}
+                {!isArma3 && (
+                  <Link
+                    to="/dependency-blockers"
+                    className={`flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-colors ${isActive('/dependency-blockers') ? 'text-tactical-orange' : 'text-gray-400'}`}
+                  >
+                    <div className={`w-1 h-4 ${isActive('/dependency-blockers') ? 'bg-tactical-orange' : 'bg-transparent'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Dependency Blockers</span>
                   </Link>
                 )}
                 {!isArma3 && (
@@ -265,6 +275,17 @@ export function Layout({ children }: LayoutProps) {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     [ 🔍 Config Audit ]
+                  </Link>
+                )}
+                {!isArma3 && (
+                  <Link
+                    to="/dependency-blockers"
+                    className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
+                      isActive('/dependency-blockers') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    [ 🔗 Dependency Blockers ]
                   </Link>
                 )}
                 {!isArma3 && (
