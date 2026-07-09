@@ -33,6 +33,9 @@ export interface Mod {
 
 export type WorkshopAvailability = 'available' | 'unavailable' | 'unknown';
 
+/** BattleMetrics attributes.status */
+export type BmServerStatus = 'online' | 'offline' | 'dead' | 'removed' | 'invalid' | 'unknown';
+
 export interface WorkshopStatus {
   status: WorkshopAvailability;
   checkedAt: string | null;
@@ -72,6 +75,8 @@ export interface Server {
   port: number | null;
   players: number;
   maxPlayers: number;
+  /** BattleMetrics attributes.status (online / offline / dead / …). */
+  bmStatus?: BmServerStatus | null;
   /** Active scenario/mission from BattleMetrics (Reforger scenarioName or Arma 3 map·mission). */
   scenarioName?: string | null;
   sqePoints?: number;

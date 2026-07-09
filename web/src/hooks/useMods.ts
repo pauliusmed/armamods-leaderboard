@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { modsApi, type GameType } from '../api/client';
 import type { Mod } from '../types';
 
@@ -12,13 +13,19 @@ interface UseModsOptions {
 
 export function useMods(options: UseModsOptions = {}) {
   const { game = 'reforger' } = options;
+  const [searchParams] = useSearchParams();
+  const qFromUrl = searchParams.get('q') ?? '';
   const [mods, setMods] = useState<Mod[]>([]);
   const [totalMods, setTotalMods] = useState(0);
   const [globalStats, setGlobalStats] = useState({ totalPlayers: 0, totalServers: 0, totalMods: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(qFromUrl);
+
+  useEffect(() => {
+    setSearchQuery(qFromUrl);
+  }, [qFromUrl]);
   const [playerFilter, setPlayerFilter] = useState<PlayerFilter>('all');
   const [sortBy, setSortBy] = useState<ModSortBy>('overall');
   const [sortDir, setSortDir] = useState<SortDir>('asc');

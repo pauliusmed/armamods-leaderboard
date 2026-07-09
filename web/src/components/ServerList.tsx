@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useServers, type ConsoleFitFilter } from '../hooks/useServers';
+import { useServers, type ConsoleFitFilter, type BmStatusFilter } from '../hooks/useServers';
 import { ServerRow } from './ServerRow';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
@@ -10,6 +10,7 @@ import { ListFilterBar } from './ui/ListFilterBar';
 import type { GameType } from '../api/client';
 import type { ServerSortBy } from '../hooks/useServers';
 import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/modListFilters';
+import { BM_STATUS_FILTER_OPTIONS } from '../lib/serverStatus';
 
 interface ServerListProps {
   game?: GameType;
@@ -29,6 +30,8 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     toggleSort,
     consoleFilter,
     setConsoleFilter,
+    bmStatusFilter,
+    setBmStatusFilter,
     consoleLimitGb,
     consoleLimitBytes,
     currentPage,
@@ -95,6 +98,14 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
             options: SERVER_LIST_SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
             ariaLabel: 'Sort servers by',
           },
+          {
+            id: 'status',
+            label: '// STATUS',
+            value: bmStatusFilter,
+            onChange: (v: string) => setBmStatusFilter(v as BmStatusFilter),
+            options: BM_STATUS_FILTER_OPTIONS,
+            ariaLabel: 'Filter servers by BattleMetrics status',
+          },
           ...(game === 'reforger'
             ? [
                 {
@@ -109,7 +120,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
             : []),
         ]}
         onReset={resetFilters}
-        columns={game === 'reforger' ? 3 : 2}
+        columns={game === 'reforger' ? 4 : 3}
         footer={
           game === 'reforger' ? (
             <>

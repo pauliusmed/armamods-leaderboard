@@ -16,6 +16,7 @@
 import 'dotenv/config';
 import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
+import { normalizeBmServerStatus } from '../web/functions/lib/server-status.js';
 import {
   fetchReforgerWorkshopHtml,
   cacheReforgerFieldsFromWorkshopHtml,
@@ -422,6 +423,7 @@ interface ServerMod {
       players: attributes.players,
       maxPlayers: attributes.maxPlayers,
       scenarioName: extractScenarioName(attributes, game),
+      bmStatus: normalizeBmServerStatus(attributes.status),
       mods: [] as any[],
     });
 
@@ -1026,6 +1028,7 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
                   port: null,
                   players: 0,
                   maxPlayers: 0,
+                  bmStatus: 'offline',
                   mods: []
               });
           }

@@ -20,6 +20,7 @@ import {
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
+import { ModAuthorLink } from './ui/ModAuthorLink';
 import { formatBytes } from '../lib/formatBytes';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModWorkshopCopy } from './ui/ModWorkshopCopy';
@@ -211,7 +212,8 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 </h1>
                 {mod.author && (
                   <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                    Workshop author · {mod.author}
+                    Workshop author ·{' '}
+                    <ModAuthorLink author={mod.author} game={game} />
                   </p>
                 )}
                 {(mod.workshopCreated || mod.workshopModified) && (

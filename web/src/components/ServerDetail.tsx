@@ -8,6 +8,7 @@ import { AffiliateBanner } from './ui/AffiliateBanner';
 import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
 import { TierBadge } from './ui/TierBadge';
+import { ServerStatusBadge } from './ui/ServerStatusBadge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
@@ -266,6 +267,14 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <h1 className="text-6xl font-black text-white uppercase tracking-tighter leading-none">
               {server.name}
             </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <ServerStatusBadge status={server.bmStatus} size="md" />
+              {server.bmStatus && server.bmStatus !== 'online' && (
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                  Last seen via BattleMetrics scan
+                </span>
+              )}
+            </div>
             <p className="text-xl font-mono text-gray-500 font-bold uppercase tracking-widest">
               {server.ip}:{server.port}
             </p>

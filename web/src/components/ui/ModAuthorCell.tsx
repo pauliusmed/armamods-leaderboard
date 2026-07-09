@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { GameType } from '../../api/client';
 import { modsApi } from '../../api/client';
+import { ModAuthorLink } from './ModAuthorLink';
 
 interface ModAuthorCellProps {
   modId: string;
@@ -52,11 +53,10 @@ export function ModAuthorCell({ modId, game = 'reforger', className = '' }: ModA
   }
 
   return (
-    <span
-      className={`text-xs font-bold text-gray-400 line-clamp-1 ${className}`}
-      title={author}
-    >
-      {author}
-    </span>
+    <ModAuthorLink
+      author={author}
+      game={game}
+      className={`text-xs font-bold text-gray-400 line-clamp-1 block ${className}`}
+    />
   );
 }

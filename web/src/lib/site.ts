@@ -17,3 +17,11 @@ export function modPreviewImageUrl(modId: string, game: 'reforger' | 'arma3' = '
 export function serverPreviewImageUrl(serverId: string, game: 'reforger' | 'arma3' = 'reforger'): string {
   return `${SITE_ORIGIN}/api/og/preview/server/${encodeURIComponent(serverId)}?game=${game}`;
 }
+
+/** Leaderboard path with optional search (name, id, or workshop author). */
+export function modListHref(game: 'reforger' | 'arma3' = 'reforger', search?: string): string {
+  const base = game === 'arma3' ? '/arma3' : '/';
+  const q = search?.trim();
+  if (!q) return base;
+  return `${base}?q=${encodeURIComponent(q)}`;
+}

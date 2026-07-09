@@ -7,7 +7,7 @@ interface BattleMetricsServer {
     port: number;
     players: number;
     maxPlayers: number;
-    status: string;
+    status: 'online' | 'offline' | 'dead' | 'removed' | 'invalid' | string;
     details?: {
       map?: string;
       mission?: string;
