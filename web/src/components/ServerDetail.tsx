@@ -25,6 +25,7 @@ import {
   sortServerMods,
 } from '../lib/modListFilters';
 import { ListFilterBar } from './ui/ListFilterBar';
+import { CopyServerModsButton } from './ui/CopyServerModsButton';
 import { ModRow } from './ModRow';
 import { toModRow } from './ui/ModDataTable';
 
@@ -570,9 +571,14 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
       <section className="space-y-8">
         <div className="border-b border-white/5 pb-6 space-y-6">
-          <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-            Installed Mod Stack
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+              Installed Mod Stack
+            </h2>
+            {game === 'reforger' && (
+              <CopyServerModsButton mods={server.mods ?? []} />
+            )}
+          </div>
 
           <ListFilterBar
             sticky={false}

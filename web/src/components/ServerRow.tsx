@@ -3,6 +3,7 @@ import type { Server } from '../types';
 import { TierBadge } from './ui/TierBadge';
 import { ConsoleFitBadge } from './ui/ConsoleFitBadge';
 import { ServerStatusBadge } from './ui/ServerStatusBadge';
+import { CopyServerModsButton } from './ui/CopyServerModsButton';
 import { formatBytes } from '../lib/formatBytes';
 import { serverModpackBytes } from '../lib/serverModpack';
 
@@ -92,8 +93,13 @@ export function ServerRow({
         {isVanilla ? (
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vanilla</span>
         ) : (
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="font-mono text-sm tabular-nums text-gray-300">{modCount}</span>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm tabular-nums text-gray-300">{modCount}</span>
+              {game === 'reforger' && (
+                <CopyServerModsButton mods={server.mods ?? []} size="sm" />
+              )}
+            </div>
             <span
               className="lg:hidden font-mono text-[9px] tabular-nums text-tactical-orange/90"
               title={

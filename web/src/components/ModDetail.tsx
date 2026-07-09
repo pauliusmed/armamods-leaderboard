@@ -5,7 +5,6 @@ import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { AffiliateBanner } from './ui/AffiliateBanner';
 import { Card, CardContent } from './ui/Card';
-import { StatsHero } from './ui/StatsHero';
 import {
   LineChart,
   Line,
@@ -279,19 +278,29 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             />
           </div>
 
-          <StatsHero
-            stats={[
-              { label: 'Total Personnel', value: mod.stats?.totalPlayers || mod.totalPlayers || 0 },
-              { label: 'Deployed Servers', value: mod.stats?.serverCount || mod.serverCount || 0 },
-              ...(game === 'reforger'
-                ? [{ label: 'Download Size', value: formatBytes(mod.sizeBytes) }]
-                : []),
-              { label: 'Marketshare', value: `${(mod.stats?.marketShare || 0).toFixed(1)}%` },
-              { label: 'Overall Rank', value: `#${mod.stats?.overallRank || '-'}` },
-            ]}
-            title="Tactical Analytics"
-            subtitle="Real-time module performance tracking across global network"
-          />
+          <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 py-3 border-b border-white/5">
+            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 w-full sm:w-auto">
+              Live stats
+            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-mono text-lg font-black text-white tabular-nums">
+                {(mod.stats?.totalPlayers || mod.totalPlayers || 0).toLocaleString()}
+              </span>
+              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Personnel</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-mono text-lg font-black text-white tabular-nums">
+                {mod.stats?.serverCount || mod.serverCount || 0}
+              </span>
+              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Servers</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-mono text-lg font-black text-tactical-orange tabular-nums">
+                {(mod.stats?.marketShare || 0).toFixed(1)}%
+              </span>
+              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Share</span>
+            </div>
+          </div>
 
           {/* Affiliate Section */}
           <AffiliateBanner />
@@ -598,7 +607,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         </div>
 
         {/* Desktop sticky right rail: owner tools always one click away. */}
-        <aside className="hidden lg:block w-72 xl:w-80 shrink-0">
+        <aside className="hidden lg:block w-64 xl:w-72 shrink-0">
           <div className="sticky top-24 w-full">
             <ModConfigPanel
               modId={mod.id}
