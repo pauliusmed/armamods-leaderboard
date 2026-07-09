@@ -193,16 +193,13 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       />
 
       {/*
-        Desktop: main content on the left, owner-tools panel as a sticky right
-        rail so Copy/Workshop stay reachable while scrolling the long page.
-        Mobile (<lg): the panel renders inline below the header instead, so the
-        mod identity (title/rank/gallery) stays above the fold.
+        Full-width page body. Config panel sits in the hero header on desktop
+        (not a side column) so charts, workshop copy, and tables use 100% width.
       */}
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 min-w-0 max-w-full">
-        <div className="flex-1 min-w-0 space-y-12">
+      <div className="w-full min-w-0 space-y-12">
           <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div className="space-y-3 min-w-0">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+              <div className="space-y-3 min-w-0 flex-1">
                 <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
                   // MODULE_IDENTIFIER: {mod.id}
                 </span>
@@ -239,19 +236,29 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   </p>
                 )}
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 shrink-0 self-start">
-                {game === 'reforger' && (
-                  <div className="px-6 py-4 bg-zinc-900 border border-white/10 text-center min-w-[120px]">
-                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
-                    <p className="text-xl font-black font-mono text-tactical-orange tabular-nums">
-                      {formatBytes(mod.sizeBytes)}
-                    </p>
-                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1">Workshop ver.</p>
+              <div className="flex flex-col gap-3 shrink-0 self-start w-full sm:w-auto lg:w-64 xl:w-72">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {game === 'reforger' && (
+                    <div className="px-6 py-4 bg-zinc-900 border border-white/10 text-center min-w-[120px]">
+                      <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
+                      <p className="text-xl font-black font-mono text-tactical-orange tabular-nums">
+                        {formatBytes(mod.sizeBytes)}
+                      </p>
+                      <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1">Workshop ver.</p>
+                    </div>
+                  )}
+                  <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center">
+                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                    <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
                   </div>
-                )}
-                <div className="px-8 py-4 bg-zinc-900 border border-white/10 text-center">
-                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-                  <p className="text-3xl font-black text-white">#{mod.stats?.overallRank || mod.overallRank || '-'}</p>
+                </div>
+                <div className="hidden lg:block">
+                  <ModConfigPanel
+                    modId={mod.id}
+                    modName={mod.name}
+                    game={game}
+                    workshopStatus={mod.workshopStatus}
+                  />
                 </div>
               </div>
             </div>
@@ -267,8 +274,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             )}
           </header>
 
-          {/* Mobile: owner-tools panel inline, high up under the gallery.
-              Hidden on desktop where the sticky right rail renders instead. */}
+          {/* Mobile: config panel below gallery — desktop panel is in the header column. */}
           <div className="lg:hidden w-full">
             <ModConfigPanel
               modId={mod.id}
@@ -604,19 +610,6 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               </ServerDataTable>
             )}
           </section>
-        </div>
-
-        {/* Desktop sticky right rail: owner tools always one click away. */}
-        <aside className="hidden lg:block w-64 xl:w-72 shrink-0">
-          <div className="sticky top-24 w-full">
-            <ModConfigPanel
-              modId={mod.id}
-              modName={mod.name}
-              game={game}
-              workshopStatus={mod.workshopStatus}
-            />
-          </div>
-        </aside>
       </div>
     </div>
   );
