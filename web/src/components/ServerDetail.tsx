@@ -677,7 +677,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       Share
                     </th>
                     <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Workshop
+                      Actions
                     </th>
                   </tr>
                 </thead>
