@@ -35,7 +35,7 @@ A production-grade, highly-optimized data aggregation and visualization platform
 
 ### 5. Workshop Metadata Supplement (not BattleMetrics)
 * **Problem**: BattleMetrics has no mod thumbnails or declared dependencies; the official workshop has no live player telemetry.
-* **Solution**: On-demand Reforger workshop scrape in Edge Workers — one HTML fetch caches thumbnail CDN URL + dependency list in KV (7d). UI loads images directly from Bohemia CDN via `/api/mods/:id/thumbnail` JSON (no redirect hop per `<img>`).
+* **Solution**: On-demand Reforger workshop scrape in Edge Workers — one HTML fetch caches thumbnail CDN URL + dependency list in KV (7d). List pages embed cached `author` / `thumbnail` / `workshopStatus` in `GET /api/mods`; row images use a resized `/thumbnail/img?w=` proxy with lazy viewport loading.
 * **Result**: Workshop recognition + install requirements without duplicating the catalog or storing image files. See [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md).
 
 ### 6. Scenario Leaderboard (Mission Popularity)

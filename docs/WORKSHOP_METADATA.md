@@ -27,7 +27,7 @@ Early UI used `<img src="/api/og/preview/mod/:id">`. Each image request:
 
 On a list page with many mods this meant many Worker round-trips. The first request per mod could also trigger a **full workshop HTML scrape** to extract `og:image`.
 
-### Solution (v2)
+### Solution (v2 — superseded for list rows)
 
 ```
 ModThumbnail (React)
@@ -35,6 +35,19 @@ ModThumbnail (React)
     → Client memory cache (7 days, deduped in-flight)
     → <img src="https://ar-gcp-cdn.bistudio.com/...">  (direct CDN, no redirect hop)
 ```
+
+v2 removed the redirect hop but still issued **one JSON request per visible row** and loaded **full-resolution** CDN images (~1280×1280 for 32×32 display).
+
+### Solution (v3 — current)
+
+```
+GET /api/mods?limit=&offset=   → page slice includes author, thumbnail URL, workshopStatus (KV only)
+ModThumbnail (list)
+    → <img src="/api/mods/:id/thumbnail/img?w=64">  (resized proxy, edge-cached 7d)
+    → IntersectionObserver — image fetch only when row nears viewport
+```
+
+**Detail / OG** still use full URL or `/api/og/preview/mod/:id` (302) where quality matters.
 
 **We store the CDN URL in KV, not the image bytes.** This avoids R2 storage, copyright re-hosting, and extra bandwidth on our origin.
 
@@ -44,6 +57,7 @@ ModThumbnail (React)
 |-------|-----------|----------|
 | KV | `cache:og-image:{game}:{MODID}` · 7 days | Bohemia/Steam CDN URL string |
 | Edge Cache API | `armamods:mod_thumbnails` · `max-age=86400` | JSON thumbnail response |
+| Edge Cache API | `armamods:mod_thumbnails_img` · `max-age=604800` | Resized image bytes (when CF Image Resizing available) |
 | Browser (`modsApi.getThumbnailUrl`) | in-memory · 7 days | Resolved CDN URL |
 | CF fetch (scrape) | `cacheEverything` · 24h | Workshop HTML (during scrape only) |
 
@@ -109,7 +123,9 @@ Co-deploy is computed in the collector (`scripts/collector.ts`) with **zero extr
 
 | Method | Path | Response | Use |
 |--------|------|----------|-----|
-| GET | `/mods/:id/thumbnail` | `{ data: { url } }` | UI `ModThumbnail` (direct CDN) |
+| GET | `/mods` (page slice) | `author`, `thumbnail`, `workshopStatus` on each mod | List rows — no per-row metadata API |
+| GET | `/mods/:id/thumbnail` | `{ data: { url } }` | Detail / legacy client path |
+| GET | `/mods/:id/thumbnail/img?w=` | Image bytes or 302 | List `ModThumbnail` (resized) |
 | GET | `/mods/:id/dependencies` | `{ data: ModDependency[] }` | Mod detail dependency table |
 | GET | `/mods/:id/size` | `{ data: { sizeBytes } }` | Mod detail + Storage Planner |
 | GET | `/mods/:id/workshop-status` | `{ data: { status, checkedAt } }` | UI badge — available / unavailable / unknown |
@@ -126,9 +142,12 @@ All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnai
 | `web/functions/lib/workshop-fetch.ts` | Scrape, parse, KV cache, `ensureReforgerWorkshopMetadata` |
 | `web/functions/lib/workshop-meta.ts` | Re-exports for tests / backward imports |
 | `web/functions/lib/share-meta.ts` | OG share HTML; `resolveModPreviewImage` → workshop-fetch |
-| `web/src/components/ui/ModThumbnail.tsx` | Client: JSON URL → direct `<img>` |
+| `web/functions/api/[[path]].ts` | `attachCachedListFields()` — embed list metadata from KV |
+| `web/src/components/ui/ModThumbnail.tsx` | Lazy `<img>`; list uses `/thumbnail/img?w=` |
+| `web/src/lib/workshop.ts` | `workshopPageUrl()`, `modListThumbnailUrl()` |
+| `web/src/components/ui/CopyModConfigButton.tsx` | One-click `game.mods[]` snippet copy |
+| `web/src/lib/modConfig.ts` | `formatModConfigSnippet()`, server modpack formatter |
 | `web/src/api/client.ts` | `getThumbnailUrl`, `getDependencies` + client caches |
-| `web/src/lib/workshop.ts` | `workshopPageUrl()` outbound links |
 | `test/workshop-meta.test.ts` | Dependency HTML parser tests |
 
 ---
@@ -138,7 +157,11 @@ All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnai
 - **Store image files** in R2/KV (only URL strings) — keeps cost and ToS risk low
 - **Scrape all mods** on each collector run — would hit rate limits and KV write caps
 - **Replace co-deploy with dependencies** — they answer different questions
-- **Batch thumbnail URLs in `/mods` list** — keeps list payload small; thumbnails load lazily per visible row
+- **Store full-size CDN images on list pages** — list uses resized proxy; full URL only on detail/OG
+
+### List metadata embedding (v1.21+)
+
+`GET /api/mods` attaches cached `author`, `thumbnail`, and `workshopStatus` for the **current page slice only** (KV reads, no workshop scrape). This removes ~3×N per-row API calls on leaderboard/trending load while keeping the global mod payload small.
 
 ### When R2 self-hosting might make sense
 
@@ -160,6 +183,7 @@ Mods deleted from Reforger Workshop still appear in BattleMetrics telemetry unti
 - API: `GET /api/mods/:id/workshop-status`
 - Mod detail also includes `workshopStatus` + `workshopStatusCheckedAt`
 - UI: **Nebe Workshop** badge on leaderboard/trending rows; banner on mod detail; Workshop CTA disabled when unavailable
+- List API embeds `workshopStatus` when cached — `useWorkshopStatus` skips fetch when prop is present
 - Shorter TTL on `unavailable` so mods that return to Workshop are re-checked within ~2 days
 
 ---

@@ -22,9 +22,9 @@ UI never talks to BattleMetrics directly.
 
 Documented in [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md):
 
-- **Lazy thumbnails** — `GET /api/mods/:id/thumbnail` per visible row (small list payload).
-- **Lazy workshop status** — `GET /api/mods/:id/workshop-status` per row unless `mod.workshopStatus` already on the object.
-- **On-demand author** — `cache:mod-author:*` filled on scrape/detail, not on every collector run.
+- **List metadata** — `author`, `thumbnail`, `workshopStatus` embedded in `GET /api/mods` page slice (KV only); rows skip per-item API when present.
+- **Lazy thumbnail bytes** — list rows load `/api/mods/:id/thumbnail/img?w=` on viewport (`IntersectionObserver`), not full CDN originals.
+- **On-demand author** — `cache:mod-author:*` filled on scrape/detail; list uses embedded author when cached.
 - **Default mod list** — only **chunk 0** of `cache:mods` (rank view).
 - **Full mod shards** — loaded when search, activity filter, or non-default sort is active ([ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) § Lazy Chunk Loading).
 
@@ -58,6 +58,29 @@ Author-only queries still cost O(mods) KV reads; name/id queries avoid that path
 
 See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 servers bulk, `localStorage` name cache, failed ID handling.
 
+### Mod list — embedded metadata (v1.21+)
+
+`attachCachedListFields()` in `web/functions/api/[[path]].ts`:
+
+- For each mod in the **current page slice**, reads KV for `cache:mod-author`, `cache:og-image`, `cache:workshop-status` (parallel).
+- Response includes `author`, `thumbnail`, `workshopStatus` — **one** `GET /api/mods` replaces ~72 row-level JSON calls (24 rows × 3).
+
+### Thumbnail resize proxy
+
+`GET /api/mods/:id/thumbnail/img?w=64|128|256`:
+
+- Resolves CDN URL from KV, then serves via **Cloudflare Image Resizing** when available.
+- Falls back to **302** to CDN if resizing is unavailable.
+- Edge-cached 7 days; `modListThumbnailUrl()` builds client URLs.
+
+### Route code-splitting
+
+Heavy routes (`ModDetail`, `ServerDetail`, Storage Planner, Audit, Dependency Blockers) are `React.lazy()` in `App.tsx` — smaller initial JS bundle for list pages.
+
+### Browser hints
+
+`index.html` includes `preconnect` to `ar-gcp-cdn.bistudio.com` for faster CDN handshakes on detail/OG paths.
+
 ---
 
 ## Known limitations (not yet fixed)
@@ -66,7 +89,8 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 |------|--------|----------|
 | **Mod list filter/sort** | Any non-default view loads **all** mod shards server-side | Medium |
 | **Server search API** | `?search=` on `/api/servers` loads **all** server shards | Medium |
-| **Leaderboard rows** | Up to ~24× thumbnail + author + workshop-status requests per page (deduped client-side) | Medium |
+| **Thumbnail resize** | Without CF Image Resizing, `/thumbnail/img` 302s to full CDN size | Medium |
+| **Leaderboard rows** | ~24 resized image requests per page (lazy, viewport-gated) — no per-row author/status JSON | Low |
 | **Planner + /servers** | Each page fetch up to 5000 servers (mitigated by 5 min client cache) | Low |
 | **ServerDetail similar** | Similar servers computed from **top 100** list fetch only | Low |
 | **No per-server KV index** | `findServerById` still scans shard text (one load, not O(1) key) | Low |

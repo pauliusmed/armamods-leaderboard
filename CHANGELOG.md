@@ -1,4 +1,48 @@
-- [CHANGELOG.md](../CHANGELOG.md) — release notes (v1.18.0+)
+# Changelog
+
+Release notes nuo v1.18.0. Pilna istorija žemiau.
+
+## [1.21.0] - 2026-07-09
+
+### 📋 Server config copy (one-click `game.mods[]`)
+- **`CopyModConfigButton`** — bendras UI komponentas; kopijuoja paruoštą `config.json` bloką (`modId` + `name`, 12-space indent, trailing comma).
+- **Mod leaderboard** (`/`) — **Actions** stulpelis: **Copy** + **Workshop ↗** kiekvienoje eilutėje (`ModRow`).
+- **Trending** (`/trending`) — tas pats **Copy** ant **Rising**, **Falling** ir **New** lentelių (`TrendRow`).
+- **Server detail** — **Copy mods** kopijuoja visą serverio modpack kaip sujungtus `game.mods[]` blokus (`formatServerModsConfigSnippet`).
+- **Mod detail** — kompaktiškas `ModConfigPanel` hero zonoje (desktop); pilno pločio turinys žemiau (grafikai, lentelės).
+- **Tests**: `test/mod-config.test.ts` — vieno mod'o ir pilno modpack snippet formatavimas.
+
+### 👤 Mod authors & workshop UX
+- **Clickable author** — `ModAuthorLink` mod kortelėse/detail; nuoroda į `/?q=<author>` mod leaderboard'e.
+- **Mod detail hero** — workshop thumbnail šalia pavadinimo; inline `ModWorkshopGallery` (3 stulpelių hero: info | screenshots | stats/config).
+- **Galerija** — slideshow su rodyklėmis/dots kai 2+ shot'ai; 4:3 rėmas landscape; 3+ paveikslėlių atveju grid susitraukia į inline slideshow.
+- **Galerijos lightbox** — paspaudus screenshot atsidaro in-page preview su rodyklėmis (`GalleryLightbox`), ne naujas tab; **Full size ↗** jei reikia originalo.
+- **Active Deployed Servers** mod detail — paginacija **20 per puslapį** (rikiuota pagal žaidėjus).
+
+### 🟢 BattleMetrics server status
+- **Collector** — saugo `bmStatus` iš BattleMetrics `attributes.status` (`online` / `offline`; fadeaway → `offline`).
+- **Server list** — `ServerStatusBadge` + filtras pagal BM statusą (`BM_STATUS_FILTER_OPTIONS`).
+- **Tests**: `test/server-status.test.ts`.
+
+### ⛓️ Dependency Blockers
+- **`/dependency-blockers`** — pasirink serverį + tikslinį modą; rodo reverse dependents, kuriuos reikia pašalinti pirmiau (`findReverseDependentsOnServer`).
+- **UI**: supaprastinti serverio ir mod'o picker'iai.
+
+### ⚡ Performance (PageSpeed / leaderboard)
+- **`GET /api/mods`** — įterpia cached `author`, `thumbnail`, `workshopStatus` dabartiniam page slice (pašalina ~72 per-row API užklausas sąrašo įkėlimui).
+- **`GET /api/mods/:id/thumbnail/img?w=`** — sumažintų thumbnail proxy (Cloudflare Image Resizing kai prieinama; redirect fallback).
+- **`ModThumbnail`** — `IntersectionObserver` lazy load; sąrašo eilutės naudoja resize proxy, ne pilnos CDN rezoliucijos.
+- **`ModAuthorCell` / `useWorkshopStatus`** — praleidžia fetch kai `author` / `workshopStatus` jau ateina iš list API.
+- **Route code-splitting** — `ModDetail`, `ServerDetail`, Storage Planner, Audit ir kt. lazy-loaded (`React.lazy`).
+- **`preconnect`** — `ar-gcp-cdn.bistudio.com` `index.html`.
+
+### ♿ Accessibility
+- **Sortable table headers** — `aria-sort` ant `<th scope="col">`, ne ant vidinio `<button>`.
+- **Workshop links** — per-mod `aria-label` leaderboard/trending eilutėse.
+
+### 📚 Dokumentacija
+- [CHANGELOG.md](CHANGELOG.md), [README.md](README.md), [walkthrough.md](walkthrough.md).
+- [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md), [docs/UI_FILTERS.md](docs/UI_FILTERS.md).
 
 ## [1.20.0] - 2026-07-06
 

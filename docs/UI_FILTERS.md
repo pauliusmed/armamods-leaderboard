@@ -22,7 +22,8 @@ Shared option labels live in `web/src/lib/modListFilters.ts` so server detail an
 | Page | Route | Controls |
 |------|-------|----------|
 | Mod leaderboard | `/`, `/arma3` | Search (name, id, **author** on Reforger) · Activity · Sort · Reset |
-| Server network | `/servers` | Search · Sort · Console fit (Reforger) · Reset |
+| Trending | `/trending` | Rising / Falling / New tables — same filter vocabulary where applicable |
+| Server network | `/servers` | Search · Sort · **BM status** (online/offline) · Console fit (Reforger) · Reset |
 | Scenario leaderboard | `/scenarios` | Search · Sort · Reset |
 | Server detail mod stack | `/server/:id` | Search · Activity · Rank · **Size** (Reforger) · Sort · Reset |
 
@@ -34,6 +35,19 @@ Console-focused filters only on **Installed Mod Stack**:
 - **Sort** — Personnel, Size (largest/smallest), Global Rank, Deploy, Share, Name
 
 Filter logic: `filterServerMods()` + `sortServerMods()` in `modListFilters.ts` (unit-tested in `test/mod-list-filters.test.ts`).
+
+## Row actions (not in filter bar)
+
+Shared **Actions** column on mod list tables (leaderboard + trending):
+
+| Control | Component | Behavior |
+|---------|-----------|----------|
+| **Copy** | `CopyModConfigButton` | Copies `game.mods[]` snippet (`modId` + `name`) to clipboard |
+| **Workshop ↗** | link | Opens Reforger Workshop page (`workshopPageUrl`) |
+
+Server detail header: **Copy mods** — full modpack as chained `game.mods[]` blocks.
+
+Mod detail hero: compact `ModConfigPanel` with the same single-mod copy.
 
 ## Label convention
 

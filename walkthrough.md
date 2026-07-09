@@ -151,8 +151,11 @@ Recharts.
 
 **UI** (`src/lib/workshop.ts`, `src/components/ui/ModThumbnail.tsx`):
 - `workshopPageUrl()` — outbound link to Reforger workshop or Steam (Arma 3).
-- `ModThumbnail` calls `GET /api/mods/:id/thumbnail`, caches the CDN URL client-side (7d), then loads the image **directly from Bohemia CDN** (no per-image 302 through the Worker).
+- `modListThumbnailUrl()` — list rows use `GET /api/mods/:id/thumbnail/img?w=` (resized proxy, `IntersectionObserver` lazy load).
+- `GET /api/mods` page slice includes cached `author`, `thumbnail`, `workshopStatus` — no per-row metadata JSON on leaderboard/trending.
+- Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302).
 - Letter fallback when no workshop preview exists.
+- **`CopyModConfigButton`** — one-click `game.mods[]` snippet on leaderboard, trending, and mod/server detail.
 
 **Edge** (`web/functions/lib/workshop-fetch.ts`):
 - `ensureReforgerWorkshopMetadata()` — **one** workshop HTML fetch fills both `cache:og-image:*` (thumbnail URL) and `cache:mod-deps:*` (dependencies JSON) on cache miss.

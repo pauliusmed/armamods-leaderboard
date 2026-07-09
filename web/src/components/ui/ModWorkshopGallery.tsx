@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { GameType } from '../../api/client';
 import { modsApi } from '../../api/client';
 import type { ModGalleryImage } from '../../types';
+import { GalleryLightbox } from './GalleryLightbox';
 
 function isLandscapeImage(image: ModGalleryImage): boolean {
   return Boolean(image.width && image.height && image.width > image.height);
@@ -32,12 +33,14 @@ export function ModWorkshopGallery({
   const [images, setImages] = useState<ModGalleryImage[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'hidden'>('loading');
   const [active, setActive] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const isInline = variant === 'inline';
 
   useEffect(() => {
     let cancelled = false;
     setImages([]);
     setActive(0);
+    setLightboxOpen(false);
     setStatus('loading');
 
     if (game !== 'reforger') {
@@ -95,6 +98,7 @@ export function ModWorkshopGallery({
   const frameClass = isInline ? 'aspect-[4/3]' : 'aspect-square';
 
   return (
+    <>
     <section
       className={`border border-white/5 bg-zinc-950/50 ${
         isInline ? 'w-full' : 'w-full max-w-md sm:max-w-lg mx-auto'
@@ -103,34 +107,47 @@ export function ModWorkshopGallery({
     >
       <div className={`relative w-full ${frameClass} bg-zinc-950 overflow-hidden`}>
         {images.map((image, index) => (
-          <a
+          <button
             key={image.url}
-            href={image.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`absolute inset-0 transition-opacity duration-300 ${
+            type="button"
+            onClick={() => {
+              setActive(index);
+              setLightboxOpen(true);
+            }}
+            className={`absolute inset-0 transition-opacity duration-300 cursor-zoom-in group ${
               index === active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
-            title={`Open screenshot ${index + 1} of ${images.length}`}
+            title={`View screenshot ${index + 1} of ${images.length}`}
             tabIndex={index === active ? 0 : -1}
+            aria-label={`View screenshot ${index + 1} of ${images.length}`}
           >
             <img
               src={image.url}
               alt=""
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
-              className={`w-full h-full object-center ${
+              draggable={false}
+              className={`w-full h-full object-center pointer-events-none ${
                 isInline && isLandscapeImage(image) ? 'object-cover' : 'object-contain'
               }`}
             />
-          </a>
+            <span
+              className="absolute bottom-2 right-2 z-20 px-2 py-1 bg-black/70 border border-white/10 text-[8px] font-black uppercase tracking-[0.2em] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              aria-hidden
+            >
+              Expand
+            </span>
+          </button>
         ))}
 
         {hasMultiple && (
           <>
             <button
               type="button"
-              onClick={() => go(-1)}
+              onClick={(event) => {
+                event.stopPropagation();
+                go(-1);
+              }}
               className={`absolute left-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors ${navBtn}`}
               aria-label="Previous screenshot"
             >
@@ -138,7 +155,10 @@ export function ModWorkshopGallery({
             </button>
             <button
               type="button"
-              onClick={() => go(1)}
+              onClick={(event) => {
+                event.stopPropagation();
+                go(1);
+              }}
               className={`absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors ${navBtn}`}
               aria-label="Next screenshot"
             >
@@ -170,5 +190,16 @@ export function ModWorkshopGallery({
         </div>
       )}
     </section>
+
+    {lightboxOpen && (
+      <GalleryLightbox
+        images={images}
+        active={active}
+        onActiveChange={setActive}
+        onClose={() => setLightboxOpen(false)}
+        label={label}
+      />
+    )}
+  </>
   );
 }
