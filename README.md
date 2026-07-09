@@ -1,7 +1,10 @@
 # 🛡️ Full-Stack Data Visualization & Edge-Native Leaderboard Platform
 ### High-Performance Mod Tracking, Analytics & Scalable Ranking System for Arma Community
 
-[![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com)
+**🌐 Live site:** [reforgermods.com](https://reforgermods.com/)
+
+[![Live Site](https://img.shields.io/badge/Live-reforgermods.com-blue.svg)](https://reforgermods.com/)
+[![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com/)
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-100_(desktop)_%7C_98_(mobile)-brightgreen.svg)](docs/LIGHTHOUSE.md)
 [![Lighthouse SEO](https://img.shields.io/badge/Lighthouse_SEO-100-brightgreen.svg)](docs/LIGHTHOUSE.md)
 [![System Type](https://img.shields.io/badge/System-Distributed_Caching-blue.svg)]()
@@ -184,7 +187,7 @@ npm test
 ```
 *Tested areas: `findMatchingBrace` surgical logic, `mod-lookup` co-deploy false-positive guard, EMA ranking decay, SQE bonus clamping, scenario aggregation (`buildScenarioRanking`), storage planner math, server uptime history (`server-uptime-history`), audit-config, history-query, share-meta, search-match.*
 
-**Docs:** [walkthrough.md](walkthrough.md) (system overview) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (PageSpeed scores) · [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) (index) · [CHANGELOG.md](CHANGELOG.md) (release notes through **v1.22.2**).
+**Docs:** [walkthrough.md](walkthrough.md) (system overview) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (PageSpeed scores) · [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) (index) · [CHANGELOG.md](CHANGELOG.md) (release notes through **v1.22.3**).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 

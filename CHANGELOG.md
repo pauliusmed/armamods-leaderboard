@@ -2,6 +2,11 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.3] - 2026-07-10
+
+### 📚 README
+- **Live site** nuoroda ir badge viršuje → [https://reforgermods.com/](https://reforgermods.com/)
+
 ## [1.22.2] - 2026-07-10
 
 ### 📚 Dokumentacija (pilnas sync + Lighthouse)
