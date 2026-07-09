@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.2] - 2026-07-10
+
+### 📚 Dokumentacija (pilnas sync + Lighthouse)
+- **`docs/LIGHTHOUSE.md`** — production PageSpeed rezultatai (`reforgermods.com/` mod leaderboard): desktop **100** / mobile **98** Performance; baseline prieš v1.21 (70 / 84); Core Web Vitals, PSI perleidimo komandos.
+- **README** — Lighthouse badge'ai, Performance lentelė, nuorodos į `docs/LIGHTHOUSE.md`.
+- **`docs/README.md`** — dokumentacijos indeksas (naujas).
+- **walkthrough**, **UI_FILTERS**, **PERFORMANCE**, **ARCHITECTURE_DECISION**, **web/README** — atnaujinta pagal v1.22.0–v1.22.1 (favorites, uptime, cron 2h, mod-lookup, server favorites).
+- **CONTRIBUTING** — testų lentelė, privalomas CHANGELOG/docs workflow.
+- **`.cursor/rules/changelog-and-docs.mdc`** — agento taisyklė: visada atnaujinti CHANGELOG ir susijusią dokumentaciją.
+
 ## [1.22.0] - 2026-07-09
 
 ### ⭐ Mod favorites (localStorage)
@@ -94,7 +104,7 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ### 📚 Dokumentacija
 - [CHANGELOG.md](CHANGELOG.md), [README.md](README.md), [walkthrough.md](walkthrough.md).
-- [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md), [docs/UI_FILTERS.md](docs/UI_FILTERS.md).
+- [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md), [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md), [docs/UI_FILTERS.md](docs/UI_FILTERS.md).
 
 ## [1.20.0] - 2026-07-06
 

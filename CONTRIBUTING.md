@@ -10,10 +10,34 @@ Thank you for your interest in improving the project! This document provides gui
    - Web: `cd web && npm install`
 3. **Run Linting**: Ensure your code passes TypeScript checks with `npx tsc --noEmit`.
 4. **Local Proxy**: Use `npm run dev` in the root to test API interactions.
-5. **Tests**: Run `npm test` before opening a PR. Scenario logic lives in
-   `web/functions/lib/scenario-ranking.ts`; storage planner in `storage-calc.ts`,
-   `server-set-analysis.ts`, `server-modpack.ts` — see `test/storage-*.test.ts`,
-   `test/server-*.test.ts`.
+5. **Tests**: Run `npm test` before opening a PR. Key suites:
+
+| Area | Module | Test file |
+|------|--------|-----------|
+| Mod lookup | `web/functions/lib/mod-lookup.ts` | `test/mod-lookup.test.ts` |
+| Server uptime | `server-uptime-history.ts` | `test/server-uptime-history.test.ts` |
+| Storage planner | `storage-calc.ts`, `server-set-analysis.ts` | `test/storage-*.test.ts`, `test/server-modpack.test.ts` |
+| Scenarios | `scenario-ranking.ts` | `test/scenario-ranking.test.ts` |
+| Config copy | `mod-config.ts` | `test/mod-config.test.ts` |
+| History API | `history-query.ts` | `test/history-query.test.ts` |
+
+Full list: `package.json` → `"test"` script.
+
+## 📝 Changelog & documentation (required)
+
+Every PR or commit with user-visible changes **must** update docs in the same change set:
+
+| Change type | Update |
+|-------------|--------|
+| Feature, fix, perf, UX | New section under `## [x.y.z]` at top of [CHANGELOG.md](CHANGELOG.md) |
+| Architecture / API / cron | [README.md](README.md), [walkthrough.md](walkthrough.md) |
+| UI patterns, filters, tables | [docs/UI_FILTERS.md](docs/UI_FILTERS.md) |
+| KV, cache, PageSpeed | [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) if scores change |
+| New doc file | [docs/README.md](docs/README.md) index |
+
+- Use **semver patch** (`1.22.2`) for doc-only releases; bump minor for features.
+- Date format: `YYYY-MM-DD` on the version heading.
+- Agent rule: [.cursor/rules/changelog-and-docs.mdc](.cursor/rules/changelog-and-docs.mdc).
 
 ## 📜 Coding Standards
 

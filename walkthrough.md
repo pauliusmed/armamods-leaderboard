@@ -17,8 +17,8 @@ BattleMetrics (every two hours). Workshop answers *what the mod is*; we answer
 
 The UI may show workshop preview thumbnails for quick recognition, but the core
 value is telemetry — leaderboard, trending deltas, history charts, scenario popularity
-by active mission, Reforger 1.7 config auditor, and **console storage planning**
-(modpack download sizes for PS5/Xbox).
+by active mission, Reforger 1.7 config auditor, **console storage planning**
+(modpack download sizes for PS5/Xbox), mod/server **favorites**, and **one-click mod config copy**.
 
 It supports two games — **Reforger** (default) and **Arma 3** — served from the same
 pipeline with game-suffixed keys.
@@ -68,15 +68,15 @@ web/
     audit-config.ts        config auditor heuristics (Reforger 1.7)
     history-query.ts       maps ?days= → KV history key + slice
     _middleware.ts         request logging
-  functions/lib/           shared helpers (share-meta, search-match, scenario-ranking,
-                           storage-calc, server-set-analysis, server-uptime-history, workshop-fetch)
+  functions/lib/           shared helpers (mod-lookup, server-lookup, server-uptime-history,
+                           scenario-ranking, storage-calc, workshop-fetch, …)
   src/
     api/client.ts          axios client with in-memory TTL cache
-    components/            pages (ModList, ServerList, StoragePlannerPage, …)
-    hooks/                 useMods, useServers, useScenarios, useModFavorites
-    lib/                   siteCopy, modFavorites, serverUptimeChart, storageProfile, …
-test/                      node:test unit tests (findMatchingBrace, EMA, audit, …)
-docs/                      ALGORITHM.md, architecture decisions, case study
+    components/            pages + ui (ModLeaderboardHead, FavoriteStarButton, …)
+    hooks/                 useMods, useServers, useModFavorites, useServerFavorites, …
+    lib/                   modFavorites, serverFavorites, siteCopy, serverUptimeChart, …
+test/                      node:test (mod-lookup, server-uptime-history, storage-calc, …)
+docs/                      ALGORITHM, SERVER_UPTIME, UI_FILTERS, PERFORMANCE, LIGHTHOUSE, …
 .github/workflows/         ci, collector (cron), deploy
 ```
 
@@ -143,7 +143,8 @@ Hono app exported as a Pages Function. Read paths follow a common pattern:
 2. Read the relevant KV keys, **shards in parallel** via `Promise.all`.
 3. For single-record lookups (mod/server by id), avoid `JSON.parse`-ing the whole
    shard: scan the raw text for the id, then slice the object out with
-   `findMatchingBrace` / `splitJsonArray`. Only the target object is parsed.
+   `findMatchingBrace` / `splitJsonArray` / `extractModFromChunks` (mod-lookup).
+   Only the target object is parsed.
 4. Set `Cache-Control` and store the response with `waitUntil(cache.put(...))`.
 
 ### 4.4 Presentation — `web/src`
@@ -160,9 +161,13 @@ Recharts.
 - Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302).
 - Letter fallback when no workshop preview exists.
 - **`CopyModConfigButton`** — one-click `game.mods[]` snippet on leaderboard, trending, and mod/server detail.
-- **`FavoriteModButton`** — ★ bookmarks (up to 20 mods/game in `localStorage`); pinned rows on leaderboard/trending.
+- **`FavoriteModButton` / `FavoriteServerButton`** — ★ bookmarks (up to 20/game each, `localStorage`); pinned rows on leaderboard, trending, and `/servers`.
+- **`ModLeaderboardHead`** — shared `<thead>` + `table-fixed` column widths; favorites and main list share one table (v1.22.1 alignment fix).
+- **`GalleryLightbox`** — in-page workshop screenshot preview on mod detail (v1.21).
+- **`CoDeployTable`** — mod detail co-deploy shows **shared server count**, not global leaderboard stats.
 - **`siteCopy.ts`** — centralized user-facing strings (“network scan”, “live network data”) instead of vendor names in UI.
 - **Server detail** — rank/players chart with rose offline bands (`ReferenceArea`); `BmLastSeenHint` on list/detail.
+- **Mod leaderboard** — pagination inside table card; donation block below (not between table and page buttons).
 
 **Edge** (`web/functions/lib/workshop-fetch.ts`):
 - `ensureReforgerWorkshopMetadata()` — **one** workshop HTML fetch fills both `cache:og-image:*` (thumbnail URL) and `cache:mod-deps:*` (dependencies JSON) on cache miss.
@@ -292,10 +297,11 @@ npm test
 ```
 
 Covers the pieces where correctness is non-obvious: `findMatchingBrace` surgical
-extraction, EMA smoothing/clamping, scenario aggregation (`buildScenarioRanking`),
-storage planner (`storage-calc`, `server-set-analysis`, `server-modpack`),
-server uptime merge/classify (`server-uptime-history`),
-audit-config heuristics, history-query resolution, share-meta, and search matching.
+extraction, **`mod-lookup`** (co-deploy false-positive guard), EMA smoothing/clamping,
+scenario aggregation (`buildScenarioRanking`), storage planner (`storage-calc`,
+`server-set-analysis`, `server-modpack`), server uptime merge/classify
+(`server-uptime-history`), audit-config heuristics, history-query resolution,
+share-meta, and search matching.
 
 ---
 

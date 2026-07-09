@@ -69,9 +69,10 @@ Kiekvienas istorijos taškas turi formatą:
 ## API Optimization Strategies
 
 1. **Chirurginis JSON išskleidimas**: Detalės puslapiuose naudojamas `findMatchingBrace` su skliaustų skaičiavimu, leidžiantis tiksliai išpjaustyti objektą iš didelio JSON teksto be pilno `JSON.parse`.
-2. **Tekstinis skenavimas**: Istorijos endpoint'ai skenuoja raw tekstą `indexOf` metodu, aplenkdami pilną JSON parse. CPU laikas išlaikomas <5ms.
-3. **Edge kėšavimas (Cache API)**: Cloudflare Cache API naudojamas visiems endpoint'ams su skirtingais TTL (5min – 1val).
-4. **Lazy Chunk Loading**: Sąrašų endpoint'ai krauna tik 1-ąjį bloką default view, pilną duomenų krūvį naudoja tik paieškai.
+2. **Mod lookup (`mod-lookup.ts`, v1.22.1)**: `extractModFromChunks` ieško pilno mod įrašo (`overallRank` / `totalPlayers`), praleidžia `coDeployed` snippet'us kitų modų JSON'e — mod detail rank sutampa su leaderboard.
+3. **Tekstinis skenavimas**: Istorijos endpoint'ai skenuoja raw tekstą `indexOf` metodu, aplenkdami pilną JSON parse. CPU laikas išlaikomas <5ms.
+4. **Edge kėšavimas (Cache API)**: Cloudflare Cache API naudojamas visiems endpoint'ams su skirtingais TTL (5min – 1val).
+5. **Lazy Chunk Loading**: Sąrašų endpoint'ai krauna tik 1-ąjį bloką default view, pilną duomenų krūvį naudoja tik paieškai.
 
 Pilnas resursų žemėlapis, žinomi limitai ir `ServerLookup` optimizacija: [PERFORMANCE.md](./PERFORMANCE.md).
 
@@ -87,3 +88,4 @@ Pilnas resursų žemėlapis, žinomi limitai ir `ServerLookup` optimizacija: [PE
 - 2026-05-14: Serverių istorijos suliejimas su modų istorija, pašalinant atskirą `history:server_scores` blob'ą.
 - 2026-06-30: Scenario leaderboard (`cache:ranking:scenarios:{game}`) — agregacija collector run metu, API read-only.
 - 2026-07-09: Serverių uptime pavyzdžiai (`on`/`n`/`online`) bendroje `history:*` struktūroje — offline grafikas be papildomų KV raktų.
+- 2026-07-10: `mod-lookup.ts` — pilno mod objekto paieška shard'e (ne co-deploy snippet).

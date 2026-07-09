@@ -1,73 +1,48 @@
-# React + TypeScript + Vite
+# Frontend (`web/`)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 SPA for [reforgermods.com](https://reforgermods.com) — mod/server leaderboards, trending, scenarios, storage planner, and config audit.
 
-Currently, two official plugins are available:
+Production API: Cloudflare Pages Functions in `functions/api/[[path]].ts` (not the root `npm run dev` proxy).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Commands
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install          # from web/
+npm run dev          # Vite dev server (default :5173)
+npm run build        # tsc + production bundle → dist/
+npm run preview      # serve dist locally
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Root repo tests (`npm test` from project root) cover shared logic under `functions/lib/` and `test/`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Structure
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+  components/       pages (ModList, ServerList, ModDetail, …) + ui/
+  hooks/            useMods, useServers, useModFavorites, useServerFavorites, …
+  lib/              favorites, siteCopy, modConfig, serverUptimeChart, …
+  api/client.ts     axios + in-memory TTL cache
+functions/
+  api/              Hono edge API (production)
+  lib/              mod-lookup, server-lookup, storage-calc, …
+```
+
+## Key UI patterns (v1.22.1)
+
+| Feature | Files |
+|---------|--------|
+| Mod favorites | `modFavorites.ts`, `useModFavorites`, `FavoriteModButton` |
+| Server favorites | `serverFavorites.ts`, `useServerFavorites`, `FavoriteServerButton` |
+| Shared ★ button | `FavoriteStarButton.tsx` |
+| Mod table headers | `ModLeaderboardHead.tsx` + `SortableTh` (`mirrorBar` on Share) |
+| Filters toolbar | `ListFilterBar.tsx` + `modListFilters.ts` |
+| Owned copy | `siteCopy.ts` (no vendor names in primary UI) |
+| Config copy | `CopyModConfigButton`, `modConfig.ts` |
+| Server uptime chart | `serverUptimeChart.ts` + Recharts `ReferenceArea` on `ServerDetail` |
+
+See [docs/UI_FILTERS.md](../docs/UI_FILTERS.md) and [walkthrough.md](../walkthrough.md).
+
+## Environment
+
+Frontend reads API from same origin in production. Local dev: root `npm run dev` proxy or set `WORKER_URL` in root `.env`.

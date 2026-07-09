@@ -60,6 +60,24 @@ Mod detail hero: compact `ModConfigPanel` with the same single-mod copy.
 
 User-facing labels for data sources: `web/src/lib/siteCopy.ts` (avoid vendor names in primary UI).
 
+## Mod leaderboard table layout (v1.22.1)
+
+`web/src/components/ui/ModLeaderboardHead.tsx` — shared `<thead>` for the main list and pinned favorites (single `<table>`, `table-fixed`).
+
+| Column | Width / notes |
+|--------|----------------|
+| Rank | `w-14` |
+| Module | flexible (`min-w-0`) |
+| Author | `140px` (desktop) |
+| Personnel | `5.5rem`, right-aligned |
+| Deploy / Size | fixed rem widths, right-aligned |
+| Share | `7.5rem`; header uses `mirrorBar` spacer to align with % + progress bar |
+| Actions | `11rem` — ★, Copy, Workshop |
+
+Pagination sits **inside** the table card (`Pagination` + `sliceLabel="Module Slice"`). Donation card is **below** the card, not between rows and page buttons.
+
+Mod detail **gallery**: `ModWorkshopGallery` + `GalleryLightbox` — click screenshot for in-page preview (v1.21).
+
 ## Label convention
 
 - Field labels: `// SEARCH`, `// ACTIVITY`, `// SORT`, `// SIZE`, `// RANK`, `// CONSOLE`

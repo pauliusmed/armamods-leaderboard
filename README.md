@@ -2,7 +2,8 @@
 ### High-Performance Mod Tracking, Analytics & Scalable Ranking System for Arma Community
 
 [![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com)
-[![Response Time](https://img.shields.io/badge/Performance-Optimized_Edge_Response-brightgreen.svg)]()
+[![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-100_(desktop)_%7C_98_(mobile)-brightgreen.svg)](docs/LIGHTHOUSE.md)
+[![Lighthouse SEO](https://img.shields.io/badge/Lighthouse_SEO-100-brightgreen.svg)](docs/LIGHTHOUSE.md)
 [![System Type](https://img.shields.io/badge/System-Distributed_Caching-blue.svg)]()
 [![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
@@ -53,10 +54,20 @@ A production-grade, highly-optimized data aggregation and visualization platform
 * **Solution**: Collector stores an **online sample** per run in shared `history:*` shards (`on`/`n` for daily/weekly, `online` for hourly). Days/weeks are marked offline only when **&lt;50%** of scans saw the server up.
 * **Result**: Server detail charts overlay rose offline bands on rank/players; tooltip shows uptime % or hourly scan status. See [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md).
 
-### 9. Client-Side Mod Favorites (v1.22+)
-* **Problem**: Players revisit the same mods across leaderboard, trending, and detail — no lightweight bookmarking without accounts.
-* **Solution**: `localStorage` favorites (up to 20 per game), ★ on rows and detail, pinned block on leaderboard/trending page 1.
-* **Result**: Zero backend cost; instant recall for repeat lookups.
+### 9. Client-Side Favorites (v1.22+)
+* **Problem**: Players revisit the same mods and servers across list, trending, and detail — no lightweight bookmarking without accounts.
+* **Solution**: `localStorage` favorites (up to 20 per game each for mods and servers), ★ on rows and detail, pinned blocks on leaderboard/trending/servers (page 1, default filters).
+* **Result**: Zero backend cost; instant recall. Shared `FavoriteStarButton` component.
+
+### 10. One-Click Mod Config Copy (v1.21+)
+* **Problem**: Server owners paste `game.mods[]` blocks manually from workshop pages.
+* **Solution**: `CopyModConfigButton` on mod leaderboard, trending, mod detail, and full modpack copy on server detail (`formatModConfigSnippet`).
+* **Result**: Clipboard-ready `config.json` fragments with correct `modId` + `name` indent.
+
+### 11. Surgical Mod Lookup (`mod-lookup.ts`, v1.22.1)
+* **Problem**: `extractModFromChunks` could match a mod ID inside another mod's `coDeployed` array, returning a snippet without `overallRank` — mod detail showed `#-` while the list showed the correct rank.
+* **Solution**: Scan all occurrences; return only **full** mod records (`overallRank` or `totalPlayers` present). Case-insensitive ID match.
+* **Result**: Reliable `GET /api/mods/:id` for top mods co-deployed everywhere. Tests: `test/mod-lookup.test.ts`.
 
 ---
 
@@ -69,7 +80,7 @@ graph TD
     end
 
     subgraph "Serverless Edge Infrastructure (Cloudflare)"
-        CRON[Cloudflare Cron Trigger] --> |1-Hour Interval| COL[Data Scraper / TS Engine]
+        CRON[Cloudflare Cron Trigger] --> |every 2h| COL[Data Scraper / TS Engine]
         COL --> |Co-deployment Analytics / EMA Scoring| COL
         COL --> |Chunking & Sharding| KV[(Cloudflare KV Store)]
         
@@ -107,6 +118,19 @@ Rather than sequentially loading mod shards (which previously caused 503 gateway
 ### ⚡ Defensive State & Race Condition Prevention
 Implemented global `AbortController` cancellation in React. Rapid views switching instantly aborts unresolved network tasks, guaranteeing zero UI memory leaks and correct rendering of temporal data.
 
+### ⚡ Lighthouse / PageSpeed (production, Jul 2026)
+
+Mod leaderboard at `https://reforgermods.com/` — [PageSpeed Insights](https://pagespeed.web.dev/analysis?url=https://reforgermods.com/) lab scores after v1.21 list-metadata optimizations:
+
+| | Desktop | Mobile (Slow 4G) |
+|--|---------|------------------|
+| Performance | **100** | **98** |
+| Accessibility | 98 | 94 |
+| Best Practices | 100 | 100 |
+| SEO | 100 | 100 |
+
+TBT improved from **970 ms → 0 ms** (desktop) by collapsing ~72 per-row API calls into one `GET /api/mods`. Full before/after metrics, re-run commands: [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md).
+
 ---
 
 ## 🛠️ Local Development & Deployment
@@ -119,7 +143,7 @@ Implemented global `AbortController` cancellation in React. Rapid views switchin
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/GrybasTV/armamods-leaderboard.git
+   git clone https://github.com/pauliusmed/armamods-leaderboard.git
    cd armamods-leaderboard
    ```
 
@@ -158,9 +182,9 @@ To ensure the integrity of the math scoring models and surgical parser:
 ```bash
 npm test
 ```
-*Tested areas: `findMatchingBrace` surgical logic, EMA ranking decay correctness, SQE bonus clamping bounds, scenario aggregation (`buildScenarioRanking`), storage planner math (`storage-calc`, `server-set-analysis`, `server-modpack`), server uptime history (`server-uptime-history`).*
+*Tested areas: `findMatchingBrace` surgical logic, `mod-lookup` co-deploy false-positive guard, EMA ranking decay, SQE bonus clamping, scenario aggregation (`buildScenarioRanking`), storage planner math, server uptime history (`server-uptime-history`), audit-config, history-query, share-meta, search-match.*
 
-**Docs:** [walkthrough.md](walkthrough.md) (system overview), [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math), [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) (console mod sizes & planner), [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) (offline bands & scan aggregation), [docs/UI_FILTERS.md](docs/UI_FILTERS.md) (shared filter toolbar), [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (KV/cache trade-offs), [CHANGELOG.md](CHANGELOG.md) (release notes).
+**Docs:** [walkthrough.md](walkthrough.md) (system overview) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (PageSpeed scores) · [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) (index) · [CHANGELOG.md](CHANGELOG.md) (release notes through **v1.22.2**).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 

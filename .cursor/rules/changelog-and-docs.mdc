@@ -1,0 +1,29 @@
+---
+description: Always update CHANGELOG and related docs with user-visible changes
+alwaysApply: true
+---
+
+# Changelog & documentation
+
+When shipping features, fixes, perf, or UX changes:
+
+1. **CHANGELOG.md** — add `## [x.y.z] - YYYY-MM-DD` at the top (below the intro line). Group bullets by theme (feat, fix, docs, perf). Doc-only releases use a patch bump.
+
+2. **Sync related docs** in the same commit:
+   - README / walkthrough — architecture, setup, cron, new highlights
+   - docs/UI_FILTERS.md — list filters, favorites, table layout
+   - docs/PERFORMANCE.md / docs/LIGHTHOUSE.md — cache, KV, PageSpeed scores
+   - docs/README.md — index when adding or renaming docs
+
+3. **Do not** finish a task with code changes and skip CHANGELOG unless the user explicitly said docs are out of scope.
+
+4. **Commit messages** — `feat:`, `fix:`, `docs:`, `perf:` per Conventional Commits; include version in body when releasing (`v1.22.2`).
+
+Example CHANGELOG entry:
+
+```markdown
+## [1.22.2] - 2026-07-10
+
+### 📚 Dokumentacija
+- **docs/LIGHTHOUSE.md** — PageSpeed scores after v1.21 optimizations.
+```

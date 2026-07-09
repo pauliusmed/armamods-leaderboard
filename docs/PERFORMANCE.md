@@ -2,7 +2,21 @@
 
 How the site uses Cloudflare KV, Edge cache, and client memory — including intentional trade-offs and known hot paths.
 
-See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (KV sharding), [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) (lazy workshop scrape).
+See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (KV sharding), [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) (lazy workshop scrape), [LIGHTHOUSE.md](./LIGHTHOUSE.md) (PageSpeed / Lighthouse scores).
+
+---
+
+## PageSpeed summary (production)
+
+`https://reforgermods.com/` mod leaderboard — lab scores **2026-07-09** after v1.21 optimizations:
+
+| | Desktop | Mobile |
+|--|---------|--------|
+| Performance | 100 | 98 |
+| Accessibility | 98 | 94 |
+| Best Practices / SEO | 100 / 100 | 100 / 100 |
+
+Baseline (pre v1.21): desktop Performance **70** (TBT 970 ms), mobile **84**. Details and re-run steps: [LIGHTHOUSE.md](./LIGHTHOUSE.md).
 
 ---
 
@@ -81,6 +95,14 @@ Heavy routes (`ModDetail`, `ServerDetail`, Storage Planner, Audit, Dependency Bl
 
 `web/src/lib/modFavorites.ts` — no KV/API; up to 20 mod IDs per game in `localStorage`. Zero edge cost.
 
+### Server favorites (client-only, v1.22.1+)
+
+`web/src/lib/serverFavorites.ts` — same pattern for server IDs; pinned block on `/servers` page 1 with default filters. Missing favorites resolved via `GET /api/servers/:id` (`usePinnedFavoriteServers`).
+
+### Mod detail lookup (`mod-lookup.ts`, v1.22.1)
+
+`extractModFromChunks()` in `web/functions/lib/mod-lookup.ts` — avoids returning `coDeployed` snippet objects when resolving `GET /api/mods/:id`. Shared with co-deploy enrichment in the detail handler.
+
 ### Server uptime in history shards (v1.22+)
 
 Collector adds `online` / `on` / `n` per server in `history:*` without extra KV keys. API enriches `GET /servers/:id/history` via `parseServerHistoryFields`. Details: [SERVER_UPTIME.md](./SERVER_UPTIME.md).
@@ -117,3 +139,5 @@ npm test
 - `test/search-match.test.ts` — `matchesModSearchByNameOrId`
 - `test/storage-calc.test.ts` — planner math
 - `test/server-uptime-history.test.ts` — uptime merge, offline bands
+- `test/mod-lookup.test.ts` — full mod record vs co-deploy snippet
+- `test/mod-config.test.ts` — config snippet formatting
