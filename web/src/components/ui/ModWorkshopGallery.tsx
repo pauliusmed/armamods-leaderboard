@@ -7,12 +7,10 @@ function isLandscapeImage(image: ModGalleryImage): boolean {
   return Boolean(image.width && image.height && image.width > image.height);
 }
 
-/** Hero inline prefers screenshots; workshop preview icon is usually first and square. */
+/** Hero inline drops the leading workshop icon only when more media exists. */
 function pickInlineGalleryImages(gallery: ModGalleryImage[]): ModGalleryImage[] {
-  const landscapes = gallery.filter(isLandscapeImage);
-  if (landscapes.length > 0) return landscapes;
-  if (gallery.length > 1) return gallery.slice(1);
-  return gallery;
+  if (gallery.length <= 2) return gallery;
+  return gallery.slice(1);
 }
 
 interface ModWorkshopGalleryProps {
@@ -94,12 +92,7 @@ export function ModWorkshopGallery({
   const hasMultiple = images.length > 1;
   const navBtn = isInline ? 'w-8 h-8 text-base' : 'w-9 h-9';
   const footerPad = isInline ? 'py-2.5' : 'py-3';
-  const useLandscapeFrame = isInline && images.some(isLandscapeImage);
-  const frameClass = useLandscapeFrame
-    ? 'aspect-[4/3]'
-    : isInline
-      ? 'aspect-square max-w-[220px] mx-auto'
-      : 'aspect-square';
+  const frameClass = isInline ? 'aspect-[4/3]' : 'aspect-square';
 
   return (
     <section
@@ -127,7 +120,7 @@ export function ModWorkshopGallery({
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
               className={`w-full h-full object-center ${
-                isInline && useLandscapeFrame ? 'object-cover' : 'object-contain'
+                isInline && isLandscapeImage(image) ? 'object-cover' : 'object-contain'
               }`}
             />
           </a>

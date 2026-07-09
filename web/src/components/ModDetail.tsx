@@ -20,6 +20,7 @@ import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-co
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { ModAuthorLink } from './ui/ModAuthorLink';
+import { ModThumbnail } from './ui/ModThumbnail';
 import { formatBytes } from '../lib/formatBytes';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModWorkshopCopy } from './ui/ModWorkshopCopy';
@@ -29,7 +30,10 @@ import { ModRow } from './ModRow';
 import { ServerRow } from './ServerRow';
 import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
 import { ModDataTable, ServerDataTable, toModRow } from './ui/ModDataTable';
+import { Pagination } from './ui/Pagination';
 import type { Mod, Server, ModHistory, ModDependency } from '../types';
+
+const DEPLOYED_SERVERS_PER_PAGE = 20;
 
 const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
   dead: 'border-red-500/60 bg-red-950/40 text-red-300',
@@ -66,9 +70,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
   const [heroGalleryVisible, setHeroGalleryVisible] = useState(false);
+  const [serversPage, setServersPage] = useState(1);
 
   useEffect(() => {
     setHeroGalleryVisible(false);
+    setServersPage(1);
   }, [modId]);
 
   const loadMod = useCallback(async (days: number, signal?: AbortSignal) => {
@@ -148,6 +154,27 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
     return { row, showPatchLine, maxDate, broken };
   }, [game, modId, mod, history]);
 
+  const sortedDeployedServers = useMemo(() => {
+    if (!mod?.servers) return [];
+    return [...mod.servers].sort((a, b) => (b.players || 0) - (a.players || 0));
+  }, [mod?.servers]);
+
+  const deployedServersTotalPages = Math.max(
+    1,
+    Math.ceil(sortedDeployedServers.length / DEPLOYED_SERVERS_PER_PAGE)
+  );
+
+  const paginatedDeployedServers = useMemo(() => {
+    const start = (serversPage - 1) * DEPLOYED_SERVERS_PER_PAGE;
+    return sortedDeployedServers.slice(start, start + DEPLOYED_SERVERS_PER_PAGE);
+  }, [sortedDeployedServers, serversPage]);
+
+  useEffect(() => {
+    if (serversPage > deployedServersTotalPages) {
+      setServersPage(deployedServersTotalPages);
+    }
+  }, [serversPage, deployedServersTotalPages]);
+
   useEffect(() => {
     const controller = new AbortController();
     setHistory([]); // Clear history immediately on mod change
@@ -214,29 +241,40 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
                   // MODULE_IDENTIFIER: {mod.id}
                 </span>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tighter leading-none break-words">
-                  {mod.name}
-                </h1>
-                {mod.author && (
-                  <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                    Workshop author ·{' '}
-                    <ModAuthorLink author={mod.author} game={game} />
-                  </p>
-                )}
-                {(mod.workshopCreated || mod.workshopModified) && (
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
-                    {mod.workshopCreated && (
-                      <span>
-                        Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
-                      </span>
+                <div className="flex items-start gap-4 sm:gap-5">
+                  <ModThumbnail
+                    modId={mod.id}
+                    modName={mod.name}
+                    game={game}
+                    size="lg"
+                    className="shrink-0"
+                  />
+                  <div className="min-w-0 space-y-3 flex-1">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter leading-none break-words">
+                      {mod.name}
+                    </h1>
+                    {mod.author && (
+                      <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                        Workshop author ·{' '}
+                        <ModAuthorLink author={mod.author} game={game} />
+                      </p>
                     )}
-                    {mod.workshopModified && (
-                      <span>
-                        Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
-                      </span>
+                    {(mod.workshopCreated || mod.workshopModified) && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                        {mod.workshopCreated && (
+                          <span>
+                            Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
+                          </span>
+                        )}
+                        {mod.workshopModified && (
+                          <span>
+                            Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
+                </div>
                 {mod.workshopSummary ? (
                   <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
                     {mod.workshopSummary}
@@ -620,22 +658,35 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 📡 Active Deployed Servers
               </h2>
               <span className="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                Displaying {(mod.servers || []).length} Intel Nodes
+                {sortedDeployedServers.length === 0
+                  ? 'No Intel Nodes'
+                  : sortedDeployedServers.length <= DEPLOYED_SERVERS_PER_PAGE
+                    ? `Displaying ${sortedDeployedServers.length} Intel Nodes`
+                    : `Displaying ${(serversPage - 1) * DEPLOYED_SERVERS_PER_PAGE + 1}–${Math.min(
+                        serversPage * DEPLOYED_SERVERS_PER_PAGE,
+                        sortedDeployedServers.length
+                      )} of ${sortedDeployedServers.length} Intel Nodes`}
               </span>
             </div>
 
-            {!mod.servers || mod.servers.length === 0 ? (
+            {sortedDeployedServers.length === 0 ? (
               <div className="p-12 sm:p-20 text-center border-2 border-dashed border-white/5">
                 <p className="text-lg sm:text-xl font-black text-gray-700 uppercase tracking-widest">No active deployments detected</p>
               </div>
             ) : (
-              <ServerDataTable>
-                {[...(mod.servers || [])]
-                  .sort((a, b) => (b.players || 0) - (a.players || 0))
-                  .map((server) => (
+              <>
+                <ServerDataTable>
+                  {paginatedDeployedServers.map((server) => (
                     <ServerRow key={server.id} server={server} game={game} />
                   ))}
-              </ServerDataTable>
+                </ServerDataTable>
+                <Pagination
+                  currentPage={serversPage}
+                  totalPages={deployedServersTotalPages}
+                  onPageChange={setServersPage}
+                  className="pb-0"
+                />
+              </>
             )}
           </section>
       </div>
