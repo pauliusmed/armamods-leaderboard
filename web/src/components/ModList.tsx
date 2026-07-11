@@ -130,7 +130,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
           aria-busy={loading}
         >
           <div className="overflow-x-auto">
-            <table className="w-full table-fixed border-collapse">
+            <table className="w-full min-w-[18rem] border-collapse">
               <ModLeaderboardHead sortBy={sortBy} sortDir={sortDir} onSort={toggleSort} />
               <tbody>
                 {showFavoritesPin && (pinnedMods.length > 0 || loadingPinned) && (

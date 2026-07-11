@@ -34,7 +34,7 @@ export function SortableTh({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`flex items-center gap-3 py-3 text-[11px] font-black uppercase tracking-widest transition-colors ${
+        className={`flex items-center gap-3 min-h-11 sm:min-h-0 py-3 text-[11px] font-black uppercase tracking-widest transition-colors ${
           align === 'right' ? 'ml-auto' : ''
         } ${active ? 'text-tactical-orange' : 'text-gray-600 hover:text-gray-400'}`}
       >

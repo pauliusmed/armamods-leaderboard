@@ -77,9 +77,18 @@ export function ModRow({
             </Link>
             <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-1" />
             {isLeaderboard && (
-              <span className="md:hidden">
-                <ModAuthorCell modId={mod.id} game={game} author={mod.author} className="mt-0.5" />
-              </span>
+              <>
+                <span className="md:hidden">
+                  <ModAuthorCell modId={mod.id} game={game} author={mod.author} className="mt-0.5" />
+                </span>
+                <p className="md:hidden mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
+                  <span>{mod.serverCount} deploy</span>
+                  <span>{share.toFixed(1)}% share</span>
+                  {game === 'reforger' && mod.sizeBytes != null && (
+                    <span>{formatBytes(mod.sizeBytes)}</span>
+                  )}
+                </p>
+              </>
             )}
           </div>
         </div>
@@ -91,7 +100,7 @@ export function ModRow({
         </td>
       )}
 
-      <td className="w-[5.5rem] py-3 md:py-2.5 px-4 text-right align-middle tabular-nums">
+      <td className="w-[4.25rem] sm:w-[5.5rem] py-3 md:py-2.5 px-2 sm:px-4 text-right align-middle tabular-nums">
         <span className="font-mono text-sm tabular-nums text-white">
           {(mod.totalPlayers || 0).toLocaleString()}
         </span>
@@ -122,7 +131,7 @@ export function ModRow({
       </td>
 
       {isLeaderboard && (
-        <td className="w-[11rem] py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
+        <td className="w-[6.5rem] sm:w-[9rem] md:w-[11rem] py-3 md:py-2.5 pl-1 sm:pl-2 pr-2 sm:pr-4 text-right align-middle">
           <div className={`inline-flex items-center justify-end ${TOUCH_TARGET_GAP}`}>
             {onToggleFavorite && (
               <FavoriteModButton

@@ -65,7 +65,7 @@ export function ListFilterBar({
   return (
     <div
       className={`bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl transition-all hover:bg-zinc-900/80 ${
-        sticky ? 'sticky top-28 z-40' : ''
+        sticky ? 'sticky top-[72px] sm:top-[84px] z-40' : ''
       }`}
     >
       <div className={`grid grid-cols-1 gap-4 items-end ${GRID_COLS[gridCols]}`}>

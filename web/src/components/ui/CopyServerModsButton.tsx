@@ -1,6 +1,7 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import { copyToClipboard } from '../../lib/clipboard';
 import { formatServerModsConfigSnippet } from '../../lib/modConfig';
+import { TOUCH_TARGET_BUTTON } from '../../lib/touchTargets';
 
 interface CopyServerModsButtonProps {
   mods: ReadonlyArray<{ id: string; name: string }>;
@@ -29,7 +30,10 @@ export function CopyServerModsButton({
     window.setTimeout(() => setHint(null), 2000);
   };
 
-  const pad = size === 'sm' ? 'px-2 py-1 text-[8px]' : 'px-3 py-1.5 text-[9px]';
+  const pad =
+    size === 'sm'
+      ? `${TOUCH_TARGET_BUTTON} px-2 sm:px-2 sm:py-1 text-[8px] sm:text-[8px]`
+      : 'px-3 py-2 sm:py-1.5 text-[9px] min-h-11 sm:min-h-0';
 
   return (
     <button

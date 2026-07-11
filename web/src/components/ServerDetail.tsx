@@ -12,6 +12,7 @@ import { ServerStatusBadge } from './ui/ServerStatusBadge';
 import { BmLastSeenHint } from './ui/BmLastSeenHint';
 import { FavoriteServerButton } from './ui/FavoriteServerButton';
 import { useServerFavorites } from '../hooks/useServerFavorites';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
@@ -93,6 +94,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
   const gp = game === 'reforger' ? '' : `/${game}`;
   const { isFavorite, toggle } = useServerFavorites(game);
+  const isMobileChart = useMediaQuery('(max-width: 639px)');
 
   const [allServers, setAllServers] = useState<Server[]>([]);
   const [storagePack, setStoragePack] = useState<ServerStoragePack | null>(null);
@@ -425,7 +427,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                   <button
                     key={opt.label}
                     onClick={() => setSelectedDays(opt.value)}
-                    className={`px-4 py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    className={`min-h-11 px-4 py-2 sm:py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
                       selectedDays === opt.value
                         ? 'bg-tactical-orange text-black'
                         : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -437,8 +439,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               </div>
             </div>
           </div>
-          <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm">
-            <CardContent className="p-4 sm:p-6 lg:p-8 h-[400px]">
+          <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
               {!history || history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
                   <span>No recent activity detected</span>
@@ -460,9 +462,17 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       Mostly offline (&lt;50% scans)
                     </span>
                   </div>
-                  <div className="flex-1 min-h-0">
+                  <div className="flex-1 min-h-0 min-w-0 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={history} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <LineChart
+                    data={history}
+                    margin={{
+                      top: 8,
+                      right: isMobileChart ? 4 : 8,
+                      left: isMobileChart ? 4 : 0,
+                      bottom: 0,
+                    }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                     {offlineBands.map((band, i) => (
                       <ReferenceArea
@@ -491,17 +501,18 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                         }
                         return `${d.getMonth()+1}/${d.getDate()}`;
                       }}
-                      tick={{ fontSize: 10, fill: '#666', fontWeight: 'bold' }}
+                      tick={{ fontSize: isMobileChart ? 9 : 10, fill: '#666', fontWeight: 'bold' }}
                       axisLine={false}
                       tickLine={false}
+                      minTickGap={isMobileChart ? 24 : 16}
                     />
                     <YAxis
                       yAxisId="rank"
                       stroke="#f97316"
-                      tick={{ fontSize: 10, fill: '#f97316', fontWeight: 'bold' }}
+                      tick={{ fontSize: isMobileChart ? 9 : 10, fill: '#f97316', fontWeight: 'bold' }}
                       axisLine={false}
                       tickLine={false}
-                      width={50}
+                      width={isMobileChart ? 32 : 50}
                       reversed={true}
                       domain={['dataMin - 1', 'dataMax + 1']}
                       tickFormatter={(val) => `#${val}`}
@@ -509,12 +520,17 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                     <YAxis
                       yAxisId="players"
                       orientation="right"
+                      hide={isMobileChart}
                       stroke="#22c55e"
                       tick={{ fontSize: 10, fill: '#22c55e', fontWeight: 'bold' }}
                       axisLine={false}
                       tickLine={false}
-                      width={50}
-                      tickFormatter={(val) => Number(val).toLocaleString()}
+                      width={isMobileChart ? 0 : 50}
+                      tickFormatter={(val) =>
+                        isMobileChart && Number(val) >= 1000
+                          ? `${Math.round(Number(val) / 1000)}k`
+                          : Number(val).toLocaleString()
+                      }
                     />
                     <Tooltip
                       contentStyle={{ backgroundColor: '#18181b', border: '1px solid #333', borderRadius: '4px' }}

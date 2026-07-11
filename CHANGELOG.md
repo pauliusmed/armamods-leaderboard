@@ -2,6 +2,26 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.5] - 2026-07-11
+
+### 📱 Mobile UX audit fixes
+- **ModList** — pašalintas `table-fixed` (Module stulpelis nebesuspaudžiamas); siauresni Personnel / Actions mobile.
+- **ModRow** — po pavadinimu mobile rodoma deploy / share / size santrauka.
+- **ServerDetail** — grafikas su `useMediaQuery` (mažesni margin'ai, players ašis paslėpta mobile).
+- **ListFilterBar** — sticky `top-[72px] sm:top-[84px]` (atitinka header).
+- **SortableTh**, **TrendingPage** period tabs, chart period mygtukai — `min-h-11` touch target.
+- **ScenarioList** — fill % ir top server po pavadinimu mobile.
+- **CopyServerModsButton** (sm) — 44px touch target mobile.
+- **`docs/MOBILE_UX.md`** — audit checklist ir likę low-priority punktai.
+
+## [1.22.4] - 2026-07-11
+
+### 📱 Mod detail — mobile layout
+- **Performance Timeline** — legendos eilutė (Personnel / Servers / Rank); pašalinta antra kairė Y ašis (servers), mobile paslėpta rank ašis; plotis naudojamas grafikui, ne trijų ašių persidengimui.
+- **Active Deployed Servers** — sutrumpintas mobile skaičiuoklis (`1–20 of 45`), antraštė `text-xl`, vertikalus stack.
+- **`ServerDataTable`** — Mods stulpelis matomas ir mobile (sutampa su eilutėmis).
+- **`useMediaQuery`** hook — responsive chart elgsena.
+
 ## [1.22.3] - 2026-07-10
 
 ### 📚 README

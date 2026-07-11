@@ -100,13 +100,13 @@ export function ServerRow({
       </td>
 
       {/* Players = current / capacity (each value shown once) */}
-      <td className="py-3 md:py-2.5 px-4 text-right align-middle whitespace-nowrap">
+      <td className="py-3 md:py-2.5 px-3 sm:px-4 text-right align-middle whitespace-nowrap">
         <span className="font-mono text-sm tabular-nums text-white">{players}</span>
         <span className="font-mono text-xs tabular-nums text-gray-600"> / {max}</span>
       </td>
 
       {/* Mod count + mobile modpack size */}
-      <td className="py-3 md:py-2.5 px-4 text-right align-middle">
+      <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
         {isVanilla ? (
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vanilla</span>
         ) : (

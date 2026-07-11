@@ -151,7 +151,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
               <button
                 key={period}
                 onClick={() => setActivePeriod(period)}
-                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                className={`min-h-11 px-3 py-2 sm:py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
                   activePeriod === period
                     ? 'bg-white text-black'
                     : 'bg-zinc-800 text-gray-400 hover:text-white'

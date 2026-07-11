@@ -60,6 +60,18 @@ function ScenarioNameCell({
           {scenarioKindLabel(scenario.kind)}
         </span>
       )}
+      <div className="md:hidden flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-mono text-gray-500">
+        <span>{Math.round(scenario.avgFillPercent)}% fill</span>
+        {scenario.topServer && (
+          <Link
+            to={`${gamePrefix}/server/${scenario.topServer.id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="font-bold text-gray-400 hover:text-tactical-orange truncate max-w-[10rem]"
+          >
+            {scenario.topServer.name}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
