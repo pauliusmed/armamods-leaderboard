@@ -317,9 +317,8 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             </div>
           </div>
 
-          {/* Error list (if any) */}
           {health.errors?.length > 0 && (
-            <div className="bg-signal-critical/10 border border-signal-critical/30 p-4 rounded-lg">
+            <div className="bg-signal-critical/10 border border-signal-critical/30 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-signal-critical mb-2">Errors:</p>
               <ul className="space-y-1">
                 {health.errors.map((err: string, i: number) => (
@@ -329,7 +328,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             </div>
           )}
 
-          <div className="bg-[#172635] border border-white/5 p-6 rounded-lg space-y-4">
+          <div className="bg-[#172635] border border-white/5 p-6 space-y-4">
             {(['reforger', 'arma3'] as const).map((g) => {
               const chk = health.checks?.[g] as Record<string, unknown> | undefined;
               if (!chk) return null;
@@ -345,61 +344,26 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                     {chk.isStale as boolean && <span className="text-[8px] text-signal-warning font-bold">STALE</span>}
                     <span className="text-[8px] text-gray-600 font-mono ml-auto">{chk.timingMs as number}ms</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[9px]">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px]">
                     <div>
                       <span className="text-gray-600">Mods: </span>
                       <span className="text-white font-bold">{(mods?.total as number) ?? '?'}</span>
-                      <span className="text-gray-600"> ({mods?.chunks as number ?? 0} chunks)</span>
+                      <span className="text-gray-600"> ({(mods?.chunks as number) ?? 0} chunks)</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Servers: </span>
                       <span className="text-white font-bold">{(servers?.total as number) ?? '?'}</span>
-                      <span className="text-gray-600"> ({servers?.chunks as number ?? 0} chunks)</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">SQE: </span>
-                      <span className="text-white font-bold">{chk.sqeIndex as string ?? 'none'}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Trending: </span>
-                      <span className={`font-bold ${chk.trendingWeekly ? 'text-signal-ok' : 'text-signal-critical'}`}>
-                        {chk.trendingWeekly ? 'OK' : 'MISSING'}
-                      </span>
+                      <span className="text-gray-600"> ({(servers?.chunks as number) ?? 0} chunks)</span>
                     </div>
                     {lastUpdate && (
-                      <p className="text-gray-500 font-mono truncate" title={lastUpdate}>
-                        {new Date(lastUpdate).toLocaleString()}
+                      <p className="text-gray-500 font-mono truncate col-span-2" title={lastUpdate}>
+                        Last: {new Date(lastUpdate).toLocaleString()}
                       </p>
                     )}
                   </div>
                 </div>
               );
             })}
-
-            {/* Additional checks */}
-            {health.checks?.modLookup && (
-              <div className="border-t border-white/5 pt-4">
-                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-2">Mod Lookup Test</p>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${(health.checks.modLookup as Record<string, unknown>).foundInChunk ? 'bg-signal-ok' : 'bg-signal-critical'}`}></span>
-                  <span className="text-[9px] text-white font-mono">{(health.checks.modLookup as Record<string, unknown>).timingMs as number}ms</span>
-                  {(health.checks.modLookup as Record<string, string>).testedId && (
-                    <span className="text-[9px] text-gray-500">{(health.checks.modLookup as Record<string, string>).testedId}</span>
-                  )}
-                </div>
-              </div>
-            )}
-            {health.checks?.serversEndpoint && (
-              <div className="border-t border-white/5 pt-4">
-                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-2">Servers Endpoint Path</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px]">
-                  <div><span className="text-gray-600">Meta: </span><span className={`font-bold ${(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'text-signal-ok' : 'text-signal-critical'}`}>{(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'OK' : 'MISSING'}</span></div>
-                  <div><span className="text-gray-600">Servers: </span><span className="text-white">{(health.checks.serversEndpoint as Record<string, unknown>).totalServers as number}</span></div>
-                  <div><span className="text-gray-600">First chunk: </span><span className="text-white">{(health.checks.serversEndpoint as Record<string, unknown>).firstChunkRows as number} rows</span></div>
-                  <div><span className="text-gray-600">{(health.checks.serversEndpoint as Record<string, unknown>).timingMs as number}ms</span></div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
