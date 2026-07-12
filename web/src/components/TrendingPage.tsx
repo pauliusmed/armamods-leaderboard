@@ -24,13 +24,15 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
   }>({ rising: [], falling: [], new: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [activeCategory, setActiveCategory] = useState<TrendCategory>('rising');
   const [activePeriod, setActivePeriod] = useState<TrendPeriod>('30d');
   const [comparisonDate, setComparisonDate] = useState<string | null>(null);
 
-  const loadTrending = useCallback(async () => {
+  const loadTrending = useCallback(async (isRetry = false) => {
     try {
-      setLoading(true);
+      if (isRetry) setRetrying(true);
+      else setLoading(true);
       const data = await trendingApi.getTrending(activePeriod, game);
 
       if (data && data.data) {
@@ -44,9 +46,37 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
       setComparisonDate(data?.meta?.comparisonDate || null);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load trending data');
+      const msg = err instanceof Error ? err.message : 'Failed to load trending data';
+      const isTimeout = msg.includes('503') || msg.includes('timeout') || msg.includes('502') || msg.includes('504');
+      if (isTimeout) {
+        // Auto-retry transients: 503, timeout, 502, 504
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+          setRetrying(true);
+          try {
+            const data = await trendingApi.getTrending(activePeriod, game);
+            if (data?.data) {
+              setTrending({
+                rising: data.data.rising,
+                falling: data.data.falling,
+                new: data.data.new
+              });
+            }
+            setComparisonDate(data?.meta?.comparisonDate || null);
+            setError(null);
+            setLoading(false);
+            setRetrying(false);
+            return;
+          } catch {
+            // continue retrying
+          }
+        }
+      }
+      setError(msg);
+      setRetrying(false);
     } finally {
       setLoading(false);
+      setRetrying(false);
     }
   }, [activePeriod, game]);
 
@@ -97,7 +127,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
     [sortedCurrentMods, favoriteIds]
   );
 
-  if (loading) return <StatusState type="loading" />;
+  if (loading || retrying) return <StatusState type="loading" />;
   if (error) return (
     <div className="space-y-8">
       <StatusState
