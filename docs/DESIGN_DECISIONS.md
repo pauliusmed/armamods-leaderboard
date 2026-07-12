@@ -31,7 +31,7 @@ The human visual system can track at most 5–7 distinct chromatic states simult
 
 - **Red (#FF3838)**: Critical — operator must act now (server down, error)
 - **Amber (#FFB302)**: Warning — degraded but working (stale data, fallback active)
-- **Green (#56F000)**: Nominal — everything operational
+- **Green (#2ECC71)**: Nominal — everything operational
 - **Cyan (#2DCCFF)**: Informational — neutral data, telemetry
 - **Gray (#A4ABB6)**: Muted — inactive, labels, metadata
 

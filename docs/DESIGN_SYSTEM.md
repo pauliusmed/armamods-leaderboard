@@ -55,7 +55,7 @@ Chromatic encoding is strictly functional: warm colors demand immediate action, 
 |-------|-----|----------|
 | `--color-critical` | `#FF3838` | Errors, critical alerts, operator decision required |
 | `--color-warning` | `#FFB302` | Degraded status, caution, fallback active |
-| `--color-ok` | `#56F000` | Nominal operation, online, healthy |
+| `--color-ok` | `#2ECC71` | Nominal operation, online, healthy |
 | `--color-info` | `#2DCCFF` | Informational, telemetry, secondary data |
 | `--color-neutral` | `#A4ABB6` | Muted labels, inactive elements, metadata |
 | `--color-accent` | `#ff6b00` | Primary interactive accent — hover states, active nav, rank badges |
