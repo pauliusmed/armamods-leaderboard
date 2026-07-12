@@ -215,7 +215,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
         ) : (
           <div className="space-y-4">
             {pinnedMods.length > 0 && (
-              <div className="border border-tactical-orange/25 bg-tactical-orange/[0.03]">
+              <div className="border border-white/5 bg-[#172635]">
                 <div className="px-4 py-2.5 border-b border-tactical-orange/20">
                   <p className="text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange">
                     ★ Favorites

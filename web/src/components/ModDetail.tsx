@@ -460,7 +460,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               </div>
             )}
 
-            <Card className="border-l-4 border-l-tactical-orange overflow-hidden">
+            <Card>
               <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
                 {!history || history.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">

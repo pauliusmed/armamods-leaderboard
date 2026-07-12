@@ -101,7 +101,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         {/* Global Encryption Status */}
         <div className="flex items-center gap-4 bg-[#172635] border border-white/5 p-4 rounded-lg">
           <div className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-signal-ok opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-signal-ok"></span>
           </div>
           <div className="space-y-0.5">
@@ -116,7 +116,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
       {/* Primary Ingestion Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Metric 1 */}
-        <Card className="border-l-4 border-l-tactical-orange bg-[#172635]">
+        <Card>
           <CardContent className="p-6 space-y-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Global Registries</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalMods.toLocaleString()}</p>
@@ -125,7 +125,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         </Card>
 
         {/* Metric 2 */}
-        <Card className="border-l-4 border-l-tactical-orange bg-[#172635]">
+        <Card>
           <CardContent className="p-6 space-y-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Active Deployments</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalServers.toLocaleString()}</p>
@@ -134,7 +134,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         </Card>
 
         {/* Metric 3 */}
-        <Card className="border-l-4 border-l-tactical-orange bg-[#172635]">
+        <Card>
           <CardContent className="p-6 space-y-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Combat Personnel</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalPlayers.toLocaleString()}</p>
@@ -162,13 +162,13 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                   {isCollectorDelayed() ? '⚠️ Refresh Delayed' : '⚡ Synchronized'}
                 </p>
               </div>
-              <div className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest border ${
+              <span className={`text-[9px] font-black uppercase tracking-widest ${
                 isCollectorDelayed() 
-                  ? 'border-signal-warning/30 text-signal-warning bg-signal-warning/5' 
-                  : 'border-signal-ok/30 text-signal-ok bg-signal-ok/5'
+                  ? 'text-signal-warning' 
+                  : 'text-signal-ok'
               }`}>
                 {isCollectorDelayed() ? 'STALE' : 'OK'}
-              </div>
+              </span>
             </div>
 
             {/* Time Stamp Row */}
@@ -206,7 +206,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               </div>
               
               {/* Latency progress bar */}
-              <div className="h-1.5 bg-zinc-900 border border-white/5 w-full relative overflow-hidden">
+              <div className="h-1.5 bg-[#101923] border border-white/5 w-full relative overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-1000 ${
                     latency < 50 ? 'bg-signal-ok' : latency < 150 ? 'bg-tactical-orange' : 'bg-signal-critical'
@@ -284,7 +284,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                 {Array.from({ length: kv.mods?.chunks || 1 }).map((_, idx) => (
                   <div 
                     key={idx} 
-                    className="flex-1 h-8 bg-tactical-orange/10 border border-tactical-orange/30 rounded flex items-center justify-center relative group"
+                    className="flex-1 h-8 bg-[#172635] border border-white/5 flex items-center justify-center relative group"
                   >
                     <span className="text-[8px] font-black text-tactical-orange font-mono">C{idx}</span>
                     {/* Hover Tooltip */}
@@ -308,17 +308,17 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             <h3 className="text-xs font-black text-white uppercase tracking-[0.25em] border-b border-white/5 pb-2">
               // KV Health Probe ({health.durationMs}ms)
             </h3>
-            <div className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
+            <span className={`text-[9px] font-black uppercase tracking-widest ${
               health.healthy
-                ? 'border-signal-ok/30 text-signal-ok bg-signal-ok/5'
-                : 'border-signal-critical/30 text-signal-critical bg-signal-critical/5'
+                ? 'text-signal-ok'
+                : 'text-signal-critical'
             }`}>
               {health.healthy ? 'ALL OK' : `${health.errorCount} ISSUES`}
-            </div>
+            </span>
           </div>
 
           {health.errors?.length > 0 && (
-            <div className="bg-signal-critical/10 border border-signal-critical/30 p-4">
+            <div className="bg-[#172635] border border-white/5 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-signal-critical mb-2">Errors:</p>
               <ul className="space-y-1">
                 {health.errors.map((err: string, i: number) => (

@@ -168,7 +168,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
           className={pickerInputClass}
         />
         {serverId && (
-          <div className="border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+            <div className="border border-white/5 bg-[#172635] px-3 py-3">
             <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest mb-1">
               Selected server
             </p>
@@ -230,7 +230,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
             className={pickerInputClass}
           />
           {targetModId && (
-            <div className="border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+          <div className="border border-white/5 bg-[#172635] px-3 py-3">
               <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest mb-1">
                 Target mod
               </p>

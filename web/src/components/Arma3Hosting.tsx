@@ -187,7 +187,7 @@ export function Arma3Hosting() {
 
       <section className="max-w-4xl mx-auto px-4">
         <Card className="p-8 space-y-10">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-tactical-orange/5 blur-3xl" />
+          
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -243,7 +243,7 @@ export function Arma3Hosting() {
           </div>
 
           {(modCount > 150 || playerCount > 60) && (
-            <div className="flex items-center gap-3 bg-tactical-orange/10 border border-tactical-orange/20 p-3">
+            <div className="flex items-center gap-3 bg-[#172635] border border-white/5 p-3">
               <Activity className="w-4 h-4 text-tactical-orange animate-pulse" />
               <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-relaxed">
                 Expert Analysis: Large-scale Milsim operations (60p+) with heavy modpacks require extreme single-core performance. Ensure your host utilizes i9 or Ryzen 9 nodes to prevent FPS drops during complex script executions.
@@ -280,7 +280,7 @@ export function Arma3Hosting() {
                   <td className="p-6">
                     <div className="flex items-center gap-4">
                       {p.isWinner ? (
-                        <div className="bg-tactical-orange p-1.5 rounded-sm">
+                        <div className="bg-[#172635] border border-white/10 p-1.5">
                           <Zap className="w-4 h-4 text-black" />
                         </div>
                       ) : (
@@ -363,7 +363,7 @@ export function Arma3Hosting() {
 
       <section className="max-w-4xl mx-auto px-4 pt-10">
         <Card className="border-tactical-orange/20">
-          <div className="absolute top-0 left-0 w-full h-1 bg-tactical-orange" />
+          <div className="absolute top-0 left-0 w-full h-px bg-white/5" />
           <CardContent className="p-12 text-center space-y-8">
             <div className="space-y-2">
               <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">Arma 3 Expert Verdict</h2>

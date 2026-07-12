@@ -6,7 +6,7 @@ export function DonationCard() {
   const paypalUrl = PAYPAL_DONATE_URL;
 
   return (
-    <Card className="border-l-4 border-l-tactical-orange bg-gradient-to-br from-zinc-900 to-black">
+    <Card>
       <CardContent className="p-8 space-y-6">
         <div className="space-y-2">
           <h3 className="text-2xl font-black text-white uppercase tracking-tighter">

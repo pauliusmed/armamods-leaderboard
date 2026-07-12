@@ -135,7 +135,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
               <tbody>
                 {showFavoritesPin && (pinnedMods.length > 0 || loadingPinned) && (
                   <>
-                    <tr className="border-b border-tactical-orange/20 bg-tactical-orange/[0.03]">
+                    <tr className="border-b border-white/10 bg-[#172635]">
                       <td
                         colSpan={MOD_LEADERBOARD_COL_COUNT}
                         className="px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange"

@@ -29,11 +29,10 @@ export function HostingLanding({ game }: HostingLandingProps) {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-tactical-orange/10 via-transparent to-transparent blur-[120px] pointer-events-none" />
         
         <div className="text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-tactical-orange/10 border border-tactical-orange/30 rounded-full">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-tactical-orange opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-tactical-orange"></span>
-            </span>
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[#172635] border border-white/5">
+            <span className="relative flex w-2 h-2">
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-signal-ok"></span>
+              </span>
             <span className="text-[10px] font-black text-tactical-orange uppercase tracking-[0.3em]">Flash Sale: Use Code 10OFF for $10 Off</span>
           </div>
 
@@ -96,7 +95,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
 
           {/* Official Partner */}
           <Card className="bg-zinc-900 border-tactical-orange shadow-[0_0_30px_rgba(249,115,22,0.1)] relative transform md:scale-105 z-10">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-tactical-orange text-black font-black uppercase tracking-widest text-[10px] px-4 py-1">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#172635] border border-white/10 text-signal-neutral font-black uppercase tracking-widest text-[10px] px-4 py-1">
               Official Partner Deal
             </div>
             <CardContent className="p-8 space-y-6">
@@ -163,7 +162,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
           <div className="space-y-8">
             <div className="space-y-2">
               <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Everything you need<br/>to run a community</h2>
-              <div className="w-20 h-1.5 bg-tactical-orange" />
+              <div className="w-20 h-px bg-white/10" />
             </div>
             
             <ul className="space-y-4">
@@ -176,7 +175,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
                 'Automated Daily Backups'
               ].map(item => (
                 <li key={item} className="flex items-center gap-4 text-gray-400 font-bold uppercase tracking-widest text-xs">
-                  <div className="w-1.5 h-1.5 bg-tactical-orange" />
+                  <div className="w-1.5 h-1.5 bg-signal-neutral" />
                   {item}
                 </li>
               ))}
@@ -190,7 +189,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
           </div>
 
           <div className="bg-black/60 border border-tactical-orange/40 p-10 space-y-8 text-center relative shadow-[0_0_50px_rgba(249,115,22,0.05)]">
-            <div className="absolute top-0 right-0 px-4 py-1 bg-tactical-orange text-black text-[10px] font-black uppercase tracking-widest transform translate-x-4 -translate-y-4 shadow-lg">
+            <div className="absolute top-0 right-0 px-4 py-1 bg-[#172635] border border-white/10 text-signal-neutral text-[10px] font-black uppercase tracking-widest transform translate-x-4 -translate-y-4">
               Official Partner Deal
             </div>
             <div className="space-y-2">

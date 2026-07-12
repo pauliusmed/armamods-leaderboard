@@ -6,7 +6,7 @@ export function SupportPage() {
     <div className="max-w-3xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
       <div className="text-center space-y-6 pt-12">
-        <div className="inline-flex items-center gap-4 px-6 py-3 bg-tactical-orange/10 border border-tactical-orange/20">
+        <div className="inline-flex items-center gap-4 px-6 py-3 bg-[#172635] border border-white/5">
           <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.3em]">
             // Support The Project
           </span>
@@ -20,7 +20,7 @@ export function SupportPage() {
       </div>
 
       {/* Main Message */}
-      <Card className="border-l-4 border-l-tactical-orange bg-gradient-to-br from-zinc-900 to-black">
+      <Card>
         <CardContent className="p-10 space-y-8">
           <div className="space-y-4">
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">

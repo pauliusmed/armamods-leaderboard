@@ -222,7 +222,7 @@ function ModSizeList({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3 border border-tactical-orange/30 bg-tactical-orange/5 px-3 py-2">
+      <div className="flex items-center justify-between gap-3 border border-white/5 bg-[#172635] px-3 py-2">
         <span className="text-[9px] font-black text-tactical-orange uppercase tracking-widest">{title}</span>
         <span className="text-[10px] font-mono font-black text-white">
           {formatBytes(totals.knownBytes)}
@@ -303,7 +303,7 @@ function StoragePlanLoading({
       role="status"
       aria-live="polite"
       aria-busy="true"
-      className="space-y-3 border border-tactical-orange/40 bg-tactical-orange/5 px-4 py-4"
+      className="space-y-3 border border-white/5 bg-[#172635] px-4 py-4"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1 min-w-0">
@@ -769,7 +769,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
       </header>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <Card className="border-l-4 border-l-tactical-orange">
+        <Card>
           <CardContent className="p-6 space-y-6">
             <h2 className="text-lg font-black text-white uppercase tracking-tight">1 · Platform</h2>
             <div className="grid grid-cols-2 gap-2">
@@ -819,7 +819,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               className="w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange"
             />
             {profile.mainServerId && (
-              <div className="border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+              <div className="border border-white/5 bg-[#172635] px-3 py-3">
                 <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest mb-2">
                   Current selection
                 </p>
@@ -888,7 +888,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             className="w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange"
           />
           {profile.wantedServerIds.length > 0 && (
-            <div className="space-y-2 border border-tactical-orange/40 bg-tactical-orange/5 px-3 py-3">
+            <div className="space-y-2 border border-white/5 bg-[#172635] px-3 py-3">
               <p className="text-[9px] font-black text-tactical-orange uppercase tracking-widest">
                 Selected · {profile.wantedServerIds.length} server(s)
               </p>

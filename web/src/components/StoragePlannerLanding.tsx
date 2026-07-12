@@ -111,7 +111,7 @@ export function StoragePlannerLanding() {
               key={step}
               className="flex gap-4 items-start border border-white/5 bg-[#172635] p-5"
             >
-              <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-tactical-orange text-black font-black text-sm">
+              <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-[#172635] border border-white/10 text-signal-neutral font-black text-sm">
                 {i + 1}
               </span>
               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed pt-1">
@@ -151,7 +151,7 @@ export function StoragePlannerLanding() {
         </div>
       </section>
 
-      <section className="max-w-2xl mx-auto px-4 text-center space-y-4 border border-tactical-orange/20 bg-tactical-orange/5 p-8">
+      <section className="max-w-2xl mx-auto px-4 text-center space-y-4 border border-white/5 bg-[#172635] p-8">
         <h2 className="text-xl font-black text-white uppercase tracking-tight">
           Ready to compare your servers?
         </h2>
