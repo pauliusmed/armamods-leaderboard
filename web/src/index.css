@@ -4,6 +4,16 @@
   --color-military-green: #3a4d39;
   --color-military-dark: #121510;
   --color-tactical-orange: #ff6b00;
+  --color-signal-critical: #FF3838;
+  --color-signal-warning: #FFB302;
+  --color-signal-ok: #56F000;
+  --color-signal-info: #2DCCFF;
+  --color-signal-neutral: #A4ABB6;
+  --color-surface-base: #101923;
+  --color-surface-card: #172635;
+  --color-surface-elevated: #1C2E3F;
+  --font-sans: 'Barlow', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
 }
 
 html,
@@ -13,16 +23,17 @@ body {
 }
 
 body {
-  background-color: #000000;
-  color: #d1d5db;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #101923;
+  color: #C8CDD3;
+  font-family: 'Barlow', system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 #root {
   overflow-x: hidden;
 }
 
-/* Scanline effect for that terminal look */
+/* Scanline effect */
 body::before {
   content: " ";
   display: block;

@@ -47,9 +47,9 @@ export function Layout({ children }: LayoutProps) {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#000000] flex flex-col font-mono selection:bg-tactical-orange selection:text-black">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#101923] flex flex-col font-mono selection:bg-tactical-orange selection:text-black">
       {/* Top Bar - Tactical Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#000000]/80">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#101923]/80">
         <div className="max-w-screen-2xl mx-auto w-full flex items-stretch justify-between">
           <div className="flex items-center flex-1 min-w-0 px-4 sm:px-8 py-4 sm:py-6 lg:border-r lg:border-white/5 group">
             <Link to={gp || '/'} className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -88,7 +88,7 @@ export function Layout({ children }: LayoutProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div className="absolute top-full left-0 w-56 bg-[#0a0a0a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible group-hover/tools:opacity-100 group-hover/tools:visible transition-all duration-200 py-2 z-50">
+              <div className="absolute top-full left-0 w-56 bg-[#1C2E3F] border border-white/10 opacity-0 invisible group-hover/tools:opacity-100 group-hover/tools:visible transition-all duration-200 py-2 z-50">
                 <div className="px-4 py-2 border-b border-white/5 mb-2">
                   <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Utilities</span>
                 </div>
@@ -185,7 +185,7 @@ export function Layout({ children }: LayoutProps) {
             </button>
 
             {/* Tactical Dropdown Menu */}
-            <div className="absolute top-full right-0 w-64 bg-[#0a0a0a] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-200 py-2">
+            <div className="absolute top-full right-0 w-64 bg-[#1C2E3F] border border-white/10 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-200 py-2">
               <div className="px-4 py-2 border-b border-white/5 mb-2">
                 <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Switch Theater</span>
               </div>
@@ -213,7 +213,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <nav className="lg:hidden relative z-10 border-t border-white/5 bg-[#000000]/95 backdrop-blur-xl">
+          <nav className="lg:hidden relative z-10 border-t border-white/5 bg-[#101923]/95 backdrop-blur-xl">
             <div className="px-4 py-4 space-y-2">
               <div className="flex gap-2 p-1 bg-white/5 border border-white/10 mb-4">
                 <Link 
@@ -328,7 +328,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Industrial Footer */}
-      <footer className="border-t border-white/5 bg-[#0a0c08] relative overflow-hidden">
+      <footer className="border-t border-white/5 bg-[#0d1520] relative overflow-hidden">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-10 py-12 sm:py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-16">
             <div className="md:col-span-2 space-y-6 sm:space-y-8">

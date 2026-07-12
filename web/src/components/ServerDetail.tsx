@@ -439,7 +439,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               </div>
             </div>
           </div>
-          <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/50 backdrop-blur-sm overflow-hidden">
+          <Card className="border-l-4 border-l-tactical-orange overflow-hidden">
             <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
               {!history || history.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
@@ -636,7 +636,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               <Link
                 key={other.id}
                 to={`${gp}/server/${other.id}`}
-                className="group relative block bg-zinc-950/60 border border-white/5 hover:border-tactical-orange/50 p-6 transition-all hover:-translate-y-1"
+                className="group relative block bg-[#172635] border border-white/5 hover:border-tactical-orange/40 p-6 transition-all"
               >
                 <div className="space-y-3">
                   <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest">// ALIGNMENT: {overlapPercent}% OVERLAP</span>

@@ -99,10 +99,10 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         </div>
 
         {/* Global Encryption Status */}
-        <div className="flex items-center gap-4 bg-zinc-900/40 border border-white/5 p-4 rounded-lg">
+        <div className="flex items-center gap-4 bg-[#172635] border border-white/5 p-4 rounded-lg">
           <div className="relative flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-signal-ok"></span>
           </div>
           <div className="space-y-0.5">
             <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Main Engine</p>
@@ -116,7 +116,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
       {/* Primary Ingestion Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Metric 1 */}
-        <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/20">
+        <Card className="border-l-4 border-l-tactical-orange bg-[#172635]">
           <CardContent className="p-6 space-y-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Global Registries</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalMods.toLocaleString()}</p>
@@ -125,7 +125,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         </Card>
 
         {/* Metric 2 */}
-        <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/20">
+        <Card className="border-l-4 border-l-tactical-orange bg-[#172635]">
           <CardContent className="p-6 space-y-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Active Deployments</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalServers.toLocaleString()}</p>
@@ -134,7 +134,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         </Card>
 
         {/* Metric 3 */}
-        <Card className="border-l-4 border-l-tactical-orange bg-zinc-900/20">
+        <Card className="border-l-4 border-l-tactical-orange bg-[#172635]">
           <CardContent className="p-6 space-y-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Combat Personnel</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalPlayers.toLocaleString()}</p>
@@ -152,7 +152,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             // Telemetry Ingestion Pipeline
           </h3>
           
-          <div className="bg-[#050505] border border-white/5 p-6 rounded-lg space-y-6">
+          <div className="bg-[#172635] border border-white/5 p-6 rounded-lg space-y-6">
             
             {/* Collector Status Row */}
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
@@ -164,8 +164,8 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               </div>
               <div className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest border ${
                 isCollectorDelayed() 
-                  ? 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5' 
-                  : 'border-green-500/30 text-green-500 bg-green-500/5'
+                  ? 'border-signal-warning/30 text-signal-warning bg-signal-warning/5' 
+                  : 'border-signal-ok/30 text-signal-ok bg-signal-ok/5'
               }`}>
                 {isCollectorDelayed() ? 'STALE' : 'OK'}
               </div>
@@ -209,7 +209,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               <div className="h-1.5 bg-zinc-900 border border-white/5 w-full relative overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-1000 ${
-                    latency < 50 ? 'bg-green-500' : latency < 150 ? 'bg-tactical-orange' : 'bg-red-500'
+                    latency < 50 ? 'bg-signal-ok' : latency < 150 ? 'bg-tactical-orange' : 'bg-signal-critical'
                   }`}
                   style={{ width: `${Math.min(100, Math.max(10, 100 - (latency / 3)))}%` }}
                 ></div>
@@ -231,7 +231,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             // Cloudflare KV Sharding Status
           </h3>
           
-          <div className="bg-[#050505] border border-white/5 p-6 rounded-lg space-y-4">
+          <div className="bg-[#172635] border border-white/5 p-6 rounded-lg space-y-4">
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed">
               Cloudflare KV restricts values to 25MB. In order to scale, the system splits large datasets into size-optimized 5MB memory chunks.
             </p>
@@ -252,7 +252,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                   <span className="text-gray-400 font-sans font-bold">cache:mods</span>
                   <span className="text-center font-black text-tactical-orange">{kv.mods.chunks || 0}</span>
                   <span className="text-center">{kv.mods.total || 0}</span>
-                  <span className="text-right font-black text-green-500">{formatBytes(kv.mods.size)}</span>
+                  <span className="text-right font-black text-signal-ok">{formatBytes(kv.mods.size)}</span>
                 </div>
               )}
 
@@ -262,7 +262,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                   <span className="text-gray-400 font-sans font-bold">cache:servers</span>
                   <span className="text-center font-black text-tactical-orange">{kv.servers.chunks || 0}</span>
                   <span className="text-center">{kv.servers.total || 0}</span>
-                  <span className="text-right font-black text-green-500">{formatBytes(kv.servers.size)}</span>
+                  <span className="text-right font-black text-signal-ok">{formatBytes(kv.servers.size)}</span>
                 </div>
               )}
 
@@ -272,7 +272,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                   <span className="text-gray-400 font-sans font-bold">history:daily</span>
                   <span className="text-center font-black text-tactical-orange">{kv.history.chunks || 0}</span>
                   <span className="text-center">{kv.history.total || 0}</span>
-                  <span className="text-right font-black text-green-500">{formatBytes(kv.history.size)}</span>
+                  <span className="text-right font-black text-signal-ok">{formatBytes(kv.history.size)}</span>
                 </div>
               )}
             </div>
@@ -310,8 +310,8 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             </h3>
             <div className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
               health.healthy
-                ? 'border-green-500/30 text-green-500 bg-green-500/5'
-                : 'border-red-500/30 text-red-500 bg-red-500/5'
+                ? 'border-signal-ok/30 text-signal-ok bg-signal-ok/5'
+                : 'border-signal-critical/30 text-signal-critical bg-signal-critical/5'
             }`}>
               {health.healthy ? 'ALL OK' : `${health.errorCount} ISSUES`}
             </div>
@@ -319,17 +319,17 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
 
           {/* Error list (if any) */}
           {health.errors?.length > 0 && (
-            <div className="bg-red-950/20 border border-red-900/50 p-4 rounded-lg">
-              <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">Errors:</p>
+            <div className="bg-signal-critical/10 border border-signal-critical/30 p-4 rounded-lg">
+              <p className="text-[10px] font-black uppercase tracking-widest text-signal-critical mb-2">Errors:</p>
               <ul className="space-y-1">
                 {health.errors.map((err: string, i: number) => (
-                  <li key={i} className="text-[10px] font-mono text-red-300/80">⚠ {err}</li>
+                  <li key={i} className="text-[10px] font-mono text-signal-critical/80">⚠ {err}</li>
                 ))}
               </ul>
             </div>
           )}
 
-          <div className="bg-[#050505] border border-white/5 p-6 rounded-lg space-y-4">
+          <div className="bg-[#172635] border border-white/5 p-6 rounded-lg space-y-4">
             {(['reforger', 'arma3'] as const).map((g) => {
               const chk = health.checks?.[g] as Record<string, unknown> | undefined;
               if (!chk) return null;
@@ -340,10 +340,10 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               return (
                 <div key={g} className="border-b border-white/5 pb-4 last:border-0 last:pb-0 space-y-2">
                   <div className="flex items-center gap-3">
-                    <span className={`w-2 h-2 rounded-full ${kvStatus === 'ok' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <span className={`w-2 h-2 rounded-full ${kvStatus === 'ok' ? 'bg-signal-ok' : 'bg-signal-critical'}`}></span>
                     <span className="text-[11px] font-black uppercase tracking-wider text-white">{g}</span>
-                    {chk.isStale && <span className="text-[8px] text-yellow-500 font-bold">STALE</span>}
-                    <span className="text-[8px] text-gray-600 font-mono ml-auto">{chk.timingMs}ms</span>
+                    {chk.isStale as boolean && <span className="text-[8px] text-signal-warning font-bold">STALE</span>}
+                    <span className="text-[8px] text-gray-600 font-mono ml-auto">{chk.timingMs as number}ms</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[9px]">
                     <div>
@@ -362,7 +362,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                     </div>
                     <div>
                       <span className="text-gray-600">Trending: </span>
-                      <span className={`font-bold ${chk.trendingWeekly ? 'text-green-500' : 'text-red-500'}`}>
+                      <span className={`font-bold ${chk.trendingWeekly ? 'text-signal-ok' : 'text-signal-critical'}`}>
                         {chk.trendingWeekly ? 'OK' : 'MISSING'}
                       </span>
                     </div>
@@ -381,10 +381,10 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               <div className="border-t border-white/5 pt-4">
                 <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-2">Mod Lookup Test</p>
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${(health.checks.modLookup as Record<string, unknown>).foundInChunk ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  <span className={`w-2 h-2 rounded-full ${(health.checks.modLookup as Record<string, unknown>).foundInChunk ? 'bg-signal-ok' : 'bg-signal-critical'}`}></span>
                   <span className="text-[9px] text-white font-mono">{(health.checks.modLookup as Record<string, unknown>).timingMs as number}ms</span>
-                  {(health.checks.modLookup as Record<string, unknown>).testedId && (
-                    <span className="text-[9px] text-gray-500">{(health.checks.modLookup as Record<string, unknown>).testedId as string}</span>
+                  {(health.checks.modLookup as Record<string, string>).testedId && (
+                    <span className="text-[9px] text-gray-500">{(health.checks.modLookup as Record<string, string>).testedId}</span>
                   )}
                 </div>
               </div>
@@ -393,7 +393,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               <div className="border-t border-white/5 pt-4">
                 <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-2">Servers Endpoint Path</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px]">
-                  <div><span className="text-gray-600">Meta: </span><span className={`font-bold ${(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'text-green-500' : 'text-red-500'}`}>{(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'OK' : 'MISSING'}</span></div>
+                  <div><span className="text-gray-600">Meta: </span><span className={`font-bold ${(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'text-signal-ok' : 'text-signal-critical'}`}>{(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'OK' : 'MISSING'}</span></div>
                   <div><span className="text-gray-600">Servers: </span><span className="text-white">{(health.checks.serversEndpoint as Record<string, unknown>).totalServers as number}</span></div>
                   <div><span className="text-gray-600">First chunk: </span><span className="text-white">{(health.checks.serversEndpoint as Record<string, unknown>).firstChunkRows as number} rows</span></div>
                   <div><span className="text-gray-600">{(health.checks.serversEndpoint as Record<string, unknown>).timingMs as number}ms</span></div>

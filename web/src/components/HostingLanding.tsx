@@ -156,7 +156,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
       </section>
 
       {/* Pricing / CTA Section */}
-      <section className="bg-zinc-950 border border-white/10 p-12 sm:p-20 relative overflow-hidden">
+      <section className="bg-[#172635] border border-white/5 p-12 sm:p-20">
         <div className="absolute top-0 right-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(249,115,22,0.02)_50%,transparent_75%)] bg-[length:20px_20px]" />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">

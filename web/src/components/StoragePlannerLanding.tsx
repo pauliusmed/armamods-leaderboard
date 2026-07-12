@@ -109,7 +109,7 @@ export function StoragePlannerLanding() {
           ].map((step, i) => (
             <li
               key={step}
-              className="flex gap-4 items-start border border-white/5 bg-zinc-950/60 p-5"
+              className="flex gap-4 items-start border border-white/5 bg-[#172635] p-5"
             >
               <span className="shrink-0 w-8 h-8 flex items-center justify-center bg-tactical-orange text-black font-black text-sm">
                 {i + 1}
@@ -138,7 +138,7 @@ export function StoragePlannerLanding() {
           {FAQ.map((item) => (
             <details
               key={item.q}
-              className="group border border-white/5 bg-zinc-950/40 open:border-tactical-orange/30"
+              className="group border border-white/5 bg-[#172635] open:border-tactical-orange/30"
             >
               <summary className="cursor-pointer list-none px-5 py-4 text-[11px] font-black text-white uppercase tracking-wide hover:text-tactical-orange transition-colors">
                 {item.q}

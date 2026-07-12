@@ -64,7 +64,7 @@ export function ListFilterBar({
 
   return (
     <div
-      className={`bg-zinc-900/50 p-4 border border-white/5 backdrop-blur-sm shadow-2xl transition-all hover:bg-zinc-900/80 ${
+      className={`bg-[#172635] p-4 border border-white/5 transition-all hover:bg-[#1C2E3F] ${
         sticky ? 'sticky top-[72px] sm:top-[84px] z-40' : ''
       }`}
     >

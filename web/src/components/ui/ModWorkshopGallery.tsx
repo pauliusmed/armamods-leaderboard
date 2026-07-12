@@ -100,12 +100,12 @@ export function ModWorkshopGallery({
   return (
     <>
     <section
-      className={`border border-white/5 bg-zinc-950/50 ${
+      className={`border border-white/5 bg-[#172635] ${
         isInline ? 'w-full' : 'w-full max-w-md sm:max-w-lg mx-auto'
       }`}
       aria-label={`${label} workshop gallery`}
     >
-      <div className={`relative w-full ${frameClass} bg-zinc-950 overflow-hidden`}>
+      <div className={`relative w-full ${frameClass} bg-[#101923] overflow-hidden`}>
         {images.map((image, index) => (
           <button
             key={image.url}

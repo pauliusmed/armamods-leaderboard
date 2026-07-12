@@ -186,7 +186,7 @@ export function ReforgerHosting() {
       </section>
 
       <section className="max-w-4xl mx-auto px-4">
-        <Card className="bg-zinc-950 border border-white/10 p-8 space-y-10 relative overflow-hidden">
+        <Card className="p-8 space-y-10">
           <div className="absolute top-0 right-0 w-32 h-32 bg-tactical-orange/5 blur-3xl" />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -258,7 +258,7 @@ export function ReforgerHosting() {
       </p>
 
       <section className="max-w-7xl mx-auto px-4 overflow-x-auto">
-        <table className="w-full border-collapse bg-zinc-950 border border-white/5 min-w-[900px]">
+        <table className="w-full border-collapse bg-[#172635] border border-white/5 min-w-[900px]">
           <thead>
             <tr className="border-b border-white/10 bg-white/[0.02]">
               <th className="p-6 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest">Provider</th>
@@ -301,7 +301,7 @@ export function ReforgerHosting() {
                     </div>
                     {details && (
                       <div className="flex flex-col items-center justify-center gap-0.5 mt-1">
-                        <div className="flex items-center gap-1 text-[8px] font-bold text-red-500 uppercase tracking-widest">
+                        <div className="flex items-center gap-1 text-[8px] font-bold text-signal-critical uppercase tracking-widest">
                           <AlertCircle className="w-2.5 h-2.5" />
                           Included Addons:
                         </div>
@@ -311,7 +311,7 @@ export function ReforgerHosting() {
                       </div>
                     )}
                     {warning && (
-                      <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-red-500 uppercase tracking-widest mt-1 animate-pulse">
+                      <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-signal-critical uppercase tracking-widest mt-1 animate-pulse">
                         <AlertCircle className="w-2.5 h-2.5" />
                         {warning}
                       </div>
@@ -362,7 +362,7 @@ export function ReforgerHosting() {
       </section>
 
       <section className="max-w-4xl mx-auto px-4 pt-10">
-        <Card className="bg-zinc-900 border-tactical-orange/20 overflow-hidden relative shadow-2xl">
+        <Card className="border-tactical-orange/20">
           <div className="absolute top-0 left-0 w-full h-1 bg-tactical-orange" />
           <CardContent className="p-12 text-center space-y-8">
             <div className="space-y-2">

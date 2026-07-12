@@ -89,7 +89,7 @@ export function TrendRow({
           <span
             title={`#${prevRank} → #${currentRank}`}
             className={`font-mono text-xs font-bold tabular-nums ${
-              delta > 0 ? 'text-green-500' : 'text-red-500'
+              delta > 0 ? 'text-signal-ok' : 'text-signal-critical'
             }`}
           >
             {delta > 0 ? '↑' : '↓'} {magnitude}

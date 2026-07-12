@@ -516,7 +516,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
 
           <div className="text-[11px] text-gray-500 border border-white/5 p-4 rounded bg-white/2 space-y-2">
             {result.meta.mode === 'client-fallback' && (
-              <p className="text-yellow-500/90 font-bold uppercase text-[10px] tracking-widest">
+              <p className="text-signal-warning/90 font-bold uppercase text-[10px] tracking-widest">
                 Fallback mode (per mod)
               </p>
             )}

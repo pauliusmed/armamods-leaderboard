@@ -12,8 +12,8 @@ export function Card({ children, className = '', onClick, hoverEffect = true }: 
     <div
       onClick={onClick}
       className={`
-        bg-zinc-950/40 border border-white/5 relative group transition-all duration-700
-        ${hoverEffect ? 'hover:border-tactical-orange/20 cursor-pointer shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)]' : ''}
+        bg-[#172635] border border-white/5 relative group transition-all duration-200
+        ${hoverEffect ? 'hover:border-tactical-orange/40 cursor-pointer' : ''}
         ${className}
       `}
     >
@@ -31,7 +31,7 @@ export function Card({ children, className = '', onClick, hoverEffect = true }: 
 
 export function CardHeader({ children, className = '' }: { children: React.ReactNode, className?: string }) {
   return (
-    <div className={`px-8 py-6 relative overflow-hidden border-b border-white/5 ${className}`}>
+    <div className={`px-6 py-5 relative overflow-hidden border-b border-white/5 ${className}`}>
       <div className="relative z-10">{children}</div>
     </div>
   );
@@ -40,7 +40,7 @@ export function CardHeader({ children, className = '' }: { children: React.React
 export const CardContent = React.forwardRef<HTMLDivElement, { children: React.ReactNode; className?: string }>(
   ({ children, className = '' }, ref) => {
     return (
-      <div ref={ref} className={`p-8 ${className}`}>
+      <div ref={ref} className={`p-6 ${className}`}>
         {children}
       </div>
     );

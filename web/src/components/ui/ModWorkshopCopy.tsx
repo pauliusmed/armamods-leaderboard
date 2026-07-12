@@ -29,7 +29,7 @@ export function ModWorkshopCopy({
     needsCollapse && !expanded ? `${descriptionText.slice(0, COLLAPSE_CHARS).trim()}…` : descriptionText;
 
   return (
-    <section className="space-y-4 border border-white/5 bg-zinc-950/40 p-4 sm:p-6">
+    <section className="space-y-4 border border-white/5 bg-[#172635] p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-white/5 pb-4">
         <div>
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">

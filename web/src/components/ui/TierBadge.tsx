@@ -2,7 +2,7 @@ const TIER_STYLES: Record<string, string> = {
   S: 'bg-tactical-orange text-black',
   A: 'bg-tactical-orange/70 text-black',
   B: 'bg-zinc-600 text-white',
-  C: 'bg-zinc-700 text-gray-300',
+  C: 'bg-zinc-700 text-signal-neutral',
 };
 
 interface TierBadgeProps {

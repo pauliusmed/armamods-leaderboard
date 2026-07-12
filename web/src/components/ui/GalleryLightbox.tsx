@@ -52,7 +52,7 @@ export function GalleryLightbox({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/92 backdrop-blur-sm p-4 sm:p-8"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#101923]/92 p-4 sm:p-8"
       role="dialog"
       aria-modal="true"
       aria-label={`${label} screenshot preview`}

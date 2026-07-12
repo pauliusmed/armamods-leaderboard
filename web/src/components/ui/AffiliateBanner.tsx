@@ -14,7 +14,7 @@ export function AffiliateBanner() {
       href={externalAffiliateUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="block group relative overflow-hidden bg-zinc-950 border border-tactical-orange/40 p-6 sm:p-10 transition-all hover:border-tactical-orange hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]"
+      className="block group relative overflow-hidden bg-[#172635] border border-tactical-orange/40 p-6 sm:p-10 transition-all hover:border-tactical-orange"
     >
       {/* Background Effect */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-tactical-orange/5 blur-[100px] -mr-48 -mt-48 pointer-events-none group-hover:bg-tactical-orange/15 transition-all duration-700" />

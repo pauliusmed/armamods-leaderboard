@@ -63,7 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-black text-red-500 p-20 font-mono">
+        <div className="min-h-screen bg-[#101923] text-signal-critical p-20 font-mono">
           <h1 className="text-4xl font-black mb-8">// SYSTEM_CRITICAL_FAILURE</h1>
           <div className="bg-red-950/20 border border-red-900/50 p-8 rounded-lg mb-8">
             <p className="font-bold mb-4">Error Details:</p>
