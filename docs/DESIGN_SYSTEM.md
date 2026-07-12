@@ -45,28 +45,35 @@ Critical system events follow the PACE model (Primary, Alternate, Contingency, E
 
 ---
 
-## Color Palette
+## Color Philosophy: Grayscale-First, Color by Exception
 
-### Core (MIL-STD-1472H compliant)
+**~95% of the interface is grayscale.** Color is used only in two narrowly-scoped roles:
 
-Chromatic encoding is strictly functional: warm colors demand immediate action, cool/neutral colors indicate stable processes. Maximum 5 active signal colors.
+1. **Accent (`#ff6b00`)** — for interaction only: buttons, active nav, hover states, logo. Never decorative.
+2. **Signal colors** — for status indicators only: small dots (≤12px), badge text. Never on backgrounds, borders, cards, or large surfaces.
 
-| Token | Hex | Function |
-|-------|-----|----------|
-| `--color-critical` | `#FF3838` | Errors, critical alerts, operator decision required |
-| `--color-warning` | `#FFB302` | Degraded status, caution, fallback active |
-| `--color-ok` | `#2ECC71` | Nominal operation, online, healthy |
-| `--color-info` | `#2DCCFF` | Informational, telemetry, secondary data |
-| `--color-neutral` | `#A4ABB6` | Muted labels, inactive elements, metadata |
-| `--color-accent` | `#ff6b00` | Primary interactive accent — hover states, active nav, rank badges |
+This follows the "color by exception" pattern used by military C2 systems (ATAK), aerospace UX (Astro UXDS), and modern tactical UI frameworks (Voidframe, Trunk). Grayscale testing ensures hierarchy and meaning survive without hue.
 
-### Backgrounds
+### Core Palette (MIL-STD-1472H compliant)
 
-Deep dark blue/gray tones replace pure black per Astro UXDS and MIL-STD-1472H recommendations for reduced eye strain in low-light environments. Depth is created through luminance shifts, not shadows (shadows are invisible on dark surfaces).
+Chromatic encoding is strictly functional. Maximum 5 signal colors. All are used as **text or small dots only** — no backgrounds, no borders, no card surfaces.
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `--color-accent` | `#ff6b00` | Primary interactive accent — buttons, active nav, hover states, logo |
+| `--color-critical` | `#FF3838` | Small status text / dot: errors, critical alerts |
+| `--color-warning` | `#FFB302` | Small status text / dot: degraded, stale data |
+| `--color-ok` | `#2ECC71` | Small status text / dot: nominal, online |
+| `--color-info` | `#2DCCFF` | Small informational text / dot |
+| `--color-neutral` | `#A4ABB6` | Muted labels, metadata |
+
+### Backgrounds (Grayscale Only)
+
+Depth is created through luminance shifts only — no shadows, no glassmorphism, no colored backgrounds.
 
 | Context | Hex | Notes |
 |---------|-----|-------|
-| Page body | `#101923` | Deep navy — base surface (Astro UXDS inspired) |
+| Page body | `#101923` | Deep navy — base surface |
 | Cards / containers | `#172635` | Elevated surface, 1 step lighter |
 | Elevated surfaces | `#1C2E3F` | Dropdowns, modals, bottom sheets |
 | Table rows | `#101923` | Same as base, alternated with `#172635` |
@@ -79,17 +86,16 @@ Deep dark blue/gray tones replace pure black per Astro UXDS and MIL-STD-1472H re
 | Primary | `#FFFFFF` | Headings, key values |
 | Body | `#C8CDD3` (~`gray-300`) | Data, descriptions |
 | Muted | `#7A828E` (~`gray-500`) | Secondary labels, footnotes |
-| Signal | Per core palette | Status, rank, alerts |
+| Signal | Per core palette | Status text only — never on backgrounds |
 
 ### Borders
 
-Borders are 1px, never rounded on containers. Interactive elements may have subtle rounding (`rounded-md` max).
+All borders are 1px solid `rgba(255,255,255,0.05)` by default. Signal-colored borders are never used on surfaces — borders are grayscale only.
 
 | Token | Usage |
 |-------|-------|
 | `rgba(255,255,255,0.05)` | Default card/table borders |
 | `rgba(255,255,255,0.10)` | Stronger separation (nav, th) |
-| Per signal color at 40% | Accent borders for active/warning/error states |
 
 ---
 

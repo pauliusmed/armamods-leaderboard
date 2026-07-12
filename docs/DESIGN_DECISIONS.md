@@ -25,6 +25,16 @@ Monospaced numbers with `font-variant-numeric: tabular-nums` ensure:
 - Values don't shift horizontally when updating in real-time
 - Standard in financial and military dashboards (Signal, Bloomberg, MIL-STD-1472H §5.5)
 
+## Why Color by Exception (~95% Grayscale)
+
+Military and aerospace UX research shows that color should be used only for signaling, never for decoration. Patterns from ATAK, Astro UXDS, Voidframe UI, and Trunk all converge on the same principle: **grayscale-first, color by exception.**
+
+Key rules:
+- Orange (`#ff6b00`) is used **only** for interactive elements (buttons, active nav, hover states, logo)
+- Signal colors are used **only** as small status indicators (text or ≤12px dots)
+- All surfaces — cards, banners, sections — are grayscale only (`#101923` / `#172635` / `#1C2E3F` with white borders)
+- No colored backgrounds, no colored borders on surfaces, no decorative color
+
 ## Why 5 Signal Colors (MIL-STD-1472H)
 
 The human visual system can track at most 5–7 distinct chromatic states simultaneously. Limiting to 5 functional colors ensures:
