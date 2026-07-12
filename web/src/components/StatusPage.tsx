@@ -10,6 +10,7 @@ interface StatusPageProps {
 
 export function StatusPage({ game = 'reforger' }: StatusPageProps) {
   const [data, setData] = useState<any>(null);
+  const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [latency, setLatency] = useState<number>(0);
@@ -18,12 +19,22 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
     const start = Date.now();
     try {
       setLoading(true);
-      const res = await diagnosticsApi.getDiagnostics(game);
+      const [res, healthRes] = await Promise.all([
+        diagnosticsApi.getDiagnostics(game),
+        diagnosticsApi.getHealth().catch(() => null),
+      ]);
       setData(res);
+      setHealth(healthRes);
       setLatency(Date.now() - start);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to retrieve diagnostics');
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { message?: string; error?: string } } };
+        const body = axiosErr.response?.data;
+        setError(body?.message || body?.error || (err instanceof Error ? err.message : 'Failed to retrieve diagnostics'));
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to retrieve diagnostics');
+      }
     } finally {
       setLoading(false);
     }
@@ -289,6 +300,109 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         </div>
 
       </div>
+
+      {/* Health Check Panel */}
+      {health && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.25em] border-b border-white/5 pb-2">
+              // KV Health Probe ({health.durationMs}ms)
+            </h3>
+            <div className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
+              health.healthy
+                ? 'border-green-500/30 text-green-500 bg-green-500/5'
+                : 'border-red-500/30 text-red-500 bg-red-500/5'
+            }`}>
+              {health.healthy ? 'ALL OK' : `${health.errorCount} ISSUES`}
+            </div>
+          </div>
+
+          {/* Error list (if any) */}
+          {health.errors?.length > 0 && (
+            <div className="bg-red-950/20 border border-red-900/50 p-4 rounded-lg">
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">Errors:</p>
+              <ul className="space-y-1">
+                {health.errors.map((err: string, i: number) => (
+                  <li key={i} className="text-[10px] font-mono text-red-300/80">⚠ {err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="bg-[#050505] border border-white/5 p-6 rounded-lg space-y-4">
+            {(['reforger', 'arma3'] as const).map((g) => {
+              const chk = health.checks?.[g] as Record<string, unknown> | undefined;
+              if (!chk) return null;
+              const kvStatus = chk.kv as string;
+              const mods = chk.mods as Record<string, unknown> | undefined;
+              const servers = chk.servers as Record<string, unknown> | undefined;
+              const lastUpdate = chk.lastUpdate as string | undefined;
+              return (
+                <div key={g} className="border-b border-white/5 pb-4 last:border-0 last:pb-0 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full ${kvStatus === 'ok' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <span className="text-[11px] font-black uppercase tracking-wider text-white">{g}</span>
+                    {chk.isStale && <span className="text-[8px] text-yellow-500 font-bold">STALE</span>}
+                    <span className="text-[8px] text-gray-600 font-mono ml-auto">{chk.timingMs}ms</span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[9px]">
+                    <div>
+                      <span className="text-gray-600">Mods: </span>
+                      <span className="text-white font-bold">{(mods?.total as number) ?? '?'}</span>
+                      <span className="text-gray-600"> ({mods?.chunks as number ?? 0} chunks)</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Servers: </span>
+                      <span className="text-white font-bold">{(servers?.total as number) ?? '?'}</span>
+                      <span className="text-gray-600"> ({servers?.chunks as number ?? 0} chunks)</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">SQE: </span>
+                      <span className="text-white font-bold">{chk.sqeIndex as string ?? 'none'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Trending: </span>
+                      <span className={`font-bold ${chk.trendingWeekly ? 'text-green-500' : 'text-red-500'}`}>
+                        {chk.trendingWeekly ? 'OK' : 'MISSING'}
+                      </span>
+                    </div>
+                    {lastUpdate && (
+                      <p className="text-gray-500 font-mono truncate" title={lastUpdate}>
+                        {new Date(lastUpdate).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Additional checks */}
+            {health.checks?.modLookup && (
+              <div className="border-t border-white/5 pt-4">
+                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-2">Mod Lookup Test</p>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${(health.checks.modLookup as Record<string, unknown>).foundInChunk ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  <span className="text-[9px] text-white font-mono">{(health.checks.modLookup as Record<string, unknown>).timingMs as number}ms</span>
+                  {(health.checks.modLookup as Record<string, unknown>).testedId && (
+                    <span className="text-[9px] text-gray-500">{(health.checks.modLookup as Record<string, unknown>).testedId as string}</span>
+                  )}
+                </div>
+              </div>
+            )}
+            {health.checks?.serversEndpoint && (
+              <div className="border-t border-white/5 pt-4">
+                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-2">Servers Endpoint Path</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px]">
+                  <div><span className="text-gray-600">Meta: </span><span className={`font-bold ${(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'text-green-500' : 'text-red-500'}`}>{(health.checks.serversEndpoint as Record<string, unknown>).metaOk ? 'OK' : 'MISSING'}</span></div>
+                  <div><span className="text-gray-600">Servers: </span><span className="text-white">{(health.checks.serversEndpoint as Record<string, unknown>).totalServers as number}</span></div>
+                  <div><span className="text-gray-600">First chunk: </span><span className="text-white">{(health.checks.serversEndpoint as Record<string, unknown>).firstChunkRows as number} rows</span></div>
+                  <div><span className="text-gray-600">{(health.checks.serversEndpoint as Record<string, unknown>).timingMs as number}ms</span></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

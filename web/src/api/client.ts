@@ -312,7 +312,21 @@ export const diagnosticsApi = {
       });
       return response.data;
     }, 60000); // 1 min cache
-  }
+  },
+
+  /** Comprehensive KV health check — no caching, always fresh. */
+  getHealth: async () => {
+    const response = await api.get<{
+      status: string;
+      healthy: boolean;
+      timestamp: string;
+      durationMs: number;
+      errorCount: number;
+      errors: string[];
+      checks: Record<string, unknown>;
+    }>('health');
+    return response.data;
+  },
 };
 
 export const storageApi = {

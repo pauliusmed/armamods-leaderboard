@@ -1372,6 +1372,205 @@ app.get('/trending/:period?', async (c) => {
     return response;
 });
 
+// ──────────────────────────────────────────────
+// COMPREHENSIVE HEALTH CHECK
+// ──────────────────────────────────────────────
+app.get('/health', async (c) => {
+  const start = Date.now();
+  const checks: Record<string, unknown> = {};
+  const errors: string[] = [];
+
+  // 1. KV connectivity + data existence (per game)
+  try {
+    for (const game of ['reforger', 'arma3'] as const) {
+      const keys = getKVKeys(game);
+      const gameStart = Date.now();
+
+      const [stats, modsMeta, serversMeta, sqeIndex, lastUpdate, trendingWeekly] = await Promise.all([
+        c.env.TRENDING_KV.get(keys.STATS, 'json').catch((e: Error) => { errors.push(`${game}.stats: ${e.message}`); return null; }),
+        c.env.TRENDING_KV.get(`${keys.MODS}:meta`, 'json').catch((e: Error) => { errors.push(`${game}.modsMeta: ${e.message}`); return null; }),
+        c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json').catch((e: Error) => { errors.push(`${game}.serversMeta: ${e.message}`); return null; }),
+        c.env.TRENDING_KV.get(keys.SERVER_SQE, 'json').catch(() => null),
+        c.env.TRENDING_KV.get(keys.LAST_UPDATE, 'text').catch(() => null),
+        c.env.TRENDING_KV.get(`${keys.TRENDING}:weekly`, 'json').catch(() => null),
+      ]);
+
+      // Verify we can actually read a data chunk
+      let firstChunkOk = false;
+      let firstChunkSize = 0;
+      try {
+        if (modsMeta?.chunks > 0) {
+          const chunk0 = await c.env.TRENDING_KV.get(`${keys.MODS}:0`, 'text');
+          if (chunk0) {
+            firstChunkOk = true;
+            firstChunkSize = chunk0.length;
+          }
+        }
+      } catch (e: unknown) {
+        errors.push(`${game}.modsChunk0: ${e instanceof Error ? e.message : String(e)}`);
+      }
+
+      // Check data freshness
+      const now = Date.now();
+      const lastUpdateTime = lastUpdate ? new Date(lastUpdate).getTime() : null;
+      const staleHours = lastUpdateTime ? (now - lastUpdateTime) / 3600000 : null;
+      const isStale = staleHours !== null && staleHours > 3;
+
+      checks[game] = {
+        kv: stats || modsMeta ? 'ok' : 'missing',
+        stats,
+        mods: {
+          chunks: modsMeta?.chunks ?? 0,
+          total: modsMeta?.total ?? 0,
+          firstChunkReadable: firstChunkOk,
+          firstChunkBytes: firstChunkSize,
+        },
+        servers: {
+          chunks: serversMeta?.chunks ?? 0,
+          total: serversMeta?.total ?? 0,
+        },
+        sqeIndex: sqeIndex ? `${Object.keys(sqeIndex as object).length} entries` : null,
+        trendingWeekly: trendingWeekly ? true : false,
+        lastUpdate,
+        staleHours: staleHours !== null ? Math.round(staleHours * 10) / 10 : null,
+        isStale,
+        timingMs: Date.now() - gameStart,
+      };
+
+      if (!stats) errors.push(`${game}: stats missing from KV`);
+      if (!modsMeta) errors.push(`${game}: mods meta missing`);
+      if (!serversMeta) errors.push(`${game}: servers meta missing`);
+      if (isStale) errors.push(`${game}: data stale (${staleHours?.toFixed(1)}h since last update)`);
+    }
+  } catch (err) {
+    errors.push(`kv_iteration: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // 2. Test a lightweight mod lookup (simulates /api/mods/:id path)
+  try {
+    const modLookupStart = Date.now();
+    const keys = getKVKeys('reforger');
+    const modsMeta = await c.env.TRENDING_KV.get(`${keys.MODS}:meta`, 'json') as { chunks?: number } | null;
+    if (modsMeta?.chunks) {
+      const chunk0 = await c.env.TRENDING_KV.get(`${keys.MODS}:0`, 'text');
+      if (chunk0 && chunk0.length > 0) {
+        // Find first mod id in chunk0
+        const idMatch = chunk0.match(/"id":"([^"]+)"(?:,"name":"([^"]+)")?/);
+        if (idMatch) {
+          const firstId = idMatch[1];
+          const includesId = chunk0.includes(`"id":"${firstId}"`);
+          checks.modLookup = {
+            testedId: firstId,
+            foundInChunk: includesId,
+            timingMs: Date.now() - modLookupStart,
+          };
+        } else {
+          checks.modLookup = { error: 'no mod id pattern found in chunk0' };
+        }
+      } else {
+        checks.modLookup = { error: 'chunk0 empty' };
+      }
+    } else {
+      checks.modLookup = { error: 'no mods meta' };
+    }
+  } catch (e: unknown) {
+    errors.push(`modLookup: ${e instanceof Error ? e.message : String(e)}`);
+    checks.modLookup = { error: 'exception' };
+  }
+
+  // 3. Simulate the /api/servers critical path (read meta + one chunk + SQE)
+  try {
+    const serversPathStart = Date.now();
+    const keys = getKVKeys('reforger');
+    const [serversMeta, sqeIndex] = await Promise.all([
+      c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json') as Promise<{ chunks?: number; total?: number } | null>,
+      c.env.TRENDING_KV.get(keys.SERVER_SQE, 'json') as Promise<Record<string, unknown> | null>,
+    ]);
+
+    let firstServerChunkRows = 0;
+    let firstServerChunkBytes = 0;
+    let firstServerChunkReadable = false;
+    if (serversMeta?.chunks) {
+      try {
+        const chunk0 = await c.env.TRENDING_KV.get(`${keys.SERVERS}:0`, 'text');
+        if (chunk0) {
+          firstServerChunkBytes = chunk0.length;
+          firstServerChunkReadable = true;
+          // Count approximate server objects
+          const serverCount = (chunk0.match(/"id":"/g) || []).length;
+          firstServerChunkRows = serverCount;
+        }
+      } catch {
+        // chunk read failed
+      }
+    }
+
+    checks.serversEndpoint = {
+      metaOk: Boolean(serversMeta),
+      totalServers: serversMeta?.total ?? 0,
+      chunks: serversMeta?.chunks ?? 0,
+      firstChunkReadable: firstServerChunkReadable,
+      firstChunkBytes: firstServerChunkBytes,
+      firstChunkRows: firstServerChunkRows,
+      sqeEntries: sqeIndex ? Object.keys(sqeIndex).length : 0,
+      timingMs: Date.now() - serversPathStart,
+    };
+
+    if (!serversMeta) errors.push('serversEndpoint: meta missing');
+    if (!sqeIndex) errors.push('serversEndpoint: SQE index missing');
+    if (serversMeta?.chunks && !firstServerChunkReadable) errors.push('serversEndpoint: chunk0 unreadable');
+  } catch (e: unknown) {
+    errors.push(`serversEndpoint: ${e instanceof Error ? e.message : String(e)}`);
+    checks.serversEndpoint = { error: 'exception' };
+  }
+
+  // 4. Check trending data
+  try {
+    const trendingStart = Date.now();
+    const keys = getKVKeys('reforger');
+    const [weekly, monthly] = await Promise.all([
+      c.env.TRENDING_KV.get(`${keys.TRENDING}:weekly`, 'json').catch(() => null),
+      c.env.TRENDING_KV.get(`${keys.TRENDING}:monthly`, 'json').catch(() => null),
+    ]);
+    checks.trending = {
+      weekly: weekly ? 'ok' : 'missing',
+      monthly: monthly ? 'ok' : 'missing',
+      timingMs: Date.now() - trendingStart,
+    };
+    if (!weekly) errors.push('trending: weekly data missing');
+  } catch (e: unknown) {
+    errors.push(`trending: ${e instanceof Error ? e.message : String(e)}`);
+    checks.trending = { error: 'exception' };
+  }
+
+  // 5. Cache API availability
+  try {
+    await caches.open('armamods:health').then((cache) => cache.match(c.req.raw));
+    checks.cacheApi = 'ok';
+  } catch (e: unknown) {
+    checks.cacheApi = 'error';
+    errors.push(`cacheApi: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  const duration = Date.now() - start;
+  const degradedCount = Object.keys(checks).filter((k) => {
+    const v = checks[k];
+    return v && typeof v === 'object' && !Array.isArray(v) && 'kv' in (v as Record<string, unknown>)
+      ? ((v as Record<string, unknown>).kv === 'missing')
+      : false;
+  }).length;
+
+  return c.json({
+    status: errors.length === 0 ? 'healthy' : degradedCount > 0 ? 'degraded' : 'healthy_with_issues',
+    healthy: errors.length === 0,
+    timestamp: new Date().toISOString(),
+    durationMs: duration,
+    errorCount: errors.length,
+    errors: errors.slice(0, 20), // cap at 20 to avoid huge response
+    checks,
+  });
+});
+
 // DEBUG & DIAGNOSTICS ENDPOINT: Full system health check
 app.get('/diagnostics', async (c) => {
     const game = getGameFromQuery(c);

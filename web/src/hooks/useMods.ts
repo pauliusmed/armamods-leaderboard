@@ -47,7 +47,13 @@ export function useMods(options: UseModsOptions = {}) {
       setGlobalStats(statsData || { totalPlayers: 0, totalServers: 0, totalMods: 0 });
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { message?: string; error?: string } } };
+        const body = axiosErr.response?.data;
+        setError(body?.message || body?.error || (err instanceof Error ? err.message : 'Failed to load data'));
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load data');
+      }
     } finally {
       setLoading(false);
     }

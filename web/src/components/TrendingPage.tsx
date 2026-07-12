@@ -54,21 +54,6 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
     loadTrending();
   }, [loadTrending]);
 
-  if (loading) return <StatusState type="loading" />;
-  if (error) return (
-    <div className="space-y-8">
-      <StatusState
-        type="error"
-        message={error}
-        onAction={loadTrending}
-        actionText="Retry"
-      />
-      <Link to="/" className="block text-center text-tactical-orange font-black uppercase tracking-[0.4em] text-[10px] hover:underline">
-        ← Return to Database
-      </Link>
-    </div>
-  );
-
   const currentMods = trending[activeCategory] || [];
   const hasNoData = !currentMods || currentMods.length === 0;
 
@@ -110,6 +95,21 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
         (m) => !favoriteIds.some((id) => id === m.id || id === m.id.toUpperCase())
       ),
     [sortedCurrentMods, favoriteIds]
+  );
+
+  if (loading) return <StatusState type="loading" />;
+  if (error) return (
+    <div className="space-y-8">
+      <StatusState
+        type="error"
+        message={error}
+        onAction={loadTrending}
+        actionText="Retry"
+      />
+      <Link to="/" className="block text-center text-tactical-orange font-black uppercase tracking-[0.4em] text-[10px] hover:underline">
+        ← Return to Database
+      </Link>
+    </div>
   );
 
   const getCategoryLabel = (cat: TrendCategory, short = false) => {

@@ -63,7 +63,13 @@ export function useServers(options: UseServersOptions = {}) {
       });
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load servers');
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { message?: string; error?: string } } };
+        const body = axiosErr.response?.data;
+        setError(body?.message || body?.error || (err instanceof Error ? err.message : 'Failed to load servers'));
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load servers');
+      }
     } finally {
       setLoading(false);
     }
