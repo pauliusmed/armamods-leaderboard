@@ -176,6 +176,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           const rankScore = s.sqeRank ? 1 / (1 + Math.abs(s.sqeRank - (server.sqeRank || 9999)) * 0.1) : 0;
           return {
             server: s,
+            reason: 'Vanilla server' as const,
             overlapPercent: 0,
             score: (isVanilla ? playerScore * 2 + rankScore : playerScore) * (alive ? 1.5 : 1),
           };
@@ -222,16 +223,17 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
     function exclude(s: typeof scored[0]) { return !usedIds.has(s.server.id); }
 
-    const slot1 = reserve(take(pick(exclude, (s) => s.modSimilarity), (s) => s.modSimilarity, 1));
-    const slot2 = reserve(take(pick(exclude, (s) => s.rankWeighted), (s) => s.rankWeighted, 1));
-    const slot3 = reserve(take(pick((s) => exclude(s) && s.fillRatio >= 0.8, (s) => s.modSimilarity), (s) => s.modSimilarity, 1));
-    const slot4 = reserve(take(pick((s) => exclude(s) && s.fillRatio >= 0.8, (s) => s.rankWeighted), (s) => s.rankWeighted, 1));
-    const slot5 = reserve(take(pick((s) => exclude(s) && s.fillRatio > 0 && s.fillRatio < 0.8, (s) => s.modSimilarity), (s) => s.modSimilarity, 1));
+    const slot1 = reserve(take(pick(exclude, (s) => s.modSimilarity), (s) => s.modSimilarity, 1)).map(r => ({ ...r, reason: 'Best mod match' as const }));
+    const slot2 = reserve(take(pick(exclude, (s) => s.rankWeighted), (s) => s.rankWeighted, 1)).map(r => ({ ...r, reason: 'Mod match + premium weighting' as const }));
+    const slot3 = reserve(take(pick((s) => exclude(s) && s.fillRatio >= 0.8, (s) => s.modSimilarity), (s) => s.modSimilarity, 1)).map(r => ({ ...r, reason: 'Mod match + Full server' as const }));
+    const slot4 = reserve(take(pick((s) => exclude(s) && s.fillRatio >= 0.8, (s) => s.rankWeighted), (s) => s.rankWeighted, 1)).map(r => ({ ...r, reason: 'Premium weighting + Full server' as const }));
+    const slot5 = reserve(take(pick((s) => exclude(s) && s.fillRatio > 0 && s.fillRatio < 0.8, (s) => s.modSimilarity), (s) => s.modSimilarity, 1)).map(r => ({ ...r, reason: 'Mod match + Space available' as const }));
 
     return [...slot1, ...slot2, ...slot3, ...slot4, ...slot5]
       .slice(0, 5)
       .map((s) => ({
         server: s.server,
+        reason: s.reason,
         score: s.modSimilarity,
         overlapPercent: s.union > 0 ? Math.round((s.common / s.union) * 100) : 0,
       }));
@@ -663,14 +665,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {similarServers.map(({ server: other, overlapPercent }) => (
+            {similarServers.map(({ server: other, overlapPercent, reason }) => (
               <Link
                 key={other.id}
                 to={`${gp}/server/${other.id}`}
                 className="group relative block bg-[#172635] border border-white/5 hover:border-tactical-orange/40 p-6 transition-all"
               >
                 <div className="space-y-2.5">
-                  <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest">// ALIGNMENT: {overlapPercent}% OVERLAP</span>
+                  <span className="inline-block text-[7px] font-mono text-tactical-orange/70 uppercase tracking-widest">{reason}</span>
+                  <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest ml-1">// {overlapPercent}% overlap</span>
                   <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
                     {other.name}
                   </h3>
