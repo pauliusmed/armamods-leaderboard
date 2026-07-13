@@ -46,6 +46,17 @@ interface State {
   error: Error | null;
 }
 
+const CHUNK_ERROR_PATTERNS = [
+  'error loading dynamically imported module',
+  'Loading chunk',
+  'ChunkLoadError',
+  'Loading CSS chunk',
+];
+
+function isChunkError(error: Error): boolean {
+  return CHUNK_ERROR_PATTERNS.some((p) => error.message?.includes(p));
+}
+
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -58,10 +69,15 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    if (isChunkError(error)) {
+      console.log('🔄 Chunk load error detected — reloading for fresh bundle');
+      setTimeout(() => window.location.reload(), 1500);
+    }
   }
 
   public render() {
     if (this.state.hasError) {
+      const isChunk = this.state.error ? isChunkError(this.state.error) : false;
       return (
         <div className="min-h-screen bg-[#101923] text-signal-critical p-20 font-mono">
           <h1 className="text-4xl font-black mb-8">// SYSTEM_CRITICAL_FAILURE</h1>
@@ -71,12 +87,18 @@ class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.stack || this.state.error?.message}
             </pre>
           </div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-8 py-4 bg-red-600 text-white font-black hover:bg-white hover:text-black transition-all"
-          >
-            REBOOT SYSTEM (RELOAD)
-          </button>
+          {isChunk ? (
+            <p className="text-signal-ok font-mono text-sm mb-4 animate-pulse">
+              ▸ New version detected — reloading...
+            </p>
+          ) : (
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-8 py-4 bg-red-600 text-white font-black hover:bg-white hover:text-black transition-all"
+            >
+              REBOOT SYSTEM (RELOAD)
+            </button>
+          )}
         </div>
       );
     }
