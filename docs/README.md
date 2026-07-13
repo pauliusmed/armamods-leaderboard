@@ -1,6 +1,6 @@
 # Documentation index
 
-Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.5**).
+Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.6**).
 
 ## Start here
 

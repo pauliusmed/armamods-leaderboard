@@ -2,6 +2,25 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.6] - 2026-07-13
+
+### ⚡ Našumas
+- **Server detail /servers** — pašalintas `full: true` (nebekrauna visų 13 KV chunk'ų); dabar kraunamas tik pirmas chunk'as (iki 500 serverių). Paieška krauna visus chunk'us tik kai vartotojas įveda užklausą. Užkrovimo laikas nuo ~10s → <1s.
+- **Auto-retry (visi puslapiai)** — sukurtas `fetchWithRetry` helper'is su 2s/4s/6s backoff; 503/502/504/timeout automatiškai bandomi dar 2 kartus. Kol bandoma — rodomas "UPLINK LOST — Auto-retrying" indikatorius.
+
+### 🐛 Klaidų taisymai
+- **React #185 "Maximum update depth exceeded"** — `usePinnedFavoriteMods` ir `sortedCurrentMods` pataisyti, kad nesukeltų begalinio re-render'io ciklo /trending puslapyje.
+- **Stale chunk load error** — ErrorBoundary atpažįsta "ChunkLoadError" ir automatiškai reloadina puslapį po 1.5s (vietoj rankinio "REBOOT SYSTEM").
+- **Chunk load error UX** — rodomas "New version detected — reloading..." pranešimas, kol laukiama reload'o.
+
+### 🖥️ Server detail
+- **Vanilla serveriai** — paslėpti modų filter'iai (Search, Activity, Rank, Size, Sort); rodomas "Vanilla server — no mods installed".
+- **Similar Deployed Servers** — naujas algoritmas: 1 slotas pagal modų panašumą, 2 pagal modų panašumą tarp pilnų serverių, 3 tarp serverių su vietomis, 4-5 likę geriausi. Dead serveriai nukeliami žemyn.
+- **Rank history gaps** — interpoliuojami trūkstami serverio rank taškai tarp žinomų datų.
+
+### 📚 Dokumentacija
+- Šis CHANGELOG įrašas.
+
 ## [1.22.5] - 2026-07-11
 
 ### 📱 Mobile UX audit fixes
