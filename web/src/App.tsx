@@ -14,6 +14,9 @@ import { StatusState } from './components/ui/StatusState';
 const ServerDetail = lazy(() =>
   import('./components/ServerDetail').then((m) => ({ default: m.ServerDetail }))
 );
+const ServerSearchLanding = lazy(() =>
+  import('./components/ServerSearchLanding').then((m) => ({ default: m.ServerSearchLanding }))
+);
 const ModDetail = lazy(() =>
   import('./components/ModDetail').then((m) => ({ default: m.ModDetail }))
 );
@@ -129,6 +132,7 @@ function App() {
               <Route path="/dependency-blockers" element={<DependencyBlockersPage game="reforger" />} />
               <Route path="/storage-planner" element={<StoragePlannerPage game="reforger" />} />
               <Route path="/arma-reforger-console-mod-storage" element={<StoragePlannerLanding />} />
+              <Route path="/arma-server-browser" element={<ServerSearchLanding />} />
               <Route path="/support" element={<SupportPage />} />
 
               {/* Arma 3 routes */}
