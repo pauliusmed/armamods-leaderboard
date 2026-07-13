@@ -85,7 +85,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [selectedDays, setSelectedDays] = useState(30);
 
   const [modSearch, setModSearch] = useState('');
-  const [modSort, setModSort] = useState<EmbeddedModSort>('players');
+  const [modSort, setModSort] = useState<EmbeddedModSort>('rank');
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [rankFilter, setRankFilter] = useState<RankFilter>('all');
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
@@ -242,7 +242,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     setActivityFilter('all');
     setRankFilter('all');
     setSizeFilter('all');
-    setModSort('players');
+    setModSort('rank');
   }, []);
 
   const sortedAndFilteredMods = useMemo(() => {
