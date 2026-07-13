@@ -169,15 +169,26 @@ export function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.reforger ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Reforger clicks</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Reforger clicks (ours)</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.arma3 ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Arma 3 clicks</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Arma 3 clicks (ours)</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.total ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Total clicks</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Total tracked</p>
+            </div>
+          </div>
+
+          <div className="border border-white/5 bg-[#172635] p-5 space-y-2">
+            <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Expected vs actual</h3>
+            <div className="text-[9px] font-mono text-gray-400 space-y-1">
+              <p>Cloudflare page views: <span className="text-white">2,110</span></p>
+              <p>Affiliate banner impressions (est.): <span className="text-white">~400</span> (server detail views)</p>
+              <p>Expected clicks at 2% CTR: <span className="text-white">~8</span></p>
+              <p>Expected clicks at 5% CTR: <span className="text-white">~20</span></p>
+              <p className="text-gray-600 pt-1">Empower reports 34 clicks over the site's lifetime — our tracking started fresh, compare in a few days.</p>
             </div>
           </div>
 
