@@ -121,7 +121,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         columns={3}
       />
 
-      {initialLoading ? (
+      {loading ? (
         <>
           {retryCount > 0 && (
             <div className="mb-4 p-3 border border-signal-critical/30 bg-red-950/10 text-signal-critical text-[10px] font-black uppercase tracking-widest animate-pulse text-center">
