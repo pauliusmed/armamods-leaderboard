@@ -177,6 +177,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           return {
             server: s,
             overlapPercent: 0,
+            sharedMods: [] as { id: string; name: string }[],
             score: (isVanilla ? playerScore * 2 + rankScore : playerScore) * (alive ? 1.5 : 1),
           };
         })
@@ -184,20 +185,24 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         .slice(0, 5);
     }
 
+    const currentModsByName = new Map(server.mods?.map(m => [m.id, m.name]) || []);
+
     const scored = allServers
       .filter(s => s.id !== server.id)
       .map(other => {
         const otherMods = other.mods || [];
         let common = 0;
+        const sharedMods: { id: string; name: string }[] = [];
         for (const m of otherMods) {
           if (currentModIds.has(m.id)) {
             common++;
+            sharedMods.push({ id: m.id, name: currentModsByName.get(m.id) || m.name });
           }
         }
         const union = currentModIds.size + otherMods.length - common;
         const modSimilarity = union > 0 ? common / union : 0;
         const fillRatio = other.maxPlayers > 0 ? (other.players ?? 0) / other.maxPlayers : 0;
-        return { server: other, modSimilarity, common, union, fillRatio };
+        return { server: other, modSimilarity, common, sharedMods, union, fillRatio };
       })
       .filter(x => x.modSimilarity > 0);
 
@@ -235,6 +240,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         server: s.server,
         score: s.modSimilarity,
         overlapPercent: s.union > 0 ? Math.round((s.common / s.union) * 100) : 0,
+        sharedMods: s.sharedMods,
       }));
   }, [server, allServers]);
 
@@ -664,18 +670,36 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {similarServers.map(({ server: other, overlapPercent }) => (
+            {similarServers.map(({ server: other, overlapPercent, sharedMods }) => (
               <Link
                 key={other.id}
                 to={`${gp}/server/${other.id}`}
                 className="group relative block bg-[#172635] border border-white/5 hover:border-tactical-orange/40 p-6 transition-all"
               >
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest">// ALIGNMENT: {overlapPercent}% OVERLAP</span>
                   <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
                     {other.name}
                   </h3>
-                  <div className="pt-2 flex items-end justify-between border-t border-white/5">
+                  {sharedMods.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[7px] text-gray-600 font-black uppercase tracking-wider">Shared mods</span>
+                      <div className="flex flex-wrap gap-1">
+                        {sharedMods.slice(0, 4).map((mod) => (
+                          <span
+                            key={mod.id}
+                            className="inline-block px-1.5 py-0.5 text-[7px] font-mono text-tactical-orange/80 bg-tactical-orange/5 border border-tactical-orange/20 truncate max-w-full"
+                          >
+                            {mod.name}
+                          </span>
+                        ))}
+                        {sharedMods.length > 4 && (
+                          <span className="text-[7px] text-gray-600 font-mono">+{sharedMods.length - 4}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <div className="pt-1 flex items-end justify-between border-t border-white/5">
                     <div className="space-y-0.5">
                       <span className="text-[7px] text-gray-600 font-black uppercase tracking-wider">Active load</span>
                       <p className="text-lg font-black text-white font-mono">{other.players}/{other.maxPlayers}</p>
