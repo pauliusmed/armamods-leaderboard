@@ -107,7 +107,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         serversApi.getById(serverId, game),
         serversApi.getHistory(serverId, days, game),
         modsApi.getGlobalStats(game),
-        serversApi.getList(100, 0, game).catch(() => ({ data: [] })),
+        serversApi.getList(500, 0, game).catch(() => ({ data: [] })),
         game === 'reforger'
           ? serversApi.getStorage(serverId, game).catch(() => null)
           : Promise.resolve(null),
@@ -167,11 +167,17 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     if (currentModIds.size === 0) {
       return allServers
         .filter(s => s.id !== server.id)
-        .map(s => ({
-          server: s,
-          overlapPercent: 0,
-          score: 1 / (1 + Math.abs(s.players - server.players))
-        }))
+        .map(s => {
+          const otherModCount = s.mods?.length || 0;
+          const isVanilla = otherModCount === 0;
+          const playerScore = 1 / (1 + Math.abs(s.players - server.players));
+          const rankScore = s.sqeRank ? 1 / (1 + Math.abs(s.sqeRank - (server.sqeRank || 9999)) * 0.1) : 0;
+          return {
+            server: s,
+            overlapPercent: 0,
+            score: isVanilla ? playerScore * 2 + rankScore : playerScore
+          };
+        })
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
     }
@@ -670,65 +676,71 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             )}
           </div>
 
-          <ListFilterBar
-            sticky={false}
-            columns={game === 'reforger' ? 6 : 5}
-            search={{
-              label: '// SEARCH',
-              value: modSearch,
-              onChange: setModSearch,
-              placeholder: 'Search mods…',
-              ariaLabel: 'Search mods on this server',
-              hint:
-                sortedAndFilteredMods.length !== (server.mods?.length ?? 0) ? (
-                  <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
-                    Showing {sortedAndFilteredMods.length} of {server.mods?.length ?? 0} mods
-                  </p>
-                ) : undefined,
-            }}
-            selects={[
-              {
-                id: 'activity',
-                label: '// ACTIVITY',
-                value: activityFilter,
-                onChange: (v) => setActivityFilter(v as ActivityFilter),
-                options: ACTIVITY_FILTER_OPTIONS,
-                ariaLabel: 'Filter mods by player activity',
-              },
-              {
-                id: 'rank',
-                label: '// RANK',
-                value: rankFilter,
-                onChange: (v) => setRankFilter(v as RankFilter),
-                options: RANK_FILTER_OPTIONS,
-                ariaLabel: 'Filter mods by global player rank',
-              },
-              ...(game === 'reforger'
-                ? [
-                    {
-                      id: 'size',
-                      label: '// SIZE',
-                      value: sizeFilter,
-                      onChange: (v: string) => setSizeFilter(v as SizeFilter),
-                      options: SIZE_FILTER_OPTIONS,
-                      ariaLabel: 'Filter mods by download size',
-                    },
-                  ]
-                : []),
-              {
-                id: 'sort',
-                label: '// SORT',
-                value: modSort,
-                onChange: (v) => setModSort(v as EmbeddedModSort),
-                options: EMBEDDED_MOD_SORT_OPTIONS,
-                ariaLabel: 'Sort mods',
-              },
-            ]}
-            onReset={resetModFilters}
-          />
+          {(server.mods?.length ?? 0) > 0 ? (
+            <ListFilterBar
+              sticky={false}
+              columns={game === 'reforger' ? 6 : 5}
+              search={{
+                label: '// SEARCH',
+                value: modSearch,
+                onChange: setModSearch,
+                placeholder: 'Search mods…',
+                ariaLabel: 'Search mods on this server',
+                hint:
+                  sortedAndFilteredMods.length !== (server.mods?.length ?? 0) ? (
+                    <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
+                      Showing {sortedAndFilteredMods.length} of {server.mods?.length ?? 0} mods
+                    </p>
+                  ) : undefined,
+              }}
+              selects={[
+                {
+                  id: 'activity',
+                  label: '// ACTIVITY',
+                  value: activityFilter,
+                  onChange: (v) => setActivityFilter(v as ActivityFilter),
+                  options: ACTIVITY_FILTER_OPTIONS,
+                  ariaLabel: 'Filter mods by player activity',
+                },
+                {
+                  id: 'rank',
+                  label: '// RANK',
+                  value: rankFilter,
+                  onChange: (v) => setRankFilter(v as RankFilter),
+                  options: RANK_FILTER_OPTIONS,
+                  ariaLabel: 'Filter mods by global player rank',
+                },
+                ...(game === 'reforger'
+                  ? [
+                      {
+                        id: 'size',
+                        label: '// SIZE',
+                        value: sizeFilter,
+                        onChange: (v: string) => setSizeFilter(v as SizeFilter),
+                        options: SIZE_FILTER_OPTIONS,
+                        ariaLabel: 'Filter mods by download size',
+                      },
+                    ]
+                  : []),
+                {
+                  id: 'sort',
+                  label: '// SORT',
+                  value: modSort,
+                  onChange: (v) => setModSort(v as EmbeddedModSort),
+                  options: EMBEDDED_MOD_SORT_OPTIONS,
+                  ariaLabel: 'Sort mods',
+                },
+              ]}
+              onReset={resetModFilters}
+            />
+          ) : (
+            <p className="text-gray-600 font-mono text-xs uppercase tracking-widest">
+              Vanilla server — no mods installed
+            </p>
+          )}
         </div>
 
-        {sortedAndFilteredMods.length === 0 ? (
+        {(server.mods?.length ?? 0) === 0 ? null : sortedAndFilteredMods.length === 0 ? (
           <div className="p-20 text-center border-2 border-dashed border-white/5 space-y-4">
             <p className="text-xl font-black text-gray-700 uppercase tracking-widest">No mods match your filters</p>
             <button

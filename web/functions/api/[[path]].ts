@@ -975,7 +975,7 @@ app.get('/servers', async (c) => {
   const requestedLimit = parseInt(c.req.query('limit') || '100', 10);
   const limit = full || search
     ? Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 5000)
-    : Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 100);
+    : Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 500);
   const offset = parseInt(c.req.query('offset') || '0', 10);
 
   console.log(`[SERVERS] Fetching data for ${game}...`);
