@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { serversApi, modsApi, type GameType } from '../api/client';
+import { fetchWithRetry } from '../lib/fetchWithRetry';
 import { matchesServerSearch } from '../lib/searchMatch';
 import { matchesConsoleFilter, type ConsoleFitFilter } from '../lib/serverModpack';
 import { matchesBmStatusFilter, type BmStatusFilter } from '../lib/serverStatus';
@@ -39,10 +40,12 @@ export function useServers(options: UseServersOptions = {}) {
   const loadServers = useCallback(async () => {
     try {
       setLoading(true);
-      const [serversData, statsData] = await Promise.all([
-        serversApi.getList(5000, 0, game, { full: true }),
-        modsApi.getGlobalStats(game),
-      ]);
+      const [serversData, statsData] = await fetchWithRetry(() =>
+        Promise.all([
+          serversApi.getList(5000, 0, game, { full: true }),
+          modsApi.getGlobalStats(game),
+        ])
+      );
       const fetchedServers = serversData?.data || [];
       setServers(fetchedServers);
       setTotalServers(serversData?.meta?.total || fetchedServers.length);

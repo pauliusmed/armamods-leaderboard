@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { modsApi, type GameType } from '../api/client';
+import { fetchWithRetry } from '../lib/fetchWithRetry';
 import type { Mod } from '../types';
 
 export type PlayerFilter = 'all' | 'high' | 'medium' | 'low';
@@ -37,10 +38,12 @@ export function useMods(options: UseModsOptions = {}) {
       setLoading(true);
       const offset = (currentPage - 1) * itemsPerPage;
 
-      const [listData, statsData] = await Promise.all([
-        modsApi.getPopular(itemsPerPage, offset, searchQuery, sortBy, sortDir, game, playerFilter),
-        modsApi.getGlobalStats(game)
-      ]);
+      const [listData, statsData] = await fetchWithRetry(() =>
+        Promise.all([
+          modsApi.getPopular(itemsPerPage, offset, searchQuery, sortBy, sortDir, game, playerFilter),
+          modsApi.getGlobalStats(game)
+        ])
+      );
 
       setMods(Array.isArray(listData?.data) ? listData.data : []);
       setTotalMods(listData?.meta?.total || 0);

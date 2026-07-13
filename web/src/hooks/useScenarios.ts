@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { scenariosApi, modsApi, type GameType } from '../api/client';
+import { fetchWithRetry } from '../lib/fetchWithRetry';
 import type { ScenarioRankingEntry, Server } from '../types';
 
 export type ScenarioSortBy = 'players' | 'servers' | 'fill' | 'name' | 'rank';
@@ -28,10 +29,12 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const loadScenarios = useCallback(async () => {
     try {
       setLoading(true);
-      const [scenarioData, statsData] = await Promise.all([
-        scenariosApi.getRanking(game),
-        modsApi.getGlobalStats(game),
-      ]);
+      const [scenarioData, statsData] = await fetchWithRetry(() =>
+        Promise.all([
+          scenariosApi.getRanking(game),
+          modsApi.getGlobalStats(game),
+        ])
+      );
       setRanking(scenarioData.data || []);
       setTotalServers(statsData?.totalServers || 0);
       setTotalPlayers(statsData?.totalPlayers || 0);
