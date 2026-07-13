@@ -31,6 +31,9 @@ body {
 
 #root {
   overflow-x: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Scanline effect */
