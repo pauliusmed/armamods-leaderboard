@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { modsApi, type GameType } from '../api/client';
 import type { Mod } from '../types';
 import { isModFavorite } from '../lib/modFavorites';
 
 function modIdKey(game: GameType, id: string): string {
   return game === 'reforger' ? id.toUpperCase() : id;
+}
+
+function modsEqual(a: Mod[], b: Mod[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].id !== b[i].id || a[i].name !== b[i].name) return false;
+  }
+  return true;
 }
 
 /** Resolve favorite mods for pin block — reuse page slice, fetch missing by id. */
@@ -16,10 +24,18 @@ export function usePinnedFavoriteMods(
 ) {
   const [pinnedMods, setPinnedMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(false);
+  const lastValueRef = useRef<Mod[]>([]);
+
+  function setIfChanged(next: Mod[]) {
+    if (!modsEqual(next, lastValueRef.current)) {
+      lastValueRef.current = next;
+      setPinnedMods(next);
+    }
+  }
 
   useEffect(() => {
     if (!enabled || favoriteIds.length === 0) {
-      setPinnedMods([]);
+      setIfChanged([]);
       return;
     }
 
@@ -32,7 +48,7 @@ export function usePinnedFavoriteMods(
     const missingIds = favoriteIds.filter((id) => !pageById.has(modIdKey(game, id)));
 
     if (missingIds.length === 0) {
-      setPinnedMods(orderedFromPage);
+      setIfChanged(orderedFromPage);
       return;
     }
 
@@ -68,7 +84,7 @@ export function usePinnedFavoriteMods(
         const merged = favoriteIds
           .map((id) => pageById.get(modIdKey(game, id)) ?? fetchedById.get(modIdKey(game, id)))
           .filter((mod): mod is Mod => Boolean(mod));
-        setPinnedMods(merged);
+        setIfChanged(merged);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

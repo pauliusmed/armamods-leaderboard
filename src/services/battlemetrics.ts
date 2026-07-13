@@ -51,7 +51,7 @@ export class BattleMetricsService {
     const servers: BattleMetricsServer[] = [];
     let url = `${this.baseUrl}?filter[game]=${this.game}&page[size]=100`;
     let pageCount = 0;
-    const maxPages = updateMode ? 3 : 10000; // Update mode: only first 3 pages (300 servers)
+    const maxPages = updateMode ? 3 : 10000;
 
     while (url) {
       console.log(`Fetching: ${url}`);
@@ -67,7 +67,20 @@ export class BattleMetricsService {
       const response = await fetch(url, { headers });
 
       if (!response.ok) {
-        throw new Error(`BattleMetrics API error: ${response.status}`);
+        if (response.status === 403) {
+          console.error(`❌ BattleMetrics 403 - IP blocked or rate limited. Add BATTLEMETRICS_API_KEY to Worker env.`);
+          if (servers.length > 0) {
+            console.log(`⚠️ Returning ${servers.length} servers collected before block`);
+            break;
+          }
+        }
+        if (response.status === 429) {
+          const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
+          console.log(`⏳ Rate limited (429). Waiting ${retryAfter}s...`);
+          await this.sleep(retryAfter * 1000);
+          continue;
+        }
+        throw new Error(`HTTP ${response.status}: error code: 1106`);
       }
 
       const json: BattleMetricsResponse = await response.json();
@@ -84,13 +97,11 @@ export class BattleMetricsService {
       url = json.links?.next || '';
       pageCount++;
 
-      // Stop after max pages in update mode
       if (updateMode && pageCount >= maxPages) {
         console.log(`🔄 Update mode: stopping after ${maxPages} pages`);
         break;
       }
 
-      // Rate limiting - with API key: 120 req/min (500ms), without: 60 req/min (1s)
       const delay = this.apiKey ? 500 : 1000;
       await this.sleep(delay);
     }

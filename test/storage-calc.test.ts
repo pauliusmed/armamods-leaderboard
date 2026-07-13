@@ -84,6 +84,23 @@ describe('analyzeStoragePlan', () => {
     assert.ok(analysis.fits);
   });
 
+  it('includes proxy-only mods in combined modpack total', () => {
+    const analysis = analyzeStoragePlan({
+      installedMods: [mod('A', 'RHS', 1_000_000_000), mod('B', 'ACE', 500_000_000)],
+      wantedServers: [
+        { id: 's2', name: 'KOTH', mods: [mod('A', 'RHS', 1_000_000_000), mod('C', 'WCS', 300_000_000)] },
+      ],
+      availableBytes: 10_000_000_000,
+    });
+
+    assert.equal(analysis.toDownload.length, 1);
+    assert.equal(analysis.toDownload[0].id, 'C');
+    assert.equal(analysis.canRemove.length, 1);
+    assert.equal(analysis.canRemove[0].id, 'B');
+    assert.equal(analysis.wanted.modCount, 3);
+    assert.equal(analysis.wanted.knownBytes, 1_800_000_000);
+  });
+
   it('uses conservative known-only fit when coverage is partial', () => {
     const heavy = 2 * 1024 ** 3;
     const withNullSizes = [

@@ -94,15 +94,20 @@ export function analyzeStoragePlan(input: {
   wantedServers: ServerModpackInput[];
   availableBytes: number;
 }): StoragePlanAnalysis {
-  const wantedUnion = deduplicateMods(input.wantedServers.map((s) => s.mods));
+  const wantedOnlyUnion = deduplicateMods(input.wantedServers.map((s) => s.mods));
   const installedIds = new Set(input.installedMods.map((m) => m.id));
-  const wantedIds = new Set(wantedUnion.map((m) => m.id));
+  const wantedIds = new Set(wantedOnlyUnion.map((m) => m.id));
 
-  const toDownload = wantedUnion.filter((m) => !installedIds.has(m.id));
+  const toDownload = wantedOnlyUnion.filter((m) => !installedIds.has(m.id));
   const canRemove = input.installedMods.filter((m) => !wantedIds.has(m.id));
   const overlap = input.installedMods.filter((m) => wantedIds.has(m.id));
 
-  const wanted = sumKnownBytes(wantedUnion);
+  const diskUnion = deduplicateMods([
+    input.installedMods,
+    ...input.wantedServers.map((s) => s.mods),
+  ]);
+
+  const wanted = sumKnownBytes(diskUnion);
   const wantedEstimated = estimateTotalBytes(wanted);
   const toDownloadSummary = sumKnownBytes(toDownload);
   const canRemoveSummary = sumKnownBytes(canRemove);
@@ -125,7 +130,7 @@ export function analyzeStoragePlan(input: {
   }
 
   return {
-    wantedUnion,
+    wantedUnion: diskUnion,
     toDownload,
     canRemove,
     overlap,

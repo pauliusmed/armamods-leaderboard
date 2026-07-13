@@ -88,23 +88,27 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
   const hasNoData = !currentMods || currentMods.length === 0;
 
   // Sort mods based on category
-  const sortedCurrentMods = Array.isArray(currentMods)
-    ? activeCategory === 'new'
-      ? [...currentMods].sort((a, b) => (a.overallRank || 9999) - (b.overallRank || 9999))
-      : activeCategory === 'rising'
-        ? [...currentMods].sort((a, b) => {
-            const changeA = (a.prevRank || 9999) - (a.currentRank || 9999);
-            const changeB = (b.prevRank || 9999) - (b.currentRank || 9999);
-            return changeB - changeA; // Biggest improvement first
-          })
-        : activeCategory === 'falling'
-          ? [...currentMods].sort((a, b) => {
-              const changeA = (a.prevRank || 9999) - (a.currentRank || 9999);
-              const changeB = (b.prevRank || 9999) - (b.currentRank || 9999);
-              return changeA - changeB; // Biggest drop first
-            })
-          : currentMods
-    : currentMods;
+  const sortedCurrentMods = useMemo(() => {
+    if (!Array.isArray(currentMods)) return currentMods;
+    if (activeCategory === 'new') {
+      return [...currentMods].sort((a, b) => (a.overallRank || 9999) - (b.overallRank || 9999));
+    }
+    if (activeCategory === 'rising') {
+      return [...currentMods].sort((a, b) => {
+        const changeA = (a.prevRank || 9999) - (a.currentRank || 9999);
+        const changeB = (b.prevRank || 9999) - (b.currentRank || 9999);
+        return changeB - changeA;
+      });
+    }
+    if (activeCategory === 'falling') {
+      return [...currentMods].sort((a, b) => {
+        const changeA = (a.prevRank || 9999) - (a.currentRank || 9999);
+        const changeB = (b.prevRank || 9999) - (b.currentRank || 9999);
+        return changeA - changeB;
+      });
+    }
+    return currentMods;
+  }, [currentMods, activeCategory]);
 
   const { favoriteIds, toggle, isFavorite } = useModFavorites(game);
   const trendingAsMods: Mod[] = useMemo(
