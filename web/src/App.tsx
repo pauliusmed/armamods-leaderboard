@@ -17,6 +17,9 @@ const ServerDetail = lazy(() =>
 const ServerSearchLanding = lazy(() =>
   import('./components/ServerSearchLanding').then((m) => ({ default: m.ServerSearchLanding }))
 );
+const AdminPage = lazy(() =>
+  import('./components/AdminPage').then((m) => ({ default: m.AdminPage }))
+);
 const ModDetail = lazy(() =>
   import('./components/ModDetail').then((m) => ({ default: m.ModDetail }))
 );
@@ -133,6 +136,7 @@ function App() {
               <Route path="/storage-planner" element={<StoragePlannerPage game="reforger" />} />
               <Route path="/arma-reforger-console-mod-storage" element={<StoragePlannerLanding />} />
               <Route path="/arma-server-browser" element={<ServerSearchLanding />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/support" element={<SupportPage />} />
 
               {/* Arma 3 routes */}
