@@ -12,9 +12,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
   const gameName = isReforger ? 'Arma Reforger' : 'Arma 3';
   
   // Game-specific deep links with affiliate tracking
-  const affiliateUrl = isReforger 
-    ? "https://empowerservers.com/games/arma-reforger/?aff=294" 
-    : "https://empowerservers.com/games/arma3/?aff=294";
+  const affiliateUrl = `/api/click/empower?game=${isReforger ? 'reforger' : 'arma3'}`;
 
   return (
     <div className="space-y-20 animate-in fade-in duration-1000">

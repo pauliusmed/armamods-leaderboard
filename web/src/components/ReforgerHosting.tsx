@@ -374,7 +374,7 @@ export function ReforgerHosting() {
             </p>
             <div className="pt-4 flex flex-col items-center gap-4">
               <a 
-                href="https://empowerservers.com/games/arma-reforger/?aff=294"
+                href="/api/click/empower?game=reforger"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-16 py-6 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_40px_rgba(249,115,22,0.3)] transform hover:scale-105"

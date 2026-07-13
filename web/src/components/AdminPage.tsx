@@ -19,11 +19,13 @@ export function AdminPage() {
   const [password, setPassword] = useState('');
   const [authed, setAuthedState] = useState(isAuthed);
   const [health, setHealth] = useState<any>(null);
+  const [clicks, setClicks] = useState<any>(null);
   const [tab, setTab] = useState<'health' | 'affiliate'>('health');
 
   useEffect(() => {
     if (authed) {
       api.get('/health').then((r) => setHealth(r.data)).catch(() => {});
+      api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
     }
   }, [authed]);
 
@@ -131,19 +133,34 @@ export function AdminPage() {
       {tab === 'affiliate' && (
         <div className="space-y-4">
           <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
-            <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Affiliate Links</h3>
+            <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Empower Servers</h3>
             <p className="text-[9px] text-gray-500 font-mono">
-              Empower Servers affiliate ID: <span className="text-white">294</span>
+              Affiliate ID: <span className="text-white">294</span>
             </p>
             <div className="space-y-2 text-[9px] font-mono text-gray-400">
-              <p>Reforger: <span className="text-white/80">empowerservers.com/games/arma-reforger/?aff=294</span></p>
-              <p>Arma 3: <span className="text-white/80">empowerservers.com/games/arma3/?aff=294</span></p>
+              <p>Reforger: <span className="text-white/80">/api/click/empower?game=reforger</span></p>
+              <p>Arma 3: <span className="text-white/80">/api/click/empower?game=arma3</span></p>
             </div>
-            <p className="text-[9px] text-gray-600 pt-2 border-t border-white/5">
-              Clicks are tracked via Empower Servers' own affiliate system — they count unique referrals
-              by the <span className="text-white">?aff=294</span> parameter in the URL. No additional tracking needed from our side.
-            </p>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+              <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.reforger ?? '…'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Reforger clicks</p>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+              <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.arma3 ?? '…'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Arma 3 clicks</p>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+              <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.total ?? '…'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Total clicks</p>
+            </div>
+          </div>
+
+          <p className="text-[9px] text-gray-600 font-mono border-t border-white/5 pt-4">
+            Empower dashboard reports <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">34 clicks, 0 signups</a>. Our internal counter tracks every link click — Empower counts unique referrals after they land on their site.
+          </p>
 
           <div className="border border-white/5 p-5 space-y-3">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Where affiliate links appear</h3>

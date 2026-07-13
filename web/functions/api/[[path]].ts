@@ -1907,4 +1907,37 @@ app.post('/storage/plan', async (c) => {
   }
 });
 
+/** Track affiliate link clicks */
+app.get('/click/empower', async (c) => {
+  const game = c.req.query('game') || 'reforger';
+  const key = game === 'arma3' ? 'click:empower:arma3' : 'click:empower:reforger';
+
+  try {
+    const raw = await c.env.TRENDING_KV.get(key, 'text');
+    const count = (parseInt(raw || '0', 10) || 0) + 1;
+    await c.env.TRENDING_KV.put(key, String(count));
+    console.log(`[CLICK] Empower ${game} — total ${count}`);
+  } catch {
+    // best-effort
+  }
+
+  const url = `https://billing.empowerservers.com/aff.php?aff=294`;
+  return c.redirect(url, 302);
+});
+
+/** Get click stats for admin panel */
+app.get('/admin/clicks', async (c) => {
+  const [reforger, arma3] = await Promise.all([
+    c.env.TRENDING_KV.get('click:empower:reforger', 'text'),
+    c.env.TRENDING_KV.get('click:empower:arma3', 'text'),
+  ]);
+  return c.json({
+    empower: {
+      reforger: parseInt(reforger || '0', 10) || 0,
+      arma3: parseInt(arma3 || '0', 10) || 0,
+      total: (parseInt(reforger || '0', 10) || 0) + (parseInt(arma3 || '0', 10) || 0),
+    },
+  });
+});
+
 export const onRequest = handle(app);

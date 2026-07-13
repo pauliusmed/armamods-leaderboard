@@ -376,7 +376,7 @@ export function Layout({ children }: LayoutProps) {
                 Registry: <span className="text-gray-300">reforgermods</span><br/>
                 Sync: <span className="text-gray-300">~2h network scan</span><br/>
                 Compute: <span className="text-gray-300">Edge Workers</span><br/>
-                Hosting: <a href={isArma3 ? "https://empowerservers.com/games/arma3/?aff=294" : "https://empowerservers.com/games/arma-reforger/?aff=294"} target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">High-Performance Nodes</a>
+                Hosting: <a href={isArma3 ? "/api/click/empower?game=arma3" : "/api/click/empower?game=reforger"} target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">High-Performance Nodes</a>
               </p>
               <p className="text-gray-600 text-[9px] font-medium normal-case tracking-normal leading-relaxed">
                 {DATA_SYNC_NOTE}. {DATA_SOURCE_ATTRIBUTION}.

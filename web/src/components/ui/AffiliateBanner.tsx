@@ -1,17 +1,14 @@
 import { useLocation } from 'react-router-dom';
+import { empowerGameUrl } from '../../lib/siteLinks';
 
 export function AffiliateBanner() {
   const location = useLocation();
   const isArma3 = location.pathname.startsWith('/arma3');
-  
-  // Direct link to partner to reduce funnel friction (Landing -> Partner Landing)
-  const externalAffiliateUrl = isArma3 
-    ? "https://empowerservers.com/games/arma3/?aff=294" 
-    : "https://empowerservers.com/games/arma-reforger/?aff=294";
+  const affiliateUrl = empowerGameUrl(isArma3 ? 'arma3' : 'reforger');
 
   return (
     <a 
-      href={externalAffiliateUrl}
+      href={affiliateUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="block group relative overflow-hidden bg-[#172635] border border-tactical-orange/40 p-6 sm:p-10 transition-all hover:border-tactical-orange"
