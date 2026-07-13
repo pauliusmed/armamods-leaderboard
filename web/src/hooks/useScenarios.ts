@@ -21,6 +21,7 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<ScenarioSortBy>('rank');
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,12 +30,15 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const loadScenarios = useCallback(async () => {
     try {
       setLoading(true);
-      const [scenarioData, statsData] = await fetchWithRetry(() =>
-        Promise.all([
-          scenariosApi.getRanking(game),
-          modsApi.getGlobalStats(game),
-        ])
+      const [scenarioData, statsData] = await fetchWithRetry(
+        () =>
+          Promise.all([
+            scenariosApi.getRanking(game),
+            modsApi.getGlobalStats(game),
+          ]),
+        (attempt) => setRetryCount(attempt),
       );
+      setRetryCount(0);
       setRanking(scenarioData.data || []);
       setTotalServers(statsData?.totalServers || 0);
       setTotalPlayers(statsData?.totalPlayers || 0);
@@ -133,6 +137,7 @@ export function useScenarios(options: UseScenariosOptions = {}) {
     loading,
     initialLoading: loading && ranking.length === 0,
     error,
+    retryCount,
     searchInput,
     setSearchInput,
     sortBy,

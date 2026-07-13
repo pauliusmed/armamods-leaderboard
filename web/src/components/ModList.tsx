@@ -25,6 +25,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
     loading,
     initialLoading,
     error,
+    retryCount,
     searchQuery,
     setSearchQuery,
     playerFilter,
@@ -121,7 +122,14 @@ export function ModList({ game = 'reforger' }: ModListProps) {
       />
 
       {initialLoading ? (
-        <ModListSkeleton />
+        <>
+          {retryCount > 0 && (
+            <div className="mb-4 p-3 border border-signal-critical/30 bg-red-950/10 text-signal-critical text-[10px] font-black uppercase tracking-widest animate-pulse text-center">
+              ⚠ UPLINK LOST — Auto-retrying ({retryCount}/3)...
+            </div>
+          )}
+          <ModListSkeleton />
+        </>
       ) : filteredMods.length === 0 && pinnedMods.length === 0 ? (
         <StatusState type="empty" message="No matches found" details="No mods match your current filter settings. Try resetting them." onAction={resetFilters} actionText="Clear Filters" />
       ) : (

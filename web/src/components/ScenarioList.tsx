@@ -87,6 +87,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
     totalItems,
     initialLoading,
     error,
+    retryCount,
     searchInput,
     setSearchInput,
     sortBy,
@@ -118,7 +119,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
     setSearchParams(next, { replace: true });
   };
 
-  if (initialLoading) return <StatusState type="loading" />;
+  if (initialLoading) return <StatusState type="loading" retryCount={retryCount} />;
   if (error) {
     return (
       <StatusState type="error" details={error} onAction={refresh} actionText="Try Again" />

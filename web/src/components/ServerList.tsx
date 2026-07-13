@@ -29,6 +29,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     totalItems,
     initialLoading,
     error,
+    retryCount,
     searchInput,
     setSearchInput,
     searchQuery,
@@ -73,7 +74,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  if (initialLoading) return <StatusState type="loading" />;
+  if (initialLoading) return <StatusState type="loading" retryCount={retryCount} />;
   if (error) return <StatusState type="error" details={error} onAction={refresh} actionText="Try Again" />;
   if (stats.totalServers === 0 && !searchQuery) return <StatusState type="empty" message="No servers active" details="Check your filters or wait for the system to scan more servers." onAction={resetFilters} actionText="Reset Filters" />;
 

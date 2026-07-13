@@ -21,6 +21,7 @@ export function useMods(options: UseModsOptions = {}) {
   const [globalStats, setGlobalStats] = useState({ totalPlayers: 0, totalServers: 0, totalMods: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const [searchQuery, setSearchQuery] = useState(qFromUrl);
 
@@ -38,13 +39,16 @@ export function useMods(options: UseModsOptions = {}) {
       setLoading(true);
       const offset = (currentPage - 1) * itemsPerPage;
 
-      const [listData, statsData] = await fetchWithRetry(() =>
-        Promise.all([
-          modsApi.getPopular(itemsPerPage, offset, searchQuery, sortBy, sortDir, game, playerFilter),
-          modsApi.getGlobalStats(game)
-        ])
+      const [listData, statsData] = await fetchWithRetry(
+        () =>
+          Promise.all([
+            modsApi.getPopular(itemsPerPage, offset, searchQuery, sortBy, sortDir, game, playerFilter),
+            modsApi.getGlobalStats(game)
+          ]),
+        (attempt) => setRetryCount(attempt),
       );
 
+      setRetryCount(0);
       setMods(Array.isArray(listData?.data) ? listData.data : []);
       setTotalMods(listData?.meta?.total || 0);
       setGlobalStats(statsData || { totalPlayers: 0, totalServers: 0, totalMods: 0 });
@@ -107,6 +111,7 @@ export function useMods(options: UseModsOptions = {}) {
     loading,
     initialLoading: loading && mods.length === 0,
     error,
+    retryCount,
     searchQuery,
     setSearchQuery,
     playerFilter,

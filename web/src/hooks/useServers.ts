@@ -29,6 +29,7 @@ export function useServers(options: UseServersOptions = {}) {
   const [globalStats, setGlobalStats] = useState({ totalPlayers: 0, fullServers: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<ServerSortBy>('rank');
   const [sortDir, setSortDir] = useState<ServerSortDir>('asc');
@@ -40,12 +41,15 @@ export function useServers(options: UseServersOptions = {}) {
   const loadServers = useCallback(async () => {
     try {
       setLoading(true);
-      const [serversData, statsData] = await fetchWithRetry(() =>
-        Promise.all([
-          serversApi.getList(5000, 0, game, { full: true }),
-          modsApi.getGlobalStats(game),
-        ])
+      const [serversData, statsData] = await fetchWithRetry(
+        () =>
+          Promise.all([
+            serversApi.getList(5000, 0, game, { full: true }),
+            modsApi.getGlobalStats(game),
+          ]),
+        (attempt) => setRetryCount(attempt),
       );
+      setRetryCount(0);
       const fetchedServers = serversData?.data || [];
       setServers(fetchedServers);
       setTotalServers(serversData?.meta?.total || fetchedServers.length);
@@ -173,6 +177,7 @@ export function useServers(options: UseServersOptions = {}) {
     loading,
     initialLoading: loading && servers.length === 0,
     error,
+    retryCount,
     searchInput,
     setSearchInput,
     searchQuery,

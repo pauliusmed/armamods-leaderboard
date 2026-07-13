@@ -6,9 +6,10 @@ interface StatusStateProps {
   details?: string;
   onAction?: () => void;
   actionText?: string;
+  retryCount?: number;
 }
 
-export function StatusState({ type, message, details, onAction, actionText }: StatusStateProps) {
+export function StatusState({ type, message, details, onAction, actionText, retryCount }: StatusStateProps) {
   const getIcon = () => {
     switch (type) {
       case 'loading': return (
@@ -32,6 +33,14 @@ export function StatusState({ type, message, details, onAction, actionText }: St
               <span className="text-signal-info animate-pulse">▸</span>
               <span className="animate-pulse">Processing Intel...</span>
             </div>
+            {retryCount != null && retryCount > 0 && (
+              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
+                <span className="text-signal-critical">⚠</span>
+                <span className="text-signal-critical">
+                  UPLINK LOST — Auto-retrying ({retryCount}/3)...
+                </span>
+              </div>
+            )}
           </div>
         </div>
       );
