@@ -21,7 +21,7 @@ export function AdminPage() {
   const [health, setHealth] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
   const [seedValue, setSeedValue] = useState('');
-  const [tab, setTab] = useState<'health' | 'affiliate'>('health');
+  const [tab, setTab] = useState<'dashboards' | 'health' | 'affiliate'>('dashboards');
 
   useEffect(() => {
     if (authed) {
@@ -83,7 +83,7 @@ export function AdminPage() {
       </div>
 
       <div className="flex gap-2">
-        {(['health', 'affiliate'] as const).map((t) => (
+        {(['dashboards', 'health', 'affiliate'] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -129,6 +129,28 @@ export function AdminPage() {
 
       {tab === 'health' && !health && (
         <p className="text-gray-600 text-[10px] font-mono">Loading health data...</p>
+      )}
+
+      {tab === 'dashboards' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <a href="https://dash.cloudflare.com/945c61dd7d467620343f43685dce370c/web-analytics/armamods-leaderboard.pages.dev" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
+            <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Cloudflare Analytics</h3>
+            <p className="text-[9px] text-gray-500 font-mono">Visits, page views, LCP, CLS, INP, top pages — full history</p>
+            <p className="text-[9px] text-gray-600 font-mono">900 visits · 2.11k page views · 517ms load time</p>
+          </a>
+          <a href="https://dash.cloudflare.com/945c61dd7d467620343f43685dce370c/workers/services/view/armamods-api/production/observability" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
+            <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Worker Logs</h3>
+            <p className="text-[9px] text-gray-500 font-mono">API errors, 503s, collector cron failures</p>
+          </a>
+          <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
+            <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Empower Affiliates</h3>
+            <p className="text-[9px] text-gray-500 font-mono">34 clicks · 0 signups · 0% conversion</p>
+          </a>
+          <a href="https://github.com/pauliusmed/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
+            <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">GitHub Repo</h3>
+            <p className="text-[9px] text-gray-500 font-mono">Commits, deployments, CI status</p>
+          </a>
+        </div>
       )}
 
       {tab === 'affiliate' && (
