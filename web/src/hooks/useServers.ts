@@ -38,13 +38,14 @@ export function useServers(options: UseServersOptions = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
-  const loadServers = useCallback(async () => {
+  const loadServers = useCallback(async (search?: string) => {
     try {
       setLoading(true);
+      const query = search?.trim() || '';
       const [serversData, statsData] = await fetchWithRetry(
         () =>
           Promise.all([
-            serversApi.getList(5000, 0, game, { full: true }),
+            serversApi.getList(query ? 5000 : 200, 0, game, { search: query || undefined }),
             modsApi.getGlobalStats(game),
           ]),
         (attempt) => setRetryCount(attempt),
@@ -96,8 +97,8 @@ export function useServers(options: UseServersOptions = {}) {
   }, [sortBy]);
 
   useEffect(() => {
-    loadServers();
-  }, [loadServers]);
+    loadServers(searchInput);
+  }, [loadServers, searchInput]);
 
   const allFilteredServers = useMemo(() => {
     if (!Array.isArray(servers)) return [];
@@ -196,6 +197,6 @@ export function useServers(options: UseServersOptions = {}) {
     totalPages,
     resetFilters,
     stats,
-    refresh: loadServers,
+    refresh: () => loadServers(searchInput),
   };
 }
