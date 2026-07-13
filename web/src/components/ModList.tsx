@@ -185,6 +185,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                     variant="leaderboard"
                     isFavorite={isFavorite(mod.id)}
                     onToggleFavorite={() => toggle(mod.id)}
+                    priority={index < 8 && currentPage === 1 ? 'eager' : 'lazy'}
                   />
                 ))}
               </tbody>

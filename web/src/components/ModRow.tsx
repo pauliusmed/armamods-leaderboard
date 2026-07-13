@@ -20,6 +20,8 @@ interface ModRowProps {
   onToggleFavorite?: () => void;
   /** Pin row styling on favorites block */
   pinned?: boolean;
+  /** Load thumbnail immediately — set for first visible rows */
+  priority?: 'eager' | 'lazy';
 }
 
 export function ModRow({
@@ -30,6 +32,7 @@ export function ModRow({
   isFavorite = false,
   onToggleFavorite,
   pinned = false,
+  priority = 'lazy',
 }: ModRowProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const isTop3 = rank != null && rank <= 3;
@@ -66,6 +69,7 @@ export function ModRow({
             game={game}
             size="sm"
             thumbnailUrl={mod.thumbnail}
+            priority={priority}
           />
           <div className="min-w-0">
             <Link
