@@ -164,25 +164,27 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     if (!server || !allServers || allServers.length === 0) return [];
 
     const currentModIds = new Set(server.mods?.map(m => m.id) || []);
+
     if (currentModIds.size === 0) {
       return allServers
         .filter(s => s.id !== server.id)
         .map(s => {
           const otherModCount = s.mods?.length || 0;
           const isVanilla = otherModCount === 0;
+          const alive = (s.players ?? 0) > 0;
           const playerScore = 1 / (1 + Math.abs(s.players - server.players));
           const rankScore = s.sqeRank ? 1 / (1 + Math.abs(s.sqeRank - (server.sqeRank || 9999)) * 0.1) : 0;
           return {
             server: s,
             overlapPercent: 0,
-            score: isVanilla ? playerScore * 2 + rankScore : playerScore
+            score: (isVanilla ? playerScore * 2 + rankScore : playerScore) * (alive ? 1.5 : 1),
           };
         })
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
     }
 
-    return allServers
+    const scored = allServers
       .filter(s => s.id !== server.id)
       .map(other => {
         const otherMods = other.mods || [];
@@ -192,24 +194,48 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             common++;
           }
         }
-        
         const union = currentModIds.size + otherMods.length - common;
         const modSimilarity = union > 0 ? common / union : 0;
-
-        const playerDiff = Math.abs(other.players - server.players);
-        const playerSimilarity = 1 / (1 + playerDiff / Math.max(1, server.players));
-
-        const score = modSimilarity * 0.7 + playerSimilarity * 0.3;
-
-        return {
-          server: other,
-          score,
-          overlapPercent: union > 0 ? Math.round((common / union) * 100) : 0
-        };
+        const fillRatio = other.maxPlayers > 0 ? (other.players ?? 0) / other.maxPlayers : 0;
+        return { server: other, modSimilarity, common, union, fillRatio };
       })
-      .filter(x => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
+      .filter(x => x.modSimilarity > 0);
+
+    if (scored.length === 0) return [];
+
+    const take = (items: typeof scored, sortFn: (a: typeof scored[0]) => number, count: number) =>
+      [...items].sort((a, b) => sortFn(b) - sortFn(a)).slice(0, count);
+
+    const bestModMatch = take(scored, (s) => s.modSimilarity, 1);
+    const usedIds = new Set(bestModMatch.map((s) => s.server.id));
+
+    const bestFull = take(
+      scored.filter((s) => !usedIds.has(s.server.id) && s.fillRatio >= 0.8),
+      (s) => s.modSimilarity,
+      1,
+    );
+    bestFull.forEach((s) => usedIds.add(s.server.id));
+
+    const bestActive = take(
+      scored.filter((s) => !usedIds.has(s.server.id) && s.fillRatio > 0 && s.fillRatio < 0.8),
+      (s) => s.modSimilarity,
+      1,
+    );
+    bestActive.forEach((s) => usedIds.add(s.server.id));
+
+    const rest = take(
+      scored.filter((s) => !usedIds.has(s.server.id)),
+      (s) => s.modSimilarity * 0.6 + (s.server.players ?? 0) * 0.4,
+      2,
+    );
+
+    return [...bestModMatch, ...bestFull, ...bestActive, ...rest]
+      .slice(0, 5)
+      .map((s) => ({
+        server: s.server,
+        score: s.modSimilarity,
+        overlapPercent: s.union > 0 ? Math.round((s.common / s.union) * 100) : 0,
+      }));
   }, [server, allServers]);
 
   const resetModFilters = useCallback(() => {
