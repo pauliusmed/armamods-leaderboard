@@ -1570,7 +1570,33 @@ app.get('/servers/:serverId/history', async (c) => {
     }
   }
 
-  const finalHistory = serverHistory.slice(plan.sliceCount);
+  const rawHistory = serverHistory.slice(plan.sliceCount);
+
+  // Fill gaps between known points with interpolated values
+  function smoothServerHistory(data: any[]): any[] {
+    if (data.length < 2) return data;
+    const smoothed: any[] = [];
+    for (let i = 0; i < data.length; i++) {
+      const point = { ...data[i] };
+      if (point.rank === null && i > 0 && i < data.length - 1) {
+        let prevIdx = i - 1;
+        while (prevIdx >= 0 && data[prevIdx].rank === null) prevIdx--;
+        let nextIdx = i + 1;
+        while (nextIdx < data.length && data[nextIdx].rank === null) nextIdx++;
+        if (prevIdx >= 0 && nextIdx < data.length) {
+          const prevRank = data[prevIdx].rank;
+          const nextRank = data[nextIdx].rank;
+          const step = (i - prevIdx) / (nextIdx - prevIdx);
+          point.rank = Math.round(prevRank + (nextRank - prevRank) * step);
+          point.isInterpolated = true;
+        }
+      }
+      smoothed.push(point);
+    }
+    return smoothed;
+  }
+
+  const finalHistory = smoothServerHistory(rawHistory);
   const finalResponse = c.json({ data: finalHistory });
   finalResponse.headers.set('Cache-Control', 'public, max-age=300');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
