@@ -4,11 +4,7 @@ import { trendingApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { TrendRow } from './TrendRow';
-import { ModRow } from './ModRow';
-import { useModFavorites } from '../hooks/useModFavorites';
-import { usePinnedFavoriteMods } from '../hooks/usePinnedFavoriteMods';
 import type { TrendingMod, TrendPeriod } from '../types';
-import type { Mod } from '../types';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
 
@@ -110,26 +106,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
     return currentMods;
   }, [currentMods, activeCategory]);
 
-  const { favoriteIds, toggle, isFavorite } = useModFavorites(game);
-  const trendingAsMods: Mod[] = useMemo(
-    () =>
-      sortedCurrentMods.map((m) => ({
-        id: m.id,
-        name: m.name,
-        serverCount: m.serverCount,
-        totalPlayers: m.totalPlayers,
-        overallRank: m.overallRank ?? m.currentRank ?? 0,
-      })),
-    [sortedCurrentMods]
-  );
-  const { pinnedMods } = usePinnedFavoriteMods(game, favoriteIds, trendingAsMods, true);
-  const visibleTrending = useMemo(
-    () =>
-      sortedCurrentMods.filter(
-        (m) => !favoriteIds.some((id) => id === m.id || id === m.id.toUpperCase())
-      ),
-    [sortedCurrentMods, favoriteIds]
-  );
+
 
   if (loading || retrying) return <StatusState type="loading" />;
   if (error) return (
@@ -247,35 +224,6 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
             <p className="text-gray-600 mt-2">Trending data will be available after the first daily snapshot</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {pinnedMods.length > 0 && (
-              <div className="border border-white/5 bg-[#172635]">
-                <div className="px-4 py-2.5 border-b border-tactical-orange/20">
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange">
-                    ★ Favorites
-                  </p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <tbody>
-                      {pinnedMods.map((mod) => (
-                        <ModRow
-                          key={`fav-${mod.id}`}
-                          mod={mod}
-                          rank={mod.overallRank}
-                          game={game}
-                          variant="leaderboard"
-                          pinned
-                          isFavorite={isFavorite(mod.id)}
-                          onToggleFavorite={() => toggle(mod.id)}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
           <div className="border border-white/5 bg-black/40">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -292,20 +240,17 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleTrending.map((mod) => (
+                  {sortedCurrentMods.map((mod: TrendingMod) => (
                     <TrendRow
                       key={mod.id}
                       mod={mod}
                       category={activeCategory}
                       game={game}
-                      isFavorite={isFavorite(mod.id)}
-                      onToggleFavorite={() => toggle(mod.id)}
                     />
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
           </div>
         )}
       </section>
