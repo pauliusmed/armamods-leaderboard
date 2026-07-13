@@ -315,9 +315,9 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
               {scenarioDetailHref(selectedScenario, gp) && (
                 <Link
                   to={scenarioDetailHref(selectedScenario, gp)!}
-                  className="inline-block mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-tactical-orange border border-tactical-orange/30 hover:bg-tactical-orange/10 px-3 py-1.5 transition-colors"
-                >
-                  {selectedScenario.kind === 'workshop' ? 'Open workshop mod →' : 'Official scenario →'}
+              className="inline-block mt-3 min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-tactical-orange border border-tactical-orange/30 hover:bg-tactical-orange/10 px-3 py-1.5 transition-colors"
+              >
+                {selectedScenario.kind === 'workshop' ? 'Open workshop mod →' : 'Official scenario →'}
                 </Link>
               )}
             </div>
@@ -328,8 +328,8 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                 next.delete('s');
                 setSearchParams(next, { replace: true });
               }}
-              className="self-start sm:self-auto text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
-            >
+              className="self-start sm:self-auto min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
+              >
               Close
             </button>
           </div>

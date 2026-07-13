@@ -778,7 +778,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                   key={preset.id}
                   type="button"
                   onClick={() => handlePresetChange(preset.id)}
-                  className={`px-3 py-3 text-[9px] font-black uppercase tracking-widest border transition-all ${
+                  className={`min-h-11 px-3 py-3 text-[9px] font-black uppercase tracking-widest border transition-all ${
                     profile.consolePreset === preset.id
                       ? 'border-tactical-orange bg-tactical-orange/10 text-tactical-orange'
                       : 'border-white/10 text-gray-500 hover:border-white/30'

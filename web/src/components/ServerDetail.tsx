@@ -358,7 +358,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <button
               type="button"
               onClick={() => setEmbedOpen((o) => !o)}
-              className="self-end text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
+              className="self-end min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
             >
               {embedOpen ? 'Close Embed' : 'Embed Badge'}
             </button>
@@ -387,7 +387,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       <button
                         type="button"
                         onClick={() => void handleCopy(key, value)}
-                        className="text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange transition-colors"
+                        className="min-h-11 px-3 text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange transition-colors"
                       >
                         {copiedKey === key ? 'Copied' : 'Copy'}
                       </button>

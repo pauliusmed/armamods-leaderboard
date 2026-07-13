@@ -336,7 +336,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           <button
             type="button"
             onClick={() => setInputMode('paste')}
-            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
+            className={`min-h-11 px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
               inputMode === 'paste' ? 'text-tactical-orange border-b-2 border-tactical-orange' : 'text-gray-500'
             }`}
           >
@@ -345,7 +345,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           <button
             type="button"
             onClick={() => setInputMode('file')}
-            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
+            className={`min-h-11 px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
               inputMode === 'file' ? 'text-tactical-orange border-b-2 border-tactical-orange' : 'text-gray-500'
             }`}
           >
@@ -393,7 +393,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-6 py-3 border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-white/5"
+              className="min-h-11 px-6 py-3 border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-white/5"
             >
               Choose file
             </button>
@@ -426,7 +426,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             type="button"
             onClick={runAudit}
             disabled={loading || !configText.trim()}
-            className="px-8 py-3 bg-tactical-orange text-black font-black text-[10px] uppercase tracking-widest disabled:opacity-40 hover:bg-white transition-colors"
+            className="min-h-11 px-8 py-3 bg-tactical-orange text-black font-black text-[10px] uppercase tracking-widest disabled:opacity-40 hover:bg-white transition-colors"
           >
             {loading ? 'Scanning…' : 'Run audit'}
           </button>
@@ -434,7 +434,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             type="button"
             onClick={clearInput}
             disabled={loading || (!configText && !fileName)}
-            className="px-6 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white disabled:opacity-30"
+            className="min-h-11 px-6 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white disabled:opacity-30"
           >
             Clear
           </button>
@@ -466,14 +466,14 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             <button
               type="button"
               onClick={() => void copyReport('text')}
-              className="px-4 py-2 border border-white/15 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-white/5"
+              className="min-h-11 px-4 py-2 border border-white/15 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-white/5"
             >
               Copy text report (with modId)
             </button>
             <button
               type="button"
               onClick={() => void copyReport('json')}
-              className="px-4 py-2 border border-white/15 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5"
+              className="min-h-11 px-4 py-2 border border-white/15 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/5"
             >
               Copy JSON report
             </button>

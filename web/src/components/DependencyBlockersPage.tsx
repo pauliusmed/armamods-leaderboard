@@ -198,7 +198,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
                     setTargetModId('');
                     setResult(null);
                   }}
-                  className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                  className={`w-full text-left min-h-11 px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
                     serverId === server.id
                       ? 'bg-tactical-orange/20 text-tactical-orange'
                       : 'text-gray-400 hover:bg-white/5 hover:text-white'
@@ -248,7 +248,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
                   key={mod.id}
                   type="button"
                   onClick={() => setTargetModId(mod.id)}
-                  className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                  className={`w-full text-left min-h-11 px-3 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
                     targetModId.toUpperCase() === mod.id.toUpperCase()
                       ? 'bg-tactical-orange/20 text-tactical-orange'
                       : 'text-gray-400 hover:bg-white/5 hover:text-white'
@@ -264,7 +264,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
             type="button"
             disabled={!targetModId || analyzing}
             onClick={() => void runAnalysis()}
-            className="px-6 py-3 bg-tactical-orange text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-white transition-colors"
+            className="min-h-11 px-6 py-3 bg-tactical-orange text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-40 hover:bg-white transition-colors"
           >
             {analyzing ? 'Scanning…' : 'Find blockers'}
           </button>

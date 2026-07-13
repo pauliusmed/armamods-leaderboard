@@ -195,7 +195,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-3 sm:px-4 py-2 font-black uppercase tracking-widest text-[11px] transition-all border ${
+              className={`min-h-11 px-3 sm:px-4 py-2 font-black uppercase tracking-widest text-[11px] transition-all border ${
                 activeCategory === category
                   ? 'bg-tactical-orange text-black border-tactical-orange'
                   : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'

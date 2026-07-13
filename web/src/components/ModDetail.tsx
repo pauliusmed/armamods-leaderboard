@@ -452,7 +452,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 {patchInsight.broken && (
                   <Link
                     to="/audit"
-                    className="text-[9px] font-bold uppercase tracking-widest text-tactical-orange hover:underline shrink-0"
+                    className="inline-block min-h-11 leading-[44px] text-[9px] font-bold uppercase tracking-widest text-tactical-orange hover:underline shrink-0"
                   >
                     Config audit →
                   </Link>
