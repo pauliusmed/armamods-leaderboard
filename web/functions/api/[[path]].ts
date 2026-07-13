@@ -1940,4 +1940,18 @@ app.get('/admin/clicks', async (c) => {
   });
 });
 
+/** Seed click counter (admin) */
+app.post('/admin/clicks/seed', async (c) => {
+  const body = await c.req.json<{ reforger?: number; arma3?: number }>();
+  const promises: Promise<void>[] = [];
+  if (body.reforger != null) {
+    promises.push(c.env.TRENDING_KV.put('click:empower:reforger', String(body.reforger)));
+  }
+  if (body.arma3 != null) {
+    promises.push(c.env.TRENDING_KV.put('click:empower:arma3', String(body.arma3)));
+  }
+  await Promise.all(promises);
+  return c.json({ ok: true });
+});
+
 export const onRequest = handle(app);

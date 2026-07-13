@@ -20,6 +20,7 @@ export function AdminPage() {
   const [authed, setAuthedState] = useState(isAuthed);
   const [health, setHealth] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
+  const [seedValue, setSeedValue] = useState('');
   const [tab, setTab] = useState<'health' | 'affiliate'>('health');
 
   useEffect(() => {
@@ -159,8 +160,30 @@ export function AdminPage() {
           </div>
 
           <p className="text-[9px] text-gray-600 font-mono border-t border-white/5 pt-4">
-            Empower dashboard reports <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">34 clicks, 0 signups</a>. Our internal counter tracks every link click — Empower counts unique referrals after they land on their site.
+            Empower dashboard reports <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">34 clicks, 0 signups</a>. Our counter started at 0 — old Empower clicks are not retroactively tracked.
           </p>
+          <div className="flex gap-2 border-t border-white/5 pt-3">
+            <input
+              type="number"
+              value={seedValue}
+              onChange={(e) => setSeedValue(e.target.value)}
+              placeholder="Seed count"
+              className="w-24 bg-black/40 border border-white/10 px-3 py-2 text-white text-[10px] font-mono outline-none focus:border-tactical-orange"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                const v = parseInt(seedValue, 10);
+                if (isNaN(v) || v < 0) return;
+                await api.post('/admin/clicks/seed', { reforger: v, arma3: 0 });
+                setSeedValue('');
+                api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
+              }}
+              className="min-h-11 px-4 py-2 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white"
+            >
+              Seed
+            </button>
+          </div>
 
           <div className="border border-white/5 p-5 space-y-3">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Where affiliate links appear</h3>
