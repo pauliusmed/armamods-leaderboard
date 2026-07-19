@@ -16,6 +16,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
+import { toUserErrorMessage } from '../lib/apiError';
 import {
   buildOfflineBands,
   uptimeTooltipLabel,
@@ -143,7 +144,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       setError(null);
     } catch (err) {
       if (signal?.aborted) return;
-      setError(err instanceof Error ? err.message : 'Failed to load server');
+      setError(toUserErrorMessage(err));
     } finally {
       if (!signal?.aborted) {
         setLoading(false);
