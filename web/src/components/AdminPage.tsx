@@ -161,7 +161,7 @@ export function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(analytics.counters ?? {}).sort(([, a], [, b]) => (b as any).total - (a as any).total).map(([route, counts]) => (
+                {Object.entries(analytics.counters ?? {} as Record<string, { total: number; errors: number; errorRate: number }>).sort(([, a], [, b]) => b.total - a.total).map(([route, counts]) => (
                   <tr key={route} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3 text-white/80">/{route}</td>
                     <td className="px-4 py-3 text-right text-white/80">{counts.total.toLocaleString()}</td>
