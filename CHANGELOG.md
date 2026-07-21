@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.7] - 2026-07-21
+
+### 📊 Admin Analytics
+- **Request/error statistics** — naujas "Analytics" tab'as admin panelėje; rodo kiekvieno API route'o request'ų skaičių, klaidų kiekį ir error rate procentą nuo paskutinio deploy.
+- **In-memory counters** — realaus laiko metrika be jokio overhead'o (neblokuoja response, nenaudoja KV write'ų). Data reset'inasi ant kiekvieno deploy/cold start.
+- **Cloudflare Analytics API** — jei `CLOUDFLARE_API_TOKEN` ir `CLOUDFLARE_ACCOUNT_ID` sukonfigūruoti Cloudflare Pages environment, endpoint papildomai grąžina istorinius duomenis iš Cloudflare Workers Analytics.
+
+### ⚙️ Infrastruktūra
+- `CLOUDFLARE_API_TOKEN` ir `CLOUDFLARE_ACCOUNT_ID` pridėti prie Hono `Bindings` (Cloudflare Pages Functions environment).
+
 ## [1.22.6] - 2026-07-13
 
 ### ⚡ Našumas

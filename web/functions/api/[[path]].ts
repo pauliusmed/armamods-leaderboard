@@ -40,9 +40,25 @@ import { extractModFromChunks } from '../lib/mod-lookup';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
+  CLOUDFLARE_API_TOKEN?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
 };
 
 type GameType = 'reforger' | 'arma3';
+
+/** In-memory request/error counters per normalized path. Resets on each deploy/cold start. */
+const routeCounters = new Map<string, { total: number; errors: number }>();
+
+function normalizeRoutePath(url: string): string {
+  try {
+    const u = new URL(url);
+    const segments = u.pathname.replace(/\/api\//, '').split('/');
+    // Group by controller (e.g., /api/mods/*, /api/servers/*)
+    return segments[0] || 'root';
+  } catch {
+    return 'unknown';
+  }
+}
 
 const app = new Hono<{ Bindings: Bindings }>().basePath('/api');
 
@@ -50,10 +66,15 @@ const app = new Hono<{ Bindings: Bindings }>().basePath('/api');
 app.use('*', cors());
 app.use('*', async (c, next) => {
   const start = Date.now();
-  console.log(`[REQUEST] ${c.req.method} ${c.req.url} started`);
+  const route = normalizeRoutePath(c.req.url);
   await next();
   const ms = Date.now() - start;
-  console.log(`[RESPONSE] ${c.req.method} ${c.req.url} finished in ${ms}ms - Status: ${c.res.status}`);
+  const status = c.res.status;
+  const entry = routeCounters.get(route) || { total: 0, errors: 0 };
+  entry.total++;
+  if (status >= 400) entry.errors++;
+  routeCounters.set(route, entry);
+  console.log(`[RESPONSE] ${c.req.method} ${route} finished in ${ms}ms - Status: ${status}`);
 });
 
 // Global Error Handler
@@ -1952,6 +1973,55 @@ app.post('/admin/clicks/seed', async (c) => {
   }
   await Promise.all(promises);
   return c.json({ ok: true });
+});
+
+/** Get request/error statistics for admin panel */
+app.get('/admin/analytics', async (c) => {
+  const counters: Record<string, { total: number; errors: number; errorRate: number }> = {};
+  let grandTotal = 0;
+  let grandErrors = 0;
+
+  for (const [route, counts] of routeCounters) {
+    counters[route] = {
+      total: counts.total,
+      errors: counts.errors,
+      errorRate: counts.total > 0 ? Math.round((counts.errors / counts.total) * 10000) / 100 : 0,
+    };
+    grandTotal += counts.total;
+    grandErrors += counts.errors;
+  }
+
+  const result: any = {
+    counters,
+    summary: {
+      totalRequests: grandTotal,
+      totalErrors: grandErrors,
+      overallErrorRate: grandTotal > 0 ? Math.round((grandErrors / grandTotal) * 10000) / 100 : 0,
+    },
+    note: 'Data resets on deploy or cold start. For historical analytics, use Cloudflare dashboard.',
+  };
+
+  // Try to fetch Cloudflare Analytics API if env vars are configured
+  const apiToken = c.env.CLOUDFLARE_API_TOKEN;
+  const accountId = c.env.CLOUDFLARE_ACCOUNT_ID;
+  if (apiToken && accountId) {
+    try {
+      const until = new Date().toISOString();
+      const since = new Date(Date.now() - 86400000).toISOString();
+      const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/analytics/edge?since=${encodeURIComponent(since)}&until=${encodeURIComponent(until)}`;
+      const cfRes = await fetch(cfUrl, {
+        headers: { Authorization: `Bearer ${apiToken}` },
+      });
+      if (cfRes.ok) {
+        const cfData = await cfRes.json<any>();
+        result.cloudflare = cfData.result;
+      }
+    } catch (err) {
+      result.cloudflare = { error: 'Failed to fetch Cloudflare analytics' };
+    }
+  }
+
+  return c.json(result);
 });
 
 export const onRequest = handle(app);

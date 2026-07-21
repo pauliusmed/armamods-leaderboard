@@ -20,13 +20,15 @@ export function AdminPage() {
   const [authed, setAuthedState] = useState(isAuthed);
   const [health, setHealth] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [seedValue, setSeedValue] = useState('');
-  const [tab, setTab] = useState<'dashboards' | 'health' | 'affiliate'>('dashboards');
+  const [tab, setTab] = useState<'dashboards' | 'health' | 'affiliate' | 'analytics'>('dashboards');
 
   useEffect(() => {
     if (authed) {
       api.get('/health').then((r) => setHealth(r.data)).catch(() => {});
       api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
+      api.get('/admin/analytics').then((r) => setAnalytics(r.data)).catch(() => {});
     }
   }, [authed]);
 
@@ -83,7 +85,7 @@ export function AdminPage() {
       </div>
 
       <div className="flex gap-2">
-        {(['dashboards', 'health', 'affiliate'] as const).map((t) => (
+        {(['dashboards', 'health', 'analytics', 'affiliate'] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -94,7 +96,7 @@ export function AdminPage() {
                 : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'
             }`}
           >
-            {t === 'health' ? 'System Health' : 'Affiliate'}
+            {t === 'health' ? 'System Health' : t === 'analytics' ? 'Analytics' : 'Affiliate'}
           </button>
         ))}
       </div>
@@ -129,6 +131,58 @@ export function AdminPage() {
 
       {tab === 'health' && !health && (
         <p className="text-gray-600 text-[10px] font-mono">Loading health data...</p>
+      )}
+
+      {tab === 'analytics' && analytics && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+              <p className="text-3xl font-black text-white font-mono">{analytics.summary?.totalRequests?.toLocaleString() ?? '—'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Requests (since deploy)</p>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+              <p className="text-3xl font-black text-white font-mono">{analytics.summary?.totalErrors?.toLocaleString() ?? '—'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Errors (4xx/5xx)</p>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+              <p className="text-3xl font-black text-white font-mono">{analytics.summary?.overallErrorRate ?? '—'}%</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Error rate</p>
+            </div>
+          </div>
+
+          <div className="border border-white/5 bg-[#172635] overflow-hidden">
+            <table className="w-full text-[9px] font-mono">
+              <thead>
+                <tr className="border-b border-white/5 text-gray-500 uppercase tracking-widest">
+                  <th className="text-left px-4 py-3 font-black">Route</th>
+                  <th className="text-right px-4 py-3 font-black">Total</th>
+                  <th className="text-right px-4 py-3 font-black">Errors</th>
+                  <th className="text-right px-4 py-3 font-black">Error %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(analytics.counters || {}).sort(([, a], [, b]) => b.total - a.total).map(([route, counts]: [string, any]) => (
+                  <tr key={route} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3 text-white/80">/{route}</td>
+                    <td className="px-4 py-3 text-right text-white/80">{counts.total.toLocaleString()}</td>
+                    <td className={`px-4 py-3 text-right ${counts.errors > 0 ? 'text-signal-critical' : 'text-white/80'}`}>
+                      {counts.errors.toLocaleString()}
+                    </td>
+                    <td className={`px-4 py-3 text-right ${counts.errorRate > 5 ? 'text-signal-critical' : counts.errorRate > 1 ? 'text-yellow-400' : 'text-white/80'}`}>
+                      {counts.errorRate}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-[9px] text-gray-600 font-mono">{analytics.note}</p>
+        </div>
+      )}
+
+      {tab === 'analytics' && !analytics && (
+        <p className="text-gray-600 text-[10px] font-mono">Loading analytics...</p>
       )}
 
       {tab === 'dashboards' && (
