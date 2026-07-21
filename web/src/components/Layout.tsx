@@ -321,7 +321,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Content Spacer */}
       <div className="h-[72px] sm:h-[84px]"></div>
 
-      <main className="flex-1 max-w-screen-2xl mx-auto px-4 sm:px-8 w-full py-8 sm:py-12 relative">
+      <main className="flex-1 min-h-[60vh] max-w-screen-2xl mx-auto px-4 sm:px-8 w-full py-8 sm:py-12 relative">
         <div className="animate-in fade-in duration-1000">
           {children}
         </div>

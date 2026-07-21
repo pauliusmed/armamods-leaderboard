@@ -89,13 +89,23 @@ export function ModWorkshopGallery({
     [images.length]
   );
 
-  if (status !== 'ready' || images.length === 0) return null;
-
   const label = modName ?? 'Mod';
-  const hasMultiple = images.length > 1;
+  const hasGallery = status === 'ready' && images.length > 0;
+  const hasMultiple = hasGallery && images.length > 1;
   const navBtn = isInline ? 'w-11 h-11 sm:w-8 sm:h-8 text-base' : 'w-11 h-11 sm:w-9 sm:h-9';
   const footerPad = isInline ? 'py-2.5' : 'py-3';
   const frameClass = isInline ? 'aspect-[4/3]' : 'aspect-square';
+
+  // Reserve space during loading to prevent CLS
+  if (game === 'reforger' && status === 'loading') {
+    return (
+      <section className={`border border-white/5 bg-[#172635] ${isInline ? 'w-full' : 'w-full max-w-md sm:max-w-lg mx-auto'}`}>
+        <div className={`w-full ${frameClass} bg-[#101923] animate-pulse`} />
+      </section>
+    );
+  }
+
+  if (!hasGallery) return null;
 
   return (
     <>
