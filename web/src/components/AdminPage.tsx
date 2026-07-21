@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { SEO } from './ui/SEO';
 
-const ADMIN_PASSWORD = 'admin';
+const ADMIN_PASSWORD = 'neadmin';
 const AUTH_KEY = 'armamods:admin:authed';
 
 function isAuthed(): boolean {
