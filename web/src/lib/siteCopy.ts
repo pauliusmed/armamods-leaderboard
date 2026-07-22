@@ -22,7 +22,9 @@ export const DATA_STALE_HERO_NOTE = (ageLabel: string) =>
 export const CHART_NO_DATA_TITLE = 'No chart data';
 
 export const CHART_NO_DATA_SYNC_PAUSED =
-  'Live sync paused — history charts are hidden until the collector runs again';
+  'Live sync paused — amber band = no new samples since last collect';
+
+export const CHART_SYNC_GAP_LEGEND = 'No data (sync paused)';
 
 export const CHART_NO_DATA_INACTIVE =
   'Data may be archived or this module is currently inactive';

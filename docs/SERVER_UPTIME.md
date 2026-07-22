@@ -5,7 +5,9 @@ Server detail charts show **rank**, **players**, and **offline periods** derived
 See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (shared `history:*` shards), [ALGORITHM.md](./ALGORITHM.md) § SQE History, [DATA_SYNC.md](./DATA_SYNC.md) (stale / paused sync).
 
 **UI note (v1.22.8):** when `/api/health` reports `isStale`, mod/server detail charts
-hide history and show “No chart data” instead of a frozen curve — avoids implying live monitoring while the collector is paused.
+keep historical curves and paint an amber “No data (sync paused)” band from the last
+sample to today (`withSyncGapMarker` in `web/src/lib/chartSyncGap.ts`). The gap days
+are not backfilled when sync resumes.
 
 ---
 

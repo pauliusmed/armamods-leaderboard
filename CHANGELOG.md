@@ -9,7 +9,7 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **List heroes** — Mods / Servers / Scenarios rodo „Snapshot as of … · not live“.
 - **Trending** — rodomas `meta.lastUpdated` arba stale pastaba.
 - **Footer** — sync copy persijungia į „live sync paused“ kai snapshot senas.
-- **Charts (mod/server detail)** — kai sync stale, grafikai rodo „No chart data“ vietoj senos kreivės.
+- **Charts (mod/server detail)** — istorinės kreivės lieka; kai sync stale, amber **No data (sync paused)** juosta nuo paskutinio taško iki šiandien.
 
 ### 💸 Donations
 - **Goal $25** — centralizuota `web/src/lib/donation.ts` (progress bar 0/$25); tikslas = BattleMetrics Basic API metams.
