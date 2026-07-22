@@ -16,13 +16,15 @@ import type { GameType } from '../api/client';
 import type { ServerSortBy } from '../hooks/useServers';
 import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import { BM_STATUS_FILTER_OPTIONS } from '../lib/serverStatus';
-import { SERVER_STATUS_FILTER_ARIA } from '../lib/siteCopy';
+import { DATA_STALE_HERO_NOTE, SERVER_STATUS_FILTER_ARIA } from '../lib/siteCopy';
+import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 
 interface ServerListProps {
   game?: GameType;
 }
 
 export function ServerList({ game = 'reforger' }: ServerListProps) {
+  const freshness = useDataFreshness(game);
   const {
     allFilteredServers,
     filteredServers,
@@ -83,6 +85,8 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
       <StatsHero
         title="Active Server Network"
         subtitle="Real-time monitoring of all community and official servers using mods."
+        note={freshness.isStale ? DATA_STALE_HERO_NOTE(formatSyncAge(freshness.staleHours)) : null}
+        noteTone={freshness.isStale ? 'warning' : 'default'}
         stats={[
           { label: 'Active Servers', value: stats.totalServers },
           { label: 'Total Players', value: stats.totalPlayers },

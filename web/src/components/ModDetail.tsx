@@ -19,7 +19,8 @@ import {
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
-import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE } from '../lib/siteCopy';
+import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE, CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_INACTIVE } from '../lib/siteCopy';
+import { useDataFreshness } from '../hooks/useDataFreshness';
 import { ModAuthorLink } from './ui/ModAuthorLink';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { formatBytes } from '../lib/formatBytes';
@@ -77,6 +78,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [serversPage, setServersPage] = useState(1);
   const { isFavorite, toggle } = useModFavorites(game);
   const isMobileChart = useMediaQuery('(max-width: 639px)');
+  const freshness = useDataFreshness(game);
+  // Hide misleading history while live collector sync is paused
+  const chartHistory = freshness.isStale ? [] : history;
 
   useEffect(() => {
     setHeroGalleryVisible(false);
@@ -145,20 +149,20 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   }, [modId, game]);
 
   const patchInsight = useMemo(() => {
-    if (game !== 'reforger' || !modId || !mod || history.length < 4) return null;
+    if (game !== 'reforger' || !modId || !mod || chartHistory.length < 4) return null;
     const row = buildModAuditRow(
       { modId: modId.toUpperCase(), name: mod.name },
-      history,
+      chartHistory,
       { totalPlayers: mod.totalPlayers, serverCount: mod.serverCount, name: mod.name }
     );
-    const sorted = [...history].map((h) => h.date).sort();
+    const sorted = [...chartHistory].map((h) => h.date).sort();
     const minDate = sorted[0];
     const maxDate = sorted[sorted.length - 1];
     const showPatchLine =
       minDate <= REFORGER_PATCH_17 && maxDate >= REFORGER_PATCH_17;
     const broken = row.status === 'dead' || row.status === 'warning';
     return { row, showPatchLine, maxDate, broken };
-  }, [game, modId, mod, history]);
+  }, [game, modId, mod, chartHistory]);
 
   const sortedDeployedServers = useMemo(() => {
     if (!mod?.servers) return [];
@@ -462,10 +466,12 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
             <Card>
               <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
-                {!history || history.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
-                    <span>No recent activity detected</span>
-                    <span className="text-[8px] opacity-50 font-medium">Data may be archived or module is currently inactive</span>
+                {!chartHistory || chartHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2 px-4 text-center">
+                    <span>{CHART_NO_DATA_TITLE}</span>
+                    <span className="text-[8px] opacity-70 font-medium normal-case tracking-normal">
+                      {freshness.isStale ? CHART_NO_DATA_SYNC_PAUSED : CHART_NO_DATA_INACTIVE}
+                    </span>
                   </div>
                 ) : (
                   <div className="flex flex-col h-full gap-3 min-w-0">
@@ -486,7 +492,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     <div className="flex-1 min-h-0 min-w-0 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={history}
+                      data={chartHistory}
                       margin={{
                         top: 8,
                         right: isMobileChart ? 4 : 8,

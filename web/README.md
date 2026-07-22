@@ -28,7 +28,7 @@ functions/
   lib/              mod-lookup, server-lookup, storage-calc, …
 ```
 
-## Key UI patterns (v1.22.1)
+## Key UI patterns (v1.22.8)
 
 | Feature | Files |
 |---------|--------|
@@ -40,8 +40,10 @@ functions/
 | Owned copy | `siteCopy.ts` (no vendor names in primary UI) |
 | Config copy | `CopyModConfigButton`, `modConfig.ts` |
 | Server uptime chart | `serverUptimeChart.ts` + Recharts `ReferenceArea` on `ServerDetail` |
+| Stale sync banner | `useDataFreshness.ts`, `DataStaleBanner.tsx` (hides charts when `isStale`) |
+| Donation goal ($25) | `lib/donation.ts`, `DonationCard`, `SupportPage` |
 
-See [docs/UI_FILTERS.md](../docs/UI_FILTERS.md) and [walkthrough.md](../walkthrough.md).
+See [docs/UI_FILTERS.md](../docs/UI_FILTERS.md), [docs/DATA_SYNC.md](../docs/DATA_SYNC.md), and [walkthrough.md](../walkthrough.md).
 
 ## Environment
 

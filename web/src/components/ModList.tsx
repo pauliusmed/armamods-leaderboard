@@ -14,12 +14,15 @@ import { ListFilterBar } from './ui/ListFilterBar';
 import type { GameType } from '../api/client';
 import type { ModSortBy } from '../hooks/useMods';
 import { ACTIVITY_FILTER_OPTIONS, MOD_LEADERBOARD_SORT_OPTIONS } from '../lib/modListFilters';
+import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
 
 interface ModListProps {
   game?: GameType;
 }
 
 export function ModList({ game = 'reforger' }: ModListProps) {
+  const freshness = useDataFreshness(game);
   const {
     filteredMods,
     loading,
@@ -83,6 +86,8 @@ export function ModList({ game = 'reforger' }: ModListProps) {
       <StatsHero
         title="Mod Popularity Leaderboard"
         subtitle="Supplements the workshop with live player counts — see what is deployed right now, not just subscribed."
+        note={freshness.isStale ? DATA_STALE_HERO_NOTE(formatSyncAge(freshness.staleHours)) : null}
+        noteTone={freshness.isStale ? 'warning' : 'default'}
         stats={[
           { label: 'Total Mods', value: statPlaceholder ?? stats.totalMods },
           { label: 'Active Players', value: statPlaceholder ?? stats.totalPlayers },

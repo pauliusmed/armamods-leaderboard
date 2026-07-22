@@ -1,6 +1,6 @@
 # Documentation index
 
-Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.6**).
+Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.8**).
 
 ## Start here
 
@@ -9,6 +9,7 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.6**).
 | [walkthrough.md](../walkthrough.md) | New engineers | End-to-end data flow, API surface, cron, local dev |
 | [README.md](../README.md) | Overview | Architecture highlights, stack, setup |
 | [web/README.md](../web/README.md) | Frontend | Vite app structure, UI patterns |
+| [DATA_SYNC.md](./DATA_SYNC.md) | Ops / maintainers | BM paid API, collector switch, stale UI, $25 goal |
 
 ## Domain guides
 

@@ -22,6 +22,8 @@ import {
   uptimeTooltipLabel,
   type ServerHistoryPoint,
 } from '../lib/serverUptimeChart';
+import { useDataFreshness } from '../hooks/useDataFreshness';
+import { CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_SERVER } from '../lib/siteCopy';
 import {
   type ActivityFilter,
   type RankFilter,
@@ -96,6 +98,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const { isFavorite, toggle } = useServerFavorites(game);
   const isMobileChart = useMediaQuery('(max-width: 639px)');
+  const freshness = useDataFreshness(game);
+  const chartHistory = freshness.isStale ? [] : history;
 
   const [allServers, setAllServers] = useState<Server[]>([]);
   const [storagePack, setStoragePack] = useState<ServerStoragePack | null>(null);
@@ -159,7 +163,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     return () => controller.abort();
   }, [serverId, selectedDays, loadServer]);
 
-  const offlineBands = useMemo(() => buildOfflineBands(history), [history]);
+  const offlineBands = useMemo(() => buildOfflineBands(chartHistory), [chartHistory]);
 
   const similarServers = useMemo(() => {
     if (!server || !allServers || allServers.length === 0) return [];
@@ -475,10 +479,12 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
           <Card>
             <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
-              {!history || history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2">
-                  <span>No recent activity detected</span>
-                  <span className="text-[8px] opacity-50 font-medium">Server may be offline or monitoring was suspended</span>
+              {!chartHistory || chartHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2 px-4 text-center">
+                  <span>{CHART_NO_DATA_TITLE}</span>
+                  <span className="text-[8px] opacity-70 font-medium normal-case tracking-normal">
+                    {freshness.isStale ? CHART_NO_DATA_SYNC_PAUSED : CHART_NO_DATA_SERVER}
+                  </span>
                 </div>
               ) : (
                 <div className="flex flex-col h-full gap-3">
@@ -499,7 +505,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                   <div className="flex-1 min-h-0 min-w-0 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={history}
+                    data={chartHistory}
                     margin={{
                       top: 8,
                       right: isMobileChart ? 4 : 8,

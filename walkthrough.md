@@ -85,11 +85,16 @@ docs/                      ALGORITHM, SERVER_UPTIME, UI_FILTERS, PERFORMANCE, LI
 ## 4. The data pipeline
 
 ### 4.1 Ingestion — `scripts/collector.ts`
-Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`. Two phases:
+Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`, gated by
+`collector-gate` (`enabled=true|false`). See [docs/DATA_SYNC.md](./docs/DATA_SYNC.md)
+for the BM paid-API requirement and how to re-enable the cron.
+
+Two phases:
 
 **`collect`** (run per game):
-1. `BattleMetricsService.fetchAllServers()` paginates the BM API, respecting the
-   120 req/min (keyed) / 60 req/min (anonymous) limits.
+1. `BattleMetricsService.fetchAllServers()` paginates the BM API with
+   `Authorization: Bearer` (`BATTLEMETRICS_API_KEY` **required** since ~2026-07-20;
+   anonymous calls return 403). Respect keyed rate limits (~120 req/min).
 2. Servers are normalized — Reforger exposes `details.reforger.mods[]` and
    `details.reforger.scenarioName`; Arma 3 exposes `details.modIds[]` / `modNames[]`
    and `map · mission` as `scenarioName`.
@@ -259,6 +264,13 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 - **Collector cron**: `.github/workflows/collector.yml`, `0 */2 * * *`. Runs
   Reforger collect → Arma 3 collect → Reforger trending → Arma 3 trending, with
   dependencies so Arma 3 reuses leftover BM quota.
+- **BattleMetrics API**: since ~2026-07-20 all BM requests require a paid
+  subscription PAT (`BATTLEMETRICS_API_KEY` in GitHub Actions secrets). Without
+  it the collector fails; the UI keeps serving the last KV snapshot and shows a
+  stale-data banner when `/api/health` reports `isStale` (>3h).
+- **Collector switch**: `.github/workflows/collector.yml` job `collector-gate`
+  sets `enabled=false|true`. While false, collect/trending jobs are skipped
+  (avoids red 403 runs). Flip to `true` after the BM PAT secret exists.
 - **CI**: `.github/workflows/ci.yml` runs the test suite on PRs.
 - **Deploy**: `.github/workflows/deploy.yml` publishes to Cloudflare.
 
@@ -278,7 +290,8 @@ npm run dev                 # local proxy mirroring the production Worker
 cd web && npm run dev       # Vite dev server (frontend)
 ```
 
-Env vars (see `.env.example`): `PORT`, `BATTLEMETRICS_API_KEY` (optional),
+Env vars (see `.env.example`): `PORT`, `BATTLEMETRICS_API_KEY` (required for
+collector since BM gated API behind paid plans),
 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `WORKER_URL`.
 
 Manual data runs (need the Cloudflare vars):

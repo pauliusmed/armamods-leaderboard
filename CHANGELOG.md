@@ -2,6 +2,27 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.8] - 2026-07-22
+
+### ⚠️ Data freshness
+- **Stale data banner** — kai `/api/health` rodo `isStale` (>3h), po headeriu soft notice + Support/Donate (be hard lock).
+- **List heroes** — Mods / Servers / Scenarios rodo „Snapshot as of … · not live“.
+- **Trending** — rodomas `meta.lastUpdated` arba stale pastaba.
+- **Footer** — sync copy persijungia į „live sync paused“ kai snapshot senas.
+- **Charts (mod/server detail)** — kai sync stale, grafikai rodo „No chart data“ vietoj senos kreivės.
+
+### 💸 Donations
+- **Goal $25** — centralizuota `web/src/lib/donation.ts` (progress bar 0/$25); tikslas = BattleMetrics Basic API metams.
+- **Community voice** — „Community Sync Fund“ / „Chip in“ / shared pool (ne asmeninis tip jar); Layout, Support, DonationCard, stale banner, Audit.
+- Layout / Support / DonationCard atnaujinti nuo €100–€500.
+
+### ⚙️ Infrastruktūra
+- **Collector SWITCH** — `.github/workflows/collector.yml` `collector-gate` (`enabled=false`); cron nebefailina su 403, kol nėra BM PAT.
+
+### 📚 Dokumentacija
+- Naujas **[docs/DATA_SYNC.md](docs/DATA_SYNC.md)** — BM paid API, collector switch, stale UI, donation $25, re-enable checklist.
+- Atnaujinta: `docs/README.md`, `README.md`, `walkthrough.md`, `web/README.md`, `docs/PERFORMANCE.md`, `docs/SERVER_UPTIME.md`, `docs/WORKSHOP_METADATA.md`, `docs/MOBILE_UX.md`, `docs/UI_FILTERS.md`, `.env.example`.
+
 ## [1.22.7] - 2026-07-21
 
 ### 📊 Admin Analytics

@@ -8,8 +8,9 @@ import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { ListFilterBar } from './ui/ListFilterBar';
 import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '../lib/scenarioLinks';
-import { SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/siteCopy';
+import { DATA_STALE_HERO_NOTE, SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/siteCopy';
 import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
+import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 import type { GameType } from '../api/client';
 import type { ScenarioRankingEntry } from '../types';
 
@@ -79,6 +80,7 @@ function ScenarioNameCell({
 export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const gameLabel = game === 'reforger' ? 'Arma Reforger' : 'Arma 3';
+  const freshness = useDataFreshness(game);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedName = searchParams.get('s') ?? '';
 
@@ -149,6 +151,8 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
       <StatsHero
         title="Scenario Leaderboard"
         subtitle={SCENARIO_SUBTITLE}
+        note={freshness.isStale ? DATA_STALE_HERO_NOTE(formatSyncAge(freshness.staleHours)) : null}
+        noteTone={freshness.isStale ? 'warning' : 'default'}
         stats={[
           { label: 'Scenarios', value: stats.uniqueScenarios },
           { label: 'Servers', value: stats.totalServers },

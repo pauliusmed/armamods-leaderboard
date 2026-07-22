@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { DATA_SOURCE_ATTRIBUTION, DATA_SYNC_NOTE } from '../lib/siteCopy';
+import { DATA_SOURCE_ATTRIBUTION, DATA_STALE_FOOTER, DATA_SYNC_NOTE } from '../lib/siteCopy';
+import { DONATION_GOAL_LABEL } from '../lib/donation';
+import { DataStaleBanner } from './DataStaleBanner';
+import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +15,7 @@ export function Layout({ children }: LayoutProps) {
 
   const isArma3 = location.pathname.startsWith('/arma3');
   const gp = isArma3 ? '/arma3' : '';
+  const freshness = useDataFreshness(isArma3 ? 'arma3' : 'reforger');
 
   const isActive = (path: string) => {
     // Exact match for home, or starts with for subpages
@@ -321,6 +325,8 @@ export function Layout({ children }: LayoutProps) {
       {/* Content Spacer */}
       <div className="h-[72px] sm:h-[84px]"></div>
 
+      <DataStaleBanner game={isArma3 ? 'arma3' : 'reforger'} />
+
       <main className="flex-1 min-h-[60vh] max-w-screen-2xl mx-auto px-4 sm:px-8 w-full py-8 sm:py-12 relative">
         <div className="animate-in fade-in duration-1000">
           {children}
@@ -341,13 +347,15 @@ export function Layout({ children }: LayoutProps) {
               <p className="text-gray-500 text-xs sm:text-sm font-medium leading-[2] max-w-lg uppercase tracking-wider">
                 This platform provides strategic overview of the Arma Reforger ecosystem. We track
                 server telemetry and player deployment across various custom modules.
-                Data synchronized every 2 hours via external collector.
+                {freshness.isStale
+                  ? ` ${DATA_STALE_FOOTER}.`
+                  : ' Data synchronized every 2 hours via external collector.'}
               </p>
               <Link
                 to="/support"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-tactical-orange/10 border border-tactical-orange/20 text-tactical-orange hover:bg-tactical-orange hover:text-black text-[10px] font-black uppercase tracking-widest transition-all"
               >
-                Support Development (€500 goal)
+                Community Sync Fund ({DONATION_GOAL_LABEL})
               </Link>
             </div>
 
@@ -366,7 +374,7 @@ export function Layout({ children }: LayoutProps) {
                     <li><Link to="/arma-reforger-console-mod-storage" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Console Mod Storage</Link></li>
                   )}
                 </ul>
-                <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Support Project</Link>
+                <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Community Fund</Link>
               </div>
             </div>
 
@@ -374,12 +382,18 @@ export function Layout({ children }: LayoutProps) {
               <h3 className="font-black text-white uppercase tracking-[0.3em] text-[10px] border-b border-white/10 pb-4">Infrastructure</h3>
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] leading-loose">
                 Registry: <span className="text-gray-300">reforgermods</span><br/>
-                Sync: <span className="text-gray-300">~2h network scan</span><br/>
+                Sync:{' '}
+                <span className={freshness.isStale ? 'text-amber-400' : 'text-gray-300'}>
+                  {freshness.isStale
+                    ? `STALE · last ${formatSyncAge(freshness.staleHours)}`
+                    : '~2h network scan'}
+                </span>
+                <br/>
                 Compute: <span className="text-gray-300">Edge Workers</span><br/>
                 Hosting: <a href={isArma3 ? "/api/click/empower?game=arma3" : "/api/click/empower?game=reforger"} target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">High-Performance Nodes</a>
               </p>
               <p className="text-gray-600 text-[9px] font-medium normal-case tracking-normal leading-relaxed">
-                {DATA_SYNC_NOTE}. {DATA_SOURCE_ATTRIBUTION}.
+                {freshness.isStale ? DATA_STALE_FOOTER : DATA_SYNC_NOTE}. {DATA_SOURCE_ATTRIBUTION}.
               </p>
             </div>
           </div>

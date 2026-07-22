@@ -2,7 +2,10 @@
 
 Server detail charts show **rank**, **players**, and **offline periods** derived from collector scans — not a live ping monitor.
 
-See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (shared `history:*` shards), [ALGORITHM.md](./ALGORITHM.md) § SQE History.
+See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (shared `history:*` shards), [ALGORITHM.md](./ALGORITHM.md) § SQE History, [DATA_SYNC.md](./DATA_SYNC.md) (stale / paused sync).
+
+**UI note (v1.22.8):** when `/api/health` reports `isStale`, mod/server detail charts
+hide history and show “No chart data” instead of a frozen curve — avoids implying live monitoring while the collector is paused.
 
 ---
 

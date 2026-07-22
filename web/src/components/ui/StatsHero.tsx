@@ -7,6 +7,9 @@ interface StatsHeroProps {
   title: string;
   subtitle: string;
   stats: StatItem[];
+  /** Optional freshness line (e.g. stale snapshot age). */
+  note?: string | null;
+  noteTone?: 'default' | 'warning';
 }
 
 /**
@@ -14,7 +17,7 @@ interface StatsHeroProps {
  * Replaced the old ~250px hero block (giant h1 + 4 stat boxes) so the actual
  * list/table content sits above the fold instead of being pushed down.
  */
-export function StatsHero({ title, subtitle, stats }: StatsHeroProps) {
+export function StatsHero({ title, subtitle, stats, note, noteTone = 'default' }: StatsHeroProps) {
   return (
     <div className="mb-4 pb-3 border-b border-white/5">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -25,6 +28,15 @@ export function StatsHero({ title, subtitle, stats }: StatsHeroProps) {
           <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1.5 hidden sm:block">
             {subtitle}
           </p>
+          {note && (
+            <p
+              className={`text-[9px] font-bold uppercase tracking-wider mt-1.5 ${
+                noteTone === 'warning' ? 'text-amber-400' : 'text-gray-600'
+              }`}
+            >
+              {note}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">

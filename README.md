@@ -166,6 +166,9 @@ TBT improved from **970 ms → 0 ms** (desktop) by collapsing ~72 per-row API ca
     CLOUDFLARE_ACCOUNT_ID=your_id
     WORKER_URL=https://api.reforgermods.com
     ```
+   **Note:** `BATTLEMETRICS_API_KEY` is a **paid** BattleMetrics Personal Access Token
+   (required since ~2026-07-20). Without it the GitHub collector cannot refresh KV.
+   Ops guide: [docs/DATA_SYNC.md](docs/DATA_SYNC.md) (collector switch, stale UI, $25 donation goal).
 
 4. **Launch Local Services**
    * **Backend Local Proxy Script**:
@@ -187,7 +190,7 @@ npm test
 ```
 *Tested areas: `findMatchingBrace` surgical logic, `mod-lookup` co-deploy false-positive guard, EMA ranking decay, SQE bonus clamping, scenario aggregation (`buildScenarioRanking`), storage planner math, server uptime history (`server-uptime-history`), audit-config, history-query, share-meta, search-match.*
 
-**Docs:** [walkthrough.md](walkthrough.md) (system overview) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (PageSpeed scores) · [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) (index) · [CHANGELOG.md](CHANGELOG.md) (release notes through **v1.22.3**).
+**Docs:** [walkthrough.md](walkthrough.md) (system overview) · [docs/DATA_SYNC.md](docs/DATA_SYNC.md) (BM API / collector pause / stale UI) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (PageSpeed scores) · [docs/ALGORITHM.md](docs/ALGORITHM.md) (ranking math) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) (index) · [CHANGELOG.md](CHANGELOG.md) (release notes through **v1.22.8**).
 
 ## 📝 License & Contact
 Copyright © 2026 Paulius Medžiukevičius. Distributed under the [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) License. 

@@ -8,10 +8,14 @@ How the platform supplements BattleMetrics telemetry with **Reforger Workshop** 
 
 | Source | What it provides | Update cadence | Used for |
 |--------|------------------|----------------|----------|
-| **BattleMetrics** (collector) | Live players, servers, ranks, trending, co-deploy | Every ~2 hours | Core leaderboard value |
+| **BattleMetrics** (collector) | Live players, servers, ranks, trending, co-deploy | Every ~2 hours when collector enabled + BM PAT present | Core leaderboard value |
 | **Reforger Workshop** (on-demand scrape) | `og:image` thumbnail URL, author-declared dependencies | On first request per mod, then KV 7d | Recognition + install requirements |
 
 Workshop metadata is **not** written by the collector. It is resolved by the Edge API when a user (or OG bot) requests a mod.
+
+> **Ops:** BattleMetrics API requires a paid subscription key since ~2026-07-20.
+> If the collector is gated off, leaderboard numbers freeze on the last KV write —
+> [DATA_SYNC.md](./DATA_SYNC.md).
 
 ---
 

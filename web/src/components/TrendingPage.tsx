@@ -5,6 +5,8 @@ import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { TrendRow } from './TrendRow';
 import type { TrendingMod, TrendPeriod } from '../types';
+import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
 
@@ -24,6 +26,8 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
   const [activeCategory, setActiveCategory] = useState<TrendCategory>('rising');
   const [activePeriod, setActivePeriod] = useState<TrendPeriod>('30d');
   const [comparisonDate, setComparisonDate] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const freshness = useDataFreshness(game);
 
   const loadTrending = useCallback(async (isRetry = false) => {
     try {
@@ -40,6 +44,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
       }
 
       setComparisonDate(data?.meta?.comparisonDate || null);
+      setLastUpdated(data?.meta?.lastUpdated || null);
       setError(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load trending data';
@@ -59,6 +64,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
               });
             }
             setComparisonDate(data?.meta?.comparisonDate || null);
+            setLastUpdated(data?.meta?.lastUpdated || null);
             setError(null);
             setLoading(false);
             setRetrying(false);
@@ -149,13 +155,22 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
       <div className="border-b border-white/10 pb-4 space-y-4">
         {/* Row 1: Title + Period selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-baseline gap-4">
+          <div className="flex items-baseline gap-4 flex-wrap">
             <h1 className="text-2xl font-black text-white uppercase tracking-tighter">
               Trending
             </h1>
             <p className="text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]">
               vs {comparisonDate ? new Date(comparisonDate).toLocaleDateString() : 'Baseline'}
             </p>
+            {freshness.isStale ? (
+              <p className="text-amber-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+                {DATA_STALE_HERO_NOTE(formatSyncAge(freshness.staleHours))}
+              </p>
+            ) : lastUpdated ? (
+              <p className="text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]">
+                Synced {new Date(lastUpdated).toLocaleString()}
+              </p>
+            ) : null}
           </div>
           <div className="flex gap-1">
             {(['7d', '30d'] as TrendPeriod[]).map((period) => (

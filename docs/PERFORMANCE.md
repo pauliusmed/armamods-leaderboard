@@ -30,6 +30,10 @@ Baseline (pre v1.21): desktop Performance **70** (TBT 970 ms), mobile **84**. De
 
 UI never talks to BattleMetrics directly.
 
+**Paused sync:** BM requires a paid API key (since ~2026-07-20). While the collector
+gate is off or KV age &gt; 3h, the UI serves the last snapshot and shows stale notices —
+see [DATA_SYNC.md](./DATA_SYNC.md).
+
 ---
 
 ## Intentional trade-offs (by design)

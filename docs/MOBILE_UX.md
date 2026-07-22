@@ -1,6 +1,6 @@
 # Mobile UX audit
 
-Last reviewed: **2026-07-13** (v1.22.6 touch-target sweep). Test at 320–430px width (iPhone SE / standard phones).
+Last reviewed: **2026-07-22** (v1.22.8 stale banner + donation goal). Test at 320–430px width (iPhone SE / standard phones).
 
 Viewport: `web/index.html` — `width=device-width, initial-scale=1`.
 
@@ -11,18 +11,20 @@ Viewport: `web/index.html` — `width=device-width, initial-scale=1`.
 | Area | Status | Notes |
 |------|--------|-------|
 | Layout / hamburger nav | OK | Full mobile menu, theater switch, 56px menu button |
+| Stale data banner | OK (v1.22.8) | Amber bar under header; short copy on mobile + Support CTA `min-h` friendly |
 | Mod leaderboard | OK | `overflow-x-auto`, compact meta under name on mobile |
 | Server list | OK | Horizontal scroll; modpack size under mod count on mobile |
 | Trending | OK | Category tabs 44px; period toggles 44px; table scrolls |
-| Mod detail | OK | Chart legend, mobile axes, gallery slideshow |
-| Server detail | OK | Chart mobile margins; embed badge + copy buttons 44px |
+| Mod detail | OK | Chart empty state when sync stale; gallery slideshow |
+| Server detail | OK | Chart empty state when sync stale; embed badge + copy 44px |
 | Scenarios | OK | Fill % + top server under name on mobile; close/open buttons 44px |
 | Storage planner / Audit | OK (fixed v1.22.6) | Touch targets swept — all action buttons `min-h-11` |
 | Dependency blockers | OK (fixed v1.22.6) | Search result items + Find blockers 44px |
 | Config audit | OK (fixed v1.22.6) | Paste/Upload tabs, Run audit, Clear, Copy buttons 44px |
+| Support / donation | OK (v1.22.8) | Progress bar + $25 goal; PayPal CTA |
 | Hosting comparison tables | MEDIUM | `min-w-[900px]` inside `overflow-x-auto` — usable but not ideal on mobile |
 | Pagination | OK | 44px page buttons |
-| Filter bar sticky | OK | `top-[72px] sm:top-[84px]` matches header |
+| Filter bar sticky | OK | `top-[72px] sm:top-[84px]` matches header (banner scrolls with content) |
 | Server search landing (new) | OK | Single-column grid, no touch target issues |
 
 ---

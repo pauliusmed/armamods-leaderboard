@@ -1,13 +1,32 @@
 name: Arma Mods Collector
 
+# =============================================================================
+# COLLECTOR SWITCH — edit the `enabled=` line in job `collector-gate` only.
+# Requires secrets.BATTLEMETRICS_API_KEY (paid BattleMetrics PAT) when true.
+# false → all collect/trending jobs skip (no more red 403 failures)
+# true  → normal pipeline
+# =============================================================================
+
 on:
   schedule:
     - cron: '0 */2 * * *'  # Every 2 hours
   workflow_dispatch:      # Manual trigger
 
 jobs:
+  collector-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.switch.outputs.enabled }}
+    steps:
+      - id: switch
+        name: Collector enabled switch
+        # >>> SWITCH: change false → true when BM API key is funded <<<
+        run: echo "enabled=false" >> "$GITHUB_OUTPUT"
+
   # Reforger collection (priority - runs first)
   collect-reforger:
+    needs: collector-gate
+    if: needs.collector-gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -35,9 +54,10 @@ jobs:
 
   # Arma 3 collection (runs after Reforger - uses remaining API quota)
   collect-arma3:
+    needs: [collector-gate, collect-reforger]
+    if: needs.collector-gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: collect-reforger  # Runs after Reforger completes
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -63,9 +83,10 @@ jobs:
 
   # Reforger trending snapshot
   trending-reforger:
+    needs: [collector-gate, collect-reforger]
+    if: needs.collector-gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: collect-reforger
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -90,9 +111,10 @@ jobs:
 
   # Arma 3 trending snapshot (runs after Reforger trending)
   trending-arma3:
+    needs: [collector-gate, trending-reforger]
+    if: needs.collector-gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: trending-reforger
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
