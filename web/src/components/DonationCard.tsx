@@ -8,9 +8,10 @@ import {
   DONATION_GOAL_LABEL,
   DONATION_GOAL_USD,
   DONATION_PROGRESS_LABEL,
-  DONATION_RAISED_USD,
+  DONATION_RAISED_LABEL,
   donationProgressPercent,
 } from '../lib/donation';
+import { CommunityDonorsThanks } from './CommunityDonorsThanks';
 
 export function DonationCard() {
   const pct = donationProgressPercent();
@@ -33,7 +34,7 @@ export function DonationCard() {
               {DONATION_PROGRESS_LABEL}
             </span>
             <span className="text-xl font-black text-tactical-orange">
-              ${DONATION_RAISED_USD} / {DONATION_GOAL_LABEL}
+              {DONATION_RAISED_LABEL} / {DONATION_GOAL_LABEL}
             </span>
           </div>
 
@@ -46,10 +47,12 @@ export function DonationCard() {
             aria-label={`Community pool ${pct}% of ${DONATION_GOAL_LABEL}`}
           >
             <div
-              className={`h-full bg-tactical-orange transition-all ${pct === 0 ? 'w-0' : ''}`}
+              className="h-full bg-tactical-orange transition-all"
               style={{ width: `${pct}%` }}
             />
           </div>
+
+          <CommunityDonorsThanks compact />
 
           <div className="space-y-2 pt-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider">

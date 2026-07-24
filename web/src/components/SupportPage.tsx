@@ -8,9 +8,10 @@ import {
   DONATION_GOAL_LABEL,
   DONATION_GOAL_USD,
   DONATION_PROGRESS_LABEL,
-  DONATION_RAISED_USD,
+  DONATION_RAISED_LABEL,
   donationProgressPercent,
 } from '../lib/donation';
+import { CommunityDonorsThanks } from './CommunityDonorsThanks';
 
 export function SupportPage() {
   const pct = donationProgressPercent();
@@ -53,7 +54,7 @@ export function SupportPage() {
                 {DONATION_PROGRESS_LABEL}
               </span>
               <span className="text-lg font-black text-tactical-orange">
-                ${DONATION_RAISED_USD} / {DONATION_GOAL_LABEL}
+                {DONATION_RAISED_LABEL} / {DONATION_GOAL_LABEL}
               </span>
             </div>
             <div
@@ -70,6 +71,10 @@ export function SupportPage() {
               ${DONATION_GOAL_USD} shared goal ≈ one year of API access so the whole community
               gets live sync again.
             </p>
+          </div>
+
+          <div className="pt-6 border-t border-white/5">
+            <CommunityDonorsThanks />
           </div>
         </CardContent>
       </Card>

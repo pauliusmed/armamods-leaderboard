@@ -93,7 +93,8 @@ Live sync needs ~$1/mo BM Basic. The site frames this as a **community pool** (n
 | Constant | Value |
 |----------|--------|
 | `DONATION_GOAL_USD` | **25** (~1 year of Basic for everyone) |
-| `DONATION_RAISED_USD` | update manually when donations land |
+| `DONATION_RAISED_USD` | update manually when donations land (EUR → ≈USD) |
+| `COMMUNITY_DONORS` | public thanks wall (name / tag / date; no txn IDs) |
 | Voice | “Community Sync Fund” / “Chip in” / shared benefit |
 
 Used by `DonationCard`, `SupportPage`, Layout CTA, stale banner, Config Audit donate banner.

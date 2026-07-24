@@ -2,6 +2,12 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.9] - 2026-07-24
+
+### 💸 Community fund
+- **First donor** — Decklin Watson (Erf · ARCL); pool **$1.85 / $25**; public thanks on Support + DonationCard (`COMMUNITY_DONORS`).
+- Progress bar atnaujintas; PayPal txn ID'ai viešai nerodomi.
+
 ## [1.22.8] - 2026-07-22
 
 ### ⚠️ Data freshness
