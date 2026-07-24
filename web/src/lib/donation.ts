@@ -27,14 +27,13 @@ export const DONATION_RAISED_LABEL = `$${DONATION_RAISED_USD.toFixed(2)}`;
 /** Public wall of thanks — newest last; never store PayPal txn IDs here. */
 export const COMMUNITY_DONORS: readonly CommunityDonor[] = [
   {
-    name: 'Decklin Watson',
-    tag: 'Erf · ARCL',
+    name: 'Erf',
+    tag: 'ARCL',
     date: '2026-07-23',
     first: true,
     note: 'First community donor — thank you for opening the pool.',
   },
 ];
-
 /** Short shared pitch — collective “we”, not a personal ask. */
 export const DONATION_GOAL_BLURB =
   'A shared $25 pool covers ~1 year of BattleMetrics Basic so everyone gets live rankings back';
