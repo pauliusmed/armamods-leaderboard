@@ -2,6 +2,11 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.14] - 2026-07-25
+
+### 📚 Dokumentacija
+- **docs/MOBILE_UX.md** — re-audit (MOSTLY); Mod Changes 7D/30D OK; GalleryLightbox / StoragePlanner secondary / stale CTA noted as low; hosting tables still MEDIUM.
+
 ## [1.22.13] - 2026-07-25
 
 ### 📚 Dokumentacija / UX
