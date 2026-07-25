@@ -174,7 +174,7 @@ function ServerSetFeedbackPanel({
                     type="button"
                     disabled={planning}
                     onClick={() => onApplySet(set.serverIds)}
-                    className="shrink-0 px-3 py-2 text-[8px] font-black uppercase tracking-widest border border-violet-500/50 text-violet-200 hover:bg-violet-500/20 disabled:opacity-50"
+                    className="shrink-0 min-h-11 px-3 py-2 text-[8px] font-black uppercase tracking-widest border border-violet-500/50 text-violet-200 hover:bg-violet-500/20 disabled:opacity-50"
                   >
                     Use this set
                   </button>
@@ -1096,7 +1096,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                         <div className="flex flex-wrap gap-2 shrink-0">
                           <Link
                             to={`${gp}/server/${alt.alternativeServerId}`}
-                            className="px-3 py-2 text-[8px] font-black uppercase tracking-widest border border-white/20 text-gray-300 hover:border-white/50 hover:text-white"
+                            className="inline-flex items-center min-h-11 px-3 py-2 text-[8px] font-black uppercase tracking-widest border border-white/20 text-gray-300 hover:border-white/50 hover:text-white"
                           >
                             Inspect
                           </Link>
@@ -1104,7 +1104,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                             type="button"
                             disabled={planning}
                             onClick={() => void swapWantedServer(alt.referenceServerId, alt.alternativeServerId)}
-                            className="px-3 py-2 text-[8px] font-black uppercase tracking-widest bg-sky-500/20 border border-sky-500/50 text-sky-200 hover:bg-sky-500/30 disabled:opacity-50"
+                            className="min-h-11 px-3 py-2 text-[8px] font-black uppercase tracking-widest bg-sky-500/20 border border-sky-500/50 text-sky-200 hover:bg-sky-500/30 disabled:opacity-50"
                           >
                             Use instead
                           </button>

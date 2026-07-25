@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.15] - 2026-07-25
+
+### 📱 Mobile UX
+- **Hosting** — stacked provider cards below `md`; comparison table only from `md:` (`ReforgerHosting` / `Arma3Hosting`).
+- **Touch targets** — GalleryLightbox prev/next/close, StoragePlanner secondary actions, DataStaleBanner Community Fund → `min-h-11`.
+- **Wrap** — Mod Changes mod links `break-words`; ScenarioList top server wraps on narrow screens.
+
+### 📚 Dokumentacija
+- **docs/MOBILE_UX.md** — audit OK; fixed items closed; last reviewed v1.22.15.
+
 ## [1.22.14] - 2026-07-25
 
 ### 📚 Dokumentacija

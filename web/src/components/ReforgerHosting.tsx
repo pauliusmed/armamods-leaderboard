@@ -168,6 +168,11 @@ export function ReforgerHosting() {
     return { total: total.toFixed(2), details: details.join(" | "), warning: null };
   };
 
+  // Pre-sort once so mobile cards and md+ table stay in sync
+  const rankedProviders = providers
+    .map((p) => ({ ...p, result: calculateTotalPrice(p) }))
+    .sort((a, b) => parseFloat(a.result.total) - parseFloat(b.result.total));
+
   return (
     <div className="space-y-16 animate-in fade-in duration-700 pb-20">
       <SEO 
@@ -257,7 +262,88 @@ export function ReforgerHosting() {
         Transparency: all provider links below are affiliate — we may earn a commission at no extra cost to you. Sorted by estimated total cost for your setup.
       </p>
 
-      <section className="max-w-7xl mx-auto px-4 overflow-x-auto">
+      {/* Mobile: stacked provider cards — avoids forced 900px horizontal scroll */}
+      <section className="md:hidden max-w-7xl mx-auto px-4 space-y-3">
+        {rankedProviders.map((p, i) => {
+          const { total, details, warning } = p.result;
+          return (
+            <div
+              key={i}
+              className={`border border-white/5 bg-[#172635] p-4 space-y-3 ${p.isWinner ? 'bg-tactical-orange/[0.04] border-tactical-orange/20' : ''}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  {p.isWinner ? (
+                    <div className="shrink-0 bg-[#172635] border border-white/10 p-1.5">
+                      <Zap className="w-4 h-4 text-black" />
+                    </div>
+                  ) : (
+                    <div className="shrink-0 bg-white/5 p-1.5 rounded-sm">
+                      <Globe className="w-4 h-4 text-gray-600" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-white font-black uppercase tracking-widest text-sm break-words">{p.name}</div>
+                    {p.subName && <div className="text-[8px] text-tactical-orange/60 font-bold uppercase tracking-[0.2em]">{p.subName}</div>}
+                  </div>
+                </div>
+                <div className={`shrink-0 text-right text-xl font-black italic ${p.isWinner ? 'text-tactical-orange' : 'text-white'}`}>
+                  ${total}
+                  <span className="text-[10px] not-italic text-gray-500">/mo</span>
+                </div>
+              </div>
+              {details && (
+                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest break-words">{details}</p>
+              )}
+              {warning && (
+                <p className="flex items-center gap-1 text-[8px] font-bold text-signal-critical uppercase tracking-widest animate-pulse">
+                  <AlertCircle className="w-2.5 h-2.5 shrink-0" />
+                  {warning}
+                </p>
+              )}
+              <dl className="grid grid-cols-1 gap-2 text-[10px]">
+                <div>
+                  <dt className="text-gray-500 font-black uppercase tracking-widest">Pricing</dt>
+                  <dd className="text-white font-bold uppercase tracking-widest text-[9px]">
+                    {p.name === "EmpowerServers" ? (
+                      <span className="text-emerald-500">Resource Based (No Slot Tax)</span>
+                    ) : (
+                      'Slot-Locked Pricing'
+                    )}
+                    <span className="block text-gray-600 italic mt-0.5">Target: {playerCount} Slots</span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 font-black uppercase tracking-widest">Hardware</dt>
+                  <dd className="text-white font-bold uppercase tracking-widest text-xs">{p.cpu}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 font-black uppercase tracking-widest">DDoS</dt>
+                  <dd className="flex items-center gap-2 text-white font-bold uppercase tracking-widest">
+                    <Shield className={`w-3 h-3 shrink-0 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-500'}`} />
+                    {p.ddos}
+                  </dd>
+                </div>
+              </dl>
+              <a
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center justify-center gap-2 w-full min-h-11 px-5 font-black uppercase tracking-widest text-[10px] transition-all ${
+                  p.isWinner
+                    ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(249,115,22,0.2)]'
+                    : 'border border-white/20 text-white hover:border-white'
+                }`}
+              >
+                {p.isWinner ? 'Deploy Now' : 'Visit Host'}
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="hidden md:block max-w-7xl mx-auto px-4 overflow-x-auto">
         <table className="w-full border-collapse bg-[#172635] border border-white/5 min-w-[900px]">
           <thead>
             <tr className="border-b border-white/10 bg-white/[0.02]">
@@ -270,10 +356,7 @@ export function ReforgerHosting() {
             </tr>
           </thead>
           <tbody>
-            {providers
-              .map(p => ({ ...p, result: calculateTotalPrice(p) }))
-              .sort((a, b) => parseFloat(a.result.total) - parseFloat(b.result.total))
-              .map((p, i) => {
+            {rankedProviders.map((p, i) => {
                 const { total, details, warning } = p.result;
                 return (
                 <tr key={i} className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${p.isWinner ? 'bg-tactical-orange/[0.04]' : ''}`}>
@@ -344,7 +427,7 @@ export function ReforgerHosting() {
                       href={p.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`inline-flex items-center gap-2 px-5 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all ${
+                      className={`inline-flex items-center gap-2 min-h-11 px-5 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all ${
                         p.isWinner 
                         ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
                         : 'border border-white/20 text-white hover:border-white'

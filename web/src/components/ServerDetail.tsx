@@ -820,7 +820,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                             <li key={`a-${day.date}-${m.id}`}>
                               <Link
                                 to={`${gp}/mod/${encodeURIComponent(m.id)}`}
-                                className="text-sm text-white hover:text-tactical-orange transition-colors"
+                                className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
                               >
                                 {m.name}
                               </Link>
@@ -841,7 +841,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                             <li key={`r-${day.date}-${m.id}`}>
                               <Link
                                 to={`${gp}/mod/${encodeURIComponent(m.id)}`}
-                                className="text-sm text-white hover:text-tactical-orange transition-colors"
+                                className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
                               >
                                 {m.name}
                               </Link>

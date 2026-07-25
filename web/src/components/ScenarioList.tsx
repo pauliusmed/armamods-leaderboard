@@ -67,7 +67,7 @@ function ScenarioNameCell({
           <Link
             to={`${gamePrefix}/server/${scenario.topServer.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="font-bold text-gray-400 hover:text-tactical-orange truncate max-w-[10rem]"
+            className="font-bold text-gray-400 hover:text-tactical-orange break-words max-w-full"
           >
             {scenario.topServer.name}
           </Link>

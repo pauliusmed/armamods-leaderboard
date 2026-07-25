@@ -31,7 +31,7 @@ export function DataStaleBanner({ game }: DataStaleBannerProps) {
         </p>
         <Link
           to="/support"
-          className="shrink-0 text-[10px] font-black uppercase tracking-widest text-amber-300 hover:text-black hover:bg-amber-400 px-3 py-2 sm:py-1.5 border border-amber-400/40 transition-colors text-center"
+          className="shrink-0 inline-flex items-center justify-center min-h-11 text-[10px] font-black uppercase tracking-widest text-amber-300 hover:text-black hover:bg-amber-400 px-3 py-2 border border-amber-400/40 transition-colors text-center"
         >
           Community Fund
         </Link>

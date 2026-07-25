@@ -83,7 +83,7 @@ export function GalleryLightbox({
             <button
               type="button"
               onClick={onClose}
-              className="w-9 h-9 flex items-center justify-center border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-lg leading-none"
+              className="min-h-11 min-w-11 flex items-center justify-center border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-lg leading-none"
               aria-label="Close preview"
             >
               ×
@@ -96,7 +96,7 @@ export function GalleryLightbox({
             <button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-0 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
+              className="absolute left-0 sm:-left-4 top-1/2 -translate-y-1/2 z-20 min-h-11 min-w-11 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
               aria-label="Previous screenshot"
             >
               ‹
@@ -114,7 +114,7 @@ export function GalleryLightbox({
             <button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
+              className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 z-20 min-h-11 min-w-11 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
               aria-label="Next screenshot"
             >
               ›
