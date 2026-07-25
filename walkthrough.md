@@ -247,6 +247,10 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 | GET | `/servers/:id/storage` | modpack size breakdown (per-mod bytes) |
 | GET | `/servers/:id/mod-changes` | daily Added/Removed modlist diffs (`days=7|30`) |
 | GET | `/servers/:id/history` | server rank/players + uptime (`uptimeRatio`, `mostlyOffline`) |
+| GET | `/sitemap.xml` | sitemap index (Pages Function) |
+| GET | `/sitemap/pages.xml` | hub / marketing URLs |
+| GET | `/sitemap/mods.xml` | all `/mod/:id` (+ `/arma3/mod/:id`) from KV |
+| GET | `/sitemap/servers.xml` | all `/server/:id` (+ `/arma3/server/:id`) from KV |
 | GET | `/servers/ranking` | top-200 SQE leaderboard |
 | GET | `/scenarios` | scenario leaderboard (KV; live fallback if key missing) |
 | GET | `/scenarios/servers?name=` | servers running a given scenario |

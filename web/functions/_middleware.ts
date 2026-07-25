@@ -14,7 +14,12 @@ export async function onRequest(context: EventContext<Env, any, any>) {
   const { request, next, env } = context;
   const url = new URL(request.url);
 
-  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/assets')) {
+  if (
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/assets') ||
+    url.pathname === '/sitemap.xml' ||
+    url.pathname.startsWith('/sitemap/')
+  ) {
     return next();
   }
 

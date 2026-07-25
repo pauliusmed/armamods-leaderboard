@@ -36,6 +36,7 @@ Supplements the official Arma Workshop with engagement telemetry from active mul
 ### 4. SEO & Open Graph
 * `react-helmet-async` on React 19 for context-aware title/description.
 * Rich embeds for Discord, Twitter/X, and search.
+* Dynamic `/sitemap.xml` index + `/sitemap/{pages,mods,servers}.xml` from KV (all mod/server detail URLs).
 
 ### 5. Workshop metadata supplement (not BattleMetrics)
 * **Problem**: BattleMetrics has no thumbnails/deps; workshop has no live player telemetry.

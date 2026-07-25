@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.16] - 2026-07-25
+
+### ✨ Features
+- **Dynamic sitemap** — `/sitemap.xml` index + `/sitemap/{pages,mods,servers}.xml` from KV (all mod/server detail URLs for Reforger + Arma 3); edge cache 1h.
+
+### 📚 Dokumentacija
+- walkthrough / docs index — sitemap endpoints.
+
 ## [1.22.15] - 2026-07-25
 
 ### 📱 Mobile UX
