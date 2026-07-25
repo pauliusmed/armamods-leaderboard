@@ -36,11 +36,13 @@ cache:ranking:servers      — TOP 200 serverių leaderboard
 cache:ranking:scenarios:{game} — Scenario leaderboard (rank, serverCount, totalPlayers, topServer)
 cache:server_sqe:{game}    — Kompaktinis SQE indeksas API enrichment
 cache:server_bm_last_seen:{game} — Paskutinis collector scan, kai serveris buvo online
+cache:server_modset:{game} — Dienos modlist fingerprint (serverId → sorted mod ids)
 cache:og-image:*           — Workshop thumbnail CDN URL (on-demand, 7d)
 cache:mod-deps:*           — Workshop dependencies JSON (on-demand, 7d)
 
 history:hourly:game[:0..N] — Modų + serverių istorija (12 taškų, valandinė)
 history:daily:game[:0..N]  — Modų + serverių istorija (31 taškas, dienos peak)
+history:modpack_diff:game[:0..N] — Sparse daily Added/Removed (30d; žr. MODPACK_DIFF.md)
 history:weekly:game[:0..N] — Savaitinė agregacija (52 taškai, 1Y grafikas)
 history:monthly:game[:0..N]— Mėnesinė agregacija (12 taškų, fallback)
 history:yearly:game[:0..N] — Metinė agregacija (5 taškai)

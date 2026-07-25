@@ -1,6 +1,6 @@
 # Documentation index
 
-Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.11**).
+Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.12**).
 
 ## Start here
 
@@ -18,6 +18,7 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.11**).
 | [ALGORITHM.md](./ALGORITHM.md) | Ranking, SQE, trending, co-deploy math |
 | [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) | KV history, sharding, key layout |
 | [SERVER_UPTIME.md](./SERVER_UPTIME.md) | Offline bands, `on`/`n` aggregation |
+| [MODPACK_DIFF.md](./MODPACK_DIFF.md) | Daily server modlist added/removed |
 | [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) | Console modpack sizes, planner API |
 | [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) | Thumbnails, deps scrape, list metadata |
 | [UI_FILTERS.md](./UI_FILTERS.md) | ListFilterBar, favorites, table layout |

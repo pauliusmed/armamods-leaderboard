@@ -114,4 +114,4 @@ Size tiers (server detail, Reforger):
 3. Use `sticky={false}` when the bar sits mid-page (detail sections).
 4. Keep server-side vs client-side filtering unchanged — this doc covers UI only.
 
-See also: [STORAGE_PLANNER.md](STORAGE_PLANNER.md) (server detail mod sizes + planner link), [SERVER_UPTIME.md](SERVER_UPTIME.md) (offline chart bands).
+See also: [STORAGE_PLANNER.md](STORAGE_PLANNER.md) (server detail mod sizes + planner link), [SERVER_UPTIME.md](SERVER_UPTIME.md) (offline chart bands), [MODPACK_DIFF.md](MODPACK_DIFF.md) (daily Added/Removed).

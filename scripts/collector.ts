@@ -25,6 +25,14 @@ import {
   fetchReforgerWorkshopHtml,
   cacheReforgerFieldsFromWorkshopHtml,
 } from '../web/functions/lib/workshop-fetch.ts';
+import {
+  appendModpackDiffDay,
+  buildModpackDiffDay,
+  modpackDiffKeys,
+  normalizeModIds,
+  type ModpackDiffDay,
+  type ModsetFingerprint,
+} from '../web/functions/lib/modpack-diff.js';
 
 type BattleMetricsServer = Awaited<ReturnType<BattleMetricsService['fetchAllServers']>>[number];
 
@@ -829,8 +837,76 @@ interface ServerMod {
   // SQE scoring is now done BEFORE the initial server write (see above)
   // This eliminates the need for a second KV write pass, saving ~17 writes per run.
 
+  // Once per UTC day: modlist added/removed diffs (sparse ring, 30d retention).
+  try {
+    await updateModpackDiffDaily(kv, game, serverList, modList, today, buildChunks);
+  } catch (diffErr) {
+    console.error('⚠️ Modpack diff update failed:', diffErr);
+  }
+
   console.log('✅ COLLECTOR: Complete!');
   return { servers: totalServers, mods: totalMods };
+}
+
+/**
+ * Daily fingerprint + sparse diffs. First run of the day after bootstrap writes
+ * only non-empty { a, r } per server. Suspicious BM drops are skipped.
+ */
+async function updateModpackDiffDaily(
+  kv: CloudflareKVClient,
+  game: GameType,
+  serverList: Array<{ id: string; mods?: Array<{ id: string; name: string }> }>,
+  modList: Array<{ id: string; name: string }>,
+  today: string,
+  chunkFn: (items: any[], maxBytes: number) => any[][]
+): Promise<void> {
+  const keys = modpackDiffKeys(game);
+  const fp = (await kv.get(keys.fingerprint, 'json')) as ModsetFingerprint | null;
+
+  const currentServers: Record<string, string[]> = {};
+  const nameById = new Map<string, string>();
+  for (const m of modList) {
+    if (m?.id) nameById.set(m.id, m.name || m.id);
+  }
+  for (const s of serverList) {
+    for (const m of s.mods || []) {
+      if (m?.id) nameById.set(m.id, m.name || m.id);
+    }
+    currentServers[s.id] = normalizeModIds(s.mods || []);
+  }
+
+  if (fp?.date === today) {
+    console.log('  - modpack diff: already recorded for today, skip');
+    return;
+  }
+
+  if (!fp?.date || !fp.servers) {
+    await kv.put(keys.fingerprint, JSON.stringify({ date: today, servers: currentServers } satisfies ModsetFingerprint));
+    console.log(`  - modpack diff: fingerprint bootstrapped (${Object.keys(currentServers).length} servers)`);
+    return;
+  }
+
+  const built = buildModpackDiffDay(today, fp, currentServers, nameById);
+  if (!built) {
+    console.log('  - modpack diff: nothing to write');
+    return;
+  }
+
+  if (built.changedServers > 0) {
+    const history = (await getChunkedData(kv, keys.history)) as ModpackDiffDay[];
+    const updated = appendModpackDiffDay(history, built.day);
+    const chunks = chunkFn(updated, CHUNK_SIZE_HISTORY);
+    for (let i = 0; i < chunks.length; i++) {
+      await kv.put(`${keys.history}:${i}`, JSON.stringify(chunks[i]));
+    }
+    await kv.put(`${keys.history}:meta`, JSON.stringify({ total: updated.length, chunks: chunks.length }));
+  }
+
+  await kv.put(keys.fingerprint, JSON.stringify({ date: today, servers: currentServers } satisfies ModsetFingerprint));
+
+  console.log(
+    `  - modpack diff: ${built.changedServers} servers changed, ${built.skippedSuspicious} suspicious skips`
+  );
 }
 
 // Helper function to retrieve a history point (used for trending calculations)

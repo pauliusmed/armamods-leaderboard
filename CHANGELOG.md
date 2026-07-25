@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.12] - 2026-07-25
+
+### ✨ Features
+- **Server Mod Changes** — daily Added/Removed modlist diffs on server detail (7D / 30D).
+- Collector once-per-UTC-day fingerprint + sparse KV ring (`history:modpack_diff`); skips suspicious BM incomplete listings.
+
+### 📚 Dokumentacija
+- **docs/MODPACK_DIFF.md** — KV keys, API, incomplete-listing guard.
+
 ## [1.22.11] - 2026-07-25
 
 ### 💸 Community fund

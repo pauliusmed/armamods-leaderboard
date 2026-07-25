@@ -37,6 +37,12 @@ import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } fro
 import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
 import { parseServerHistoryFields } from '../lib/server-uptime-history';
 import { extractModFromChunks } from '../lib/mod-lookup';
+import {
+  extractServerModChanges,
+  modpackDiffKeys,
+  MODPACK_DIFF_RETENTION_DAYS,
+  type ModpackDiffDay,
+} from '../lib/modpack-diff';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -1198,6 +1204,57 @@ app.get('/servers/:serverId/storage', async (c) => {
     },
   });
   response.headers.set('Cache-Control', 'public, max-age=300');
+  return response;
+});
+
+// Daily modlist added/removed — must be before /servers/:serverId
+app.get('/servers/:serverId/mod-changes', async (c) => {
+  const serverId = c.req.param('serverId');
+  const game = getGameFromQuery(c);
+  const daysRaw = parseInt(c.req.query('days') || '7', 10);
+  const days = daysRaw === 30 ? 30 : 7;
+
+  const cache = await caches.open('armamods:server_mod_changes');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  const keys = modpackDiffKeys(game);
+  const meta = (await c.env.TRENDING_KV.get(`${keys.history}:meta`, 'json')) as {
+    chunks?: number;
+  } | null;
+
+  if (!meta?.chunks) {
+    const empty = c.json({
+      data: [],
+      meta: { days, retention: MODPACK_DIFF_RETENTION_DAYS, tracking: false },
+    });
+    empty.headers.set('Cache-Control', 'public, max-age=120');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, empty.clone()));
+    return empty;
+  }
+
+  const history: ModpackDiffDay[] = [];
+  for (let i = 0; i < meta.chunks; i++) {
+    const chunk = (await c.env.TRENDING_KV.get(`${keys.history}:${i}`, 'json')) as
+      | ModpackDiffDay[]
+      | null;
+    if (Array.isArray(chunk)) {
+      for (const day of chunk) history.push(day);
+    }
+  }
+
+  const data = extractServerModChanges(history, serverId, days);
+  const response = c.json({
+    data,
+    meta: {
+      days,
+      retention: MODPACK_DIFF_RETENTION_DAYS,
+      tracking: true,
+      daysAvailable: history.length,
+    },
+  });
+  response.headers.set('Cache-Control', 'public, max-age=300');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
 

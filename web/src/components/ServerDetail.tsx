@@ -87,6 +87,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDays, setSelectedDays] = useState(30);
+  const [modChangeDays, setModChangeDays] = useState<7 | 30>(7);
+  const [modChanges, setModChanges] = useState<
+    Array<{
+      date: string;
+      added: Array<{ id: string; name: string }>;
+      removed: Array<{ id: string; name: string }>;
+    }>
+  >([]);
+  const [modChangesTracking, setModChangesTracking] = useState(false);
 
   const [modSearch, setModSearch] = useState('');
   const [modSort, setModSort] = useState<EmbeddedModSort>('rank');
@@ -173,6 +182,26 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     loadServer(selectedDays, controller.signal);
     return () => controller.abort();
   }, [serverId, selectedDays, loadServer]);
+
+  useEffect(() => {
+    if (!serverId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await serversApi.getModChanges(serverId, modChangeDays, game);
+        if (cancelled) return;
+        setModChanges(res.data || []);
+        setModChangesTracking(Boolean(res.meta?.tracking));
+      } catch {
+        if (cancelled) return;
+        setModChanges([]);
+        setModChangesTracking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [serverId, game, modChangeDays]);
 
   const offlineBands = useMemo(() => buildOfflineBands(history), [history]);
 
@@ -729,6 +758,105 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
         </section>
       )}
+
+      <section className="space-y-6 sm:space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+              Mod Changes
+            </h2>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              Daily added / removed vs previous snapshot
+            </p>
+          </div>
+          <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
+            {([7, 30] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setModChangeDays(value)}
+                className={`min-h-11 px-4 py-2 sm:py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  modChangeDays === value
+                    ? 'bg-tactical-orange text-black'
+                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {value}D
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {!modChangesTracking ? (
+          <Card>
+            <CardContent className="p-6 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              Tracking starts after the next daily collector snapshot.
+            </CardContent>
+          </Card>
+        ) : modChanges.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              No modlist changes in the last {modChangeDays} days.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {modChanges.map((day) => (
+              <Card key={day.date}>
+                <CardContent className="p-5 sm:p-6 space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-mono">
+                    {day.date}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                        Added ({day.added.length})
+                      </p>
+                      {day.added.length === 0 ? (
+                        <p className="text-xs text-gray-600">—</p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          {day.added.map((m) => (
+                            <li key={`a-${day.date}-${m.id}`}>
+                              <Link
+                                to={`${gp}/mod/${encodeURIComponent(m.id)}`}
+                                className="text-sm text-white hover:text-tactical-orange transition-colors"
+                              >
+                                {m.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-rose-400">
+                        Removed ({day.removed.length})
+                      </p>
+                      {day.removed.length === 0 ? (
+                        <p className="text-xs text-gray-600">—</p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          {day.removed.map((m) => (
+                            <li key={`r-${day.date}-${m.id}`}>
+                              <Link
+                                to={`${gp}/mod/${encodeURIComponent(m.id)}`}
+                                className="text-sm text-white hover:text-tactical-orange transition-colors"
+                              >
+                                {m.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-8">
         <div className="border-b border-white/5 pb-6 space-y-6">

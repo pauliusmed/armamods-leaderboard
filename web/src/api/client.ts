@@ -254,6 +254,23 @@ export const serversApi = {
     }, 300000);
   },
 
+  getModChanges: async (serverId: string, days: 7 | 30 = 7, game: GameType = 'reforger') => {
+    const key = `server-mod-changes:${game}:${serverId}:${days}`;
+    return getCached(key, async () => {
+      const response = await api.get<{
+        data: Array<{
+          date: string;
+          added: Array<{ id: string; name: string }>;
+          removed: Array<{ id: string; name: string }>;
+        }>;
+        meta: { days: number; retention: number; tracking: boolean; daysAvailable?: number };
+      }>(`servers/${serverId}/mod-changes`, {
+        params: { days, game },
+      });
+      return response.data;
+    }, 300000);
+  },
+
   getReverseDeps: async (serverId: string, targetModId: string, game: GameType = 'reforger') => {
     const key = `reverse-deps:${game}:${serverId}:${targetModId.toUpperCase()}`;
     return getCached(key, async () => {
