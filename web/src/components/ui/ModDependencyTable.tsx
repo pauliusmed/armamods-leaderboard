@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { ModDependency } from '../../types';
 import type { GameType } from '../../api/client';
 import { ModThumbnail } from './ModThumbnail';
+import { OpenModStatsButton } from './OpenModStatsButton';
 import { workshopPageUrl } from '../../lib/workshop';
 
 interface DependencyRowProps {
@@ -52,14 +53,17 @@ export function DependencyRow({ dep, game = 'reforger' }: DependencyRowProps) {
       </td>
 
       <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
-        <a
-          href={workshopUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
-        >
-          {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
-        </a>
+        <div className="inline-flex items-center justify-end gap-1.5">
+          <OpenModStatsButton modId={dep.id} modName={dep.name} game={game} />
+          <a
+            href={workshopUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
+          >
+            {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
+          </a>
+        </div>
       </td>
     </tr>
   );
@@ -82,7 +86,7 @@ export function ModDependencyTable({ children }: { children: ReactNode }) {
                 Live activity
               </th>
               <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Workshop
+                Actions
               </th>
             </tr>
           </thead>

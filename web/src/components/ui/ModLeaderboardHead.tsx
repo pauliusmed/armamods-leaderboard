@@ -73,7 +73,7 @@ export function ModLeaderboardHead({ sortBy, sortDir, onSort }: ModLeaderboardHe
           mirrorBar
           className="hidden md:table-cell w-[7.5rem] pl-4 pr-4"
         />
-        <th className="w-[6.5rem] sm:w-[9rem] md:w-[11rem] pl-1 sm:pl-2 pr-2 sm:pr-4 py-3 text-right text-[11px] font-black uppercase tracking-widest text-gray-600">
+        <th className="w-[6.5rem] sm:w-[9rem] md:w-[13.5rem] pl-1 sm:pl-2 pr-2 sm:pr-4 py-3 text-right text-[11px] font-black uppercase tracking-widest text-gray-600">
           <span className="hidden sm:inline">Actions</span>
           <span className="sm:hidden" aria-hidden>· · ·</span>
         </th>

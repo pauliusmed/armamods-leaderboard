@@ -5,6 +5,7 @@ import { ModThumbnail } from './ui/ModThumbnail';
 import { ModAuthorCell } from './ui/ModAuthorCell';
 import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
 import { CopyModConfigButton } from './ui/CopyModConfigButton';
+import { OpenModStatsButton } from './ui/OpenModStatsButton';
 import { FavoriteModButton } from './ui/FavoriteModButton';
 import { workshopPageUrl } from '../lib/workshop';
 import { TOUCH_TARGET_BUTTON, TOUCH_TARGET_GAP } from '../lib/touchTargets';
@@ -131,6 +132,7 @@ export function TrendRow({
           {game === 'reforger' && (
             <CopyModConfigButton modId={mod.id} modName={mod.name} />
           )}
+          <OpenModStatsButton modId={mod.id} modName={mod.name} game={game} />
           {workshopUnavailable ? (
             <span
               className={`${TOUCH_TARGET_BUTTON} px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed`}

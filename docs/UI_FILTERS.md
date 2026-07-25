@@ -46,7 +46,8 @@ Shared **Actions** column on mod list tables (leaderboard + trending):
 | **★** | `FavoriteModButton` | Toggle mod bookmark (`localStorage`, max 20/game); sync via `useModFavorites` |
 | **★** (servers) | `FavoriteServerButton` | Toggle server bookmark (`useServerFavorites`, max 20/game) |
 | **Copy** | `CopyModConfigButton` | Copies `game.mods[]` snippet (`modId` + `name`) to clipboard |
-| **Workshop ↗** | link | Opens Reforger Workshop page (`workshopPageUrl`) |
+| **Stats** | `OpenModStatsButton` | Opens `/mod/:id` in a new tab (live ranks, trends, co-deploy) |
+| **Workshop ↗** | link | Opens Reforger / Steam Workshop (`workshopPageUrl`) |
 
 Mod detail **Co-deploy** table (`CoDeployTable`): **Shared servers** (count on same network), % of deploys, network rank — not global Personnel/Deploy from mod leaderboard rows.
 
@@ -72,7 +73,7 @@ User-facing labels for data sources: `web/src/lib/siteCopy.ts` (avoid vendor nam
 | Personnel | `5.5rem`, right-aligned |
 | Deploy / Size | fixed rem widths, right-aligned |
 | Share | `7.5rem`; header uses `mirrorBar` spacer to align with % + progress bar |
-| Actions | `11rem` — ★, Copy, Workshop |
+| Actions | `13.5rem` — ★, Copy, Stats, Workshop |
 
 Pagination sits **inside** the table card (`Pagination` + `sliceLabel="Module Slice"`). Donation card is **below** the card, not between rows and page buttons — goal **$25** via `web/src/lib/donation.ts` (v1.22.8).
 

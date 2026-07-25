@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.19] - 2026-07-25
+
+### ✨ Features
+- **Stats** row action — opens our mod detail in a new tab (leaderboard, trending, dependency table), next to Copy / Workshop.
+
+### 📚 Dokumentacija
+- **docs/UI_FILTERS.md** — Stats button in row actions.
+
 ## [1.22.18] - 2026-07-25
 
 ### ✨ Features
