@@ -1,116 +1,46 @@
-# 🗺️ Project Roadmap: Arma Mods Leaderboard
+# Project roadmap
 
-This document outlines the strategic vision, current implementation status, and future technical milestones for the platform.
+**Status (2026-07):** Core platform is live at [reforgermods.com](https://reforgermods.com/). Shipped work lives in [CHANGELOG.md](CHANGELOG.md) — this file is only the short Current / Next view.
 
----
-
-## 🎯 Strategic Vision
-
-**The Goal**: To supplement the official Reforger / Steam Workshop with **live engagement telemetry** (players, servers, trends) — not to replace workshop browsing. Workshop answers *“what does this mod look like?”*; this platform answers *“is anyone actually playing it right now?”*
+**Goal:** Supplement Reforger / Steam Workshop with **live engagement telemetry** (players, servers, trends). Workshop answers *what does this look like?*; this site answers *is anyone playing it right now?*
 
 ---
 
-## 🏗️ System Architecture (Current)
+## Current
 
-- [x] **Data Ingestion**: Multi-game (Reforger/Arma 3) collector with BattleMetrics API integration.
-- [x] **Storage Layer**: Sharded Cloudflare KV (JSON-based) to bypass 25MB limits.
-- [x] **API Layer**: High-performance Hono-based Edge API with global caching.
-- [x] **Frontend**: Reactive React 19 dashboard with client-side caching.
-- [x] **Scenario leaderboard**: Collector → KV `cache:ranking:scenarios:{game}`; `/scenarios` UI + Tools nav dropdown.
+- Multi-game collector (Reforger / Arma 3) via BattleMetrics → GitHub Actions cron ~2h → Cloudflare KV shards
+- Hono edge API on Cloudflare Pages Functions (caching, surgical JSON extract, workshop metadata on demand)
+- React 19 UI: mod/server leaderboards, trending, scenarios, storage planner, favorites, uptime history, modpack diffs
+- CI + unit tests for ranking, lookup, storage planner, uptime, share meta
 
----
-
-## 🚀 Phase 1: Performance & Stability [COMPLETED]
-
-- [x] **Edge Caching**: Implemented Cloudflare Cache API for <10ms TTFB.
-- [x] **Ultra-Optimization**: String-based JSON scanning to reduce Worker CPU usage by 80%.
-- [x] **Sharding Engine**: Automated sharding for large history datasets.
-- [x] **Dynamic Trending**: Implemented logarithmic trend scoring.
-- [x] **Ultra-Optimization Overhaul**: Implemented lazy chunk loading and text-based KV scanning to save Workers calls and prevent OOM errors.
-- [x] **Data Integrity Overhaul**: Implemented history sanitization, de-duplication, and backfilling bug fixes.
-- [x] **Automated Quality Controls**: Integrated Node-native Unit Tests suite and GitHub Actions CI pipeline.
-- [x] **Observability & Diagnostics Page**: Created the public System Status page displaying KV sharding health, edge latency, and ingestion telemetry.
+See [walkthrough.md](walkthrough.md) and [docs/README.md](docs/README.md).
 
 ---
 
-## 🚧 Phase 2: Metadata Enrichment [IN PROGRESS]
+## Next (optional)
 
-- [x] **Workshop thumbnails (UI)**:
-  - [x] `ModThumbnail` → `/api/mods/:id/thumbnail` (JSON CDN URL) → direct Bohemia CDN load.
-  - [x] KV stores **URL only** (7d), not image bytes; letter fallback when missing.
-  - [x] Unified scrape with dependencies (`workshop-fetch.ts`).
-  - [x] OG/social still uses `/api/og/preview/mod/:id` (302).
-  - [ ] R2 self-hosting (only if CDN hotlink proves insufficient).
-- [x] **Workshop dependencies (Reforger, on-demand)**:
-  - [x] `/api/mods/:id/dependencies` — direct deps from workshop `__NEXT_DATA__`, KV cache 7d.
-  - [x] Mod detail UI: „Required Dependencies“ vs „Frequently Deployed Together“ (BM co-deploy).
-  - [ ] Recursive / transitive dependency tree (depth &gt; 1).
-- [x] **Scenario leaderboard**:
-  - [x] `scenarioName` per server (BM: Reforger mission / Arma 3 map·mission).
-  - [x] Collector aggregation + `GET /api/scenarios` + drill-down `/api/scenarios/servers`.
-  - [x] UI `/scenarios`, server detail deep-link `?s=`, nav **Tools** dropdown.
-  - [ ] Scenario history / trending (future — would extend shared `history:*` shards).
-### 💾 Storage Planner (console mod space) — [COMPLETED]
+### Workshop / metadata
+- [ ] R2 self-host thumbnails only if Bohemia CDN hotlink fails
+- [ ] Recursive / transitive dependency tree (depth > 1)
+- [ ] Batch author / size / last-update warm for Arma 3 (Steam)
+- [ ] Mod categorization (Survival, Roleplay, PvP, MilSim)
 
-**Problem (SEO + product):** PS5/Xbox players can only keep mods for ~2–3 heavy servers. They manually guess what to delete when switching. Shared mods (RHS, WCS) inflate perceived size unless deduplicated.
+### Storage planner
+- [ ] SEO: Search Console `noindex` for `/storage-planner` vs landing
+- [ ] Precomputed server-similarity index (full network)
+- [ ] Warm size coverage beyond top-300
+- [ ] Arma 3 Steam workshop sizes in planner
 
-| Layer | Route | Role |
-|-------|-------|------|
-| **SEO landing** | `/arma-reforger-console-mod-storage` | Indexable content: problem, how-it-works, FAQ + JSON-LD, CTAs → tool |
-| **Tool** | `/storage-planner` | Wizard (localStorage profile, no auth) |
-| **Server hook** | `/server/:id` | Modpack size + deep-link `?main=` |
-| **Server list** | `/servers` | Modpack column, console fit badges, PS5/Xbox filters |
-
-- [x] **Workshop mod sizes**: Reforger scrape → KV `cache:mod-size:{game}:{modId}` (7d), unified `ensureReforgerWorkshopMetadata()`.
-- [x] **API**: `GET /api/mods/:id/size`, `GET /api/servers/:id/storage`, `POST /api/storage/plan`, `POST /api/storage/sizes`.
-- [x] **Storage Planner UI** + server detail modpack breakdown.
-- [x] **SEO landing page** + sitemap/robots.
-- [x] **Server list**: modpack size (mobile + desktop), console fit badges, filters (PS5 25 GB / Xbox S/X / vanilla).
-- [x] **Planner UX**: similar-server suggestions, server-group feedback, deduplicated results, PS5 25 GB preset.
-- [x] **Collector**: modpack totals per server; warm top-300 mod sizes from workshop.
-- [x] **Docs**: [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md).
-
-**Follow-ups (optional):**
-- [ ] SEO: internal links, Search Console `noindex` evaluation for `/storage-planner` vs landing.
-- [ ] Precomputed server-similarity index (full network, not client pool).
-- [ ] Increase size coverage (beyond top-300 warm).
-- [ ] **Arma 3**: Steam workshop sizes in planner.
-
-**Technical detail:** [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md)
+### Product
+- [ ] Scenario history / trending (extend shared `history:*` shards)
+- [ ] Mod comparison (side-by-side)
+- [ ] Discord/webhook alerts when a mod hits Trending
+- [ ] Public read API / SDK for third-party sites
+- [ ] Predictive trending / market-share views (exploratory)
 
 ---
 
-- [ ] **Arma Workshop Scraper (batch metadata)**:
-  - [x] File size (Reforger — workshop scrape + collector warm; see Storage Planner).
-  - [ ] Author, file size batch (collector-side), last update for Arma 3 / batch warm.
-  - [ ] Categorization (Survival, Roleplay, PvP, MilSim).
-- [ ] **Mod Comparison Tool**: Side-by-side performance analytics for multiple mods.
-- [ ] **User Alerts**: Discord/Webhook notifications for mod developers when their mods hit "Trending".
+## Notes
 
-### UX principle (workshop supplement)
-
-| Workshop provides | We provide |
-|-------------------|------------|
-| Screenshots, description, subscribe | Live players & server count |
-| Static popularity (likes/subs) | Rank, trend delta, market share |
-| Download / install | “Is it deployed right now?” confirmation |
-
-Thumbnails are **recognition aids** only — telemetry remains the primary value.
-
-**Technical detail:** [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) — thumbnail pipeline, dependency scrape, cache layers, co-deploy vs dependencies.
-
----
-
-## 🔭 Phase 3: Advanced Analytics [PLANNED]
-
-- [ ] **Predictive Trending**: Using historical patterns to predict the next "big thing" in the modding scene.
-- [ ] **Market Share Analysis**: Visualizing mod ecosystem dominance across different game versions.
-- [ ] **API for Developers**: Publicly available SDK for other sites to pull mod rankings.
-
----
-
-## 📝 Technical Notes
-
-- **Language**: TypeScript (End-to-End).
-- **Environment**: 100% Serverless (Cloudflare Pages + Workers).
-- **Compliance**: Adhering to BattleMetrics API rate limits via custom throttling logic.
+- TypeScript end-to-end; Cloudflare Pages + Workers + KV
+- Collector respects BattleMetrics rate limits; paid PAT required — [docs/DATA_SYNC.md](docs/DATA_SYNC.md)

@@ -2,6 +2,13 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.13] - 2026-07-25
+
+### 📚 Dokumentacija / UX
+- **README** — softer portfolio tone; architecture mermaid: GitHub Actions cron ~2h (not Cloudflare Cron Trigger).
+- **PLAN.md** — Current / Next trim; history → CHANGELOG.
+- **Admin** — removed client-side password theater and hardcoded vanity affiliate/analytics stats; ops links kept.
+
 ## [1.22.12] - 2026-07-25
 
 ### ✨ Features

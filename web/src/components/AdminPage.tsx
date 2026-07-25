@@ -3,89 +3,42 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { SEO } from './ui/SEO';
 
-const ADMIN_PASSWORD = 'neadmin';
-const AUTH_KEY = 'armamods:admin:authed';
+const TAB_LABELS = {
+  dashboards: 'Links',
+  health: 'System Health',
+  analytics: 'Analytics',
+  affiliate: 'Affiliate',
+} as const;
 
-function isAuthed(): boolean {
-  return localStorage.getItem(AUTH_KEY) === 'yes';
-}
+type Tab = keyof typeof TAB_LABELS;
 
-function setAuthed(v: boolean) {
-  if (v) localStorage.setItem(AUTH_KEY, 'yes');
-  else localStorage.removeItem(AUTH_KEY);
-}
-
+/** Ops shortcuts + live health/analytics. No client-side password gate — not a security boundary. */
 export function AdminPage() {
-  const [password, setPassword] = useState('');
-  const [authed, setAuthedState] = useState(isAuthed);
   const [health, setHealth] = useState<any>(null);
   const [clicks, setClicks] = useState<any>(null);
   const [analytics, setAnalytics] = useState<any>(null);
   const [seedValue, setSeedValue] = useState('');
-  const [tab, setTab] = useState<'dashboards' | 'health' | 'affiliate' | 'analytics'>('dashboards');
+  const [tab, setTab] = useState<Tab>('dashboards');
 
   useEffect(() => {
-    if (authed) {
-      api.get('/health').then((r) => setHealth(r.data)).catch(() => {});
-      api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
-      api.get('/admin/analytics').then((r) => setAnalytics(r.data)).catch(() => {});
-    }
-  }, [authed]);
-
-  if (!authed) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-[#101923] px-4">
-        <div className="max-w-sm w-full space-y-6 border border-white/5 bg-[#172635] p-8">
-          <h1 className="text-xl font-black text-white uppercase tracking-tight text-center">
-            Admin
-          </h1>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && password === ADMIN_PASSWORD) {
-                setAuthed(true);
-                setAuthedState(true);
-              }
-            }}
-            placeholder="Password"
-            className="w-full bg-black/40 border border-white/10 px-4 py-3 text-white text-xs font-mono uppercase outline-none focus:border-tactical-orange"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              if (password === ADMIN_PASSWORD) {
-                setAuthed(true);
-                setAuthedState(true);
-              }
-            }}
-            className="w-full py-3 bg-tactical-orange text-black font-black uppercase tracking-widest text-[10px] hover:bg-white transition-colors"
-          >
-            Enter
-          </button>
-        </div>
-      </div>
-    );
-  }
+    api.get('/health').then((r) => setHealth(r.data)).catch(() => {});
+    api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
+    api.get('/admin/analytics').then((r) => setAnalytics(r.data)).catch(() => {});
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
       <SEO title="Admin" />
 
-      <div className="flex items-center justify-between border-b border-white/5 pb-6">
+      <div className="border-b border-white/5 pb-6">
         <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Admin</h1>
-        <button
-          type="button"
-          onClick={() => { setAuthed(false); setAuthedState(false); }}
-          className="text-[10px] text-gray-500 hover:text-tactical-orange font-black uppercase tracking-widest"
-        >
-          Logout
-        </button>
+        <p className="text-[9px] text-gray-600 font-mono mt-2">
+          Internal ops links and live counters — not a secured control plane.
+        </p>
       </div>
 
-      <div className="flex gap-2">
-        {(['dashboards', 'health', 'analytics', 'affiliate'] as const).map((t) => (
+      <div className="flex flex-wrap gap-2">
+        {(Object.keys(TAB_LABELS) as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
@@ -96,7 +49,7 @@ export function AdminPage() {
                 : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'
             }`}
           >
-            {t === 'health' ? 'System Health' : t === 'analytics' ? 'Analytics' : 'Affiliate'}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -189,16 +142,11 @@ export function AdminPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <a href="https://dash.cloudflare.com/945c61dd7d467620343f43685dce370c/web-analytics/armamods-leaderboard.pages.dev" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Cloudflare Analytics</h3>
-            <p className="text-[9px] text-gray-500 font-mono">Visits, page views, LCP, CLS, INP, top pages — full history</p>
-            <p className="text-[9px] text-gray-600 font-mono">900 visits · 2.11k page views · 517ms load time</p>
-          </a>
-          <a href="https://dash.cloudflare.com/945c61dd7d467620343f43685dce370c/workers/services/view/armamods-api/production/observability" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
-            <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Worker Logs</h3>
-            <p className="text-[9px] text-gray-500 font-mono">API errors, 503s, collector cron failures</p>
+            <p className="text-[9px] text-gray-500 font-mono">Visits, page views, Core Web Vitals, top pages</p>
           </a>
           <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Empower Affiliates</h3>
-            <p className="text-[9px] text-gray-500 font-mono">34 clicks · 0 signups · 0% conversion</p>
+            <p className="text-[9px] text-gray-500 font-mono">External partner dashboard</p>
           </a>
           <a href="https://github.com/pauliusmed/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">GitHub Repo</h3>
@@ -223,11 +171,11 @@ export function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.reforger ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Reforger clicks (ours)</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Reforger clicks</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.arma3 ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Arma 3 clicks (ours)</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Arma 3 clicks</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.total ?? '…'}</p>
@@ -235,20 +183,6 @@ export function AdminPage() {
             </div>
           </div>
 
-          <div className="border border-white/5 bg-[#172635] p-5 space-y-2">
-            <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Expected vs actual</h3>
-            <div className="text-[9px] font-mono text-gray-400 space-y-1">
-              <p>Cloudflare page views: <span className="text-white">2,110</span></p>
-              <p>Affiliate banner impressions (est.): <span className="text-white">~400</span> (server detail views)</p>
-              <p>Expected clicks at 2% CTR: <span className="text-white">~8</span></p>
-              <p>Expected clicks at 5% CTR: <span className="text-white">~20</span></p>
-              <p className="text-gray-600 pt-1">Empower reports 34 clicks over the site's lifetime — our tracking started fresh, compare in a few days.</p>
-            </div>
-          </div>
-
-          <p className="text-[9px] text-gray-600 font-mono border-t border-white/5 pt-4">
-            Empower dashboard reports <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">34 clicks, 0 signups</a>. Our counter started at 0 — old Empower clicks are not retroactively tracked.
-          </p>
           <div className="flex gap-2 border-t border-white/5 pt-3">
             <input
               type="number"
