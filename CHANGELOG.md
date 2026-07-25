@@ -2,6 +2,11 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.20] - 2026-07-25
+
+### 🐛 Fixes
+- **Server/Mod detail** — auto-retry on 503/502/504 via `fetchWithRetry` (same as list pages); loading UI shows retry count.
+
 ## [1.22.19] - 2026-07-25
 
 ### ✨ Features

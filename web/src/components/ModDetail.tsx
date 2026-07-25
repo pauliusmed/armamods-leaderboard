@@ -26,6 +26,7 @@ import { withSyncGapMarker, maxGapMsForRange } from '../lib/chartSyncGap';
 import { ModAuthorLink } from './ui/ModAuthorLink';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { formatBytes } from '../lib/formatBytes';
+import { fetchWithRetry } from '../lib/fetchWithRetry';
 import { ModWorkshopGallery } from './ui/ModWorkshopGallery';
 import { ModWorkshopCopy } from './ui/ModWorkshopCopy';
 import { ModConfigPanel } from './ui/ModConfigPanel';
@@ -75,6 +76,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [depsLoading, setDepsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [selectedDays, setSelectedDays] = useState(30);
   const [heroGalleryVisible, setHeroGalleryVisible] = useState(false);
   const [serversPage, setServersPage] = useState(1);
@@ -102,13 +104,21 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
     if (!modId) return;
     try {
       setLoading(true);
-      const [modRes, historyData] = await Promise.all([
-        modsApi.getById(modId, game),
-        modsApi.getHistory(modId, days, game).catch(() => ({ data: [] }))
-      ]);
+      setRetryCount(0);
+      const [modRes, historyData] = await fetchWithRetry(
+        () =>
+          Promise.all([
+            modsApi.getById(modId, game),
+            modsApi.getHistory(modId, days, game).catch(() => ({ data: [] })),
+          ]),
+        (attempt) => {
+          if (!signal?.aborted) setRetryCount(attempt);
+        }
+      );
 
       if (signal?.aborted) return;
 
+      setRetryCount(0);
       setMod(modRes.data);
       setDependencies([]);
       setDepsLoading(game === 'reforger');
@@ -218,7 +228,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
 
 
-  if (loading) return <StatusState type="loading" />;
+  if (loading) return <StatusState type="loading" retryCount={retryCount} />;
   if (error || !mod) return (
     <div className="space-y-8">
       <StatusState

@@ -18,6 +18,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { Server, ServerMod, ServerStoragePack } from '../types';
 import { formatBytes } from '../lib/formatBytes';
 import { toUserErrorMessage } from '../lib/apiError';
+import { fetchWithRetry } from '../lib/fetchWithRetry';
 import {
   buildOfflineBands,
   uptimeTooltipLabel,
@@ -87,6 +88,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [totalServers, setTotalServers] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [selectedDays, setSelectedDays] = useState(30);
   const [modChangeDays, setModChangeDays] = useState<7 | 30>(7);
   const [modChanges, setModChanges] = useState<
@@ -129,18 +131,27 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     if (!serverId) return;
     try {
       setLoading(true);
-      const [serverData, historyData, statsData, allServersData, storageData] = await Promise.all([
-        serversApi.getById(serverId, game),
-        serversApi.getHistory(serverId, days, game),
-        modsApi.getGlobalStats(game),
-        serversApi.getList(500, 0, game).catch(() => ({ data: [] })),
-        game === 'reforger'
-          ? serversApi.getStorage(serverId, game).catch(() => null)
-          : Promise.resolve(null),
-      ]);
+      setRetryCount(0);
+      // Same transient retry as mod/server lists — detail routes hit KV shards and often 503 under cold load.
+      const [serverData, historyData, statsData, allServersData, storageData] = await fetchWithRetry(
+        () =>
+          Promise.all([
+            serversApi.getById(serverId, game),
+            serversApi.getHistory(serverId, days, game),
+            modsApi.getGlobalStats(game),
+            serversApi.getList(500, 0, game).catch(() => ({ data: [] })),
+            game === 'reforger'
+              ? serversApi.getStorage(serverId, game).catch(() => null)
+              : Promise.resolve(null),
+          ]),
+        (attempt) => {
+          if (!signal?.aborted) setRetryCount(attempt);
+        }
+      );
 
       if (signal?.aborted) return;
 
+      setRetryCount(0);
       setServer(serverData.data);
       setAllServers(allServersData.data || []);
       setStoragePack(storageData?.data ?? null);
@@ -313,7 +324,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     return sortServerMods(filtered, modSort, totalServers);
   }, [server?.mods, modSearch, modSort, activityFilter, rankFilter, sizeFilter, storagePack, totalServers]);
 
-  if (loading) return <StatusState type="loading" />;
+  if (loading) return <StatusState type="loading" retryCount={retryCount} />;
   if (error || !server) return (
     <div className="space-y-8">
       <StatusState
