@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.11] - 2026-07-25
+
+### 💸 Community fund
+- UI copy be **vendor pavadinimų** ir **unit kainų** ($1/mo ir pan.); progress bar tikslas lieka.
+
+### 📊 Charts
+- Sync gap juostos lieka matomos ir po atkūrimo — aptinka skyles tarp history taškų (ne tik kol stale).
+- Server chart tooltip: **uptime** rodomas tik kai &lt; 100% (100% slepiama).
+
 ## [1.22.10] - 2026-07-25
 
 ### 💸 Community fund
@@ -24,7 +33,7 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **List heroes** — Mods / Servers / Scenarios rodo „Snapshot as of … · not live“.
 - **Trending** — rodomas `meta.lastUpdated` arba stale pastaba.
 - **Footer** — sync copy persijungia į „live sync paused“ kai snapshot senas.
-- **Charts (mod/server detail)** — istorinės kreivės lieka; kai sync stale, amber **No data (sync paused)** juosta nuo paskutinio taško iki šiandien.
+- **Charts (mod/server detail)** — istorinės kreivės + amber juostos visoms skylėms tarp sample'ų (ne tik kol `isStale`).
 
 ### 💸 Donations
 - **Goal $25** — centralizuota `web/src/lib/donation.ts` (progress bar 0/$25); tikslas = BattleMetrics Basic API metams.

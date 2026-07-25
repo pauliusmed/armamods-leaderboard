@@ -47,10 +47,10 @@ export const COMMUNITY_DONORS: readonly CommunityDonor[] = [
   },
 ];
 
-/** Short shared pitch — collective “we”, not a personal ask. */
+/** Short shared pitch — collective “we”, not a personal ask. No vendor names or unit prices. */
 export const DONATION_GOAL_BLURB = DONATION_GOAL_MET
-  ? 'Community pool goal met — BattleMetrics Basic can be funded so live rankings return for everyone'
-  : 'A shared $25 pool covers ~1 year of BattleMetrics Basic so everyone gets live rankings back';
+  ? 'Community pool goal met — live network rankings can stay current for everyone'
+  : 'A shared community pool keeps live network rankings and sync running for everyone';
 
 export const DONATION_CTA_LABEL = DONATION_GOAL_MET
   ? 'Add to the buffer via PayPal'
@@ -61,16 +61,18 @@ export const DONATION_PROGRESS_LABEL = DONATION_GOAL_MET
   : 'Community pool';
 
 export const DONATION_FOOTNOTE = DONATION_GOAL_MET
-  ? 'Goal reached together — extra chips still help with API months ahead'
-  : 'Every contribution goes toward the shared API cost — not a personal tip jar';
+  ? 'Goal reached together — extra chips still help keep sync healthy ahead'
+  : 'Every contribution goes toward shared infrastructure — not a personal tip jar';
 
 export const DONATION_THANKS_HEADING = 'Community thanks';
 
 export const DONATION_GOAL_MET_BADGE = 'Goal met';
 
+export const DONATION_COVERS_HEADING = 'What the pool unlocks:';
+
 export const DONATION_COVERS = [
-  'BattleMetrics Basic API (~1 year at $1/mo) for the whole site',
-  'Live collector sync so mods, servers, and trending stay current',
+  'Live network data access for the whole site',
+  'Collector sync so mods, servers, and trending stay current',
   'Charts and rankings that update for every visitor again',
 ] as const;
 

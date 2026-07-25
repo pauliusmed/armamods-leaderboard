@@ -17,5 +17,7 @@ export function uptimeTooltipLabel(
   if (hourlyView) {
     return point.online ? 'Online at scan' : 'Offline at scan';
   }
+  // Perfect uptime is the default — only call out imperfect periods
+  if (point.uptimeRatio >= 1) return null;
   return `Uptime ~${formatUptimePercent(point.uptimeRatio)} of scans`;
 }

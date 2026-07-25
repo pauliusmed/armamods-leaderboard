@@ -7,7 +7,7 @@ import { isAuditRemoveCandidate, sortAuditRowsWorstFirst } from '@audit-config';
 import { parseApiJson, runClientSideAudit } from '../lib/clientAudit';
 import { formatAuditReportJson, formatAuditReportText } from '../lib/auditReport';
 import { PAYPAL_DONATE_URL } from '../lib/siteLinks';
-import { DONATION_CTA_LABEL, DONATION_GOAL_BLURB, DONATION_GOAL_USD } from '../lib/donation';
+import { DONATION_CTA_LABEL, DONATION_GOAL_BLURB } from '../lib/donation';
 import {
   AUDIT_BUCKET_HINT,
   AUDIT_BUCKET_SHORT,
@@ -121,8 +121,7 @@ function AuditDonateBanner() {
   return (
     <div className="border border-tactical-orange/35 bg-tactical-orange/5 rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <p className="text-sm text-gray-300 leading-relaxed">
-        <strong className="text-white">Useful for your server?</strong> {DONATION_GOAL_BLURB}
-        {' '}(shared ${DONATION_GOAL_USD} pool).
+        <strong className="text-white">Useful for your server?</strong> {DONATION_GOAL_BLURB}.
       </p>
       <a
         href={PAYPAL_DONATE_URL}

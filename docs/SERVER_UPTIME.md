@@ -58,9 +58,9 @@ mostlyOffline = uptimeRatio < 0.5   // UPTIME_OFFLINE_THRESHOLD
 
 | View | Resolution | Offline shading |
 |------|------------|-----------------|
-| 24H | hourly | per-point tooltip only (no day bands) |
-| 1M | daily | rose `ReferenceArea` when day is mostly offline |
-| 1Y | weekly | same for week buckets |
+| 24H | hourly | per-point tooltip only (no day bands); online/offline at scan |
+| 7D / 1M | daily | rose `ReferenceArea` when day is mostly offline; tooltip uptime % only if &lt; 100% |
+| 1Y | weekly | same for week buckets; tooltip uptime % only if &lt; 100% |
 
 Example: 1 offline scan out of 12 in a day → ratio ≈ 92% → **not** marked offline.
 

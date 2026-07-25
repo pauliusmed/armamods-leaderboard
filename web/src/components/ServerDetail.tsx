@@ -24,7 +24,7 @@ import {
 } from '../lib/serverUptimeChart';
 import { useDataFreshness } from '../hooks/useDataFreshness';
 import { CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_SERVER, CHART_SYNC_GAP_LEGEND } from '../lib/siteCopy';
-import { withSyncGapMarker } from '../lib/chartSyncGap';
+import { withSyncGapMarker, maxGapMsForRange } from '../lib/chartSyncGap';
 import {
   type ActivityFilter,
   type RankFilter,
@@ -100,15 +100,16 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const { isFavorite, toggle } = useServerFavorites(game);
   const isMobileChart = useMediaQuery('(max-width: 639px)');
   const freshness = useDataFreshness(game);
-  const { data: chartHistory, gapX1, gapX2 } = useMemo(
+  const { data: chartHistory, gaps: syncGaps } = useMemo(
     () =>
-      withSyncGapMarker(history, 'time', freshness.isStale, [
-        'rank',
-        'players',
-        'online',
-        'uptimeRatio',
-      ] as const),
-    [history, freshness.isStale]
+      withSyncGapMarker(
+        history,
+        'time',
+        freshness.isStale,
+        ['rank', 'players', 'online', 'uptimeRatio'] as const,
+        maxGapMsForRange(selectedDays)
+      ),
+    [history, freshness.isStale, selectedDays]
   );
 
   const [allServers, setAllServers] = useState<Server[]>([]);
@@ -511,7 +512,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       <span className="w-3 h-3 rounded-sm bg-rose-500/25 border border-rose-500/40" aria-hidden />
                       Mostly offline (&lt;50% scans)
                     </span>
-                    {gapX1 && gapX2 && (
+                    {syncGaps.length > 0 && (
                       <span className="inline-flex items-center gap-2 text-amber-400">
                         <span className="w-3 h-3 rounded-sm bg-amber-500/25 border border-amber-500/40" aria-hidden />
                         {CHART_SYNC_GAP_LEGEND}
@@ -530,10 +531,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                     }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                    {gapX1 && gapX2 && (
+                    {syncGaps.map((gap) => (
                       <ReferenceArea
-                        x1={gapX1}
-                        x2={gapX2}
+                        key={`sync-gap-${gap.x1}-${gap.x2}`}
+                        x1={gap.x1}
+                        x2={gap.x2}
                         yAxisId="rank"
                         fill="#f59e0b"
                         fillOpacity={0.12}
@@ -541,7 +543,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                         strokeOpacity={0.35}
                         ifOverflow="visible"
                       />
-                    )}
+                    ))}
                     {offlineBands.map((band, i) => (
                       <ReferenceArea
                         key={`offline-${i}`}

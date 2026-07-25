@@ -8,13 +8,13 @@ export const DATA_SYNC_NOTE =
 
 /** Shown when /api/health reports isStale (collector snapshot older than ~3h). */
 export const DATA_STALE_BANNER = (ageLabel: string) =>
-  `Leaderboard snapshot is outdated (${ageLabel}). Live network sync is paused — BattleMetrics API now requires a paid key. Numbers below are the last successful collect.`;
+  `Leaderboard snapshot is outdated (${ageLabel}). Live network sync is paused. Numbers below are the last successful collect.`;
 
 export const DATA_STALE_BANNER_SHORT = (ageLabel: string) =>
   `Snapshot outdated (${ageLabel}) · live sync paused`;
 
 export const DATA_STALE_FOOTER =
-  'Live network sync paused · showing last successful collector snapshot (BattleMetrics API now requires a paid subscription)';
+  'Live network sync paused · showing last successful collector snapshot';
 
 export const DATA_STALE_HERO_NOTE = (ageLabel: string) =>
   `Snapshot as of ${ageLabel} · not live`;
@@ -22,9 +22,9 @@ export const DATA_STALE_HERO_NOTE = (ageLabel: string) =>
 export const CHART_NO_DATA_TITLE = 'No chart data';
 
 export const CHART_NO_DATA_SYNC_PAUSED =
-  'Live sync paused — amber band = no new samples since last collect';
+  'Live sync paused — amber band = periods with no samples';
 
-export const CHART_SYNC_GAP_LEGEND = 'No data (sync paused)';
+export const CHART_SYNC_GAP_LEGEND = 'No data (gap in sync)';
 
 export const CHART_NO_DATA_INACTIVE =
   'Data may be archived or this module is currently inactive';

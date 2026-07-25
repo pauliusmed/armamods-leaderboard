@@ -2,13 +2,13 @@ import { Card, CardContent } from './ui/Card';
 import { PAYPAL_DONATE_URL } from '../lib/siteLinks';
 import {
   DONATION_COVERS,
+  DONATION_COVERS_HEADING,
   DONATION_CTA_LABEL,
   DONATION_FOOTNOTE,
   DONATION_GOAL_BLURB,
   DONATION_GOAL_LABEL,
   DONATION_GOAL_MET,
   DONATION_GOAL_MET_BADGE,
-  DONATION_GOAL_USD,
   DONATION_PROGRESS_LABEL,
   DONATION_RAISED_LABEL,
   donationProgressPercent,
@@ -63,7 +63,7 @@ export function DonationCard() {
 
           <div className="space-y-2 pt-2">
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider">
-              What the ${DONATION_GOAL_USD} pool unlocks:
+              {DONATION_COVERS_HEADING}
             </p>
             <ul className="text-xs text-gray-400 space-y-1">
               {DONATION_COVERS.map((line) => (

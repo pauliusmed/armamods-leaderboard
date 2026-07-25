@@ -76,7 +76,7 @@ When `/api/health` reports `isStale` (snapshot older than **~3 hours**):
 | Mods / Servers / Scenarios heroes | `Snapshot as of … · not live` |
 | Trending | Stale note (or `meta.lastUpdated` when fresh) |
 | Footer | Sync line → paused / last age |
-| Mod & server detail **charts** | Historical curves kept; amber **No data (sync paused)** band from last sample → today |
+| Mod & server detail **charts** | Historical curves + amber bands for **gaps between samples** (and trailing band while still stale) |
 
 Hook: `web/src/hooks/useDataFreshness.ts` (caches `/api/health` ~60s, dedupes in-flight).
 

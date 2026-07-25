@@ -21,7 +21,7 @@ import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE, CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_INACTIVE, CHART_SYNC_GAP_LEGEND } from '../lib/siteCopy';
 import { useDataFreshness } from '../hooks/useDataFreshness';
-import { withSyncGapMarker } from '../lib/chartSyncGap';
+import { withSyncGapMarker, maxGapMsForRange } from '../lib/chartSyncGap';
 import { ModAuthorLink } from './ui/ModAuthorLink';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { formatBytes } from '../lib/formatBytes';
@@ -80,14 +80,16 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const { isFavorite, toggle } = useModFavorites(game);
   const isMobileChart = useMediaQuery('(max-width: 639px)');
   const freshness = useDataFreshness(game);
-  const { data: chartHistory, gapX1, gapX2 } = useMemo(
+  const { data: chartHistory, gaps: syncGaps } = useMemo(
     () =>
-      withSyncGapMarker(history, 'date', freshness.isStale, [
-        'totalPlayers',
-        'serverCount',
-        'overallRank',
-      ] as const),
-    [history, freshness.isStale]
+      withSyncGapMarker(
+        history,
+        'date',
+        freshness.isStale,
+        ['totalPlayers', 'serverCount', 'overallRank'] as const,
+        maxGapMsForRange(selectedDays)
+      ),
+    [history, freshness.isStale, selectedDays]
   );
 
   useEffect(() => {
@@ -496,7 +498,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                         <span className="w-4 h-0.5 border-t-2 border-dashed border-[#3b82f6] rounded" aria-hidden />
                         Rank
                       </span>
-                      {gapX1 && gapX2 && (
+                      {syncGaps.length > 0 && (
                         <span className="inline-flex items-center gap-2 text-amber-400">
                           <span className="w-3 h-3 rounded-sm bg-amber-500/25 border border-amber-500/40" aria-hidden />
                           {CHART_SYNC_GAP_LEGEND}
@@ -515,10 +517,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                      {gapX1 && gapX2 && (
+                      {syncGaps.map((gap) => (
                         <ReferenceArea
-                          x1={gapX1}
-                          x2={gapX2}
+                          key={`sync-gap-${gap.x1}-${gap.x2}`}
+                          x1={gap.x1}
+                          x2={gap.x2}
                           yAxisId="players"
                           fill="#f59e0b"
                           fillOpacity={0.12}
@@ -526,7 +529,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                           strokeOpacity={0.35}
                           ifOverflow="visible"
                         />
-                      )}
+                      ))}
                       <XAxis
                         dataKey="date"
                         stroke="#666"

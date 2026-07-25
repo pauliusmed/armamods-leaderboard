@@ -8,7 +8,6 @@ import {
   DONATION_GOAL_LABEL,
   DONATION_GOAL_MET,
   DONATION_GOAL_MET_BADGE,
-  DONATION_GOAL_USD,
   DONATION_PROGRESS_LABEL,
   DONATION_RAISED_LABEL,
   donationProgressPercent,
@@ -46,10 +45,9 @@ export function SupportPage() {
               A Shared Cost, Shared Benefit
             </h2>
             <p className="text-gray-400 text-sm leading-relaxed">
-              BattleMetrics now requires a paid API key for all requests. Without a funded key,
-              live rankings, player counts, and trending freeze for{' '}
-              <span className="text-white font-bold">everyone</span> — the site can only keep the
-              last community snapshot.
+              Live rankings need a funded data feed. Without it, player counts and trending freeze
+              for <span className="text-white font-bold">everyone</span> — the site can only keep
+              the last community snapshot.
             </p>
             <p className="text-gray-400 text-sm leading-relaxed">{DONATION_GOAL_BLURB}.</p>
           </div>
@@ -78,8 +76,8 @@ export function SupportPage() {
             </div>
             <p className="text-gray-500 text-xs">
               {DONATION_GOAL_MET
-                ? `Raised ${DONATION_RAISED_LABEL} against the $${DONATION_GOAL_USD} goal — enough to fund BattleMetrics Basic and restore live sync.`
-                : `$${DONATION_GOAL_USD} shared goal ≈ one year of API access so the whole community gets live sync again.`}
+                ? `Raised ${DONATION_RAISED_LABEL} against the ${DONATION_GOAL_LABEL} goal — enough to keep live sync running for the community.`
+                : `${DONATION_GOAL_LABEL} shared goal keeps live sync and rankings available for everyone.`}
             </p>
           </div>
 
