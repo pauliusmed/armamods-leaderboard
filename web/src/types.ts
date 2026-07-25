@@ -129,6 +129,8 @@ export interface ApiResponse<T> {
 export interface TrendingMod {
   id: string;
   name: string;
+  /** Workshop author when present on the mod shard / trending snapshot. */
+  author?: string | null;
   serverCount: number;
   totalPlayers: number;
   playerRank: number;

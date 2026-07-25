@@ -2,6 +2,11 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.18] - 2026-07-25
+
+### ✨ Features
+- **Trending** — workshop author under mod name (`ModAuthorCell`), same pattern as the mod leaderboard.
+
 ## [1.22.17] - 2026-07-25
 
 ### ✨ Features / SEO

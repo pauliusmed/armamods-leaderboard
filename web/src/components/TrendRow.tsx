@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { TrendingMod } from '../types';
 import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
+import { ModAuthorCell } from './ui/ModAuthorCell';
 import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
 import { CopyModConfigButton } from './ui/CopyModConfigButton';
 import { FavoriteModButton } from './ui/FavoriteModButton';
@@ -76,6 +77,12 @@ export function TrendRow({
             >
               {mod.name}
             </Link>
+            <ModAuthorCell
+              modId={mod.id}
+              game={game}
+              author={mod.author}
+              className="mt-0.5"
+            />
             <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-0.5" />
           </div>
         </div>
