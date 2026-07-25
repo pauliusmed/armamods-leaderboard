@@ -18,6 +18,9 @@ import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/mod
 import { BM_STATUS_FILTER_OPTIONS } from '../lib/serverStatus';
 import { DATA_STALE_HERO_NOTE, SERVER_STATUS_FILTER_ARIA } from '../lib/siteCopy';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { SEO } from './ui/SEO';
+import { SITE_ORIGIN, serverPageUrl } from '../lib/site';
+import { itemListJsonLd } from '../lib/seoJsonLd';
 
 interface ServerListProps {
   game?: GameType;
@@ -82,6 +85,24 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
+      <SEO
+        title={`${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Servers - Live Network`}
+        description={`Browse live ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} servers by players, SQE rank, mod count, and console modpack fit. Real-time BattleMetrics-backed network snapshot.`}
+        url={game === 'arma3' ? '/arma3/servers' : '/servers'}
+        jsonLd={
+          filteredServers.length
+            ? itemListJsonLd({
+                name: `${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Active Servers`,
+                description: 'Live servers ranked by current player activity.',
+                url: `${SITE_ORIGIN}${game === 'arma3' ? '/arma3/servers' : '/servers'}`,
+                items: filteredServers.slice(0, 10).map((s) => ({
+                  name: s.name,
+                  url: serverPageUrl(s.id, game),
+                })),
+              })
+            : undefined
+        }
+      />
       <StatsHero
         title="Active Server Network"
         subtitle="Real-time monitoring of all community and official servers using mods."
@@ -95,6 +116,17 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         ]}
       />
 
+      <nav className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest" aria-label="Related">
+        <Link to={game === 'arma3' ? '/arma3' : '/'} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+          Mod leaderboard
+        </Link>
+        <Link to={game === 'arma3' ? '/arma3/trending' : '/trending'} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+          Trending
+        </Link>
+        <Link to="/arma-server-browser" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+          Server browser guide
+        </Link>
+      </nav>
       <ListFilterBar
         search={{
           label: '// SEARCH',

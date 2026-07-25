@@ -27,9 +27,10 @@ export function staticSitemapUrls(): SitemapUrl[] {
     { loc: `${SITE_ORIGIN}/audit`, changefreq: 'weekly', priority: 0.7 },
     { loc: `${SITE_ORIGIN}/dependency-blockers`, changefreq: 'weekly', priority: 0.5 },
     { loc: `${SITE_ORIGIN}/arma-server-browser`, changefreq: 'weekly', priority: 0.8 },
+    { loc: `${SITE_ORIGIN}/how-to-find-popular-arma-reforger-mods`, changefreq: 'monthly', priority: 0.7 },
+    { loc: `${SITE_ORIGIN}/how-to-check-arma-reforger-modpack-size`, changefreq: 'monthly', priority: 0.7 },
     { loc: `${SITE_ORIGIN}/best-arma-reforger-hosting`, changefreq: 'monthly', priority: 0.6 },
     { loc: `${SITE_ORIGIN}/hosting`, changefreq: 'monthly', priority: 0.5 },
-    { loc: `${SITE_ORIGIN}/status`, changefreq: 'daily', priority: 0.4 },
     { loc: `${SITE_ORIGIN}/support`, changefreq: 'monthly', priority: 0.5 },
     { loc: `${SITE_ORIGIN}/arma3`, changefreq: 'hourly', priority: 0.8 },
     { loc: `${SITE_ORIGIN}/arma3/servers`, changefreq: 'hourly', priority: 0.7 },
@@ -38,7 +39,6 @@ export function staticSitemapUrls(): SitemapUrl[] {
     { loc: `${SITE_ORIGIN}/arma3/scenarios/official`, changefreq: 'weekly', priority: 0.5 },
     { loc: `${SITE_ORIGIN}/arma3/hosting`, changefreq: 'monthly', priority: 0.5 },
     { loc: `${SITE_ORIGIN}/best-arma-3-hosting`, changefreq: 'monthly', priority: 0.5 },
-    { loc: `${SITE_ORIGIN}/arma3/status`, changefreq: 'daily', priority: 0.3 },
   ];
 }
 

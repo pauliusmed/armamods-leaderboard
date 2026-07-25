@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useMods } from '../hooks/useMods';
 import { useModFavorites } from '../hooks/useModFavorites';
 import { excludeFavoriteModsFromList, usePinnedFavoriteMods } from '../hooks/usePinnedFavoriteMods';
@@ -16,6 +17,8 @@ import type { ModSortBy } from '../hooks/useMods';
 import { ACTIVITY_FILTER_OPTIONS, MOD_LEADERBOARD_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
+import { SITE_ORIGIN, modPageUrl } from '../lib/site';
+import { websiteJsonLd, itemListJsonLd } from '../lib/seoJsonLd';
 
 interface ModListProps {
   game?: GameType;
@@ -76,12 +79,34 @@ export function ModList({ game = 'reforger' }: ModListProps) {
   }
 
   const statPlaceholder = initialLoading ? '…' : undefined;
+  const gp = game === 'arma3' ? '/arma3' : '';
+  const listPath = game === 'arma3' ? '/arma3' : '/';
+  const gameLabel = game === 'reforger' ? 'Arma Reforger' : 'Arma 3';
+  const topForLd = listMods.slice(0, 10);
+  const jsonLd = [
+    ...(game === 'reforger' ? [websiteJsonLd()] : []),
+    ...(topForLd.length
+      ? [
+          itemListJsonLd({
+            name: `${gameLabel} Top Mods`,
+            description: `Top mods by live player presence on ${gameLabel} servers.`,
+            url: `${SITE_ORIGIN}${listPath === '/' ? '/' : listPath}`,
+            items: topForLd.map((m) => ({
+              name: m.name,
+              url: modPageUrl(m.id, game),
+            })),
+          }),
+        ]
+      : []),
+  ];
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <SEO 
-        title={`${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Mods - Leaderboard`}
-        description={`Browse the most popular ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} mods. Compare real-time player counts, server usage, and find the best modules for your mission.`}
+        title={`${gameLabel} Mods - Leaderboard`}
+        description={`Browse the most popular ${gameLabel} mods. Compare real-time player counts, server usage, and find the best modules for your mission.`}
+        url={listPath}
+        jsonLd={jsonLd}
       />
       <StatsHero
         title="Mod Popularity Leaderboard"
@@ -96,6 +121,30 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         ]}
       />
 
+      <nav
+        className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest"
+        aria-label="Related tools"
+      >
+        <Link to={`${gp}/trending`} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+          Trending
+        </Link>
+        <Link to={`${gp}/servers`} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+          Servers
+        </Link>
+        <Link to={`${gp}/scenarios`} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+          Scenarios
+        </Link>
+        {game === 'reforger' && (
+          <>
+            <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+              How to find mods
+            </Link>
+            <Link to="/arma-reforger-console-mod-storage" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+              Console storage
+            </Link>
+          </>
+        )}
+      </nav>
       <ListFilterBar
         search={{
           label: '// SEARCH',

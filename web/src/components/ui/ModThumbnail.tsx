@@ -106,7 +106,7 @@ export function ModThumbnail({
       {visible ? (
         <img
           src={resolvedSrc}
-          alt=""
+          alt={modName?.trim() ? `${modName} thumbnail` : `Mod ${modId} thumbnail`}
           loading={priority === 'eager' ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={priority === 'eager' ? 'high' : 'low'}

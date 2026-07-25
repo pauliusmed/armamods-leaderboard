@@ -80,6 +80,8 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
       <SEO 
         title={`System Status & Diagnostics - ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'}`}
         description={`Real-time server telemetry status, Cloudflare KV edge sharding metrics, database range, and global network counts for the Arma Mods Leaderboard.`}
+        url={game === 'arma3' ? '/arma3/status' : '/status'}
+        noindex
       />
 
       {/* Header Panel */}

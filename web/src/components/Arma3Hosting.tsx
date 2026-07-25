@@ -175,10 +175,11 @@ export function Arma3Hosting() {
 
   return (
     <div className="space-y-16 animate-in fade-in duration-700 pb-20">
-      <SEO 
+      <SEO
         title={`Best ${gameName} Server Hosting Comparison 2026`}
         description={`Objective comparison of ${gameName} hosting. We analyze clock speeds, NVMe I/O, and RAM scaling for high-pop Milsim operations.`}
         keywords="best arma 3 hosting, arma 3 server rental, milsim server hosting, stable arma 3 mods"
+        url="/best-arma-3-hosting"
       />
 
       <section className="text-center space-y-4 pt-12">

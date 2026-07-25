@@ -133,7 +133,7 @@ export function ModWorkshopGallery({
           >
             <img
               src={image.url}
-              alt=""
+              alt={`${label} screenshot ${index + 1} of ${images.length}`}
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
               draggable={false}

@@ -18,7 +18,8 @@ import {
 } from 'recharts';
 import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
-import { modPageUrl, modPreviewImageUrl } from '../lib/site';
+import { SITE_ORIGIN, modPageUrl, modPreviewImageUrl } from '../lib/site';
+import { softwareApplicationJsonLd, breadcrumbJsonLd } from '../lib/seoJsonLd';
 import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE, CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_INACTIVE, CHART_SYNC_GAP_LEGEND } from '../lib/siteCopy';
 import { useDataFreshness } from '../hooks/useDataFreshness';
 import { withSyncGapMarker, maxGapMsForRange } from '../lib/chartSyncGap';
@@ -247,6 +248,28 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         keywords={`${mod.name}, Arma Reforger Mods, Arma 3 Mods, Mod Statistics, ${mod.author || ''}`}
         url={modPageUrl(mod.id, game)}
         image={modPreviewImageUrl(mod.id, game)}
+        jsonLd={[
+          softwareApplicationJsonLd({
+            name: mod.name,
+            url: modPageUrl(mod.id, game),
+            description:
+              mod.workshopSummary ??
+              MOD_DETAIL_SEO_PLAYERS(
+                mod.totalPlayers ?? 0,
+                mod.serverCount ?? 0,
+                mod.stats?.overallRank || mod.overallRank || '—'
+              ),
+            modId: mod.id,
+            players: mod.totalPlayers,
+            servers: mod.serverCount,
+            rank: mod.stats?.overallRank || mod.overallRank,
+            image: modPreviewImageUrl(mod.id, game),
+          }),
+          breadcrumbJsonLd([
+            { name: 'Mods', url: `${SITE_ORIGIN}${gp || '/'}` },
+            { name: mod.name, url: modPageUrl(mod.id, game) },
+          ]),
+        ]}
       />
       <Link
         to={`${gp}/`}

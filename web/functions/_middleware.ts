@@ -1,6 +1,7 @@
 import {
   buildShareMeta,
-  isSocialCrawler,
+  isIndexerCrawler,
+  isShareCrawler,
   parseShareRoute,
   renderShareHtml,
 } from './lib/share-meta';
@@ -9,7 +10,10 @@ interface Env {
   TRENDING_KV: KVNamespace;
 }
 
-/** Discord/Facebook crawlers do not run React – serve OG HTML from KV data. */
+/**
+ * Social + search crawlers do not run the React SPA reliably —
+ * serve OG/indexable HTML for mod/server detail routes from KV.
+ */
 export async function onRequest(context: EventContext<Env, any, any>) {
   const { request, next, env } = context;
   const url = new URL(request.url);
@@ -24,7 +28,7 @@ export async function onRequest(context: EventContext<Env, any, any>) {
   }
 
   const userAgent = request.headers.get('user-agent') || '';
-  if (!isSocialCrawler(userAgent)) {
+  if (!isShareCrawler(userAgent)) {
     return next();
   }
 
@@ -38,7 +42,8 @@ export async function onRequest(context: EventContext<Env, any, any>) {
     return next();
   }
 
-  return new Response(renderShareHtml(meta), {
+  const mode = isIndexerCrawler(userAgent) ? 'indexer' : 'social';
+  return new Response(renderShareHtml(meta, { mode }), {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'public, max-age=300',

@@ -2,6 +2,18 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.17] - 2026-07-25
+
+### ✨ Features / SEO
+- **Canonical + robots** on all `SEO` pages; `noindex` for `/admin` and `/status`.
+- **JSON-LD** — WebSite/SearchAction, ItemList (mods/servers/trending), SoftwareApplication (mod detail), HowTo guides, breadcrumbs.
+- **Googlebot / Bing prerender** — mod/server share HTML without meta-refresh; richer body + schema (social bots keep refresh).
+- **Guides** — `/how-to-find-popular-arma-reforger-mods`, `/how-to-check-arma-reforger-modpack-size`.
+- Thumbnail / gallery **alt** text; hub internal links; ServerList SEO.
+
+### 📚 Dokumentacija
+- **docs/SEO.md** — Search Console / Bing checklist.
+
 ## [1.22.16] - 2026-07-25
 
 ### ✨ Features

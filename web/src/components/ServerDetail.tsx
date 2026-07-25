@@ -4,6 +4,7 @@ import { serversApi, modsApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { SITE_ORIGIN, serverPageUrl, serverPreviewImageUrl } from '../lib/site';
+import { breadcrumbJsonLd } from '../lib/seoJsonLd';
 import { AffiliateBanner } from './ui/AffiliateBanner';
 import { Card, CardContent } from './ui/Card';
 import { StatsHero } from './ui/StatsHero';
@@ -350,6 +351,10 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         keywords={`${server.name}, Arma Reforger Server, Arma 3 Server, Server Stats, Server Ranking, ${server.ip}`}
         url={serverPageUrl(server.id, game)}
         image={serverPreviewImageUrl(server.id, game)}
+        jsonLd={breadcrumbJsonLd([
+          { name: 'Servers', url: `${SITE_ORIGIN}${gp}/servers` },
+          { name: server.name, url: serverPageUrl(server.id, game) },
+        ])}
       />
       <header className="space-y-6">
         <Link to={`${gp}/servers`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">

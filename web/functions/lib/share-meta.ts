@@ -14,13 +14,34 @@ export interface ShareMetaPayload {
   description: string;
   url: string;
   image: string;
+  kind: ShareKind;
+  name: string;
+  gameLabel: string;
+  players?: number;
+  servers?: number;
+  rank?: number | string | null;
+  modId?: string;
 }
 
-const CRAWLER_UA =
+const SOCIAL_CRAWLER_UA =
   /bot|crawl|spider|facebookexternalhit|twitterbot|discordbot|slackbot|linkedinbot|whatsapp|telegrambot|embedly|preview|vkshare|redditbot|pinterest/i;
 
+const INDEXER_CRAWLER_UA =
+  /googlebot|bingbot|yandex(bot)?|duckduckbot|baiduspider|applebot|slurp|gptbot|chatgpt-user|claudebot|perplexitybot/i;
+
+/** Discord / Facebook / link-preview bots. */
 export function isSocialCrawler(userAgent: string): boolean {
-  return CRAWLER_UA.test(userAgent);
+  return SOCIAL_CRAWLER_UA.test(userAgent);
+}
+
+/** Google / Bing and similar search indexers — need HTML snapshot, not SPA shell. */
+export function isIndexerCrawler(userAgent: string): boolean {
+  return INDEXER_CRAWLER_UA.test(userAgent);
+}
+
+/** Any crawler that should receive prerendered share HTML for mod/server pages. */
+export function isShareCrawler(userAgent: string): boolean {
+  return isIndexerCrawler(userAgent) || isSocialCrawler(userAgent);
 }
 
 export function parseShareRoute(pathname: string): ShareRoute | null {
@@ -248,6 +269,13 @@ export async function buildShareMeta(
       description,
       url,
       image: modPreviewImageUrl(route.id, route.game),
+      kind: 'mod',
+      name: String(mod.name ?? route.id),
+      gameLabel,
+      players,
+      servers,
+      rank: rank ?? null,
+      modId: route.id,
     };
   }
 
@@ -263,15 +291,65 @@ export async function buildShareMeta(
     description,
     url,
     image: serverPreviewImageUrl(route.id, route.game),
+    kind: 'server',
+    name: String(server.name ?? route.id),
+    gameLabel,
+    players: Number(server.players ?? 0),
+    servers: undefined,
+    rank: server.sqeRank ?? null,
   };
 }
 
-export function renderShareHtml(meta: ShareMetaPayload): string {
+function shareJsonLd(meta: ShareMetaPayload): Record<string, unknown> {
+  if (meta.kind === 'mod') {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: meta.name,
+      url: meta.url,
+      description: meta.description,
+      applicationCategory: 'GameApplication',
+      operatingSystem: meta.gameLabel,
+      image: meta.image,
+      identifier: meta.modId,
+    };
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: meta.name,
+    url: meta.url,
+    description: meta.description,
+    image: meta.image,
+    isPartOf: { '@type': 'WebSite', name: 'reforgermods.com', url: SITE_ORIGIN },
+  };
+}
+
+export function renderShareHtml(
+  meta: ShareMetaPayload,
+  options: { mode?: 'social' | 'indexer' } = {}
+): string {
+  const mode = options.mode ?? 'social';
   const esc = (value: string) =>
     value
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/"/g, '&quot;');
+
+  const jsonLd = JSON.stringify(shareJsonLd(meta)).replace(/</g, '\\u003c');
+  const refresh =
+    mode === 'social'
+      ? `  <meta http-equiv="refresh" content="0;url=${esc(meta.url)}" />\n`
+      : '';
+
+  const related =
+    meta.kind === 'mod'
+      ? `<li><a href="${esc(SITE_ORIGIN)}/">Mod leaderboard</a></li>
+  <li><a href="${esc(SITE_ORIGIN)}/trending">Trending mods</a></li>
+  <li><a href="${esc(SITE_ORIGIN)}/servers">Server list</a></li>`
+      : `<li><a href="${esc(SITE_ORIGIN)}/servers">Server list</a></li>
+  <li><a href="${esc(SITE_ORIGIN)}/">Mod leaderboard</a></li>
+  <li><a href="${esc(SITE_ORIGIN)}/arma-server-browser">Server browser guide</a></li>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -280,6 +358,7 @@ export function renderShareHtml(meta: ShareMetaPayload): string {
   <title>${esc(meta.title)}</title>
   <meta name="description" content="${esc(meta.description)}" />
   <link rel="canonical" href="${esc(meta.url)}" />
+  <meta name="robots" content="index, follow" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="reforgermods.com" />
   <meta property="og:url" content="${esc(meta.url)}" />
@@ -290,10 +369,19 @@ export function renderShareHtml(meta: ShareMetaPayload): string {
   <meta name="twitter:title" content="${esc(meta.title)}" />
   <meta name="twitter:description" content="${esc(meta.description)}" />
   <meta name="twitter:image" content="${esc(meta.image)}" />
-  <meta http-equiv="refresh" content="0;url=${esc(meta.url)}" />
+${refresh}  <script type="application/ld+json">${jsonLd}</script>
 </head>
 <body>
-  <p><a href="${esc(meta.url)}">${esc(meta.title)}</a></p>
+  <main>
+    <h1>${esc(meta.title)}</h1>
+    <p>${esc(meta.description)}</p>
+    <p><a href="${esc(meta.url)}">Open full page on reforgermods.com</a></p>
+    <nav aria-label="Related">
+      <ul>
+  ${related}
+      </ul>
+    </nav>
+  </main>
 </body>
 </html>`;
 }

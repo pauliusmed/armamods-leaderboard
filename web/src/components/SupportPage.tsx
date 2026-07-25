@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from './ui/Card';
+import { SEO } from './ui/SEO';
 import { PAYPAL_DONATE_URL } from '../lib/siteLinks';
 import {
   DONATION_CTA_LABEL,
@@ -19,6 +20,11 @@ export function SupportPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <SEO
+        title="Support the Community Sync Fund"
+        description="Chip in to keep live Arma Reforger and Arma 3 mod/server data syncing. Shared community fund — no ads, free for every player."
+        url="/support"
+      />
       <div className="text-center space-y-6 pt-12">
         <div className="inline-flex items-center gap-4 px-6 py-3 bg-[#172635] border border-white/5">
           <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.3em]">

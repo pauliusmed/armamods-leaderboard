@@ -185,7 +185,7 @@ Recharts.
 
 **Social / OG**: `/api/og/preview/mod/:id` still 302-redirects crawlers to the cached CDN URL.
 
-SEO/OG metadata uses `react-helmet-async`.
+SEO/OG metadata uses `react-helmet-async` (canonical + JSON-LD). Search crawlers get prerendered HTML for mod/server detail via `_middleware.ts` — see [docs/SEO.md](docs/SEO.md).
 
 ---
 

@@ -28,7 +28,7 @@ export function AdminPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
-      <SEO title="Admin" />
+      <SEO title="Admin" description="Internal operations dashboard." url="/admin" noindex />
 
       <div className="border-b border-white/5 pb-6">
         <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Admin</h1>

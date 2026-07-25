@@ -304,6 +304,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
       <SEO
         title="Server config audit | Arma Mods"
         description="Paste your Reforger config.json for post-1.7 mod risk, trends, and alternatives from similar servers."
+        url="/audit"
       />
 
       <header className="space-y-4 border-b border-white/10 pb-8">

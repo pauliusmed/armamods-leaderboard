@@ -7,6 +7,8 @@ import { TrendRow } from './TrendRow';
 import type { TrendingMod, TrendPeriod } from '../types';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
+import { SITE_ORIGIN, modPageUrl } from '../lib/site';
+import { itemListJsonLd } from '../lib/seoJsonLd';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
 
@@ -150,6 +152,20 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
       <SEO
         title={`Trending ${activePeriod} - ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'}`}
         description={`See which mods are trending in ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} over the last ${activePeriod}. Track rising stars, falling giants, and new discoveries.`}
+        url={game === 'arma3' ? '/arma3/trending' : '/trending'}
+        jsonLd={
+          sortedCurrentMods.length
+            ? itemListJsonLd({
+                name: `${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Trending (${activeCategory}, ${activePeriod})`,
+                description: getCategoryDescription(activeCategory),
+                url: `${SITE_ORIGIN}${game === 'arma3' ? '/arma3/trending' : '/trending'}`,
+                items: sortedCurrentMods.slice(0, 15).map((m) => ({
+                  name: m.name,
+                  url: modPageUrl(m.id, game),
+                })),
+              })
+            : undefined
+        }
       />
       {/* Compact control bar */}
       <div className="border-b border-white/10 pb-4 space-y-4">

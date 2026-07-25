@@ -38,6 +38,12 @@ const StoragePlannerLanding = lazy(() =>
 const OfficialScenariosPage = lazy(() =>
   import('./components/OfficialScenariosPage').then((m) => ({ default: m.OfficialScenariosPage }))
 );
+const HowToFindModsPage = lazy(() =>
+  import('./components/HowToFindModsPage').then((m) => ({ default: m.HowToFindModsPage }))
+);
+const HowToModpackSizePage = lazy(() =>
+  import('./components/HowToModpackSizePage').then((m) => ({ default: m.HowToModpackSizePage }))
+);
 
 function RouteFallback() {
   return <StatusState type="loading" />;
@@ -136,6 +142,8 @@ function App() {
               <Route path="/storage-planner" element={<StoragePlannerPage game="reforger" />} />
               <Route path="/arma-reforger-console-mod-storage" element={<StoragePlannerLanding />} />
               <Route path="/arma-server-browser" element={<ServerSearchLanding />} />
+              <Route path="/how-to-find-popular-arma-reforger-mods" element={<HowToFindModsPage />} />
+              <Route path="/how-to-check-arma-reforger-modpack-size" element={<HowToModpackSizePage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/support" element={<SupportPage />} />
 

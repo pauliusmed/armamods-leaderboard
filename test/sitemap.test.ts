@@ -58,6 +58,8 @@ describe('renderUrlset / index', () => {
     const locs = staticSitemapUrls().map((u) => u.loc);
     assert.ok(locs.includes('https://reforgermods.com/'));
     assert.ok(locs.includes('https://reforgermods.com/arma3/servers'));
+    assert.ok(locs.includes('https://reforgermods.com/how-to-find-popular-arma-reforger-mods'));
     assert.ok(!locs.some((l) => l.includes('/admin')));
+    assert.ok(!locs.some((l) => l.endsWith('/status') || l.includes('/status')));
   });
 });

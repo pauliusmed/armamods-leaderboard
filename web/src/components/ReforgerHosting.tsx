@@ -175,10 +175,11 @@ export function ReforgerHosting() {
 
   return (
     <div className="space-y-16 animate-in fade-in duration-700 pb-20">
-      <SEO 
+      <SEO
         title={`Best ${gameName} Server Hosting Comparison 2026`}
         description={`Expert analysis of ${gameName} hosting providers based on real telemetry. 3GB base usage + 0.25GB per player calculation for Conflict and MILSIM.`}
         keywords="best arma reforger hosting, reforger server rental, enfusion engine hosting, arma crossplay server"
+        url="/best-arma-reforger-hosting"
       />
 
       <section className="text-center space-y-4 pt-12">

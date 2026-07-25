@@ -145,7 +145,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
         title={`${gameLabel} Scenario Leaderboard`}
         description={`Popular scenarios and missions across ${gameLabel} modded servers — ranked by active players and deployments.`}
         keywords={`${gameLabel}, scenario leaderboard, mission popularity, server scenarios`}
-        url={`${gp || '/'}scenarios`}
+        url={game === 'arma3' ? '/arma3/scenarios' : '/scenarios'}
       />
 
       <StatsHero
