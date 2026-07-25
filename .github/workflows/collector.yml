@@ -21,7 +21,7 @@ jobs:
       - id: switch
         name: Collector enabled switch
         # >>> SWITCH: change false → true when BM API key is funded <<<
-        run: echo "enabled=false" >> "$GITHUB_OUTPUT"
+        run: echo "enabled=true" >> "$GITHUB_OUTPUT"
 
   # Reforger collection (priority - runs first)
   collect-reforger:

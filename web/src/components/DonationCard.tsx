@@ -6,6 +6,8 @@ import {
   DONATION_FOOTNOTE,
   DONATION_GOAL_BLURB,
   DONATION_GOAL_LABEL,
+  DONATION_GOAL_MET,
+  DONATION_GOAL_MET_BADGE,
   DONATION_GOAL_USD,
   DONATION_PROGRESS_LABEL,
   DONATION_RAISED_LABEL,
@@ -20,12 +22,17 @@ export function DonationCard() {
     <Card>
       <CardContent className="p-8 space-y-6">
         <div className="space-y-2">
-          <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
-            Community Sync Fund
-          </h3>
-          <p className="text-gray-400 text-sm">
-            {DONATION_GOAL_BLURB}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
+              Community Sync Fund
+            </h3>
+            {DONATION_GOAL_MET ? (
+              <span className="text-[8px] font-black uppercase tracking-widest text-black bg-emerald-400 px-2 py-0.5">
+                {DONATION_GOAL_MET_BADGE}
+              </span>
+            ) : null}
+          </div>
+          <p className="text-gray-400 text-sm">{DONATION_GOAL_BLURB}</p>
         </div>
 
         <div className="space-y-3">
@@ -47,7 +54,7 @@ export function DonationCard() {
             aria-label={`Community pool ${pct}% of ${DONATION_GOAL_LABEL}`}
           >
             <div
-              className="h-full bg-tactical-orange transition-all"
+              className={`h-full transition-all ${DONATION_GOAL_MET ? 'bg-emerald-400' : 'bg-tactical-orange'}`}
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -75,9 +82,7 @@ export function DonationCard() {
           {DONATION_CTA_LABEL}
         </a>
 
-        <p className="text-[8px] text-gray-600 text-center">
-          {DONATION_FOOTNOTE}
-        </p>
+        <p className="text-[8px] text-gray-600 text-center">{DONATION_FOOTNOTE}</p>
       </CardContent>
     </Card>
   );

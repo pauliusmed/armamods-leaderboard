@@ -1,5 +1,7 @@
 import {
   COMMUNITY_DONORS,
+  DONATION_GOAL_MET,
+  DONATION_GOAL_MET_BADGE,
   DONATION_THANKS_HEADING,
   formatDonorDate,
 } from '../lib/donation';
@@ -10,17 +12,24 @@ export function CommunityDonorsThanks({ compact = false }: { compact?: boolean }
 
   return (
     <div className={compact ? 'space-y-3 pt-2' : 'space-y-4'}>
-      <p
-        className={`font-black uppercase tracking-[0.3em] text-tactical-orange ${
-          compact ? 'text-[8px]' : 'text-[10px]'
-        }`}
-      >
-        {DONATION_THANKS_HEADING}
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p
+          className={`font-black uppercase tracking-[0.3em] text-tactical-orange ${
+            compact ? 'text-[8px]' : 'text-[10px]'
+          }`}
+        >
+          {DONATION_THANKS_HEADING}
+        </p>
+        {DONATION_GOAL_MET ? (
+          <span className="text-[8px] font-black uppercase tracking-widest text-black bg-emerald-400 px-2 py-0.5">
+            {DONATION_GOAL_MET_BADGE}
+          </span>
+        ) : null}
+      </div>
       <ul className="space-y-3">
         {COMMUNITY_DONORS.map((donor) => (
           <li
-            key={`${donor.name}-${donor.date}`}
+            key={`${donor.name}-${donor.date}-${donor.note ?? ''}`}
             className="border border-white/5 bg-white/[0.02] px-4 py-3 space-y-1"
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2">

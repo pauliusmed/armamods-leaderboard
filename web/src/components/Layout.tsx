@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { DATA_SOURCE_ATTRIBUTION, DATA_STALE_FOOTER, DATA_SYNC_NOTE } from '../lib/siteCopy';
-import { DONATION_GOAL_LABEL } from '../lib/donation';
+import { DONATION_GOAL_LABEL, DONATION_GOAL_MET } from '../lib/donation';
 import { DataStaleBanner } from './DataStaleBanner';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 
@@ -355,7 +355,7 @@ export function Layout({ children }: LayoutProps) {
                 to="/support"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-tactical-orange/10 border border-tactical-orange/20 text-tactical-orange hover:bg-tactical-orange hover:text-black text-[10px] font-black uppercase tracking-widest transition-all"
               >
-                Community Sync Fund ({DONATION_GOAL_LABEL})
+                Community Sync Fund ({DONATION_GOAL_MET ? 'goal met' : DONATION_GOAL_LABEL})
               </Link>
             </div>
 

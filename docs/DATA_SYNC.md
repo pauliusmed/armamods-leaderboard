@@ -54,13 +54,13 @@ While there is no funded BM key, scheduled collects would only fail (403) and sp
 
 ```yaml
 # >>> SWITCH: change false → true when BM API key is funded <<<
-run: echo "enabled=false" >> "$GITHUB_OUTPUT"
+run: echo "enabled=true" >> "$GITHUB_OUTPUT"
 ```
 
 | `enabled` | Behaviour |
 |-----------|-----------|
 | `false` | `collect-*` / `trending-*` jobs **skip** (cron may still appear as a short green/skipped run) |
-| `true` | Normal Reforger → Arma 3 collect → trending pipeline |
+| `true` | Normal Reforger → Arma 3 collect → trending pipeline (**current**, since 2026-07-25) |
 
 Manual `workflow_dispatch` is also gated by the same flag.
 
@@ -93,9 +93,9 @@ Live sync needs ~$1/mo BM Basic. The site frames this as a **community pool** (n
 | Constant | Value |
 |----------|--------|
 | `DONATION_GOAL_USD` | **25** (~1 year of Basic for everyone) |
-| `DONATION_RAISED_USD` | update manually when donations land (EUR → ≈USD) |
-| `COMMUNITY_DONORS` | public thanks wall (name / tag / date; no txn IDs) |
-| Voice | “Community Sync Fund” / “Chip in” / shared benefit |
+| `DONATION_RAISED_USD` | update manually when donations land (EUR → ≈USD); **goal met** at $26.85 (2026-07-25) |
+| `COMMUNITY_DONORS` | public thanks wall (nickname / anon; no txn IDs) |
+| Voice | “Community Sync Fund” / shared benefit; emerald **Goal met** when funded |
 
 Used by `DonationCard`, `SupportPage`, Layout CTA, stale banner, Config Audit donate banner.
 

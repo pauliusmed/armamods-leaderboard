@@ -269,8 +269,8 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
   it the collector fails; the UI keeps serving the last KV snapshot and shows a
   stale-data banner when `/api/health` reports `isStale` (>3h).
 - **Collector switch**: `.github/workflows/collector.yml` job `collector-gate`
-  sets `enabled=false|true`. While false, collect/trending jobs are skipped
-  (avoids red 403 runs). Flip to `true` after the BM PAT secret exists.
+  sets `enabled=false|true`. Re-enabled **2026-07-25** after BM PAT in GitHub
+  secrets (`BATTLEMETRICS_API_KEY`). Set back to `false` if the key is revoked.
 - **CI**: `.github/workflows/ci.yml` runs the test suite on PRs.
 - **Deploy**: `.github/workflows/deploy.yml` publishes to Cloudflare.
 

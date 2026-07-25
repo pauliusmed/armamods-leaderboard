@@ -18,11 +18,13 @@ export type CommunityDonor = {
 export const DONATION_GOAL_USD = 25;
 
 /** Running total in USD (EUR gifts converted ≈ at receive time). */
-export const DONATION_RAISED_USD = 1.85;
+export const DONATION_RAISED_USD = 26.85;
 
 export const DONATION_GOAL_LABEL = `$${DONATION_GOAL_USD}`;
 
 export const DONATION_RAISED_LABEL = `$${DONATION_RAISED_USD.toFixed(2)}`;
+
+export const DONATION_GOAL_MET = DONATION_RAISED_USD >= DONATION_GOAL_USD;
 
 /** Public wall of thanks — newest last; never store PayPal txn IDs here. */
 export const COMMUNITY_DONORS: readonly CommunityDonor[] = [
@@ -33,19 +35,38 @@ export const COMMUNITY_DONORS: readonly CommunityDonor[] = [
     first: true,
     note: 'First community donor — thank you for opening the pool.',
   },
+  {
+    name: 'HavocHound',
+    date: '2026-07-25',
+    note: 'Thank you — kind words and support for the workshop analytics work.',
+  },
+  {
+    name: 'Anonymous',
+    date: '2026-07-25',
+    note: 'Thank you for helping push the shared pool over the line.',
+  },
 ];
+
 /** Short shared pitch — collective “we”, not a personal ask. */
-export const DONATION_GOAL_BLURB =
-  'A shared $25 pool covers ~1 year of BattleMetrics Basic so everyone gets live rankings back';
+export const DONATION_GOAL_BLURB = DONATION_GOAL_MET
+  ? 'Community pool goal met — BattleMetrics Basic can be funded so live rankings return for everyone'
+  : 'A shared $25 pool covers ~1 year of BattleMetrics Basic so everyone gets live rankings back';
 
-export const DONATION_CTA_LABEL = 'Chip in via PayPal';
+export const DONATION_CTA_LABEL = DONATION_GOAL_MET
+  ? 'Add to the buffer via PayPal'
+  : 'Chip in via PayPal';
 
-export const DONATION_PROGRESS_LABEL = 'Community pool';
+export const DONATION_PROGRESS_LABEL = DONATION_GOAL_MET
+  ? 'Community pool — goal met'
+  : 'Community pool';
 
-export const DONATION_FOOTNOTE =
-  'Every contribution goes toward the shared API cost — not a personal tip jar';
+export const DONATION_FOOTNOTE = DONATION_GOAL_MET
+  ? 'Goal reached together — extra chips still help with API months ahead'
+  : 'Every contribution goes toward the shared API cost — not a personal tip jar';
 
 export const DONATION_THANKS_HEADING = 'Community thanks';
+
+export const DONATION_GOAL_MET_BADGE = 'Goal met';
 
 export const DONATION_COVERS = [
   'BattleMetrics Basic API (~1 year at $1/mo) for the whole site',

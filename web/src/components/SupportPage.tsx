@@ -6,6 +6,8 @@ import {
   DONATION_FOOTNOTE,
   DONATION_GOAL_BLURB,
   DONATION_GOAL_LABEL,
+  DONATION_GOAL_MET,
+  DONATION_GOAL_MET_BADGE,
   DONATION_GOAL_USD,
   DONATION_PROGRESS_LABEL,
   DONATION_RAISED_LABEL,
@@ -23,6 +25,11 @@ export function SupportPage() {
           <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.3em]">
             // Community Fund
           </span>
+          {DONATION_GOAL_MET ? (
+            <span className="text-[8px] font-black uppercase tracking-widest text-black bg-emerald-400 px-2 py-0.5">
+              {DONATION_GOAL_MET_BADGE}
+            </span>
+          ) : null}
         </div>
         <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none italic">
           Built By The Community
@@ -40,12 +47,11 @@ export function SupportPage() {
             </h2>
             <p className="text-gray-400 text-sm leading-relaxed">
               BattleMetrics now requires a paid API key for all requests. Without a funded key,
-              live rankings, player counts, and trending freeze for <span className="text-white font-bold">everyone</span>
-              — the site can only keep the last community snapshot.
+              live rankings, player counts, and trending freeze for{' '}
+              <span className="text-white font-bold">everyone</span> — the site can only keep the
+              last community snapshot.
             </p>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              {DONATION_GOAL_BLURB}.
-            </p>
+            <p className="text-gray-400 text-sm leading-relaxed">{DONATION_GOAL_BLURB}.</p>
           </div>
 
           <div className="pt-6 border-t border-white/5 space-y-4">
@@ -65,11 +71,15 @@ export function SupportPage() {
               aria-valuemax={100}
               aria-label={`Community pool ${pct}%`}
             >
-              <div className="h-full bg-tactical-orange" style={{ width: `${pct}%` }} />
+              <div
+                className={`h-full transition-all ${DONATION_GOAL_MET ? 'bg-emerald-400' : 'bg-tactical-orange'}`}
+                style={{ width: `${pct}%` }}
+              />
             </div>
             <p className="text-gray-500 text-xs">
-              ${DONATION_GOAL_USD} shared goal ≈ one year of API access so the whole community
-              gets live sync again.
+              {DONATION_GOAL_MET
+                ? `Raised ${DONATION_RAISED_LABEL} against the $${DONATION_GOAL_USD} goal — enough to fund BattleMetrics Basic and restore live sync.`
+                : `$${DONATION_GOAL_USD} shared goal ≈ one year of API access so the whole community gets live sync again.`}
             </p>
           </div>
 

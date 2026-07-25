@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.10] - 2026-07-25
+
+### 💸 Community fund
+- **Goal met** — pool **$26.85 / $25** (Erf + HavocHound + Anonymous); emerald **Goal met** badge.
+- Thanks wall: HavocHound, Anonymous (nickname-only / anon).
+
+### ⚙️ Infrastruktūra
+- **Collector re-enabled** — `collector-gate` `enabled=true` after `BATTLEMETRICS_API_KEY` secret set.
+
 ## [1.22.9] - 2026-07-24
 
 ### 💸 Community fund
