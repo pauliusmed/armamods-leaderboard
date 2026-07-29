@@ -205,15 +205,13 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                     Loading favorites…
                   </div>
                 ) : (
-                  pinnedMods.map((mod) => (
+                    pinnedMods.map((mod) => (
                     <ModCard
                       key={`fav-${mod.id}`}
                       mod={mod}
                       rank={mod.overallRank}
                       game={game}
                       pinned
-                      isFavorite={isFavorite(mod.id)}
-                      onToggleFavorite={() => toggle(mod.id)}
                     />
                   ))
                 )}
@@ -225,9 +223,6 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                 mod={mod}
                 rank={sortBy === 'overall' ? mod.overallRank : (currentPage - 1) * itemsPerPage + index + 1}
                 game={game}
-                isFavorite={isFavorite(mod.id)}
-                onToggleFavorite={() => toggle(mod.id)}
-                priority={index < 8 && currentPage === 1 ? 'eager' : 'lazy'}
               />
             ))}
           </div>

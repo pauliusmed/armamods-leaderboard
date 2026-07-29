@@ -1,33 +1,18 @@
 import { Link } from 'react-router-dom';
 import type { Server } from '../../types';
-import { TierBadge } from './TierBadge';
-import { ConsoleFitBadge } from './ConsoleFitBadge';
 import { ServerStatusBadge } from './ServerStatusBadge';
-import { BmLastSeenHint } from './BmLastSeenHint';
-import { CopyServerModsButton } from './CopyServerModsButton';
-import { FavoriteServerButton } from './FavoriteServerButton';
 import { formatBytes } from '../../lib/formatBytes';
 import { serverModpackBytes } from '../../lib/serverModpack';
 
 interface ServerCardProps {
   server: Server;
   game?: string;
-  showConsoleFit?: boolean;
-  consoleLimitGb?: number;
-  consoleLimitBytes?: number;
-  isFavorite?: boolean;
-  onToggleFavorite?: () => void;
   pinned?: boolean;
 }
 
 export function ServerCard({
   server,
   game = 'reforger',
-  showConsoleFit = false,
-  consoleLimitGb = 25,
-  consoleLimitBytes = 25 * 1024 ** 3,
-  isFavorite = false,
-  onToggleFavorite,
   pinned = false,
 }: ServerCardProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
@@ -42,12 +27,9 @@ export function ServerCard({
   return (
     <div className={`px-4 py-3 border-b border-white/5 ${pinned ? 'bg-tactical-orange/[0.04]' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className="flex items-center gap-1 shrink-0 mt-1 w-14">
-          <span className={`font-mono text-sm tabular-nums ${isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'}`}>
-            {rank != null ? String(rank).padStart(2, '0') : '–'}
-          </span>
-          <TierBadge tier={server.sqeTier} />
-        </div>
+        <span className={`font-mono text-sm tabular-nums mt-1 shrink-0 w-7 ${isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'}`}>
+          {rank != null ? String(rank).padStart(2, '0') : '–'}
+        </span>
         <div className="min-w-0 flex-1">
           <Link
             to={`${gp}/server/${server.id}`}
@@ -58,14 +40,10 @@ export function ServerCard({
           </Link>
           <div className="flex flex-wrap items-center gap-2 mt-0.5">
             <ServerStatusBadge status={server.bmStatus} />
-            <BmLastSeenHint status={server.bmStatus} lastSeenAt={server.bmLastSeenAt} />
             {server.scenarioName && (
               <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-600 line-clamp-1">
                 {server.scenarioName}
               </span>
-            )}
-            {showConsoleFit && (
-              <ConsoleFitBadge server={server} limitGb={consoleLimitGb} limitBytes={consoleLimitBytes} />
             )}
           </div>
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
@@ -79,12 +57,6 @@ export function ServerCard({
               </>
             )}
           </p>
-          <div className="flex items-center justify-end mt-2 border-t border-white/5 pt-2">
-            {!isVanilla && game === 'reforger' && <CopyServerModsButton mods={server.mods ?? []} size="sm" />}
-            {onToggleFavorite && (
-              <FavoriteServerButton active={isFavorite} serverName={server.name} onToggle={onToggleFavorite} />
-            )}
-          </div>
         </div>
       </div>
     </div>

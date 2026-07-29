@@ -2,17 +2,12 @@ import { Link } from 'react-router-dom';
 import type { Mod } from '../../types';
 import type { GameType } from '../../api/client';
 import { ModThumbnail } from './ModThumbnail';
-import { ModAuthorCell } from './ModAuthorCell';
-import { ModWorkshopStatusBadge, useWorkshopStatus } from './ModWorkshopStatus';
-import { ModActions } from './ModActions';
 import { formatBytes } from '../../lib/formatBytes';
 
 interface ModCardProps {
   mod: Mod;
   rank?: number;
   game?: GameType;
-  isFavorite?: boolean;
-  onToggleFavorite?: () => void;
   pinned?: boolean;
   priority?: 'eager' | 'lazy';
 }
@@ -21,19 +16,12 @@ export function ModCard({
   mod,
   rank,
   game = 'reforger',
-  isFavorite = false,
-  onToggleFavorite,
   pinned = false,
   priority = 'lazy',
 }: ModCardProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const isTop3 = rank != null && rank <= 3;
   const share = mod.marketShare ?? 0;
-  const { status: workshopStatus, isUnavailable: workshopUnavailable } = useWorkshopStatus(
-    mod.id,
-    game,
-    mod.workshopStatus !== undefined ? { initialStatus: mod.workshopStatus } : undefined
-  );
 
   return (
     <div className={`px-4 py-3 border-b border-white/5 ${pinned ? 'bg-tactical-orange/[0.04]' : ''}`}>
@@ -50,8 +38,6 @@ export function ModCard({
           >
             {mod.name}
           </Link>
-          <ModAuthorCell modId={mod.id} game={game} author={mod.author} className="mt-0.5" />
-          <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-0.5" />
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
             <span>{mod.totalPlayers?.toLocaleString() ?? '0'} personnel</span>
             <span>{mod.serverCount} deploy</span>
@@ -60,16 +46,6 @@ export function ModCard({
               <span>{formatBytes(mod.sizeBytes)}</span>
             )}
           </p>
-          <div className="flex items-center justify-end mt-2 border-t border-white/5 pt-2">
-            <ModActions
-              modId={mod.id}
-              modName={mod.name}
-              game={game}
-              workshopStatus={{ isUnavailable: workshopUnavailable }}
-              isFavorite={isFavorite}
-              onToggleFavorite={onToggleFavorite}
-            />
-          </div>
         </div>
       </div>
     </div>

@@ -227,12 +227,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                       key={`fav-${server.id}`}
                       server={server}
                       game={game}
-                      showConsoleFit={game === 'reforger'}
-                      consoleLimitGb={consoleLimitGb}
-                      consoleLimitBytes={consoleLimitBytes}
                       pinned
-                      isFavorite={isFavorite(server.id)}
-                      onToggleFavorite={() => toggle(server.id)}
                     />
                   ))
                 )}
@@ -277,11 +272,6 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                 key={server.id}
                 server={server}
                 game={game}
-                showConsoleFit={game === 'reforger'}
-                consoleLimitGb={consoleLimitGb}
-                consoleLimitBytes={consoleLimitBytes}
-                isFavorite={isFavorite(server.id)}
-                onToggleFavorite={() => toggle(server.id)}
               />
             ))}
           </div>
