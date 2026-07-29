@@ -91,14 +91,13 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const [retryCount, setRetryCount] = useState(0);
   const [selectedDays, setSelectedDays] = useState(30);
   const [modChangeDays, setModChangeDays] = useState<7 | 30>(7);
-  const [modChanges, setModChanges] = useState<
-    Array<{
-      date: string;
-      added: Array<{ id: string; name: string }>;
-      removed: Array<{ id: string; name: string }>;
-    }>
-  >([]);
-  const [modChangesTracking, setModChangesTracking] = useState(false);
+        const [modChanges, setModChanges] = useState<
+  Array<{
+    date: string;
+    added: Array<{ id: string; name: string }>;
+    removed: Array<{ id: string; name: string }>;
+  }>
+>([]);
 
   const [modSearch, setModSearch] = useState('');
   const [modSort, setModSort] = useState<EmbeddedModSort>('rank');
@@ -200,14 +199,12 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await serversApi.getModChanges(serverId, modChangeDays, game);
-        if (cancelled) return;
-        setModChanges(res.data || []);
-        setModChangesTracking(Boolean(res.meta?.tracking));
+      const res = await serversApi.getModChanges(serverId, modChangeDays, game);
+      if (cancelled) return;
+      setModChanges(res.data || []);
       } catch {
         if (cancelled) return;
-        setModChanges([]);
-        setModChangesTracking(false);
+      setModChanges([]);
       }
     })();
     return () => {
@@ -803,19 +800,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
         </div>
 
-        {!modChangesTracking ? (
-          <Card>
-            <CardContent className="p-6 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              Tracking starts after the next daily collector snapshot.
-            </CardContent>
-          </Card>
-        ) : modChanges.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              No modlist changes in the last {modChangeDays} days.
-            </CardContent>
-          </Card>
-        ) : (
+        {modChanges.length > 0 && (
           <div className="space-y-4">
             {modChanges.map((day) => (
               <Card key={day.date}>
@@ -824,48 +809,22 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                     {day.date}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
-                        Added ({day.added.length})
-                      </p>
-                      {day.added.length === 0 ? (
-                        <p className="text-xs text-gray-600">—</p>
-                      ) : (
-                        <ul className="space-y-1.5">
-                          {day.added.map((m) => (
-                            <li key={`a-${day.date}-${m.id}`}>
-                              <Link
-                                to={`${gp}/mod/${encodeURIComponent(m.id)}`}
-                                className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
-                              >
-                                {m.name}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-rose-400">
-                        Removed ({day.removed.length})
-                      </p>
-                      {day.removed.length === 0 ? (
-                        <p className="text-xs text-gray-600">—</p>
-                      ) : (
-                        <ul className="space-y-1.5">
-                          {day.removed.map((m) => (
-                            <li key={`r-${day.date}-${m.id}`}>
-                              <Link
-                                to={`${gp}/mod/${encodeURIComponent(m.id)}`}
-                                className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
-                              >
-                                {m.name}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                    <ModChangesColumn
+                      label="Added"
+                      color="text-emerald-400"
+                      mods={day.added}
+                      date={day.date}
+                      prefix="a"
+                      gp={gp}
+                    />
+                    <ModChangesColumn
+                      label="Removed"
+                      color="text-rose-400"
+                      mods={day.removed}
+                      date={day.date}
+                      prefix="r"
+                      gp={gp}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -1024,6 +983,64 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function ModChangesColumn({
+  label,
+  color,
+  mods,
+  date,
+  prefix,
+  gp,
+}: {
+  label: string;
+  color: string;
+  mods: Array<{ id: string; name: string }>;
+  date: string;
+  prefix: string;
+  gp: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (mods.length === 0) {
+    return (
+      <div className="space-y-2">
+        <p className={`text-[9px] font-black uppercase tracking-widest ${color}`}>
+          {label} (0)
+        </p>
+        <p className="text-xs text-gray-600">—</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="text-[9px] font-black uppercase tracking-widest cursor-pointer hover:opacity-80"
+      >
+        <span className={color}>
+          {label} ({mods.length})
+        </span>
+        <span className="ml-1.5 text-gray-500 text-[8px]">{expanded ? '▲' : '▼'}</span>
+      </button>
+      {expanded && (
+        <ul className="space-y-1.5">
+          {mods.map((m) => (
+            <li key={`${prefix}-${date}-${m.id}`}>
+              <Link
+                to={`${gp}/mod/${encodeURIComponent(m.id)}`}
+                className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
+              >
+                {m.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
