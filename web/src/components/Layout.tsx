@@ -370,11 +370,11 @@ export function Layout({ children }: LayoutProps) {
                   <li><Link to={isArma3 ? "/arma3/servers" : "/servers"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Active Servers</Link></li>
                   <li><Link to={isArma3 ? "/arma3/scenarios" : "/scenarios"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Scenario Leaderboard</Link></li>
                   <li><Link to={isArma3 ? "/best-arma-3-hosting" : "/best-arma-reforger-hosting"} className="text-tactical-orange hover:underline transition-colors font-black uppercase tracking-widest text-[10px]">Best Hosting 2026</Link></li>
-                  {!isArma3 && (
+                  {!isArma3 && (<>
                     <li><Link to="/arma-reforger-console-mod-storage" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Console Mod Storage</Link></li>
                     <li><Link to="/how-to-find-popular-arma-reforger-mods" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Find Mods</Link></li>
                     <li><Link to="/how-to-check-arma-reforger-modpack-size" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Check Modpack Size</Link></li>
-                  )}
+                  </>)}
                 </ul>
                 <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Community Fund</Link>
               </div>
