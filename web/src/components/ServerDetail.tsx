@@ -813,8 +813,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">—</span>
                     ) : (
                       <>
-                        <ZeroBadge color="text-emerald-400" label="Added" count={day.added.length} />
-                        <ZeroBadge color="text-rose-400" label="Removed" count={day.removed.length} />
+                        <CountBadge color="text-emerald-400" label="Added" count={day.added.length} />
+                        <CountBadge color="text-rose-400" label="Removed" count={day.removed.length} />
                       </>
                     )}
                   </div>
@@ -1003,9 +1003,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   );
 }
 
-function ZeroBadge({ color, label, count }: { color: string; label: string; count: number }) {
-  if (count > 0) return null;
-  return <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{label} (0)</span>;
+function CountBadge({ color, label, count }: { color: string; label: string; count: number }) {
+  return <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{label} ({count})</span>;
 }
 
 function ModChangesColumn({
