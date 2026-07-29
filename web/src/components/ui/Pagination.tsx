@@ -1,5 +1,3 @@
-import { useMediaQuery } from '../../hooks/useMediaQuery';
-
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -16,23 +14,7 @@ export function Pagination({
   sliceLabel = 'Network Slice',
   className = '',
 }: PaginationProps) {
-  const isMobile = useMediaQuery('(max-width: 639px)');
-
   if (totalPages <= 1) return null;
-
-  if (isMobile) {
-    return (
-      <div className={`flex flex-col items-center gap-4 ${className}`}>
-        <button
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className="w-full px-8 py-4 bg-zinc-900 border border-white/10 text-xs font-black text-white hover:bg-tactical-orange hover:text-black disabled:opacity-30 transition-all uppercase tracking-widest italic"
-        >
-          Load More · {currentPage} / {totalPages}
-        </button>
-      </div>
-    );
-  }
 
   const getPageNumbers = () => {
     if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);

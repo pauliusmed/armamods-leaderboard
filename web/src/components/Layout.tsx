@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { DATA_SOURCE_ATTRIBUTION, DATA_STALE_FOOTER, DATA_SYNC_NOTE } from '../lib/siteCopy';
 import { DONATION_GOAL_LABEL, DONATION_GOAL_MET } from '../lib/donation';
 import { DataStaleBanner } from './DataStaleBanner';
+import { OfflineBanner } from './OfflineBanner';
 import { BottomNav } from './ui/BottomNav';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 
@@ -145,6 +146,20 @@ export function Layout({ children }: LayoutProps) {
               <span className="text-sm" aria-hidden="true">🛰</span>
             </Link>
 
+            {/* Mobile Theater Switch */}
+            <Link
+              to={isArma3
+                ? location.pathname.replace(/^\/arma3/, '') || '/'
+                : `/arma3${location.pathname === '/' ? '' : location.pathname}`
+              }
+              className="lg:hidden flex items-center justify-center w-14 sm:w-16 border-l border-white/5 text-gray-500 hover:text-tactical-orange hover:bg-white/5 transition-colors"
+              aria-label={`Switch to ${isArma3 ? 'Reforger' : 'Arma 3'}`}
+            >
+              <span className="text-[9px] font-black uppercase tracking-widest">
+                {isArma3 ? 'A3' : 'AR'}
+              </span>
+            </Link>
+
             <div className="hidden lg:flex px-8 border-l border-white/5 items-center relative group/dropdown">
             <button className="flex items-center gap-3 py-6 group">
               <span className="w-2 h-2 bg-tactical-orange animate-pulse"></span>
@@ -195,6 +210,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="h-[72px] sm:h-[84px]"></div>
 
       <DataStaleBanner game={isArma3 ? 'arma3' : 'reforger'} />
+      <OfflineBanner />
 
       <main className="flex-1 min-h-[60vh] max-w-screen-2xl mx-auto px-4 sm:px-8 w-full py-8 sm:py-12 relative">
         <div className="animate-in fade-in duration-1000">

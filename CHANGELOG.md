@@ -12,13 +12,18 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 ### 📱 Mobile UX
 - **Bottom nav** — `BottomNav.tsx` (5 tab'ai: Mods, Servers, Trending, Scenarios, Tools). Pašalintas hamburger menu. Fixed bottom, 56px aukščio, `pb-14` content spacing.
 - **Bottom sheets** — `BottomSheet.tsx` slide-up panel, `createPortal`, backdrop dismiss. GalleryLightbox naudoja bottom sheet mobiliame (`useMediaQuery('(max-width: 1023px)')`), overlay desktop'e.
-- **Load More** — `Pagination.tsx` auto-switch: mobilui "Load More" mygtukas (<640px), desktop`i numeruotas paging'as (≥640px).
+- **Load More (attempted, reverted)** — `Pagination.tsx` auto-switch buvo pridėtas, bet reverted: mygtukas veikė kaip replace, ne append. Grįžta prie numbered pagination visuose breakpointuose.
 - **Card-based list** — `ModCard.tsx`, `ServerCard.tsx`, `TrendCard.tsx` mobilūs variantai. ModList, ServerList, TrendingPage rodo korteles <1024px (`useMediaQuery`).
 - **PWA** — `vite-plugin-pwa`: Service Worker (NetworkFirst `/api/` cache, 28 precache assets, 2h cache), manifest (SVG icon, #ff6b00 theme), auto-update.
 - **Pre-existing linter klaidos** — ištaisytos 2 unused import klaidos (ScenarioList `Server`, ModDependencyTable `ReactNode`).
 
+### 🐛 Fixes
+- **Theater switch (Reforger/A3)** — grąžintas į mobilų header (vietoje buvusio hamburger). Buvo regresija: pašalinus hamburger meniu, dingo gallimybė perjungti tarp teatrų mobiliame.
+- **Load More reverted** — mygtukas veikė kaip "Next page" (replace, ne append), nes `useMods`/`useServers` grąžina tik vieno puslapio slice. Grąžintas numbered pagination visuose breakpointuose. Tikras Load More reikalauja data hook akumuliacijos.
+- **Offline indikatorius** — `OfflineBanner.tsx`: amber bar "UPLINK LOST — Showing cached telemetry" kai `navigator.onLine === false`. Stebi online/offline events.
+
 ### 📚 Dokumentacija
-- **docs/MOBILE_STANDARDS.md** — sukurtas; atnaujintas su visais implementuotais elementais (bottom nav, card list, Load More, bottom sheets, SW/PWA). Roadmap: IndexedDB persistence.
+- **docs/MOBILE_STANDARDS.md** — sukurtas; atnaujintas su visais implementuotais elementais (bottom nav, card list, bottom sheets, SW/PWA). Pagination atnaujinta (numbered visiems, Load More pašalintas). Roadmap: IndexedDB persistence.
 - **docs/DESIGN_SYSTEM.md** — "Mobile" sekcija pakeista nuoroda į MOBILE_STANDARDS.md (buvo aprašiusi neįgyvendintą idealą).
 - **docs/MOBILE_UX.md** — praretintas iki gryno audit log: išmesta "Patterns we use" (dubliuojasi su standartu), atnaujinta data, pridėta nuoroda į standartą.
 

@@ -61,11 +61,13 @@ Mobile (<1024px): **Card-based list** (žr. [7. Card-based list](#7-card-based-l
 
 ## 4. Puslapiavimas
 
-`web/src/components/ui/Pagination.tsx` — auto-switch pagal breakpoint:
+`web/src/components/ui/Pagination.tsx`:
 
-- **Desktop (≥640px):** Sliding langas (7 puslapių) aplink dabartinį. Puslapių mygtukai: `min-w-[44px] h-11`. Prev/Next: `w-full` mobiliame, `sm:w-auto` desktop.
-- **Mobile (<640px):** "Load More" mygtukas (full-width). Rodo `currentPage / totalPages`. Callback: `onPageChange(currentPage + 1)`.
-- Etiketė: "Network Slice" / "Module Slice" (terminologija iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)).
+- **Visuose breakpoint'uose:** numeruotas paging'as (7 langų window, sliding aplink dabartinį).
+- Puslapių mygtukai: `min-w-[44px] h-11` — touch target.
+- Prev/Next: `w-full` mobiliame (full-width), `sm:w-auto` desktop.
+- Etiketė: "Network Slice" / "Module Slice".
+- Load More variantas neįgyvendintas – reikia data hook pakeitimų (akumuliacija per puslapius).
 
 ---
 
@@ -111,9 +113,11 @@ Paveldima iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), bet su mobile patikslinima
 ## 8. Offline / stale data
 
 - **Service Worker** (vite-plugin-pwa): `NetworkFirst` API užklausoms (`/api/` – 2h cache, max 100, 10s timeout). 28 assets precache.
-- **Stale data indikacija**: `DataStaleBanner` amber bar po header; hero sekcijose "Snapshot as of … · not live" užrašas.
-- **Tinkle praradus**: inline banner "Uplink Lost" su retry (ne fullscreen modal).
-- **Cache**: SW cache API atsakymams + HTTP cache. IndexedDB persistence dar neįgyvendintas — žr. [Planuojama](#10-planuojama-roadmap).
+- **Offline indikatorius**: `OfflineBanner.tsx` — amber bar "UPLINK LOST — Showing cached telemetry", rodomas kai `navigator.onLine === false`. Stebi `online`/`offline` events.
+- **Stale data indikacija**: `DataStaleBanner` amber bar po header (ne sinchronizuoti duomenys, ne tinklas).
+- **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #ff6b00`, SVG icon.
+- **Auto-update:** `registerType: 'autoUpdate'`.
+- IndexedDB persistence dar neįgyvendintas — žr. [Planuojama](#10-planuojama-roadmap).
 
 ---
 
