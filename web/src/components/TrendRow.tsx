@@ -4,11 +4,7 @@ import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { ModAuthorCell } from './ui/ModAuthorCell';
 import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
-import { CopyModConfigButton } from './ui/CopyModConfigButton';
-import { OpenModStatsButton } from './ui/OpenModStatsButton';
-import { FavoriteModButton } from './ui/FavoriteModButton';
-import { workshopPageUrl } from '../lib/workshop';
-import { TOUCH_TARGET_BUTTON, TOUCH_TARGET_GAP } from '../lib/touchTargets';
+import { ModActions } from './ui/ModActions';
 
 type TrendCategory = 'rising' | 'falling' | 'new';
 
@@ -43,7 +39,6 @@ export function TrendRow({
   const hasChange = category !== 'new' && prevRank != null && currentRank != null;
   const delta = hasChange ? (prevRank as number) - (currentRank as number) : 0; // positive = rising
   const magnitude = Math.abs(delta);
-  const workshopUrl = workshopPageUrl(mod.id, game);
   const { status: workshopStatus, isUnavailable: workshopUnavailable } = useWorkshopStatus(
     mod.id,
     game
@@ -121,37 +116,14 @@ export function TrendRow({
 
       {/* Actions */}
       <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
-        <div className={`inline-flex items-center justify-end ${TOUCH_TARGET_GAP}`}>
-          {onToggleFavorite && (
-            <FavoriteModButton
-              active={isFavorite}
-              modName={mod.name}
-              onToggle={onToggleFavorite}
-            />
-          )}
-          {game === 'reforger' && (
-            <CopyModConfigButton modId={mod.id} modName={mod.name} />
-          )}
-          <OpenModStatsButton modId={mod.id} modName={mod.name} game={game} />
-          {workshopUnavailable ? (
-            <span
-              className={`${TOUCH_TARGET_BUTTON} px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed`}
-              title="No longer on Reforger Workshop"
-            >
-              Workshop
-            </span>
-          ) : (
-            <a
-              href={workshopUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${mod.name} on ${game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop'}`}
-              className={`${TOUCH_TARGET_BUTTON} px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors`}
-            >
-              {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
-            </a>
-          )}
-        </div>
+        <ModActions
+          modId={mod.id}
+          modName={mod.name}
+          game={game}
+          workshopStatus={{ isUnavailable: workshopUnavailable }}
+          isFavorite={isFavorite}
+          onToggleFavorite={onToggleFavorite}
+        />
       </td>
     </tr>
   );

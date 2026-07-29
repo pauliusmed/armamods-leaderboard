@@ -4,12 +4,8 @@ import type { GameType } from '../../api/client';
 import { ModThumbnail } from './ModThumbnail';
 import { ModAuthorCell } from './ModAuthorCell';
 import { ModWorkshopStatusBadge, useWorkshopStatus } from './ModWorkshopStatus';
-import { CopyModConfigButton } from './CopyModConfigButton';
-import { OpenModStatsButton } from './OpenModStatsButton';
-import { FavoriteModButton } from './FavoriteModButton';
-import { workshopPageUrl } from '../../lib/workshop';
+import { ModActions } from './ModActions';
 import { formatBytes } from '../../lib/formatBytes';
-import { TOUCH_TARGET_GAP } from '../../lib/touchTargets';
 
 interface ModCardProps {
   mod: Mod;
@@ -33,7 +29,6 @@ export function ModCard({
   const gp = game === 'reforger' ? '' : `/${game}`;
   const isTop3 = rank != null && rank <= 3;
   const share = mod.marketShare ?? 0;
-  const workshopUrl = workshopPageUrl(mod.id, game);
   const { status: workshopStatus, isUnavailable: workshopUnavailable } = useWorkshopStatus(
     mod.id,
     game,
@@ -65,27 +60,15 @@ export function ModCard({
               <span>{formatBytes(mod.sizeBytes)}</span>
             )}
           </p>
-          <div className={`flex items-center justify-end mt-2 ${TOUCH_TARGET_GAP} border-t border-white/5 pt-2`}>
-            {onToggleFavorite && (
-              <FavoriteModButton active={isFavorite} modName={mod.name} onToggle={onToggleFavorite} />
-            )}
-            {game === 'reforger' && <CopyModConfigButton modId={mod.id} modName={mod.name} />}
-            <OpenModStatsButton modId={mod.id} modName={mod.name} game={game} />
-            {workshopUnavailable ? (
-              <span className="px-2.5 py-1.5 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest text-amber-200/70 cursor-not-allowed">
-                Workshop
-              </span>
-            ) : (
-              <a
-                href={workshopUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Open ${mod.name} on ${game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop'}`}
-                className="px-2.5 py-1.5 border border-tactical-orange/40 text-[9px] font-black uppercase tracking-widest text-tactical-orange hover:bg-tactical-orange hover:text-black transition-colors"
-              >
-                {game === 'arma3' ? 'Steam' : 'Workshop'} ↗
-              </a>
-            )}
+          <div className="flex items-center justify-end mt-2 border-t border-white/5 pt-2">
+            <ModActions
+              modId={mod.id}
+              modName={mod.name}
+              game={game}
+              workshopStatus={{ isUnavailable: workshopUnavailable }}
+              isFavorite={isFavorite}
+              onToggleFavorite={onToggleFavorite}
+            />
           </div>
         </div>
       </div>
