@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { DATA_SOURCE_ATTRIBUTION, DATA_STALE_FOOTER, DATA_SYNC_NOTE } from '../lib/siteCopy';
 import { DONATION_GOAL_LABEL, DONATION_GOAL_MET } from '../lib/donation';
 import { DataStaleBanner } from './DataStaleBanner';
+import { BottomNav } from './ui/BottomNav';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 
 interface LayoutProps {
@@ -11,7 +12,6 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isArma3 = location.pathname.startsWith('/arma3');
   const gp = isArma3 ? '/arma3' : '';
@@ -46,12 +46,10 @@ export function Layout({ children }: LayoutProps) {
     }
   `;
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
+
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#101923] flex flex-col font-mono selection:bg-tactical-orange selection:text-black">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#101923] flex flex-col font-mono selection:bg-tactical-orange selection:text-black pb-14 lg:pb-0">
       {/* Top Bar - Tactical Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#101923]/80">
         <div className="max-w-screen-2xl mx-auto w-full flex items-stretch justify-between">
@@ -147,33 +145,6 @@ export function Layout({ children }: LayoutProps) {
               <span className="text-sm" aria-hidden="true">🛰</span>
             </Link>
 
-            {/* Mobile Menu Button */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden flex items-center justify-center w-14 sm:w-16 border-l border-white/5 text-tactical-orange hover:bg-white/5 transition-colors"
-              aria-label="Toggle menu"
-              aria-expanded={mobileMenuOpen}
-            >
-              <span className="relative block w-5 h-3.5" aria-hidden="true">
-                <span
-                  className={`absolute left-0 top-0 h-0.5 w-5 bg-current transition-transform duration-300 origin-center ${
-                    mobileMenuOpen ? 'translate-y-[6px] rotate-45' : ''
-                  }`}
-                />
-                <span
-                  className={`absolute left-0 top-[6px] h-0.5 w-5 bg-current transition-opacity duration-300 ${
-                    mobileMenuOpen ? 'opacity-0' : ''
-                  }`}
-                />
-                <span
-                  className={`absolute left-0 bottom-0 h-0.5 w-5 bg-current transition-transform duration-300 origin-center ${
-                    mobileMenuOpen ? '-translate-y-[6px] -rotate-45' : ''
-                  }`}
-                />
-              </span>
-            </button>
-
             <div className="hidden lg:flex px-8 border-l border-white/5 items-center relative group/dropdown">
             <button className="flex items-center gap-3 py-6 group">
               <span className="w-2 h-2 bg-tactical-orange animate-pulse"></span>
@@ -215,108 +186,6 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <nav className="lg:hidden relative z-10 border-t border-white/5 bg-[#101923]/95 backdrop-blur-xl">
-            <div className="px-4 py-4 space-y-2">
-              <div className="flex gap-2 p-1 bg-white/5 border border-white/10 mb-4">
-                <Link 
-                  to={location.pathname.replace('/arma3', '') || '/'} 
-                  className={`flex-1 py-3 text-center text-[8px] font-black uppercase tracking-widest transition-all ${!isArma3 ? 'bg-tactical-orange text-black' : 'text-gray-500 hover:text-white'}`}
-                >
-                  Reforger
-                </Link>
-                <Link 
-                  to={`/arma3${location.pathname.replace('/arma3', '')}`} 
-                  className={`flex-1 py-3 text-center text-[8px] font-black uppercase tracking-widest transition-all ${isArma3 ? 'bg-tactical-orange text-black' : 'text-gray-500 hover:text-white'}`}
-                >
-                  Arma 3
-                </Link>
-              </div>
-              <Link
-                to={gp || '/'}
-                className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                  isActive(gp || '/') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                [ 📦 Mods Database ]
-              </Link>
-              <Link
-                to={`${gp}/servers`}
-                className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                  isActive(`${gp}/servers`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                [ 🖥️ Active Servers ]
-              </Link>
-              <Link
-                to={`${gp}/trending`}
-                className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                  isActive(`${gp}/trending`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                [ 📈 Trending Intel ]
-              </Link>
-              <Link
-                to={`${gp}/scenarios`}
-                className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                  isActive(`${gp}/scenarios`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                [ 🗺️ Scenarios ]
-              </Link>
-              <div className="pt-2 mt-2 border-t border-white/5">
-                <p className="px-4 py-2 text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Tools</p>
-                {!isArma3 && (
-                  <Link
-                    to="/audit"
-                    className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                      isActive('/audit') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    [ 🔍 Config Audit ]
-                  </Link>
-                )}
-                {!isArma3 && (
-                  <Link
-                    to="/dependency-blockers"
-                    className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                      isActive('/dependency-blockers') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    [ 🔗 Dependency Blockers ]
-                  </Link>
-                )}
-                {!isArma3 && (
-                  <Link
-                    to="/storage-planner"
-                    className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                      isActive('/storage-planner') ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    [ 💾 Storage Planner ]
-                  </Link>
-                )}
-                <Link
-                  to={`${gp}/hosting`}
-                  className={`block px-4 py-3 font-bold uppercase tracking-[0.2em] text-[10px] transition-all ${
-                    isActive(`${gp}/hosting`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  [ 🚀 Get Hosting ]
-                </Link>
-              </div>
-            </div>
-          </nav>
-        )}
       </header>
 
       {/* Main Grid Background */}
@@ -410,6 +279,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
       </footer>
+      <BottomNav game={isArma3 ? 'arma3' : 'reforger'} />
     </div>
   );
 }

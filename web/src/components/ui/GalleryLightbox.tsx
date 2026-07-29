@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { BottomSheet } from './BottomSheet';
 import type { ModGalleryImage } from '../../types';
 
 interface GalleryLightboxProps {
@@ -19,6 +21,7 @@ export function GalleryLightbox({
 }: GalleryLightboxProps) {
   const image = images[active];
   const hasMultiple = images.length > 1;
+  const isMobile = useMediaQuery('(max-width: 1023px)');
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -49,6 +52,75 @@ export function GalleryLightbox({
   const go = (delta: number) => {
     onActiveChange((active + delta + images.length) % images.length);
   };
+
+  const thumbs = hasMultiple && (
+    <div className="flex items-center justify-center gap-2 mt-4">
+      {images.map((item, index) => (
+        <button
+          key={item.url}
+          type="button"
+          onClick={() => onActiveChange(index)}
+          className="p-3 flex items-center justify-center"
+          aria-label={`Screenshot ${index + 1}`}
+          aria-current={index === active ? 'true' : undefined}
+        >
+          <span
+            className={`block h-1.5 rounded-full transition-all ${
+              index === active
+                ? 'w-6 bg-tactical-orange'
+                : 'w-1.5 bg-white/20 hover:bg-white/40'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+
+  const imageContent = (
+    <div className="relative flex items-center justify-center w-full flex-1 min-h-0">
+      {hasMultiple && (
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          className="absolute left-0 sm:-left-4 top-1/2 -translate-y-1/2 z-20 min-h-11 min-w-11 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
+          aria-label="Previous screenshot"
+        >
+          ‹
+        </button>
+      )}
+
+      <img
+        src={image.url}
+        alt={`${label} screenshot ${active + 1} of ${images.length}`}
+        className="max-w-full max-h-[calc(100vh-8rem)] w-auto h-auto object-contain select-none"
+        draggable={false}
+      />
+
+      {hasMultiple && (
+        <button
+          type="button"
+          onClick={() => go(1)}
+          className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 z-20 min-h-11 min-w-11 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
+          aria-label="Next screenshot"
+        >
+          ›
+        </button>
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <BottomSheet open onClose={onClose} label={label} heightClass="h-[90vh]">
+        <div className="flex flex-col h-full">
+          <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+            {imageContent}
+            {thumbs}
+          </div>
+        </div>
+      </BottomSheet>
+    );
+  }
 
   return createPortal(
     <div
@@ -91,59 +163,9 @@ export function GalleryLightbox({
           </div>
         </div>
 
-        <div className="relative flex items-center justify-center w-full flex-1 min-h-0">
-          {hasMultiple && (
-            <button
-              type="button"
-              onClick={() => go(-1)}
-              className="absolute left-0 sm:-left-4 top-1/2 -translate-y-1/2 z-20 min-h-11 min-w-11 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
-              aria-label="Previous screenshot"
-            >
-              ‹
-            </button>
-          )}
+        {imageContent}
 
-          <img
-            src={image.url}
-            alt={`${label} screenshot ${active + 1} of ${images.length}`}
-            className="max-w-full max-h-[calc(100vh-8rem)] w-auto h-auto object-contain select-none"
-            draggable={false}
-          />
-
-          {hasMultiple && (
-            <button
-              type="button"
-              onClick={() => go(1)}
-              className="absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 z-20 min-h-11 min-w-11 flex items-center justify-center bg-black/70 border border-white/10 text-white hover:border-tactical-orange/50 hover:text-tactical-orange transition-colors text-xl"
-              aria-label="Next screenshot"
-            >
-              ›
-            </button>
-          )}
-        </div>
-
-        {hasMultiple && (
-          <div className="flex items-center justify-center gap-2 mt-4">
-            {images.map((item, index) => (
-              <button
-                key={item.url}
-                type="button"
-                onClick={() => onActiveChange(index)}
-                className="p-3 flex items-center justify-center"
-                aria-label={`Screenshot ${index + 1}`}
-                aria-current={index === active ? 'true' : undefined}
-              >
-                <span
-                  className={`block h-1.5 rounded-full transition-all ${
-                    index === active
-                      ? 'w-6 bg-tactical-orange'
-                      : 'w-1.5 bg-white/20 hover:bg-white/40'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-        )}
+        {thumbs}
       </div>
     </div>,
     document.body

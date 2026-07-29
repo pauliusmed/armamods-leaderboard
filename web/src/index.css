@@ -51,3 +51,16 @@ body::before {
   pointer-events: none;
   opacity: 0.15;
 }
+
+.animate-slide-up {
+  animation: slideUp 300ms ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

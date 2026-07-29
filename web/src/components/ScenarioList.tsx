@@ -13,7 +13,7 @@ import { DATA_STALE_HERO_NOTE, SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/
 import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 import type { GameType } from '../api/client';
-import type { ScenarioRankingEntry, Server } from '../types';
+import type { ScenarioRankingEntry } from '../types';
 
 interface ScenarioListProps {
   game?: GameType;

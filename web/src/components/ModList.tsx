@@ -4,6 +4,7 @@ import { useMods } from '../hooks/useMods';
 import { useModFavorites } from '../hooks/useModFavorites';
 import { excludeFavoriteModsFromList, usePinnedFavoriteMods } from '../hooks/usePinnedFavoriteMods';
 import { ModRow } from './ModRow';
+import { ModCard } from './ui/ModCard';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { StatsHero } from './ui/StatsHero';
@@ -16,6 +17,7 @@ import type { GameType } from '../api/client';
 import type { ModSortBy } from '../hooks/useMods';
 import { ACTIVITY_FILTER_OPTIONS, MOD_LEADERBOARD_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
 import { SITE_ORIGIN, modPageUrl } from '../lib/site';
 import { websiteJsonLd, itemListJsonLd } from '../lib/seoJsonLd';
@@ -26,6 +28,7 @@ interface ModListProps {
 
 export function ModList({ game = 'reforger' }: ModListProps) {
   const freshness = useDataFreshness(game);
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const {
     filteredMods,
     loading,
@@ -186,6 +189,60 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         </>
       ) : filteredMods.length === 0 && pinnedMods.length === 0 ? (
         <StatusState type="empty" message="No matches found" details="No mods match your current filter settings. Try resetting them." onAction={resetFilters} actionText="Clear Filters" />
+      ) : isMobile ? (
+        <div
+          className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}
+          aria-busy={loading}
+        >
+          <div>
+            {showFavoritesPin && (pinnedMods.length > 0 || loadingPinned) && (
+              <>
+                <div className="px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange bg-[#172635] border-b border-tactical-orange/20">
+                  ★ Favorites · pinned to top
+                </div>
+                {loadingPinned && pinnedMods.length === 0 ? (
+                  <div className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                    Loading favorites…
+                  </div>
+                ) : (
+                  pinnedMods.map((mod) => (
+                    <ModCard
+                      key={`fav-${mod.id}`}
+                      mod={mod}
+                      rank={mod.overallRank}
+                      game={game}
+                      pinned
+                      isFavorite={isFavorite(mod.id)}
+                      onToggleFavorite={() => toggle(mod.id)}
+                    />
+                  ))
+                )}
+              </>
+            )}
+            {listMods.map((mod, index) => (
+              <ModCard
+                key={mod.id}
+                mod={mod}
+                rank={sortBy === 'overall' ? mod.overallRank : (currentPage - 1) * itemsPerPage + index + 1}
+                game={game}
+                isFavorite={isFavorite(mod.id)}
+                onToggleFavorite={() => toggle(mod.id)}
+                priority={index < 8 && currentPage === 1 ? 'eager' : 'lazy'}
+              />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="border-t border-white/5">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                sliceLabel="Module Slice"
+                className="py-6 pb-8"
+              />
+            </div>
+          )}
+        </div>
       ) : (
         <div
           className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}

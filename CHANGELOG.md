@@ -9,6 +9,19 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Visos nuorodos eina per trackingą** — hosting comparison lentelėse (Reforger + Arma 3) visi "Visit Host" mygtukai naudoja tracking endpointą, o ne tiesioginį URL.
 - **Admin panelis** — 4 providerių click statistikos kortelės su individualiais Seed mygtukais.
 
+### 📱 Mobile UX
+- **Bottom nav** — `BottomNav.tsx` (5 tab'ai: Mods, Servers, Trending, Scenarios, Tools). Pašalintas hamburger menu. Fixed bottom, 56px aukščio, `pb-14` content spacing.
+- **Bottom sheets** — `BottomSheet.tsx` slide-up panel, `createPortal`, backdrop dismiss. GalleryLightbox naudoja bottom sheet mobiliame (`useMediaQuery('(max-width: 1023px)')`), overlay desktop'e.
+- **Load More** — `Pagination.tsx` auto-switch: mobilui "Load More" mygtukas (<640px), desktop`i numeruotas paging'as (≥640px).
+- **Card-based list** — `ModCard.tsx`, `ServerCard.tsx`, `TrendCard.tsx` mobilūs variantai. ModList, ServerList, TrendingPage rodo korteles <1024px (`useMediaQuery`).
+- **PWA** — `vite-plugin-pwa`: Service Worker (NetworkFirst `/api/` cache, 28 precache assets, 2h cache), manifest (SVG icon, #ff6b00 theme), auto-update.
+- **Pre-existing linter klaidos** — ištaisytos 2 unused import klaidos (ScenarioList `Server`, ModDependencyTable `ReactNode`).
+
+### 📚 Dokumentacija
+- **docs/MOBILE_STANDARDS.md** — sukurtas; atnaujintas su visais implementuotais elementais (bottom nav, card list, Load More, bottom sheets, SW/PWA). Roadmap: IndexedDB persistence.
+- **docs/DESIGN_SYSTEM.md** — "Mobile" sekcija pakeista nuoroda į MOBILE_STANDARDS.md (buvo aprašiusi neįgyvendintą idealą).
+- **docs/MOBILE_UX.md** — praretintas iki gryno audit log: išmesta "Patterns we use" (dubliuojasi su standartu), atnaujinta data, pridėta nuoroda į standartą.
+
 ## [1.22.20] - 2026-07-25
 
 ### 🐛 Fixes

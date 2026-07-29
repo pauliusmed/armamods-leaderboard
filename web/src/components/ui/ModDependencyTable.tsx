@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModDependency } from '../../types';
 import type { GameType } from '../../api/client';

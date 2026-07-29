@@ -4,8 +4,10 @@ import { trendingApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { TrendRow } from './TrendRow';
+import { TrendCard } from './ui/TrendCard';
 import type { TrendingMod, TrendPeriod } from '../types';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
 import { SITE_ORIGIN, modPageUrl } from '../lib/site';
 import { itemListJsonLd } from '../lib/seoJsonLd';
@@ -30,6 +32,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
   const [comparisonDate, setComparisonDate] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const freshness = useDataFreshness(game);
+  const isMobile = useMediaQuery('(max-width: 1023px)');
 
   const loadTrending = useCallback(async (isRetry = false) => {
     try {
@@ -253,6 +256,19 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
               No data available for this category
             </p>
             <p className="text-gray-600 mt-2">Trending data will be available after the first daily snapshot</p>
+          </div>
+        ) : isMobile ? (
+          <div className="border border-white/5 bg-black/40">
+            <div>
+              {sortedCurrentMods.map((mod: TrendingMod) => (
+                <TrendCard
+                  key={mod.id}
+                  mod={mod}
+                  category={activeCategory}
+                  game={game}
+                />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="border border-white/5 bg-black/40">

@@ -25,7 +25,8 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.20**).
 | [UI_FILTERS.md](./UI_FILTERS.md) | ListFilterBar, favorites, table layout |
 | [PERFORMANCE.md](./PERFORMANCE.md) | KV/cache trade-offs, hot paths |
 | [LIGHTHOUSE.md](./LIGHTHOUSE.md) | PageSpeed / Lighthouse scores (before & after v1.21) |
-| [MOBILE_UX.md](./MOBILE_UX.md) | Mobile audit checklist and patterns |
+| [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md) | Mobile standartas (dabartinė kodo realybė + roadmap) |
+| [MOBILE_UX.md](./MOBILE_UX.md) | Mobile auditas ir re-test checklist'as |
 
 ## Other
 

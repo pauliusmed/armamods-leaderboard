@@ -241,32 +241,13 @@ When an Enfusion mod fails to install (e.g., RHS at 46%), the interface shows:
 
 ## Mobile
 
-Mobile is a first-class experience, not a scaled-down desktop. Based on Hoober's research (75% of interactions are one-thumb), the layout is optimized for thumb reach.
+Mobile yra first-class patirtis. **Pilnas standartas** (dabartinė kodo realybė + planuojami pagerinimai) gyvena atskirame dokumente, kad išvengtume dubliavimo ir prieštaravimų:
 
-### Thumb Zone Mapping
+➡️ **[MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md)** — header/nav, touch targets (44px), lentelės, filter bar, charts, offline, anti-patterns, roadmap.
 
-| Zone | Reachability | Elements |
-|------|-------------|----------|
-| Bottom third (thumb zone) | Easy | Primary navigation (≤5 tabs), primary filters, download/action buttons |
-| Middle third | Comfortable | Scrollable content, interactive charts, search results |
-| Top third | Stretch (grip change required) | Destructive actions, deep settings, account disconnect |
+Ten pat — **audito rezultatai ir re-test checklist'as**: [MOBILE_UX.md](./MOBILE_UX.md).
 
-### Mobile-Specific Components
-
-| Desktop | Mobile Replacement |
-|---------|-------------------|
-| Modals | Bottom sheets (reachable by thumb) |
-| Pagination with page numbers | "Load More" button (infinite vertical flow) |
-| Horizontal table scroll | Card-based list view, single column |
-| Hover tooltips | Tap-to-reveal signal details |
-| Multi-column layout | Single-column stacked layout |
-
-### Offline Behavior
-
-- Local caching via Service Worker / IndexedDB for core pages (mod list, server list)
-- Background sync when connectivity resumes
-- No full-screen error modals on network loss — inline banner "Uplink Lost" with retry button
-- Stale data shown with amber "Cached Telemetry" badge and timestamp
+> **Pastaba:** anksčiau ši sekcija aprašė bottom nav, bottom sheets, "Load More" ir Service Worker offline cache kaip faktą. Šie elementai kode **dar nerealizuoti** — jie perkelti į MOBILE_STANDARDS.md "Planuojama (Roadmap)" sekciją.
 
 ---
 
@@ -367,6 +348,7 @@ TOUCH_TARGET_BUTTON = 'min-h-11 min-w-11 sm:min-h-0 sm:min-w-0'
 |---------|------|
 | Theme tokens (CSS) | `src/index.css` |
 | Touch targets | `src/lib/touchTargets.ts` |
+| Mobile standartas | [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md) |
 | User-facing copy | `src/lib/siteCopy.ts` |
 | Filter bar | `src/components/ui/ListFilterBar.tsx` |
 | Card | `src/components/ui/Card.tsx` |

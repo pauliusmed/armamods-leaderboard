@@ -1,6 +1,8 @@
 # Mobile UX audit
 
-Last reviewed: **2026-07-25** (v1.22.15 — hosting cards + touch targets). Test at 320–430px width (iPhone SE / standard phones).
+**Standartas:** [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md). Šis dokumentas = audit log (ar kodas atitinka standartą).
+
+Last reviewed: **2026-07-29** (v1.22.21). Test at 320–430px width (iPhone SE / standard phones).
 
 Viewport: `web/index.html` — `width=device-width, initial-scale=1`.
 
@@ -30,18 +32,6 @@ Viewport: `web/index.html` — `width=device-width, initial-scale=1`.
 | Pagination | OK | 44px page buttons; Prev/Next full width on mobile |
 | Filter bar sticky | OK | `top-[72px] sm:top-[84px]` matches header (banner scrolls with content) |
 | Server search landing | OK | Single-column grid, no touch target issues |
-
----
-
-## Patterns we use
-
-- **`overflow-x-auto`** on all data tables
-- **`min-h-11`** — 44px minimum touch height on all interactive elements
-- **`TOUCH_TARGET_BUTTON`** — 44×44px min on mobile for Copy / Workshop / ★
-- **Hidden columns** — show compact meta under primary cell on `< md` (ModRow deploy/share/size, ScenarioList fill/top server)
-- **Hosting** — card stack on `< md`, comparison table from `md:` (keeps desktop density without mobile horizontal scroll)
-- **Charts** — legend above plot; max one visible Y-axis per side on mobile; values in tooltip
-- **`useMediaQuery('(max-width: 639px)')`** — chart margins and axis visibility
 
 ---
 

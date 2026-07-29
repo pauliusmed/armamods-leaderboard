@@ -7,6 +7,7 @@ import {
   usePinnedFavoriteServers,
 } from '../hooks/usePinnedFavoriteServers';
 import { ServerRow } from './ServerRow';
+import { ServerCard } from './ui/ServerCard';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
@@ -18,6 +19,7 @@ import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/mod
 import { BM_STATUS_FILTER_OPTIONS } from '../lib/serverStatus';
 import { DATA_STALE_HERO_NOTE, SERVER_STATUS_FILTER_ARIA } from '../lib/siteCopy';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { SEO } from './ui/SEO';
 import { SITE_ORIGIN, serverPageUrl } from '../lib/site';
 import { itemListJsonLd } from '../lib/seoJsonLd';
@@ -28,6 +30,7 @@ interface ServerListProps {
 
 export function ServerList({ game = 'reforger' }: ServerListProps) {
   const freshness = useDataFreshness(game);
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const {
     allFilteredServers,
     filteredServers,
@@ -212,6 +215,29 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                 ★ Favorites · pinned to top
               </p>
             </div>
+            {isMobile ? (
+              <div>
+                {loadingPinned && pinnedServers.length === 0 ? (
+                  <div className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                    Loading favorites…
+                  </div>
+                ) : (
+                  pinnedServers.map((server) => (
+                    <ServerCard
+                      key={`fav-${server.id}`}
+                      server={server}
+                      game={game}
+                      showConsoleFit={game === 'reforger'}
+                      consoleLimitGb={consoleLimitGb}
+                      consoleLimitBytes={consoleLimitBytes}
+                      pinned
+                      isFavorite={isFavorite(server.id)}
+                      onToggleFavorite={() => toggle(server.id)}
+                    />
+                  ))
+                )}
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <tbody>
@@ -239,9 +265,38 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         )}
 
+      {isMobile ? (
+        <div className="border border-white/5 bg-black/40">
+          <div>
+            {listServers.map((server) => (
+              <ServerCard
+                key={server.id}
+                server={server}
+                game={game}
+                showConsoleFit={game === 'reforger'}
+                consoleLimitGb={consoleLimitGb}
+                consoleLimitBytes={consoleLimitBytes}
+                isFavorite={isFavorite(server.id)}
+                onToggleFavorite={() => toggle(server.id)}
+              />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="border-t border-white/5">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                className="py-6 pb-8"
+              />
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="border border-white/5 bg-black/40">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
@@ -322,6 +377,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
           </div>
         )}
       </div>
+      )}
       </div>
     </div>
   );
