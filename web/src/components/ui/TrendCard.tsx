@@ -28,20 +28,19 @@ export function TrendCard({
   const magnitude = Math.abs(delta);
 
   return (
-    <div className={`px-4 py-3 border-b border-white/5 ${pinned ? 'bg-tactical-orange/[0.04]' : ''}`}>
+    <Link
+      to={`${gp}/mod/${mod.id}`}
+      className={`block px-4 py-3 border-b border-white/5 hover:bg-white/[0.02] transition-colors ${pinned ? 'bg-tactical-orange/[0.04]' : ''}`}
+    >
       <div className="flex items-start gap-3">
         <span className={`font-mono text-sm tabular-nums mt-1 shrink-0 w-7 ${isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'}`}>
           {rank != null ? String(rank).padStart(2, '0') : '–'}
         </span>
         <ModThumbnail modId={mod.id} modName={mod.name} game={game} size="sm" />
         <div className="min-w-0 flex-1">
-          <Link
-            to={`${gp}/mod/${mod.id}`}
-            className="block text-[13px] font-bold tracking-tight text-white hover:text-tactical-orange transition-colors line-clamp-1"
-            title={mod.name}
-          >
+          <p className="text-[13px] font-bold tracking-tight text-white line-clamp-1" title={mod.name}>
             {mod.name}
-          </Link>
+          </p>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
             {category === 'new' ? (
               <span className="text-[10px] font-black uppercase tracking-widest text-tactical-orange">New</span>
@@ -58,6 +57,6 @@ export function TrendCard({
           </p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
