@@ -804,28 +804,44 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           <div className="space-y-4">
             {modChanges.map((day) => (
               <Card key={day.date}>
-                <CardContent className="p-5 sm:p-6 space-y-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-mono">
-                    {day.date}
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ModChangesColumn
-                      label="Added"
-                      color="text-emerald-400"
-                      mods={day.added}
-                      date={day.date}
-                      prefix="a"
-                      gp={gp}
-                    />
-                    <ModChangesColumn
-                      label="Removed"
-                      color="text-rose-400"
-                      mods={day.removed}
-                      date={day.date}
-                      prefix="r"
-                      gp={gp}
-                    />
+                <CardContent className="p-3 sm:p-4 space-y-3">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-mono">
+                      {day.date}
+                    </span>
+                    {day.added.length === 0 && day.removed.length === 0 ? (
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">—</span>
+                    ) : (
+                      <>
+                        <ZeroBadge color="text-emerald-400" label="Added" count={day.added.length} />
+                        <ZeroBadge color="text-rose-400" label="Removed" count={day.removed.length} />
+                      </>
+                    )}
                   </div>
+                  {(day.added.length > 0 || day.removed.length > 0) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {day.added.length > 0 && (
+                        <ModChangesColumn
+                          label="Added"
+                          color="text-emerald-400"
+                          mods={day.added}
+                          date={day.date}
+                          prefix="a"
+                          gp={gp}
+                        />
+                      )}
+                      {day.removed.length > 0 && (
+                        <ModChangesColumn
+                          label="Removed"
+                          color="text-rose-400"
+                          mods={day.removed}
+                          date={day.date}
+                          prefix="r"
+                          gp={gp}
+                        />
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -987,6 +1003,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   );
 }
 
+function ZeroBadge({ color, label, count }: { color: string; label: string; count: number }) {
+  if (count > 0) return null;
+  return <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{label} (0)</span>;
+}
+
 function ModChangesColumn({
   label,
   color,
@@ -1003,17 +1024,6 @@ function ModChangesColumn({
   gp: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-
-  if (mods.length === 0) {
-    return (
-      <div className="space-y-2">
-        <p className={`text-[9px] font-black uppercase tracking-widest ${color}`}>
-          {label} (0)
-        </p>
-        <p className="text-xs text-gray-600">—</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-2">
