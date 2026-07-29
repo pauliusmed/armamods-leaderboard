@@ -2,6 +2,13 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.21] - 2026-07-29
+
+### ✨ Features
+- **Affiliate tracking visiems provideriams** — kiekvienas hosting provideris (EmpowerServers, GTXGaming, PingPerfect, Nitrado) dabar turi savo `/api/click/*` endpointą su KV counteriu.
+- **Visos nuorodos eina per trackingą** — hosting comparison lentelėse (Reforger + Arma 3) visi "Visit Host" mygtukai naudoja tracking endpointą, o ne tiesioginį URL.
+- **Admin panelis** — 4 providerių click statistikos kortelės su individualiais Seed mygtukais.
+
 ## [1.22.20] - 2026-07-25
 
 ### 🐛 Fixes

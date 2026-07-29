@@ -2003,11 +2003,56 @@ app.get('/click/empower', async (c) => {
   return c.redirect(url, 302);
 });
 
+/** Track Nitrado affiliate link clicks */
+app.get('/click/nitrado', async (c) => {
+  try {
+    const raw = await c.env.TRENDING_KV.get('click:nitrado', 'text');
+    const count = (parseInt(raw || '0', 10) || 0) + 1;
+    await c.env.TRENDING_KV.put('click:nitrado', String(count));
+    console.log(`[CLICK] Nitrado — total ${count}`);
+  } catch {
+    // best-effort
+  }
+
+  return c.redirect('https://www.nitrado-aff.com/5M99TRH/D42TT/', 302);
+});
+
+/** Track GTXGaming affiliate link clicks */
+app.get('/click/gtxgaming', async (c) => {
+  try {
+    const raw = await c.env.TRENDING_KV.get('click:gtxgaming', 'text');
+    const count = (parseInt(raw || '0', 10) || 0) + 1;
+    await c.env.TRENDING_KV.put('click:gtxgaming', String(count));
+    console.log(`[CLICK] GTXGaming — total ${count}`);
+  } catch {
+    // best-effort
+  }
+
+  return c.redirect('https://www.gtxgaming.co.uk/clientarea/aff.php?aff=4282', 302);
+});
+
+/** Track PingPerfect affiliate link clicks */
+app.get('/click/pingperfect', async (c) => {
+  try {
+    const raw = await c.env.TRENDING_KV.get('click:pingperfect', 'text');
+    const count = (parseInt(raw || '0', 10) || 0) + 1;
+    await c.env.TRENDING_KV.put('click:pingperfect', String(count));
+    console.log(`[CLICK] PingPerfect — total ${count}`);
+  } catch {
+    // best-effort
+  }
+
+  return c.redirect('https://pingperfect.com/aff.php?aff=2133', 302);
+});
+
 /** Get click stats for admin panel */
 app.get('/admin/clicks', async (c) => {
-  const [reforger, arma3] = await Promise.all([
+  const [reforger, arma3, nitrado, gtxgaming, pingperfect] = await Promise.all([
     c.env.TRENDING_KV.get('click:empower:reforger', 'text'),
     c.env.TRENDING_KV.get('click:empower:arma3', 'text'),
+    c.env.TRENDING_KV.get('click:nitrado', 'text'),
+    c.env.TRENDING_KV.get('click:gtxgaming', 'text'),
+    c.env.TRENDING_KV.get('click:pingperfect', 'text'),
   ]);
   return c.json({
     empower: {
@@ -2015,18 +2060,30 @@ app.get('/admin/clicks', async (c) => {
       arma3: parseInt(arma3 || '0', 10) || 0,
       total: (parseInt(reforger || '0', 10) || 0) + (parseInt(arma3 || '0', 10) || 0),
     },
+    nitrado: parseInt(nitrado || '0', 10) || 0,
+    gtxgaming: parseInt(gtxgaming || '0', 10) || 0,
+    pingperfect: parseInt(pingperfect || '0', 10) || 0,
   });
 });
 
 /** Seed click counter (admin) */
 app.post('/admin/clicks/seed', async (c) => {
-  const body = await c.req.json<{ reforger?: number; arma3?: number }>();
+  const body = await c.req.json<{ reforger?: number; arma3?: number; nitrado?: number; gtxgaming?: number; pingperfect?: number }>();
   const promises: Promise<void>[] = [];
   if (body.reforger != null) {
     promises.push(c.env.TRENDING_KV.put('click:empower:reforger', String(body.reforger)));
   }
   if (body.arma3 != null) {
     promises.push(c.env.TRENDING_KV.put('click:empower:arma3', String(body.arma3)));
+  }
+  if (body.nitrado != null) {
+    promises.push(c.env.TRENDING_KV.put('click:nitrado', String(body.nitrado)));
+  }
+  if (body.gtxgaming != null) {
+    promises.push(c.env.TRENDING_KV.put('click:gtxgaming', String(body.gtxgaming)));
+  }
+  if (body.pingperfect != null) {
+    promises.push(c.env.TRENDING_KV.put('click:pingperfect', String(body.pingperfect)));
   }
   await Promise.all(promises);
   return c.json({ ok: true });

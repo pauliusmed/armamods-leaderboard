@@ -13,3 +13,20 @@ export function empowerDirectUrl(game: 'reforger' | 'arma3'): string {
     ? `https://empowerservers.com/games/arma3/?aff=${EMPOWER_AFFILIATE_ID}`
     : `https://empowerservers.com/games/arma-reforger/?aff=${EMPOWER_AFFILIATE_ID}`;
 }
+
+export const NITRADO_AFFILIATE_URL = 'https://www.nitrado-aff.com/5M99TRH/D42TT/';
+
+export const GTXGAMING_AFFILIATE_URL = 'https://www.gtxgaming.co.uk/clientarea/aff.php?aff=4282';
+export const PINGPERFECT_AFFILIATE_URL = 'https://pingperfect.com/aff.php?aff=2133';
+
+export function nitradoClickUrl(): string {
+  return '/api/click/nitrado';
+}
+
+export function gtxgamingClickUrl(): string {
+  return '/api/click/gtxgaming';
+}
+
+export function pingperfectClickUrl(): string {
+  return '/api/click/pingperfect';
+}

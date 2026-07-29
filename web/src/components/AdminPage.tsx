@@ -157,29 +157,30 @@ export function AdminPage() {
 
       {tab === 'affiliate' && (
         <div className="space-y-4">
-          <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
-            <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Empower Servers</h3>
-            <p className="text-[9px] text-gray-500 font-mono">
-              Affiliate ID: <span className="text-white">294</span>
-            </p>
-            <div className="space-y-2 text-[9px] font-mono text-gray-400">
-              <p>Reforger: <span className="text-white/80">/api/click/empower?game=reforger</span></p>
-              <p>Arma 3: <span className="text-white/80">/api/click/empower?game=arma3</span></p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
-              <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.reforger ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Reforger clicks</p>
-            </div>
-            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
-              <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.arma3 ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Arma 3 clicks</p>
-            </div>
-            <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Empower Servers</h3>
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.total ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Total tracked</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">total clicks</p>
+              <div className="text-[8px] font-mono text-gray-500 space-y-0.5">
+                <p>Ref: {clicks?.empower?.reforger ?? '…'} | A3: {clicks?.empower?.arma3 ?? '…'}</p>
+                <p className="text-white/60">{/* /api/click/empower?game=reforger|arma3 */}</p>
+              </div>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-widest">GTXGaming</h3>
+              <p className="text-3xl font-black text-white font-mono">{clicks?.gtxgaming ?? '…'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">clicks</p>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-widest">PingPerfect</h3>
+              <p className="text-3xl font-black text-white font-mono">{clicks?.pingperfect ?? '…'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">clicks</p>
+            </div>
+            <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
+              <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Nitrado</h3>
+              <p className="text-3xl font-black text-white font-mono">{clicks?.nitrado ?? '…'}</p>
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">clicks</p>
             </div>
           </div>
 
@@ -191,19 +192,29 @@ export function AdminPage() {
               placeholder="Seed count"
               className="w-24 bg-black/40 border border-white/10 px-3 py-2 text-white text-[10px] font-mono outline-none focus:border-tactical-orange"
             />
-            <button
-              type="button"
-              onClick={async () => {
-                const v = parseInt(seedValue, 10);
-                if (isNaN(v) || v < 0) return;
-                await api.post('/admin/clicks/seed', { reforger: v, arma3: 0 });
-                setSeedValue('');
-                api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
-              }}
-              className="min-h-11 px-4 py-2 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white"
-            >
-              Seed
-            </button>
+            {(['empower', 'gtxgaming', 'pingperfect', 'nitrado'] as const).map((provider) => (
+              <button
+                key={provider}
+                type="button"
+                onClick={async () => {
+                  const v = parseInt(seedValue, 10);
+                  if (isNaN(v) || v < 0) return;
+                  const body: Record<string, number> = {};
+                  if (provider === 'empower') {
+                    body.reforger = v;
+                    body.arma3 = 0;
+                  } else {
+                    body[provider] = v;
+                  }
+                  await api.post('/admin/clicks/seed', body);
+                  setSeedValue('');
+                  api.get('/admin/clicks').then((r) => setClicks(r.data)).catch(() => {});
+                }}
+                className="min-h-11 px-4 py-2 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white"
+              >
+                Seed {provider === 'empower' ? 'Empower' : provider.charAt(0).toUpperCase() + provider.slice(1)}
+              </button>
+            ))}
           </div>
 
           <div className="border border-white/5 p-5 space-y-3">

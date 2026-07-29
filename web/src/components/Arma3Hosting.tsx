@@ -66,7 +66,7 @@ export function Arma3Hosting() {
       cpu: "Standard (Upgrades Required)",
       ddos: "Standard Protection",
       isWinner: false,
-      url: "https://www.gtxgaming.co.uk/clientarea/aff.php?aff=4282"
+      url: "/api/click/gtxgaming"
     },
     {
       name: "PingPerfect",
@@ -87,7 +87,7 @@ export function Arma3Hosting() {
       cpu: "Enterprise (Upsell-Driven)",
       ddos: "Standard Protection",
       isWinner: false,
-      url: "https://pingperfect.com/aff.php?aff=2133"
+      url: "/api/click/pingperfect"
     },
     {
       name: "Nitrado",
@@ -102,7 +102,7 @@ export function Arma3Hosting() {
       cpu: "Shared Infrastructure",
       ddos: "Basic / Shared",
       isWinner: false,
-      url: "https://server.nitrado.net/en-GB/offers/arma-3",
+      url: "/api/click/nitrado",
       warning: "Limited public RAM specs — heavy Milsim modpacks may need a higher tier."
     }
   ];
