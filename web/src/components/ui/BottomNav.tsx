@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Package, Server, TrendingUp, Map, Wrench } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Mods', icon: '📦', matchExact: true },
-  { path: '/servers', label: 'Servers', icon: '🖥️', matchExact: false },
-  { path: '/trending', label: 'Trending', icon: '📈', matchExact: false },
-  { path: '/scenarios', label: 'Scenarios', icon: '🗺️', matchExact: false },
+  { path: '/', label: 'Mods', Icon: Package, matchExact: true },
+  { path: '/servers', label: 'Servers', Icon: Server, matchExact: false },
+  { path: '/trending', label: 'Trending', Icon: TrendingUp, matchExact: false },
+  { path: '/scenarios', label: 'Scenarios', Icon: Map, matchExact: false },
 ];
 
 const TOOLS = [
@@ -51,19 +52,19 @@ export function BottomNav({ game }: { game?: string }) {
         </div>
       )}
       <div className="flex items-stretch">
-        {NAV_ITEMS.map((item) => (
+        {NAV_ITEMS.map(({ path, label, Icon, matchExact }) => (
           <Link
-            key={item.path}
-            to={gp + item.path}
+            key={path}
+            to={gp + path}
             className={`flex-1 flex flex-col items-center justify-center py-2 min-h-[56px] transition-colors relative ${
-              isActive(item.path, item.matchExact)
+              isActive(path, matchExact)
                 ? 'text-tactical-orange'
                 : 'text-gray-600 hover:text-gray-400'
             }`}
           >
-            <span className="text-lg leading-none">{item.icon}</span>
-            <span className="text-[8px] font-black uppercase tracking-[0.15em] mt-1">{item.label}</span>
-            {isActive(item.path, item.matchExact) && (
+            <Icon size={20} strokeWidth={1.5} />
+            <span className="text-[8px] font-black uppercase tracking-[0.15em] mt-1">{label}</span>
+            {isActive(path, matchExact) && (
               <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-tactical-orange" />
             )}
           </Link>
@@ -75,7 +76,7 @@ export function BottomNav({ game }: { game?: string }) {
             isToolsActive || toolsOpen ? 'text-tactical-orange' : 'text-gray-600 hover:text-gray-400'
           }`}
         >
-          <span className="text-lg leading-none">🛠</span>
+          <Wrench size={20} strokeWidth={1.5} />
           <span className="text-[8px] font-black uppercase tracking-[0.15em] mt-1">Tools</span>
           {(isToolsActive || toolsOpen) && (
             <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-tactical-orange" />
