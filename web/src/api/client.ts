@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { Mod, Server, ApiResponse, TrendingResponse, ScenarioRankingEntry } from '../types';
 import { modThumbnailUrl } from '../lib/workshop';
+import { persistentCache } from '../lib/db';
 
 export type GameType = 'reforger' | 'arma3';
 
@@ -31,16 +32,33 @@ const workshopStatusInflight = new Map<
 /** Dedupe concurrent gallery lookups for the same mod. */
 const galleryInflight = new Map<string, Promise<import('../types').ModGalleryImage[]>>();
 
+/** Source of the last cache hit – for UI badge ("cached telemetry"). */
+export type CacheSource = 'network' | 'memory' | 'persistent';
+let _lastCacheSource: CacheSource = 'network';
+export function getLastCacheSource(): CacheSource { return _lastCacheSource; }
+export function resetLastCacheSource() { _lastCacheSource = 'network'; }
+
 async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl = CACHE_TTL): Promise<T> {
   const cached = cache.get(key);
   const now = Date.now();
   
   if (cached && (now - cached.timestamp < ttl)) {
+    _lastCacheSource = 'memory';
     return cached.data;
+  }
+  
+  // Fallback to IndexedDB when memory misses (page refresh, offline)
+  const idbEntry = await persistentCache.get<{ data: T; timestamp: number }>(key);
+  if (idbEntry && idbEntry.data && (now - idbEntry.timestamp < ttl)) {
+    cache.set(key, idbEntry.data);
+    _lastCacheSource = 'persistent';
+    return idbEntry.data.data;
   }
   
   const data = await fetcher();
   cache.set(key, { data, timestamp: now });
+  persistentCache.set(key, { data, timestamp: now }, now);
+  _lastCacheSource = 'network';
   return data;
 }
 
