@@ -271,7 +271,7 @@ Mobile yra first-class patirtis. **Pilnas standartas** (dabartinė kodo realybė
 
 Ten pat — **audito rezultatai ir re-test checklist'as**: [MOBILE_UX.md](./MOBILE_UX.md).
 
-> **Pastaba:** anksčiau ši sekcija aprašė bottom nav, bottom sheets, "Load More" ir Service Worker offline cache kaip faktą. Šie elementai kode **dar nerealizuoti** — jie perkelti į MOBILE_STANDARDS.md "Planuojama (Roadmap)" sekciją.
+> **Pastaba:** anksčiau ši sekcija aprašė bottom nav, bottom sheets, "Load More" ir Service Worker offline cache kaip faktą. Dabar visi (išskyrus Load More) yra įgyvendinti – bottom nav (`BottomNav.tsx`), bottom sheets (`BottomSheet.tsx`), SW + IndexedDB offline cache. Load More reverted (žr. [MOBILE_STANDARDS.md §4](./MOBILE_STANDARDS.md#4-puslapiavimas)).
 
 ---
 

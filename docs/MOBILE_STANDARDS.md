@@ -67,7 +67,7 @@ Mobile (<1024px): **Card-based list** (žr. [7. Card-based list](#7-card-based-l
 - Puslapių mygtukai: `min-w-[44px] h-11` — touch target.
 - Prev/Next: `w-full` mobiliame (full-width), `sm:w-auto` desktop.
 - Etiketė: "Network Slice" / "Module Slice".
-- Load More variantas neįgyvendintas – reikia data hook pakeitimų (akumuliacija per puslapius).
+- Load More variantas buvo pridėtas ir reverted. Esmė: `useMods`/`useServers` grąžina tik vieno puslapio slice, todėl `onPageChange(currentPage + 1)` veikia kaip "Next page", ne append. Tikras Load More reikalauja akumuliacijos hooks lygmeny.
 
 ---
 
@@ -125,8 +125,8 @@ Paveldima iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), bet su mobile patikslinima
 
 | Breakpoint | Width | Mobile reikšmė |
 |------------|-------|----------------|
-| Default | < 640px | Vienas stulpelis, bottom nav, Load More, card-based list |
-| `sm` | 640px+ | Load More → numbered pagination; touch target compact; didesnis padding |
+| Default | < 640px | Vienas stulpelis, bottom nav, numbered pagination, card-based list |
+| `sm` | 640px+ | Touch target compact; didesnis padding |
 | `md` | 768px+ | Filter bar keliauja į kelis stulpelius; author antriniai laukai atsiranda |
 | `lg` | 1024px+ | **Bottom nav pasislepia**, desktop top nav matomas; card list → lentelės |
 
@@ -152,11 +152,9 @@ Paveldima iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), bet su mobile patikslinima
 
 **Density principas** (pilna specifikacija [DESIGN_SYSTEM.md "Mobile Data Density Tiers"](./DESIGN_SYSTEM.md#mobile-data-density-tiers)):
 
-Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi veiksmai, author, size) slepiami po "⋯" mygtuku arba perkeliami į detail. Horizontal scroll neleidžiamas – pasukti ekraną nereikalaujama.
+Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi veiksmai, author, size) pasiekiami per detail puslapį – visa kortelė yra Link'as. Horizontal scroll neleidžiamas – pasukti ekraną nereikalaujama.
 
-> **⚠ Žinomas skolas (technical debt):** dabartinės ModCard/ServerCard/TrendCard kortelės rodo **visus** stulpelius (Pirminius + Antrinius + Tretinius), o ne tik Pirminius + Antrinius. Ref į [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md#mobile-data-density-tiers) lentelę. Pataisymas = supaprastinti kortelių turinį pagal density tiers lentelę.
-
-**Nekeistos lentelės (kol kas):** server detail mod stack, mod detail co-deploy, dependency blockers, scenarios. Joms taikomas `overflow-x-auto` su gradient indikatoriumi (žr. anti-patterns).
+**Nekeistos lentelės (kol kas):** server detail mod stack, mod detail co-deploy, dependency blockers, scenarios. Joms taikomas `overflow-x-auto` su gradient indikatoriumi.
 
 ## 8. Bottom sheets (mobile)
 

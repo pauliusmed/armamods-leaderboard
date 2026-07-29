@@ -69,7 +69,7 @@ Steven Hoober's research shows 75% of mobile interactions use a single thumb. Th
 
 - Primary nav → bottom tab bar (≤5 items)
 - Modals → bottom sheets (reachable by thumb, no grip change)
-- Pagination → "Load More" (vertical scroll, no horizontal page tapping)
+- Pagination → numbered sliding window (verified — Load More was attempted but reverted: data hooks return single-page only, no server-side accumulation)
 - Destructive actions → top third (requires deliberate grip change, prevents accidents)
 
 ## Why PACE Model for Error States
