@@ -178,6 +178,30 @@ The interface follows a **dense, information-rich** layout inspired by Signal/Fo
 - White space is a deliberate tool for grouping, not a luxury
 - Empty states are informative ("NO DATA FOUND"), not decorative
 
+### Mobile Data Density Tiers
+
+Praktinė [Nimbus vs Focus](#cognitive-model-focus--nimbus) specifikacija. Mobiliam ekranui (<1024px) lentelių stulpeliai skirstomi į tris lygmenis. **Niekada nėra "viskas vienoje kortelėje"** – tai sulėtina skanavimą. **Niekada nereikalaujama pasukti ekraną** – tai disruptivyu ir prieštarauja Apple HOG / Material gairėms.
+
+| Lygmuo | Kur matomas | Taisyklė |
+|--------|------------|----------|
+| **Pirminis** | Visada matomas mobile kortelėje | Identifikuoja eilutę (rank, name) + 1 svarbiausias metrikas |
+| **Antrinis** | Kompaktiškai po pirminiu | 1–2 papildomi metrikai, mažu šriftu |
+| **Tretinis** | Tik detail puslapyje arba išskleidus | Likę stulpeliai + visi veiksmai (Copy, Stats, Workshop) |
+
+Konkretūs paskirstymai (naudojami card komponentuose):
+
+| List'as | Pirminis | Antrinis | Tretinis (ne mobiliame) |
+|---------|----------|----------|------------------------|
+| Mod leaderboard | Rank, Name, Personnel | Deploy, Share % | Author, Size, visi veiksmai |
+| Server leaderboard | Rank, Name, Players (current/max) | Mod count, Modpack size | Tier, Console fit, ★ veiksmai |
+| Trending | Rank, Name, Change | Personnel | Deploy, Author, veiksmai |
+| Server detail mod stack | Name, Size | Rank | Author, veiksmai |
+| Mod detail co-deploy | Server count, % of deploys | Network rank | Visi veiksmai |
+
+**Veiksmų eilutė (★ Copy Stats Workshop)** mobiliame slepiama po "⋯" mygtuku arba perkeliama į detail puslapį. Rodoma inline tik Pirminio_SHORT kortelėse (pinned favorites).
+
+**Horizontal scroll** leistinas TIK kai nėra card varianto (laikina) – su `overscroll-behavior-x: contain` ir vizualiu gradient indikatoriumi dešinėje. Tikslas – pašalinti visiškai.
+
 ---
 
 ## Components
@@ -267,6 +291,8 @@ Based on analysis of AI-generated "vibe code" patterns and failed gaming UIs.
 | Fake status dots (no live data) | Misleads users into thinking processes are active | Status dots only for live-monitored servers |
 | Uniform fade-up scroll animation | AI signature — all sections identical | Motion varies by component type; no decorative animation |
 | 3-column card grids everywhere | AI default pattern | Asymmetric grids, data-driven layouts |
+| "Pasukti ekraną" užuomina | Disruptive, priverčia keisti įprastą laikyseną; prieštarauja Apple HOG / Material | Mobile Data Density Tiers – Pirminis/Antrinis/Tretinis stulpeliai |
+| Visi duomenys vienoje mobile kortelėje | Sulėtina skanavimą; mažiau eilučių ekrane | Kortelė rodo tik Pirminius + 1–2 Antrinius; Tretiniai per detail |
 
 ### Architecture Anti-Patterns
 

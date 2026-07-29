@@ -2,6 +2,12 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.22] - 2026-07-30
+
+### 📚 Dokumentacija
+- **DESIGN_SYSTEM.md** — nauja sekcija "Mobile Data Density Tiers": Pirminis/Antrinis/Tretinis stulpelių paskirstymas per list'us. Praktinė "Nimbus vs Focus" specifikacija mobiliam. Pridėti 2 anti-pattern'ai (pasukti ekraną, visi duomenys kortelėje).
+- **MOBILE_STANDARDS.md** — Card sekcija atnaujinta: density principas, žinomas skolas pažymėtas (dabartinės kortelės per tankios), nekeistos lentelės dokumentuotos.
+
 ## [1.22.21] - 2026-07-29
 
 ### ✨ Features

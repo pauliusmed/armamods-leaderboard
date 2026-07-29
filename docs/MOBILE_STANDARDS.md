@@ -147,9 +147,16 @@ Paveldima iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), bet su mobile patikslinima
 `web/src/components/ui/ModCard.tsx`, `ServerCard.tsx`, `TrendCard.tsx`:
 
 - Mobile (<1024px): vietoj `<table>` eilučių rodomos **kortelės**.
-- Kiekviena kortelė rodo: rank, thumbnail, pavadinimą, antrinius metaduomenis, veiksmus.
 - Valdoma per `useMediaQuery('(max-width: 1023px)')` kiekviename list page (ModList, ServerList, TrendingPage).
 - Pinned favorites taip pat rodomi kaip kortelės mobiliame.
+
+**Density principas** (pilna specifikacija [DESIGN_SYSTEM.md "Mobile Data Density Tiers"](./DESIGN_SYSTEM.md#mobile-data-density-tiers)):
+
+Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi veiksmai, author, size) slepiami po "⋯" mygtuku arba perkeliami į detail. Horizontal scroll neleidžiamas – pasukti ekraną nereikalaujama.
+
+> **⚠ Žinomas skolas (technical debt):** dabartinės ModCard/ServerCard/TrendCard kortelės rodo **visus** stulpelius (Pirminius + Antrinius + Tretinius), o ne tik Pirminius + Antrinius. Ref į [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md#mobile-data-density-tiers) lentelę. Pataisymas = supaprastinti kortelių turinį pagal density tiers lentelę.
+
+**Nekeistos lentelės (kol kas):** server detail mod stack, mod detail co-deploy, dependency blockers, scenarios. Joms taikomas `overflow-x-auto` su gradient indikatoriumi (žr. anti-patterns).
 
 ## 8. Bottom sheets (mobile)
 
