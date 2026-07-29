@@ -98,6 +98,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     removed: Array<{ id: string; name: string }>;
   }>
 >([]);
+  const [expandedModSections, setExpandedModSections] = useState<Set<string>>(new Set());
 
   const [modSearch, setModSearch] = useState('');
   const [modSort, setModSort] = useState<EmbeddedModSort>('rank');
@@ -202,6 +203,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       const res = await serversApi.getModChanges(serverId, modChangeDays, game);
       if (cancelled) return;
       setModChanges(res.data || []);
+      setExpandedModSections(new Set());
       } catch {
         if (cancelled) return;
       setModChanges([]);
@@ -802,49 +804,91 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
         {modChanges.length > 0 && (
           <div className="space-y-4">
-            {modChanges.map((day) => (
-              <Card key={day.date}>
-                <CardContent className="p-3 sm:p-4 space-y-3">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-mono">
-                      {day.date}
-                    </span>
-                    {day.added.length === 0 && day.removed.length === 0 ? (
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">—</span>
-                    ) : (
-                      <>
-                        <CountBadge color="text-emerald-400" label="Added" count={day.added.length} />
-                        <CountBadge color="text-rose-400" label="Removed" count={day.removed.length} />
-                      </>
-                    )}
-                  </div>
-                  {(day.added.length > 0 || day.removed.length > 0) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {day.added.length > 0 && (
-                        <ModChangesColumn
-                          label="Added"
-                          color="text-emerald-400"
-                          mods={day.added}
-                          date={day.date}
-                          prefix="a"
-                          gp={gp}
-                        />
-                      )}
-                      {day.removed.length > 0 && (
-                        <ModChangesColumn
-                          label="Removed"
-                          color="text-rose-400"
-                          mods={day.removed}
-                          date={day.date}
-                          prefix="r"
-                          gp={gp}
-                        />
+            {modChanges.map((day) => {
+              const addedKey = `${day.date}-a`;
+              const removedKey = `${day.date}-r`;
+              const addedExpanded = expandedModSections.has(addedKey);
+              const removedExpanded = expandedModSections.has(removedKey);
+              const toggle = (key: string) => {
+                setExpandedModSections((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(key)) next.delete(key);
+                  else next.add(key);
+                  return next;
+                });
+              };
+              return (
+                <Card key={day.date}>
+                  <CardContent className="p-3 sm:p-4 space-y-3">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-mono">
+                        {day.date}
+                      </span>
+                      {day.added.length === 0 && day.removed.length === 0 ? (
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">—</span>
+                      ) : (
+                        <>
+                          {day.added.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => toggle(addedKey)}
+                              className="text-[9px] font-black uppercase tracking-widest text-emerald-400 cursor-pointer hover:opacity-80"
+                            >
+                              Added ({day.added.length}) <span className="text-gray-500 text-[8px]">{addedExpanded ? '▲' : '▼'}</span>
+                            </button>
+                          ) : (
+                            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400/40">Added (0)</span>
+                          )}
+                          {day.removed.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => toggle(removedKey)}
+                              className="text-[9px] font-black uppercase tracking-widest text-rose-400 cursor-pointer hover:opacity-80"
+                            >
+                              Removed ({day.removed.length}) <span className="text-gray-500 text-[8px]">{removedExpanded ? '▲' : '▼'}</span>
+                            </button>
+                          ) : (
+                            <span className="text-[9px] font-black uppercase tracking-widest text-rose-400/40">Removed (0)</span>
+                          )}
+                        </>
                       )}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    {(addedExpanded || removedExpanded) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {addedExpanded && day.added.length > 0 && (
+                          <ul className="space-y-1.5">
+                            {day.added.map((m) => (
+                              <li key={`a-${day.date}-${m.id}`}>
+                                <Link
+                                  to={`${gp}/mod/${encodeURIComponent(m.id)}`}
+                                  className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
+                                >
+                                  {m.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {removedExpanded && day.removed.length > 0 && (
+                          <ul className="space-y-1.5">
+                            {day.removed.map((m) => (
+                              <li key={`r-${day.date}-${m.id}`}>
+                                <Link
+                                  to={`${gp}/mod/${encodeURIComponent(m.id)}`}
+                                  className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
+                                >
+                                  {m.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </section>
@@ -999,57 +1043,6 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function CountBadge({ color, label, count }: { color: string; label: string; count: number }) {
-  return <span className={`text-[9px] font-black uppercase tracking-widest ${color}`}>{label} ({count})</span>;
-}
-
-function ModChangesColumn({
-  label,
-  color,
-  mods,
-  date,
-  prefix,
-  gp,
-}: {
-  label: string;
-  color: string;
-  mods: Array<{ id: string; name: string }>;
-  date: string;
-  prefix: string;
-  gp: string;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="text-[9px] font-black uppercase tracking-widest cursor-pointer hover:opacity-80"
-      >
-        <span className={color}>
-          {label} ({mods.length})
-        </span>
-        <span className="ml-1.5 text-gray-500 text-[8px]">{expanded ? '▲' : '▼'}</span>
-      </button>
-      {expanded && (
-        <ul className="space-y-1.5">
-          {mods.map((m) => (
-            <li key={`${prefix}-${date}-${m.id}`}>
-              <Link
-                to={`${gp}/mod/${encodeURIComponent(m.id)}`}
-                className="text-sm text-white hover:text-tactical-orange transition-colors break-words"
-              >
-                {m.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
