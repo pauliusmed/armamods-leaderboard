@@ -34,9 +34,9 @@ import { FavoriteModButton } from './ui/FavoriteModButton';
 import { useModFavorites } from '../hooks/useModFavorites';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { ModWorkshopUnavailableBanner } from './ui/ModWorkshopStatus';
-import { ModDependencyTable, DependencyRow } from './ui/ModDependencyTable';
+import { ModDependencyTable } from './ui/ModDependencyTable';
 import { CoDeployTable } from './ui/CoDeployTable';
-import { ServerDataTable } from './ui/ModDataTable';
+import { ServerDataTable, type ServerDataTableSortBy, type ServerDataTableSortDir } from './ui/ModDataTable';
 import { ServerRow } from './ServerRow';
 import { Pagination } from './ui/Pagination';
 import type { Mod, Server, ModHistory, ModDependency } from '../types';
@@ -80,6 +80,16 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [selectedDays, setSelectedDays] = useState(30);
   const [heroGalleryVisible, setHeroGalleryVisible] = useState(false);
   const [serversPage, setServersPage] = useState(1);
+  const [serversSortBy, setServersSortBy] = useState<ServerDataTableSortBy>('players');
+  const [serversSortDir, setServersSortDir] = useState<ServerDataTableSortDir>('desc');
+  const toggleServersSort = (column: ServerDataTableSortBy) => {
+    if (serversSortBy === column) {
+      setServersSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setServersSortBy(column);
+    setServersSortDir(column === 'name' || column === 'rank' ? 'asc' : 'desc');
+  };
   const { isFavorite, toggle } = useModFavorites(game);
   const isMobileChart = useMediaQuery('(max-width: 639px)');
   const freshness = useDataFreshness(game);
@@ -187,8 +197,14 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
   const sortedDeployedServers = useMemo(() => {
     if (!mod?.servers) return [];
-    return [...mod.servers].sort((a, b) => (b.players || 0) - (a.players || 0));
-  }, [mod?.servers]);
+    const dir = serversSortDir === 'asc' ? -1 : 1;
+    return [...mod.servers].sort((a, b) => {
+      if (serversSortBy === 'rank') return dir * ((a.sqeRank ?? 99999) - (b.sqeRank ?? 99999));
+      if (serversSortBy === 'name') return dir * a.name.localeCompare(b.name);
+      if (serversSortBy === 'players') return dir * ((a.players || 0) - (b.players || 0));
+      return dir * ((a.mods?.length ?? 0) - (b.mods?.length ?? 0));
+    });
+  }, [mod?.servers, serversSortBy, serversSortDir]);
 
   const deployedServersTotalPages = Math.max(
     1,
@@ -750,11 +766,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   No declared dependencies for this mod (standalone module).
                 </p>
               ) : (
-                <ModDependencyTable>
-                  {dependencies.map((dep) => (
-                    <DependencyRow key={dep.id} dep={dep} game={game} />
-                  ))}
-                </ModDependencyTable>
+                <ModDependencyTable deps={dependencies} game={game} />
               )}
             </section>
           )}
@@ -795,7 +807,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               </div>
             ) : (
               <>
-                <ServerDataTable>
+                <ServerDataTable
+                  sortBy={serversSortBy}
+                  sortDir={serversSortDir}
+                  onSort={toggleServersSort}
+                >
                   {paginatedDeployedServers.map((server) => (
                     <ServerRow key={server.id} server={server} game={game} />
                   ))}

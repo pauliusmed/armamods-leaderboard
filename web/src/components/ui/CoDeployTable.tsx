@@ -1,9 +1,14 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { GameType } from '../../api/client';
 import type { Mod } from '../../types';
 import { ModThumbnail } from './ModThumbnail';
+import { SortableTh } from './SortableTh';
 
 export type CoDeployedMod = NonNullable<Mod['coDeployed']>[number];
+
+type CoDeploySortBy = 'name' | 'count' | 'share' | 'rank';
+type CoDeploySortDir = 'asc' | 'desc';
 
 interface CoDeployTableProps {
   items: CoDeployedMod[];
@@ -14,6 +19,28 @@ interface CoDeployTableProps {
 /** Co-deploy stats — shared server count, not global mod popularity. */
 export function CoDeployTable({ items, parentServerCount, game = 'reforger' }: CoDeployTableProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
+  const [sortBy, setSortBy] = useState<CoDeploySortBy>('count');
+  const [sortDir, setSortDir] = useState<CoDeploySortDir>('desc');
+  const toggleSort = (column: CoDeploySortBy) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortBy(column);
+    setSortDir(column === 'name' || column === 'rank' ? 'asc' : 'desc');
+  };
+
+  const sortedItems = useMemo(() => {
+    const dir = sortDir === 'asc' ? -1 : 1;
+    return [...items].sort((a, b) => {
+      if (sortBy === 'name') return dir * a.name.localeCompare(b.name);
+      if (sortBy === 'count') return dir * (a.count - b.count);
+      if (sortBy === 'rank') return dir * ((a.overallRank ?? 99999) - (b.overallRank ?? 99999));
+      const shareA = parentServerCount > 0 ? a.count / parentServerCount : 0;
+      const shareB = parentServerCount > 0 ? b.count / parentServerCount : 0;
+      return dir * (shareA - shareB);
+    });
+  }, [items, sortBy, sortDir, parentServerCount]);
 
   return (
     <div className="border border-white/5 bg-black/40">
@@ -21,22 +48,45 @@ export function CoDeployTable({ items, parentServerCount, game = 'reforger' }: C
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-white/10">
-              <th className="pl-4 pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Module
-              </th>
-              <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Shared servers
-              </th>
-              <th className="hidden sm:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Of your deploys
-              </th>
-              <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Network rank
-              </th>
+              <SortableTh
+                label="Module"
+                sortKey="name"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as CoDeploySortBy)}
+                className="pl-4 pr-4"
+              />
+              <SortableTh
+                label="Shared servers"
+                sortKey="count"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as CoDeploySortBy)}
+                align="right"
+                className="px-4"
+              />
+              <SortableTh
+                label="Of your deploys"
+                sortKey="share"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as CoDeploySortBy)}
+                align="right"
+                className="hidden sm:table-cell px-4"
+              />
+              <SortableTh
+                label="Network rank"
+                sortKey="rank"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as CoDeploySortBy)}
+                align="right"
+                className="hidden md:table-cell pl-4 pr-4"
+              />
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => {
+            {sortedItems.map((item) => {
               const sharePct =
                 parentServerCount > 0 ? Math.round((item.count / parentServerCount) * 100) : null;
 

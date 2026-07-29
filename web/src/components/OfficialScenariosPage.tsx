@@ -1,12 +1,17 @@
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { OFFICIAL_SCENARIOS, getOfficialScenarioBySlug } from '../../functions/lib/official-scenarios';
 import { SEO } from './ui/SEO';
+import { SortableTh } from './ui/SortableTh';
 import type { GameType } from '../api/client';
 import { OFFICIAL_SCENARIOS_BM_NOTE } from '../lib/siteCopy';
 
 interface OfficialScenariosPageProps {
   game?: GameType;
 }
+
+type OfficialSortBy = 'title' | 'scenarioId';
+type OfficialSortDir = 'asc' | 'desc';
 
 export function OfficialScenariosPage({ game = 'reforger' }: OfficialScenariosPageProps) {
   const { slug } = useParams<{ slug?: string }>();
@@ -93,38 +98,71 @@ export function OfficialScenariosPage({ game = 'reforger' }: OfficialScenariosPa
         </p>
       </div>
 
-      <div className="border border-white/5 bg-black/40">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="pl-4 pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  Scenario
-                </th>
-                <th className="hidden lg:table-cell px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  scenarioId
-                </th>
+      <OfficialScenariosTable gamePrefix={gp} />
+    </div>
+  );
+}
+
+function OfficialScenariosTable({ gamePrefix }: { gamePrefix: string }) {
+  const [sortBy, setSortBy] = useState<OfficialSortBy>('title');
+  const [sortDir, setSortDir] = useState<OfficialSortDir>('asc');
+  const toggleSort = (column: OfficialSortBy) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortBy(column);
+    setSortDir('asc');
+  };
+  const sorted = useMemo(() => {
+    const dir = sortDir === 'asc' ? -1 : 1;
+    return [...OFFICIAL_SCENARIOS].sort((a, b) => {
+      if (sortBy === 'title') return dir * a.title.localeCompare(b.title);
+      return dir * a.scenarioId.localeCompare(b.scenarioId);
+    });
+  }, [sortBy, sortDir]);
+  return (
+    <div className="border border-white/5 bg-black/40">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-white/10">
+              <SortableTh
+                label="Scenario"
+                sortKey="title"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as OfficialSortBy)}
+                className="pl-4 pr-4"
+              />
+              <SortableTh
+                label="scenarioId"
+                sortKey="scenarioId"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as OfficialSortBy)}
+                className="hidden lg:table-cell px-4"
+              />
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((scenario) => (
+              <tr key={scenario.slug} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+                <td className="py-3 pl-4 pr-4 align-middle">
+                  <Link
+                    to={`${gamePrefix}/scenarios/official/${scenario.slug}`}
+                    className="text-[13px] font-bold text-white hover:text-tactical-orange transition-colors"
+                  >
+                    {scenario.title}
+                  </Link>
+                </td>
+                <td className="hidden lg:table-cell py-3 px-4 align-middle">
+                  <code className="text-[11px] font-mono text-gray-500">{scenario.scenarioId}</code>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {OFFICIAL_SCENARIOS.map((scenario) => (
-                <tr key={scenario.slug} className="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
-                  <td className="py-3 pl-4 pr-4 align-middle">
-                    <Link
-                      to={`${gp}/scenarios/official/${scenario.slug}`}
-                      className="text-[13px] font-bold text-white hover:text-tactical-orange transition-colors"
-                    >
-                      {scenario.title}
-                    </Link>
-                  </td>
-                  <td className="hidden lg:table-cell py-3 px-4 align-middle">
-                    <code className="text-[11px] font-mono text-gray-500">{scenario.scenarioId}</code>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

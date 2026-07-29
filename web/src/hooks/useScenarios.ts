@@ -4,6 +4,7 @@ import { fetchWithRetry } from '../lib/fetchWithRetry';
 import type { ScenarioRankingEntry, Server } from '../types';
 
 export type ScenarioSortBy = 'players' | 'servers' | 'fill' | 'name' | 'rank';
+export type ScenarioSortDir = 'asc' | 'desc';
 
 const UNKNOWN_SCENARIO = '— Unknown —';
 
@@ -24,6 +25,7 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const [retryCount, setRetryCount] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState<ScenarioSortBy>('rank');
+  const [sortDir, setSortDir] = useState<ScenarioSortDir>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
@@ -89,14 +91,15 @@ export function useScenarios(options: UseScenariosOptions = {}) {
       ? ranking.filter((s) => s.name.toLowerCase().includes(query))
       : ranking;
 
+    const dir = sortDir === 'asc' ? -1 : 1;
     return [...filtered].sort((a, b) => {
-      if (sortBy === 'rank') return a.rank - b.rank;
-      if (sortBy === 'players') return b.totalPlayers - a.totalPlayers;
-      if (sortBy === 'servers') return b.serverCount - a.serverCount;
-      if (sortBy === 'fill') return b.avgFillPercent - a.avgFillPercent;
-      return a.name.localeCompare(b.name);
+      if (sortBy === 'rank') return dir * (a.rank - b.rank);
+      if (sortBy === 'players') return dir * (a.totalPlayers - b.totalPlayers);
+      if (sortBy === 'servers') return dir * (a.serverCount - b.serverCount);
+      if (sortBy === 'fill') return dir * (a.avgFillPercent - b.avgFillPercent);
+      return dir * a.name.localeCompare(b.name);
     });
-  }, [ranking, searchInput, sortBy]);
+  }, [ranking, searchInput, sortBy, sortDir]);
 
   const paginatedScenarios = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -125,7 +128,17 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const resetFilters = () => {
     setSearchInput('');
     setSortBy('rank');
+    setSortDir('asc');
     setCurrentPage(1);
+  };
+
+  const toggleSort = (column: ScenarioSortBy) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortBy(column);
+    setSortDir(column === 'name' || column === 'rank' ? 'asc' : 'desc');
   };
 
   return {
@@ -142,6 +155,8 @@ export function useScenarios(options: UseScenariosOptions = {}) {
     setSearchInput,
     sortBy,
     setSortBy,
+    sortDir,
+    toggleSort,
     currentPage,
     setCurrentPage,
     totalPages,

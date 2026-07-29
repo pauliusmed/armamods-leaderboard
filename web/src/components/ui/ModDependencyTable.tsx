@@ -1,10 +1,14 @@
-import type { ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ModDependency } from '../../types';
 import type { GameType } from '../../api/client';
 import { ModThumbnail } from './ModThumbnail';
 import { OpenModStatsButton } from './OpenModStatsButton';
 import { workshopPageUrl } from '../../lib/workshop';
+import { SortableTh } from './SortableTh';
+
+type DepSortBy = 'name' | 'players' | 'servers';
+type DepSortDir = 'asc' | 'desc';
 
 interface DependencyRowProps {
   dep: ModDependency;
@@ -69,28 +73,62 @@ export function DependencyRow({ dep, game = 'reforger' }: DependencyRowProps) {
   );
 }
 
-export function ModDependencyTable({ children }: { children: ReactNode }) {
+export function ModDependencyTable({ deps, game = 'reforger' }: { deps: ModDependency[]; game?: GameType }) {
+  const [sortBy, setSortBy] = useState<DepSortBy>('name');
+  const [sortDir, setSortDir] = useState<DepSortDir>('asc');
+  const toggleSort = (column: DepSortBy) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortBy(column);
+    setSortDir(column === 'name' ? 'asc' : 'desc');
+  };
+
+  const sortedDeps = useMemo(() => {
+    const dir = sortDir === 'asc' ? -1 : 1;
+    return [...deps].sort((a, b) => {
+      if (sortBy === 'name') return dir * a.name.localeCompare(b.name);
+      if (sortBy === 'players') return dir * ((a.totalPlayers ?? 0) - (b.totalPlayers ?? 0));
+      return dir * ((a.serverCount ?? 0) - (b.serverCount ?? 0));
+    });
+  }, [deps, sortBy, sortDir]);
+
   return (
     <div className="border border-white/5 bg-black/40">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-white/10">
-              <th className="pl-4 pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Required module
-              </th>
+              <SortableTh
+                label="Required module"
+                sortKey="name"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as DepSortBy)}
+                className="pl-4 pr-4"
+              />
               <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                 Version
               </th>
-              <th className="hidden md:table-cell px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                Live activity
-              </th>
+              <SortableTh
+                label="Live activity"
+                sortKey="players"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as DepSortBy)}
+                className="hidden md:table-cell px-4"
+              />
               <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody>{children}</tbody>
+          <tbody>
+            {sortedDeps.map((dep) => (
+              <DependencyRow key={dep.id} dep={dep} game={game} />
+            ))}
+          </tbody>
         </table>
       </div>
     </div>

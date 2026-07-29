@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useScenarios } from '../hooks/useScenarios';
 import { ServerRow } from './ServerRow';
@@ -7,12 +7,13 @@ import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
 import { ListFilterBar } from './ui/ListFilterBar';
+import { SortableTh } from './ui/SortableTh';
 import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '../lib/scenarioLinks';
 import { DATA_STALE_HERO_NOTE, SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/siteCopy';
 import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 import type { GameType } from '../api/client';
-import type { ScenarioRankingEntry } from '../types';
+import type { ScenarioRankingEntry, Server } from '../types';
 
 interface ScenarioListProps {
   game?: GameType;
@@ -94,6 +95,8 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
     setSearchInput,
     sortBy,
     setSortBy,
+    sortDir,
+    toggleSort,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -106,6 +109,27 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
   } = useScenarios({ game, selectedName });
 
   const selectedScenario = selectedName ? getScenarioByName(selectedName) : null;
+
+  type DeployedSortBy = 'rank' | 'name' | 'players' | 'mods';
+  const [deployedSortBy, setDeployedSortBy] = useState<DeployedSortBy>('rank');
+  const [deployedSortDir, setDeployedSortDir] = useState<'asc' | 'desc'>('asc');
+  const toggleDeployedSort = (column: DeployedSortBy) => {
+    if (deployedSortBy === column) {
+      setDeployedSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setDeployedSortBy(column);
+    setDeployedSortDir(column === 'name' || column === 'rank' ? 'asc' : 'desc');
+  };
+  const sortedDeployedServers = useMemo(() => {
+    const dir = deployedSortDir === 'asc' ? -1 : 1;
+    return [...selectedServers].sort((a, b) => {
+      if (deployedSortBy === 'rank') return dir * ((a.sqeRank ?? 99999) - (b.sqeRank ?? 99999));
+      if (deployedSortBy === 'name') return dir * a.name.localeCompare(b.name);
+      if (deployedSortBy === 'players') return dir * (a.players - b.players);
+      return dir * ((a.mods?.length ?? 0) - (b.mods?.length ?? 0));
+    });
+  }, [selectedServers, deployedSortBy, deployedSortDir]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -201,24 +225,52 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  #
-                </th>
-                <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  Scenario
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  Servers
-                </th>
-                <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  Players
-                </th>
+                <SortableTh
+                  label="#"
+                  sortKey="rank"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  className="pl-4 pr-2"
+                />
+                <SortableTh
+                  label="Scenario"
+                  sortKey="name"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  className="pr-4"
+                />
+                <SortableTh
+                  label="Servers"
+                  sortKey="servers"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  align="right"
+                  className="px-4"
+                />
+                <SortableTh
+                  label="Players"
+                  sortKey="players"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  align="right"
+                  className="px-4"
+                />
                 <th className="hidden md:table-cell px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                   Type
                 </th>
-                <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                  Avg Fill
-                </th>
+                <SortableTh
+                  label="Avg Fill"
+                  sortKey="fill"
+                  activeSort={sortBy}
+                  sortDir={sortDir}
+                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  align="right"
+                  className="hidden md:table-cell px-4"
+                />
                 <th className="hidden lg:table-cell pl-4 pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                   Top Server
                 </th>
@@ -348,22 +400,44 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Rank
-                    </th>
-                    <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Server
-                    </th>
-                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Players
-                    </th>
-                    <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Mods
-                    </th>
+                    <SortableTh
+                      label="Rank"
+                      sortKey="rank"
+                      activeSort={deployedSortBy}
+                      sortDir={deployedSortDir}
+                      onSort={(key) => toggleDeployedSort(key as DeployedSortBy)}
+                      className="pl-4 pr-2"
+                    />
+                    <SortableTh
+                      label="Server"
+                      sortKey="name"
+                      activeSort={deployedSortBy}
+                      sortDir={deployedSortDir}
+                      onSort={(key) => toggleDeployedSort(key as DeployedSortBy)}
+                      className="pr-4"
+                    />
+                    <SortableTh
+                      label="Players"
+                      sortKey="players"
+                      activeSort={deployedSortBy}
+                      sortDir={deployedSortDir}
+                      onSort={(key) => toggleDeployedSort(key as DeployedSortBy)}
+                      align="right"
+                      className="px-4"
+                    />
+                    <SortableTh
+                      label="Mods"
+                      sortKey="mods"
+                      activeSort={deployedSortBy}
+                      sortDir={deployedSortDir}
+                      onSort={(key) => toggleDeployedSort(key as DeployedSortBy)}
+                      align="right"
+                      className="hidden md:table-cell pl-4 pr-4"
+                    />
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedServers.map((server) => (
+                  {sortedDeployedServers.map((server) => (
                     <ServerRow key={server.id} server={server} game={game} />
                   ))}
                 </tbody>

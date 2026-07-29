@@ -6,7 +6,6 @@ export type SizeFilter = 'all' | 'heavy' | 'medium' | 'small' | 'unknown';
 export type EmbeddedModSort =
   | 'players'
   | 'size'
-  | 'size-asc'
   | 'rank'
   | 'name'
   | 'deploy'
@@ -85,21 +84,22 @@ export function filterServerMods<T extends FilterableServerMod>(
 export function sortServerMods<T extends FilterableServerMod>(
   mods: T[],
   sort: EmbeddedModSort,
-  totalServers: number
+  totalServers: number,
+  sortDir: 'asc' | 'desc' = 'desc'
 ): T[] {
   const list = [...mods];
+  const dir = sortDir === 'asc' ? -1 : 1;
   list.sort((a, b) => {
-    if (sort === 'name') return a.name.localeCompare(b.name);
-    if (sort === 'rank') return a.playerRank - b.playerRank;
-    if (sort === 'size') return (b.sizeBytes ?? 0) - (a.sizeBytes ?? 0);
-    if (sort === 'size-asc') return (a.sizeBytes ?? 0) - (b.sizeBytes ?? 0);
-    if (sort === 'deploy') return (b.serverCount || 0) - (a.serverCount || 0);
+    if (sort === 'name') return dir * a.name.localeCompare(b.name);
+    if (sort === 'rank') return dir * (a.playerRank - b.playerRank);
+    if (sort === 'size') return dir * ((b.sizeBytes ?? 0) - (a.sizeBytes ?? 0));
+    if (sort === 'deploy') return dir * ((b.serverCount || 0) - (a.serverCount || 0));
     if (sort === 'share') {
       const shareA = totalServers > 0 ? (a.serverCount || 0) / totalServers : 0;
       const shareB = totalServers > 0 ? (b.serverCount || 0) / totalServers : 0;
-      return shareB - shareA;
+      return dir * (shareB - shareA);
     }
-    return (b.totalPlayers || 0) - (a.totalPlayers || 0);
+    return dir * ((b.totalPlayers || 0) - (a.totalPlayers || 0));
   });
   return list;
 }
@@ -128,8 +128,7 @@ export const SIZE_FILTER_OPTIONS: Array<{ value: SizeFilter; label: string }> = 
 
 export const EMBEDDED_MOD_SORT_OPTIONS: Array<{ value: EmbeddedModSort; label: string }> = [
   { value: 'players', label: 'Sort: Personnel' },
-  { value: 'size', label: 'Sort: Size (largest)' },
-  { value: 'size-asc', label: 'Sort: Size (smallest)' },
+  { value: 'size', label: 'Sort: Size' },
   { value: 'rank', label: 'Sort: Global Rank' },
   { value: 'deploy', label: 'Sort: Deploy' },
   { value: 'share', label: 'Sort: Share' },

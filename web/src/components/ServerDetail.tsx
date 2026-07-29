@@ -12,6 +12,7 @@ import { TierBadge } from './ui/TierBadge';
 import { ServerStatusBadge } from './ui/ServerStatusBadge';
 import { BmLastSeenHint } from './ui/BmLastSeenHint';
 import { FavoriteServerButton } from './ui/FavoriteServerButton';
+import { SortableTh } from './ui/SortableTh';
 import { useServerFavorites } from '../hooks/useServerFavorites';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts';
@@ -102,6 +103,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
   const [modSearch, setModSearch] = useState('');
   const [modSort, setModSort] = useState<EmbeddedModSort>('rank');
+  const [modSortDir, setModSortDir] = useState<'asc' | 'desc'>('asc');
+  const toggleModSort = (column: EmbeddedModSort) => {
+    if (modSort === column) {
+      setModSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setModSort(column);
+    setModSortDir(column === 'name' || column === 'rank' ? 'asc' : 'desc');
+  };
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>('all');
   const [rankFilter, setRankFilter] = useState<RankFilter>('all');
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
@@ -320,8 +330,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       size: sizeFilter,
     });
 
-    return sortServerMods(filtered, modSort, totalServers);
-  }, [server?.mods, modSearch, modSort, activityFilter, rankFilter, sizeFilter, storagePack, totalServers]);
+    return sortServerMods(filtered, modSort, totalServers, modSortDir);
+  }, [server?.mods, modSearch, modSort, modSortDir, activityFilter, rankFilter, sizeFilter, storagePack, totalServers]);
 
   if (loading) return <StatusState type="loading" retryCount={retryCount} />;
   if (error || !server) return (
@@ -985,27 +995,61 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Rank
-                    </th>
-                    <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Module
-                    </th>
+                    <SortableTh
+                      label="Rank"
+                      sortKey="rank"
+                      activeSort={modSort}
+                      sortDir={modSortDir}
+                      onSort={(key) => toggleModSort(key as EmbeddedModSort)}
+                      className="pl-4 pr-2"
+                    />
+                    <SortableTh
+                      label="Module"
+                      sortKey="name"
+                      activeSort={modSort}
+                      sortDir={modSortDir}
+                      onSort={(key) => toggleModSort(key as EmbeddedModSort)}
+                      className="pr-4"
+                    />
                     <th className="hidden md:table-cell px-3 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                       Author
                     </th>
-                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Personnel
-                    </th>
-                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Deploy
-                    </th>
-                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Size
-                    </th>
-                    <th className="hidden md:table-cell pl-4 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
-                      Share
-                    </th>
+                    <SortableTh
+                      label="Personnel"
+                      sortKey="players"
+                      activeSort={modSort}
+                      sortDir={modSortDir}
+                      onSort={(key) => toggleModSort(key as EmbeddedModSort)}
+                      align="right"
+                      className="px-4"
+                    />
+                    <SortableTh
+                      label="Deploy"
+                      sortKey="deploy"
+                      activeSort={modSort}
+                      sortDir={modSortDir}
+                      onSort={(key) => toggleModSort(key as EmbeddedModSort)}
+                      align="right"
+                      className="hidden md:table-cell px-4"
+                    />
+                    <SortableTh
+                      label="Size"
+                      sortKey="size"
+                      activeSort={modSort}
+                      sortDir={modSortDir}
+                      onSort={(key) => toggleModSort(key as EmbeddedModSort)}
+                      align="right"
+                      className="hidden md:table-cell px-4"
+                    />
+                    <SortableTh
+                      label="Share"
+                      sortKey="share"
+                      activeSort={modSort}
+                      sortDir={modSortDir}
+                      onSort={(key) => toggleModSort(key as EmbeddedModSort)}
+                      align="right"
+                      className="hidden md:table-cell pl-4 pr-4"
+                    />
                     <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                       Actions
                     </th>

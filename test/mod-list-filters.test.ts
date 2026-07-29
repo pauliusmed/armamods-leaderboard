@@ -74,7 +74,7 @@ describe('sortServerMods', () => {
   });
 
   it('sorts by size ascending', () => {
-    const out = sortServerMods(mods, 'size-asc', 100);
+    const out = sortServerMods(mods, 'size', 100, 'asc');
     assert.deepEqual(out.map((m) => m.id), ['A', 'B']);
   });
 });

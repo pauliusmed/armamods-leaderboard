@@ -5,6 +5,7 @@ import type { ReverseDepsAnalysis, Server } from '../types';
 import { SEO } from './ui/SEO';
 import { StatsHero } from './ui/StatsHero';
 import { StatusState } from './ui/StatusState';
+import { SortableTh } from './ui/SortableTh';
 import { workshopPageUrl } from '../lib/workshop';
 
 const pickerInputClass =
@@ -34,6 +35,12 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ReverseDepsAnalysis | null>(null);
   const [metaDisclaimer, setMetaDisclaimer] = useState<string | null>(null);
+  const [depSortDir, setDepSortDir] = useState<'asc' | 'desc'>('asc');
+  const sortedDependents = useMemo(() => {
+    if (!result) return [];
+    const dir = depSortDir === 'asc' ? -1 : 1;
+    return [...result.dependents].sort((a, b) => dir * a.name.localeCompare(b.name));
+  }, [result, depSortDir]);
 
   useEffect(() => {
     let cancelled = false;
@@ -301,12 +308,19 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-600">
-                    <th className="py-3 pl-2 text-left">Blocker mod</th>
+                    <SortableTh
+                      label="Blocker mod"
+                      sortKey="blocker"
+                      activeSort="blocker"
+                      sortDir={depSortDir}
+                      onSort={() => setDepSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                      className="py-3 pl-2"
+                    />
                     <th className="py-3 pr-2 text-left">Declared dependencies</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {result.dependents.map((hit) => (
+                  {sortedDependents.map((hit) => (
                     <tr key={hit.id} className="border-b border-white/5 align-top">
                       <td className="py-3 pl-2 pr-4">
                         <Link
