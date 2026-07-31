@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
+import { GraphicHero } from './ui/GraphicHero';
 import { Shield, Zap, Globe, ExternalLink, Database, Activity, Cpu, Users, HardDrive, AlertCircle } from 'lucide-react';
+import serverRacks960 from '../assets/generated/server-racks-960.webp';
+import serverRacks1600 from '../assets/generated/server-racks-1600.webp';
 
 export function ReforgerHosting() {
   const [modCount, setModCount] = useState(40);
@@ -180,18 +183,30 @@ export function ReforgerHosting() {
         description={`Expert analysis of ${gameName} hosting providers based on real telemetry. 3GB base usage + 0.25GB per player calculation for Conflict and MILSIM.`}
         keywords="best arma reforger hosting, reforger server rental, enfusion engine hosting, arma crossplay server"
         url="/best-arma-reforger-hosting"
+        image="/og-hosting.png"
       />
 
-      <section className="text-center space-y-4 pt-12">
-        <h1 className="text-4xl sm:text-7xl font-black text-white uppercase tracking-tighter leading-tight px-4">
-          <span className="text-tactical-orange italic">Reforger</span> Capacity Analysis
-        </h1>
-        <p className="text-gray-500 font-bold uppercase tracking-[0.2em] max-w-2xl mx-auto text-sm sm:text-base px-4">
-          Interactive Enfusion Engine infrastructure planning ({maxStableSlots} Slots Baseline).
-        </p>
-      </section>
+      <GraphicHero
+        eyebrow="// REFORGER MODDED OPERATIONS NODE"
+        title={
+          <>
+            Reforger <span className="text-brand-mineral">Capacity Analysis</span>
+          </>
+        }
+        description={`Plan modern modded operations around Enfusion hardware demands, with an interactive ${maxStableSlots}-slot stability baseline.`}
+        imageSrc={serverRacks1600}
+        imageSrcSet={`${serverRacks960} 960w, ${serverRacks1600} 1600w`}
+        imageAlt="Rugged server racks inside a modern deployable military command shelter"
+      >
+        <a
+          href="#capacity-planner"
+          className="inline-flex min-h-11 items-center bg-tactical-orange px-7 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-black transition-colors hover:bg-white sm:px-10 sm:py-4"
+        >
+          Configure mission node ↓
+        </a>
+      </GraphicHero>
 
-      <section className="max-w-4xl mx-auto px-4">
+      <section id="capacity-planner" className="max-w-4xl mx-auto scroll-mt-28 px-4">
         <Card className="p-8 space-y-10">
           
           

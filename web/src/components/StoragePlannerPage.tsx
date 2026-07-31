@@ -741,6 +741,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
         description="Plan console mod storage for Arma Reforger: compare server modpacks, deduplicated download size, safe-to-remove mods. PS5 and Xbox."
         keywords="arma reforger storage planner, console mod space, ps5 reforger mods"
         url="/storage-planner"
+        image="/og-storage.png"
       />
 
       <header className="space-y-4 border-b border-white/10 pb-10">

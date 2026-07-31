@@ -6,6 +6,7 @@ interface SEOProps {
   description?: string;
   keywords?: string;
   image?: string;
+  imageAlt?: string;
   /** Absolute URL or path used for canonical + og:url (query strings should be omitted). */
   url?: string;
   type?: string;
@@ -27,6 +28,7 @@ export function SEO({
   description,
   keywords,
   image = '/og-image.png',
+  imageAlt,
   url = SITE_ORIGIN,
   type = 'website',
   noindex = false,
@@ -38,6 +40,8 @@ export function SEO({
     'Discover and track the most popular Arma Reforger and Arma 3 mods. Real-time player counts and trending analytics.';
   const ogImage = absoluteUrl(image);
   const pageUrl = absoluteUrl(url);
+  const resolvedImageAlt = imageAlt || fullTitle;
+  const usesStandardSocialCard = image.startsWith('/og-');
   const graphs = jsonLd == null ? [] : Array.isArray(jsonLd) ? jsonLd : [jsonLd];
 
   return (
@@ -58,11 +62,16 @@ export function SEO({
       <meta property="og:type" content={type} />
       <meta property="og:url" content={pageUrl} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:alt" content={resolvedImageAlt} />
+      {usesStandardSocialCard && <meta property="og:image:type" content="image/png" />}
+      {usesStandardSocialCard && <meta property="og:image:width" content="1200" />}
+      {usesStandardSocialCard && <meta property="og:image:height" content="630" />}
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description || defaultDesc} />
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={resolvedImageAlt} />
 
       {graphs.map((graph, i) => (
         <script

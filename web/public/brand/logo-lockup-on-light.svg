@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="144" viewBox="0 0 620 144" role="img" aria-labelledby="title desc">
+  <title id="title">Arma Mods</title>
+  <desc id="desc">Arma Mods Mission Intelligence Center logo for light backgrounds</desc>
+  <g transform="translate(10 10) scale(2.58)">
+    <path d="M7 36 16 11l8 18 8-18 9 25" fill="none" stroke="#101923" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/>
+    <path d="M12 29h24M16 11h16" fill="none" stroke="#9D6038" stroke-width="2" stroke-linecap="square"/>
+    <circle cx="16" cy="11" r="3" fill="#9D6038"/>
+    <circle cx="24" cy="29" r="3" fill="#9D6038"/>
+    <circle cx="32" cy="11" r="3" fill="#9D6038"/>
+  </g>
+  <text x="158" y="69" fill="#101923" font-family="Barlow, Arial Narrow, Arial, sans-serif" font-size="52" font-weight="900" letter-spacing="5">ARMA</text>
+  <text x="330" y="69" fill="#9D6038" font-family="Barlow, Arial Narrow, Arial, sans-serif" font-size="52" font-weight="900" letter-spacing="5">MODS</text>
+  <text x="161" y="105" fill="#4B5563" font-family="Barlow, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="5">MISSION INTELLIGENCE CENTER</text>
+</svg>

@@ -93,6 +93,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         title={`${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Servers - Live Network`}
         description={`Browse live ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} servers by players, SQE rank, mod count, and console modpack fit. Real-time BattleMetrics-backed network snapshot.`}
         url={game === 'arma3' ? '/arma3/servers' : '/servers'}
+        image="/og-servers.png"
         jsonLd={
           filteredServers.length
             ? itemListJsonLd({
@@ -120,11 +121,22 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         ]}
       />
 
-      <nav className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest" aria-label="Guides">
-        <Link to="/arma-server-browser" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Server browser guide
-        </Link>
-      </nav>
+      {game === 'reforger' && (
+        <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-black uppercase tracking-widest" aria-label="Guides">
+          <span className="text-gray-600">Guides</span>
+          <Link to="/arma-server-browser" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+            Server browser
+          </Link>
+          <span className="text-gray-700" aria-hidden="true">·</span>
+          <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+            Find popular mods
+          </Link>
+          <span className="text-gray-700" aria-hidden="true">·</span>
+          <Link to="/arma-reforger-console-mod-storage" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+            Console storage
+          </Link>
+        </nav>
+      )}
       <ListFilterBar
         search={{
           label: '// SEARCH',

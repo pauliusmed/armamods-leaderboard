@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
+import { GraphicHero } from './ui/GraphicHero';
 import { STORAGE_LANDING_SOURCES } from '../lib/siteCopy';
+import storageModules960 from '../assets/generated/storage-modules-960.webp';
+import storageModules1600 from '../assets/generated/storage-modules-1600.webp';
 
 const FAQ = [
   {
@@ -44,27 +47,29 @@ export function StoragePlannerLanding() {
         description="Free tool for PS5 and Xbox players: compare server modpack sizes, see combined download weight, find mods safe to delete, and check which servers fit your console storage."
         keywords="arma reforger console mods, ps5 mod storage, xbox series mod space, reforger modpack size, delete mods reforger, server mod comparison, console storage limit"
         url="/arma-reforger-console-mod-storage"
+        image="/og-storage.png"
       />
       <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
 
-      <section className="text-center space-y-6 pt-8 px-4">
-        <p className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">
-          // CONSOLE_STORAGE_INTEL
-        </p>
-        <h1 className="text-4xl sm:text-6xl font-black text-white uppercase tracking-tighter leading-tight max-w-4xl mx-auto">
-          Arma Reforger <span className="text-tactical-orange italic">Console Mod Storage</span> Planner
-        </h1>
-        <p className="text-gray-400 font-bold uppercase tracking-[0.15em] max-w-2xl mx-auto text-xs sm:text-sm leading-relaxed">
-          PS5 and Xbox players: see how much space a server modpack needs, compare multiple servers
-          with shared-mod deduplication, and know what to delete before you run out of room.
-        </p>
+      <GraphicHero
+        eyebrow="// MODERN MOD LOADOUT"
+        title={
+          <>
+            Arma Reforger <span className="text-brand-mineral">Console Mod Storage</span> Planner
+          </>
+        }
+        description="PS5 and Xbox players: see how much space a server modpack needs, compare multiple servers with shared-mod deduplication, and know what to delete before you run out of room."
+        imageSrc={storageModules1600}
+        imageSrcSet={`${storageModules960} 960w, ${storageModules1600} 1600w`}
+        imageAlt="Modern military mission-data cases illustrating shared mod storage"
+      >
         <Link
           to="/storage-planner"
-          className="inline-block mt-4 px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-colors"
+          className="inline-flex min-h-11 items-center bg-tactical-orange px-7 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-black transition-colors hover:bg-white sm:px-10 sm:py-4"
         >
           Open free planner →
         </Link>
-      </section>
+      </GraphicHero>
 
       <section className="max-w-4xl mx-auto px-4 space-y-8">
         <h2 className="text-2xl font-black text-white uppercase tracking-tight text-center">
@@ -120,14 +125,6 @@ export function StoragePlannerLanding() {
             </li>
           ))}
         </ol>
-        <div className="text-center">
-          <Link
-            to="/storage-planner"
-            className="inline-block px-8 py-3 border border-tactical-orange/50 text-tactical-orange text-[10px] font-black uppercase tracking-[0.25em] hover:bg-tactical-orange hover:text-black transition-colors"
-          >
-            Start planning →
-          </Link>
-        </div>
       </section>
 
       <section className="max-w-3xl mx-auto px-4 space-y-6">

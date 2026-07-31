@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Arma Mods mark for light backgrounds</title>
+  <path d="M7 36 16 11l8 18 8-18 9 25" fill="none" stroke="#101923" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M12 29h24M16 11h16" fill="none" stroke="#9D6038" stroke-width="2" stroke-linecap="square"/>
+  <circle cx="16" cy="11" r="3" fill="#9D6038"/>
+  <circle cx="24" cy="29" r="3" fill="#9D6038"/>
+  <circle cx="32" cy="11" r="3" fill="#9D6038"/>
+</svg>

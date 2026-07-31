@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
+import { GraphicHero } from './ui/GraphicHero';
+import serverNetwork960 from '../assets/generated/server-network-960.webp';
+import serverNetwork1600 from '../assets/generated/server-network-1600.webp';
 
 const FAQ = [
   {
@@ -43,28 +46,30 @@ export function ServerSearchLanding() {
         description="Browse live Arma Reforger and Arma 3 servers by player count, mods, SQE rank, and online status. Find the perfect server for your playstyle with real-time network data."
         keywords="arma reforger servers, arma 3 servers, arma server list, arma multiplayer servers, find arma servers, reforger server browser, arma 3 modded servers, arma server search, arma community servers"
         url="/arma-server-browser"
+        image="/og-servers.png"
       />
       <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
 
-      <section className="text-center space-y-6 pt-8 px-4">
-        <p className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">
-          // SERVER_NETWORK_INTEL
-        </p>
-        <h1 className="text-4xl sm:text-6xl font-black text-white uppercase tracking-tighter leading-tight max-w-4xl mx-auto">
-          Find the Best{' '}
-          <span className="text-tactical-orange italic">Arma Reforger &amp; Arma 3</span> Servers
-        </h1>
-        <p className="text-gray-400 font-bold uppercase tracking-[0.15em] max-w-2xl mx-auto text-xs sm:text-sm leading-relaxed">
-          Browse live server network data — sorted by player count, SQE rank, mods, and online status.
-          See what is running right now, not what was popular last week.
-        </p>
+      <GraphicHero
+        eyebrow="// MODERN SERVER NETWORK"
+        title={
+          <>
+            Find the Best{' '}
+            <span className="text-brand-mineral">Arma Reforger &amp; Arma 3</span> Servers
+          </>
+        }
+        description="Browse live server network data — sorted by player count, SQE rank, mods, and online status. See what is running right now, not what was popular last week."
+        imageSrc={serverNetwork1600}
+        imageSrcSet={`${serverNetwork960} 960w, ${serverNetwork1600} 1600w`}
+        imageAlt="Modern military operations map with connected multiplayer server nodes"
+      >
         <Link
           to="/servers"
-          className="inline-block mt-4 px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-colors"
+          className="inline-flex min-h-11 items-center bg-tactical-orange px-7 py-3 text-[10px] font-black uppercase tracking-[0.25em] text-black transition-colors hover:bg-white sm:px-10 sm:py-4"
         >
           Browse active servers →
         </Link>
-      </section>
+      </GraphicHero>
 
       <section className="max-w-4xl mx-auto px-4 space-y-8">
         <h2 className="text-2xl font-black text-white uppercase tracking-tight text-center">
@@ -121,14 +126,6 @@ export function ServerSearchLanding() {
             </li>
           ))}
         </ol>
-        <div className="text-center">
-          <Link
-            to="/servers"
-            className="inline-block px-8 py-3 border border-tactical-orange/50 text-tactical-orange text-[10px] font-black uppercase tracking-[0.25em] hover:bg-tactical-orange hover:text-black transition-colors"
-          >
-            Browse servers →
-          </Link>
-        </div>
       </section>
 
       <section className="max-w-3xl mx-auto px-4 space-y-6">
