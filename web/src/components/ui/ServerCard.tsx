@@ -7,12 +7,14 @@ interface ServerCardProps {
   server: Server;
   game?: string;
   pinned?: boolean;
+  featured?: boolean;
 }
 
 export function ServerCard({
   server,
   game = 'reforger',
   pinned = false,
+  featured = false,
 }: ServerCardProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const rank = server.sqeRank;
@@ -26,7 +28,7 @@ export function ServerCard({
   return (
     <Link
       to={`${gp}/server/${server.id}`}
-      className={`block px-4 py-3 border-b border-white/5 hover:bg-white/[0.02] transition-colors ${pinned ? 'bg-tactical-orange/[0.04]' : ''}`}
+      className={`block px-4 py-3 border-b border-white/5 hover:bg-white/[0.02] transition-colors ${pinned ? 'bg-tactical-orange/[0.04]' : featured ? 'bg-tactical-orange/[0.06]' : ''}`}
       title={server.scenarioName ? `${server.name} · ${server.scenarioName}` : server.name}
     >
       <div className="flex items-start gap-3">
@@ -36,6 +38,11 @@ export function ServerCard({
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-bold tracking-tight text-white line-clamp-1">
             {server.name}
+            {featured ? (
+              <span className="ml-2 align-middle inline-block text-[8px] font-black uppercase tracking-widest text-black bg-tactical-orange px-1.5 py-0.5">
+                Featured
+              </span>
+            ) : null}
           </p>
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
             <span>{players} / {max} players</span>

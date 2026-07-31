@@ -40,6 +40,7 @@ import { ServerDataTable, type ServerDataTableSortBy, type ServerDataTableSortDi
 import { ServerRow } from './ServerRow';
 import { Pagination } from './ui/Pagination';
 import type { Mod, Server, ModHistory, ModDependency } from '../types';
+import { isFeaturedServer } from '../lib/featuredServers';
 
 const DEPLOYED_SERVERS_PER_PAGE = 20;
 
@@ -813,7 +814,12 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   onSort={toggleServersSort}
                 >
                   {paginatedDeployedServers.map((server) => (
-                    <ServerRow key={server.id} server={server} game={game} />
+                    <ServerRow
+                      key={server.id}
+                      server={server}
+                      game={game}
+                      featured={isFeaturedServer(server.id, game)}
+                    />
                   ))}
                 </ServerDataTable>
                 <Pagination

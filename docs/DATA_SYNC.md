@@ -92,10 +92,11 @@ Live sync needs ~$1/mo BM Basic. The site frames this as a **community pool** (n
 
 | Constant | Value |
 |----------|--------|
-| `DONATION_GOAL_USD` | **25** (~1 year of Basic for everyone) |
-| `DONATION_RAISED_USD` | update manually when donations land (EUR → ≈USD); **goal met** at $26.85 (2026-07-25) |
+| `DONATION_GOAL_USD` | **50** (stage 2; stage 1 $25 met at 2026-07-25) |
+| `DONATION_RAISED_USD` | update manually when donations land (EUR → ≈USD); $26.85 carried over into stage 2 |
+| `DONATION_QUICK_AMOUNTS` | $3 / $5 / $10 / $25 one-tap PayPal buttons (PayPal.me `/{amount}`) |
 | `COMMUNITY_DONORS` | public thanks wall (nickname / anon; no txn IDs) |
-| Voice | “Community Sync Fund” / shared benefit; emerald **Goal met** when funded |
+| Voice | “Community Sync Fund” / shared benefit; positive ask, never fear-based |
 
 Used by `DonationCard`, `SupportPage`, Layout CTA, stale banner, Config Audit donate banner.
 

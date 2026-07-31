@@ -15,10 +15,13 @@ export type CommunityDonor = {
   note?: string;
 };
 
-export const DONATION_GOAL_USD = 25;
+export const DONATION_GOAL_USD = 50;
 
 /** Running total in USD (EUR gifts converted ≈ at receive time). */
 export const DONATION_RAISED_USD = 26.85;
+
+/** Quick fixed amounts for one-tap PayPal checkout. */
+export const DONATION_QUICK_AMOUNTS = [3, 5, 10, 25] as const;
 
 export const DONATION_GOAL_LABEL = `$${DONATION_GOAL_USD}`;
 

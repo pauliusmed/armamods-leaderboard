@@ -18,6 +18,7 @@ interface ServerRowProps {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   pinned?: boolean;
+  featured?: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export function ServerRow({
   isFavorite = false,
   onToggleFavorite,
   pinned = false,
+  featured = false,
 }: ServerRowProps) {
   const gp = game === 'reforger' ? '' : `/${game}`;
   const rank = server.sqeRank;
@@ -49,7 +51,7 @@ export function ServerRow({
   return (
     <tr
       className={`group border-b border-white/5 hover:bg-white/[0.03] transition-colors ${
-        pinned ? 'bg-tactical-orange/[0.04]' : ''
+        pinned ? 'bg-tactical-orange/[0.04]' : featured ? 'bg-tactical-orange/[0.06]' : ''
       }`}
     >
       {/* SQE rank + tier */}
@@ -75,6 +77,11 @@ export function ServerRow({
         >
           <span className="block text-[13px] font-bold tracking-tight text-white group-hover:text-tactical-orange transition-colors line-clamp-1">
             {server.name}
+            {featured ? (
+              <span className="ml-2 align-middle inline-block text-[8px] font-black uppercase tracking-widest text-black bg-tactical-orange px-1.5 py-0.5">
+                Featured
+              </span>
+            ) : null}
           </span>
           <span className="flex flex-wrap items-center gap-2 mt-0.5">
             <ServerStatusBadge status={server.bmStatus} />

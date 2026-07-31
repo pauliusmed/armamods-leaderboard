@@ -8,6 +8,7 @@ import {
 } from '../hooks/usePinnedFavoriteServers';
 import { ServerRow } from './ServerRow';
 import { ServerCard } from './ui/ServerCard';
+import { FeaturedServers } from './FeaturedServers';
 import { StatsHero } from './ui/StatsHero';
 import { Pagination } from './ui/Pagination';
 import { StatusState } from './ui/StatusState';
@@ -202,6 +203,10 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
       />
 
       <div className="space-y-4">
+        {!searchQuery && currentPage === 1 && (
+          <FeaturedServers game={game} servers={allFilteredServers} isMobile={isMobile} />
+        )}
+
         {showFavoritesPin && (pinnedServers.length > 0 || loadingPinned) && (
           <div className="border border-white/5 bg-[#172635]">
             <div className="px-4 py-2.5 border-b border-tactical-orange/20">

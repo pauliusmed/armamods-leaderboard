@@ -40,6 +40,13 @@ const SECTIONS = [
     ],
   },
   {
+    id: 'featured',
+    title: 'Featured placements',
+    body: [
+      'Servers marked FEATURED are paid placements. They are displayed as a separate, clearly-labelled section and never affect rankings, player counts, or any data shown on the site.',
+    ],
+  },
+  {
     id: 'cookies',
     title: 'Cookies',
     body: [

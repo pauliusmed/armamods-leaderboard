@@ -14,6 +14,7 @@ import {
   donationProgressPercent,
 } from '../lib/donation';
 import { CommunityDonorsThanks } from './CommunityDonorsThanks';
+import { DonationAmountButtons } from './DonationAmountButtons';
 
 export function SupportPage() {
   const pct = donationProgressPercent();
@@ -94,6 +95,10 @@ export function SupportPage() {
       </Card>
 
       <div className="text-center space-y-8 pt-8 pb-12">
+        <div className="max-w-sm mx-auto">
+          <DonationAmountButtons />
+        </div>
+
         <a
           href={PAYPAL_DONATE_URL}
           target="_blank"

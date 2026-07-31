@@ -1,6 +1,12 @@
 /** Shared outbound links for the site */
 export const PAYPAL_DONATE_URL = 'https://www.paypal.com/paypalme/sachta2023';
 
+/** Prefilled-amount PayPal link — `/amount` path keeps checkout one step shorter. */
+export function paypalDonateUrl(amount?: number): string {
+  if (amount && amount > 0) return `${PAYPAL_DONATE_URL}/${amount}`;
+  return PAYPAL_DONATE_URL;
+}
+
 export const EMPOWER_AFFILIATE_ID = '294';
 export const EMPOWER_BILLING_URL = `https://billing.empowerservers.com/aff.php?aff=${EMPOWER_AFFILIATE_ID}`;
 

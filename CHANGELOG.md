@@ -2,6 +2,29 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.26] - 2026-07-31
+
+### 🐛 Affiliate linkų redirect fix
+- **PWA service worker užtverdavo `/api/click/*` navigacijas** — `navigateFallback` grąžindavo SPA `index.html` vietoj 302 redirecto (curl veikė, naršyklė ne); papildomai `NetworkFirst` sekė redirectą ir rodė affiliate puslapį po `/api/click/` URL bei jį kašino. `web/vite.config.ts`: pridėtas `navigateFallbackDenylist: [/^\/api\//]`, `/api/` runtimeCaching dabar praleidžia `mode === 'navigate'` užklausas.
+
+## [1.22.25] - 2026-07-31
+
+### 💰 Monetizacija — FEATURED serverio vieta
+- **FEATURED sistema** — mokama serverio vieta ($9.99/mėn): atskira FEATURED juosta ServerList viršuje (`FeaturedServers.tsx`) + ženkliukas ModDetail "Active Deployed Servers" lentelėje. **Niekuomet neliečia organinių reitingų** — atskira, aiškiai pažymėta sekcija.
+- **Rankinis config modelis** — `web/src/lib/featuredServers.ts`: `FEATURED_SERVERS` masyvas (ID + game), gavus PayPal → commit. Jokios DB, auth ar admin panelės; open source ir free cron lieka nepaliesti (sekretai eina per GitHub Actions secrets).
+- **Privacy skaidrumas** — naujas sekcijas "Featured placements": paid vieta niekada neįtakoja reitingų ar duomenų.
+
+### 📚 Dokumentacija
+- **MONETIZATION.md** (naujas) — pajamų politika ir kietos ribos (reitingai/dvasia), šaltinių hierarchija (affiliate > FEATURED > donation), FEATURED specifikacija (kaina, atvaizdavimas, valdymas), donation etapo modelis.
+- **docs/README.md** — pridėtas MONETIZATION.md, atnaujinta versija ir DATA_SYNC aprašas (be "$25 goal").
+- **DATA_SYNC.md / UI_FILTERS.md** — donation reikšmės atnaujintos (etapas 2: $50, quick amounts, carried-over progresas).
+
+## [1.22.24] - 2026-07-31
+
+### 💰 Aukojimo strategija
+- **Naujas fondo etapas** — Community Sync Fund tikslas pakeltas į $50; surinkta $26.85 perkelta kaip progresas (~54%), seni donorai ir jų įrašai išliko sienoje. Pašalintas "Goal met / Add to the buffer" kalbėjimas, CTA grįžo į "Chip in via PayPal".
+- **Fiksuotų sumų mygtukai** — naujas shared komponentas `DonationAmountButtons.tsx` (DonationCard + SupportPage): $3/$5/$10/$25 per PayPal.me `/{amount}` prefilled checkout; laisva suma lieka pagrindiniame CTA.
+
 ## [1.22.23] - 2026-07-31
 
 ### 🎨 Dizainas / Performance

@@ -75,7 +75,7 @@ User-facing labels for data sources: `web/src/lib/siteCopy.ts` (avoid vendor nam
 | Share | `7.5rem`; header uses `mirrorBar` spacer to align with % + progress bar |
 | Actions | `13.5rem` — ★, Copy, Stats, Workshop |
 
-Pagination sits **inside** the table card (`Pagination` + `sliceLabel="Module Slice"`). Donation card is **below** the card, not between rows and page buttons — goal **$25** via `web/src/lib/donation.ts` (v1.22.8).
+Pagination sits **inside** the table card (`Pagination` + `sliceLabel="Module Slice"`). Donation card is **below** the card, not between rows and page buttons — goal **$50** via `web/src/lib/donation.ts` (v1.22.24, stage 2).
 
 When sync is stale (`useDataFreshness`), list heroes show an amber “Snapshot as of … · not live” note; global banner: `DataStaleBanner`. Details: [DATA_SYNC.md](./DATA_SYNC.md).
 

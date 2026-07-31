@@ -14,6 +14,7 @@ import {
   donationProgressPercent,
 } from '../lib/donation';
 import { CommunityDonorsThanks } from './CommunityDonorsThanks';
+import { DonationAmountButtons } from './DonationAmountButtons';
 
 export function DonationCard() {
   const pct = donationProgressPercent();
@@ -71,6 +72,13 @@ export function DonationCard() {
               ))}
             </ul>
           </div>
+        </div>
+
+        <div className="space-y-2 pt-2">
+          <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider">
+            Quick amounts
+          </p>
+          <DonationAmountButtons />
         </div>
 
         <a
