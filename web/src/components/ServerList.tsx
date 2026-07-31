@@ -119,13 +119,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         ]}
       />
 
-      <nav className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest" aria-label="Related">
-        <Link to={game === 'arma3' ? '/arma3' : '/'} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Mod leaderboard
-        </Link>
-        <Link to={game === 'arma3' ? '/arma3/trending' : '/trending'} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Trending
-        </Link>
+      <nav className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest" aria-label="Guides">
         <Link to="/arma-server-browser" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
           Server browser guide
         </Link>

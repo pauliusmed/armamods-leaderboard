@@ -83,7 +83,6 @@ export function ModList({ game = 'reforger' }: ModListProps) {
   }
 
   const statPlaceholder = initialLoading ? '…' : undefined;
-  const gp = game === 'arma3' ? '/arma3' : '';
   const listPath = game === 'arma3' ? '/arma3' : '/';
   const gameLabel = game === 'reforger' ? 'Arma Reforger' : 'Arma 3';
   const topForLd = listMods.slice(0, 10);
@@ -125,30 +124,19 @@ export function ModList({ game = 'reforger' }: ModListProps) {
         ]}
       />
 
-      <nav
-        className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest"
-        aria-label="Related tools"
-      >
-        <Link to={`${gp}/trending`} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Trending
-        </Link>
-        <Link to={`${gp}/servers`} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Servers
-        </Link>
-        <Link to={`${gp}/scenarios`} className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Scenarios
-        </Link>
-        {game === 'reforger' && (
-          <>
-            <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-              How to find mods
-            </Link>
-            <Link to="/arma-reforger-console-mod-storage" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-              Console storage
-            </Link>
-          </>
-        )}
-      </nav>
+      {game === 'reforger' && (
+        <nav
+          className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest"
+          aria-label="Guides"
+        >
+          <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+            How to find mods
+          </Link>
+          <Link to="/arma-reforger-console-mod-storage" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
+            Console storage
+          </Link>
+        </nav>
+      )}
       <ListFilterBar
         search={{
           label: '// SEARCH',

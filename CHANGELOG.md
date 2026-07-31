@@ -14,6 +14,8 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Scanline RGB sluoksnio šalinimas** — pašalintas nedokumentuotas chromatic aberration sluoksnis (`linear-gradient(90deg, ...rgb...)`); liko tik DESIGN_SYSTEM aprašytos juodos linijos.
 
 ### 🐛 Fixes
+- **Servers page "Related" nav de-duplicated** — pašalinti dublikuoti Mod leaderboard/Trending (header + bottom nav); liko tik "Server browser guide" (unikalus SEO landing'ai linkas).
+- **Homepage "Related tools" nav de-duplicated** — pašalinti dublikuoti Trending/Servers/Scenarios (jie ir taip header + bottom nav); liko tik "How to find mods" ir "Console storage" (SEO landing'ai, kurie kitu atveju tik footeryje). Blokas rodomas tik Reforger.
 - **Scenarios default sort → Players** — `/scenarios` dabar pagal nutylėjimą rūšiuojami pagal žaidėjų skaičių (mažėjančia tvarka), ne pagal rank'ą. Pakeisti `useScenarios` default (`players`/`desc`) ir `resetFilters`; sort opcijų eilė atnaujinta (Players pirma).
 - **12 lint klaidų** (0 liko) — `react-hooks/set-state-in-effect` + `react-hooks/purity` + `react-refresh`: visi sinchroniniai `setState` efektuose perkelti į "derived state during render" pattern (React dokumentuota praktika); `Date.now()` render metu pakeistas pure `tick` išvedimu (StoragePlannerPage); `useWorkshopStatus` perkeltas į `src/hooks/`, `toModRow` į `src/lib/modRow.ts` (fast-refresh). Liko 11 preegzistuojančių warning'ų backend functions/ + exhaustive-deps.
 - **ESLint ignores** — `.wrangler` nebe lintinamas (generuojami temp failai).
