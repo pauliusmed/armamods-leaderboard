@@ -43,7 +43,7 @@ import {
 import { ListFilterBar } from './ui/ListFilterBar';
 import { CopyServerModsButton } from './ui/CopyServerModsButton';
 import { ModRow } from './ModRow';
-import { toModRow } from './ui/ModDataTable';
+import { toModRow } from '../lib/modRow';
 
 interface ServerDetailProps {
   game?: GameType;
@@ -382,7 +382,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         </Link>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/10 pb-12">
           <div className="space-y-4">
-            <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">// SERVER_NODE: {server.id}</span>
+            <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">SERVER NODE: {server.id}</span>
             <div className="flex flex-wrap items-start gap-4">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-none flex-1 min-w-0">
                 {server.name}
@@ -763,8 +763,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 className="group relative block bg-[#172635] border border-white/5 hover:border-tactical-orange/40 p-6 transition-all"
               >
                 <div className="space-y-2.5">
-                  <span className="inline-block text-[7px] font-mono text-tactical-orange/70 uppercase tracking-widest">{reason}</span>
-                  <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest ml-1">// {overlapPercent}% overlap</span>
+                  <span className="inline-block text-[7px] text-tactical-orange/70 uppercase tracking-widest">{reason}</span>
+                  <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest ml-1">{overlapPercent}% overlap</span>
                   <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
                     {other.name}
                   </h3>
@@ -972,7 +972,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               onReset={resetModFilters}
             />
           ) : (
-            <p className="text-gray-600 font-mono text-xs uppercase tracking-widest">
+            <p className="text-gray-600 text-xs uppercase tracking-widest">
               Vanilla server — no mods installed
             </p>
           )}

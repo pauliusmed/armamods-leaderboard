@@ -8,6 +8,7 @@ import { ReforgerHosting } from './components/ReforgerHosting';
 import { Arma3Hosting } from './components/Arma3Hosting';
 import { StatusPage } from './components/StatusPage';
 import { ScenarioList } from './components/ScenarioList';
+import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
 import { Layout } from './components/Layout';
 import { StatusState } from './components/ui/StatusState';
 
@@ -91,8 +92,8 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       const isChunk = this.state.error ? isChunkError(this.state.error) : false;
       return (
-        <div className="min-h-screen bg-[#101923] text-signal-critical p-20 font-mono">
-          <h1 className="text-4xl font-black mb-8">// SYSTEM_CRITICAL_FAILURE</h1>
+        <div className="min-h-screen bg-[#101923] text-signal-critical p-20">
+          <h1 className="text-4xl font-black mb-8">CRITICAL SYSTEM FAILURE</h1>
           <div className="bg-red-950/20 border border-red-900/50 p-8 rounded-lg mb-8">
             <p className="font-bold mb-4">Error Details:</p>
             <pre className="text-xs bg-black/40 p-4 border border-white/5 overflow-auto max-h-[400px]">
@@ -100,8 +101,8 @@ class ErrorBoundary extends Component<Props, State> {
             </pre>
           </div>
           {isChunk ? (
-            <p className="text-signal-ok font-mono text-sm mb-4 animate-pulse">
-              ▸ New version detected — reloading...
+            <p className="text-signal-ok text-sm mb-4 animate-pulse">
+              New version detected — reloading...
             </p>
           ) : (
             <button 
@@ -146,6 +147,7 @@ function App() {
               <Route path="/how-to-check-arma-reforger-modpack-size" element={<HowToModpackSizePage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/support" element={<SupportPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
               {/* Arma 3 routes */}
               <Route path="/arma3" element={<ModList game="arma3" />} />

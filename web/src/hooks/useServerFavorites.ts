@@ -10,8 +10,14 @@ import {
 export function useServerFavorites(game: GameType) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => loadFavoriteServerIds(game));
 
-  useEffect(() => {
+  // Adjust state during render when game changes (React "derived state" pattern).
+  const [prevGame, setPrevGame] = useState(game);
+  if (prevGame !== game) {
+    setPrevGame(game);
     setFavoriteIds(loadFavoriteServerIds(game));
+  }
+
+  useEffect(() => {
     return subscribeServerFavoritesChanged(game, () => setFavoriteIds(loadFavoriteServerIds(game)));
   }, [game]);
 

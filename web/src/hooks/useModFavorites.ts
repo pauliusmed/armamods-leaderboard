@@ -10,8 +10,14 @@ import {
 export function useModFavorites(game: GameType) {
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => loadFavoriteModIds(game));
 
-  useEffect(() => {
+  // Adjust state during render when game changes (React "derived state" pattern).
+  const [prevGame, setPrevGame] = useState(game);
+  if (prevGame !== game) {
+    setPrevGame(game);
     setFavoriteIds(loadFavoriteModIds(game));
+  }
+
+  useEffect(() => {
     return subscribeFavoritesChanged(game, () => setFavoriteIds(loadFavoriteModIds(game)));
   }, [game]);
 

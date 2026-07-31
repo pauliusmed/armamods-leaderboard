@@ -272,13 +272,7 @@ function estimateUnionModCount(
   return ids.size;
 }
 
-function StoragePlanLoading({
-  modEstimate,
-  startedAt,
-}: {
-  modEstimate: number;
-  startedAt: number;
-}) {
+function StoragePlanLoading({ modEstimate }: { modEstimate: number }) {
   const [tick, setTick] = useState(0);
   const [barPercent, setBarPercent] = useState(12);
 
@@ -294,7 +288,7 @@ function StoragePlanLoading({
     return () => window.clearInterval(timer);
   }, []);
 
-  const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const elapsed = tick;
   const stage = PLAN_LOADING_STAGES[Math.min(Math.floor(tick / 3), PLAN_LOADING_STAGES.length - 1)];
   const modLabel = modEstimate > 0 ? `~${modEstimate} unique mods` : 'your modpack';
 
@@ -983,7 +977,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             {planning ? 'Calculating…' : 'Analyze storage'}
           </button>
           {planning && planStartedAt != null && (
-            <StoragePlanLoading modEstimate={estimatedModCount} startedAt={planStartedAt} />
+            <StoragePlanLoading modEstimate={estimatedModCount} />
           )}
           {error && <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">{error}</p>}
         </CardContent>

@@ -3,7 +3,8 @@ import type { Mod } from '../types';
 import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { ModAuthorCell } from './ui/ModAuthorCell';
-import { ModWorkshopStatusBadge, useWorkshopStatus } from './ui/ModWorkshopStatus';
+import { useWorkshopStatus } from '../hooks/useWorkshopStatus';
+import { ModWorkshopStatusBadge } from './ui/ModWorkshopStatus';
 import { ModActions } from './ui/ModActions';
 import { formatBytes } from '../lib/formatBytes';
 

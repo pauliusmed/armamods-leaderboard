@@ -115,7 +115,7 @@ Paveldima iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), bet su mobile patikslinima
 - **Service Worker** (vite-plugin-pwa): `NetworkFirst` API užklausoms (`/api/` – 2h cache, max 100, 10s timeout). 28 assets precache.
 - **Offline indikatorius**: `OfflineBanner.tsx` — amber bar "UPLINK LOST — Showing cached telemetry", rodomas kai `navigator.onLine === false`. Stebi `online`/`offline` events.
 - **Stale data indikacija**: `DataStaleBanner` amber bar po header (ne sinchronizuoti duomenys, ne tinklas).
-- **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #ff6b00`, SVG icon.
+- **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #B8784A`, SVG icon.
 - **Auto-update:** `registerType: 'autoUpdate'`.
 - IndexedDB persistence dar neįgyvendintas — žr. [Planuojama](#10-planuojama-roadmap).
 
@@ -171,7 +171,7 @@ Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi ve
 - **Service Worker** generuojamas per `vite-plugin-pwa` (Workbox `generateSW`).
 - **Strategija:** `NetworkFirst` API užklausoms (`/api/` – 2h cache, max 100 entries, 10s timeout).
 - **Precache:** 28 assets (JS, CSS, HTML, SVG, woff2). `og-image.png` ignoruojamas (per didelis).
-- **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #ff6b00`, SVG icon.
+- **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #B8784A`, SVG icon.
 - **Auto-update:** `registerType: 'autoUpdate'` – nauja SW versija automatiškai užsiregistruoja.
 - Dėl pilno offline (IndexedDB persistence) – žr. Planuojama.
 

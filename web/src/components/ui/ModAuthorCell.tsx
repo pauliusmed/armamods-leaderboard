@@ -21,20 +21,20 @@ export function ModAuthorCell({
   const [author, setAuthor] = useState<string | null>(authorProp ?? null);
   const [loading, setLoading] = useState(game === 'reforger' && authorProp === undefined);
 
-  useEffect(() => {
-    if (authorProp !== undefined) {
-      setAuthor(authorProp);
-      setLoading(false);
-      return;
-    }
+  // Adjust state during render when author prop / game changes (React "derived state" pattern).
+  const [prevKey, setPrevKey] = useState<string | undefined>(undefined);
+  const authorKey = `${game}:${modId}:${authorProp ?? ''}`;
+  if (prevKey !== authorKey) {
+    setPrevKey(authorKey);
+    setAuthor(authorProp ?? null);
+    setLoading(authorProp !== undefined ? false : game === 'reforger');
+  }
 
-    if (game !== 'reforger') {
-      setLoading(false);
-      return;
-    }
+  useEffect(() => {
+    if (authorProp !== undefined) return;
+    if (game !== 'reforger') return;
 
     let cancelled = false;
-    setLoading(true);
 
     modsApi
       .getAuthor(modId, game)

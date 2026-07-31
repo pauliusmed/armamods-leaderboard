@@ -35,7 +35,7 @@ export function AffiliateBanner() {
 
           {/* Hard Facts / Specs */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
-             <div className="flex items-center gap-2 bg-black/50 border border-tactical-orange/50 px-3 py-1.5 shadow-[0_0_10px_rgba(249,115,22,0.1)]">
+             <div className="flex items-center gap-2 bg-black/50 border border-tactical-orange/50 px-3 py-1.5 shadow-[0_0_10px_rgba(184,120,74,0.1)]">
                <div className="w-2 h-2 rounded-full bg-tactical-orange animate-pulse" />
                <span className="text-xs font-black text-tactical-orange uppercase tracking-widest">8GB+ RAM Baseline</span>
              </div>
@@ -57,7 +57,7 @@ export function AffiliateBanner() {
               $9.99<span className="text-base sm:text-xl text-gray-500 not-italic">/mo</span>
             </p>
           </div>
-          <div className="w-full md:w-auto px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm transition-all group-hover:bg-white shadow-[0_0_25px_rgba(249,115,22,0.3)] group-hover:shadow-[0_0_35px_rgba(255,255,255,0.4)] text-center transform group-hover:-translate-y-1">
+          <div className="w-full md:w-auto px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm transition-all group-hover:bg-white shadow-[0_0_25px_rgba(184,120,74,0.3)] group-hover:shadow-[0_0_35px_rgba(255,255,255,0.4)] text-center transform group-hover:-translate-y-1">
             Rent Your Server →
           </div>
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center">

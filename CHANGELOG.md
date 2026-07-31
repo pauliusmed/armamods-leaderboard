@@ -2,6 +2,32 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.23] - 2026-07-31
+
+### 🎨 Dizainas / Performance
+- **Naujas brand logo ir palette** — sukurtas A/M tinklo monogramas (`BrandLogo.tsx`), atnaujinti favicon/icon assets. Oranžinė pakeista į prislopintą varį `#B8784A`, pridėta mineralinė `#E7DED0`; signalinė amber spalva palikta tik būsenoms.
+- **Anti-"tasteful terminal" refaktorius** — validavus (killaislop.com #34, thecrit.co), estetika konvergavo į antrąją AI slop bangą ("Bloomberg terminalo" klonas). Pakeista: `font-mono` pašalintas iš app shell'o (`Layout.tsx`) — mono liko TIK duomenims; pašalinti CLI glyph'ai (`//` prefiksai footer/nav/ServerDetail/error screen, `▸` marker'i); desktop nav emoji+brackets (`[ 📦 Mods Database ]`) pakeisti švariu tekstu (prieštaravo mūsų pačių anti-emoji taisyklei); `🛰`/`⚠` emoji → lucide ikonai (`Satellite`, `AlertTriangle`); Privacy puslapyje pašalinta 01/02/03 sekcijų numeracija. Karinė terminija (UPLINK, INTEL, ESTABLISHING) išlaikyta — tai brandas, keičiamas tik terminalo *pateikimas*.
+- **Fontai self-hosted** — pašalinti Google Fonts `<link>` ir preconnect'us iš `index.html`; Barlow (400/500/700/900) ir JetBrains Mono (400/700/800) dabar tiekiami per `@fontsource` (WOFF2, `font-display: swap`). Priežastis: GDPR precedentas (LG München 3 O 17493/20 — IP adreso perdavimas Google be sutikimo) ir 3rd-party connection setup pašalinimas.
+- **Fontų subset'inimas** — importuojami tik latin + latin-ext subset'ai (EN/LT turiniui). PWA precache sumažėjo 56 → 46 asset'ai.
+- **JetBrains Mono 900 → 800** — fontas realiai neturi 900 svorio (iki 800); Google Fonts buvo servinęs netikslų svorį. `font-black` mono reikšmės dabar atitinka tikrąjį fontą.
+- **Legacy token'ų šalinimas** — ištrinti nenaudojami `--color-military-green` ir `--color-military-dark` iš `src/index.css`.
+- **Scanline RGB sluoksnio šalinimas** — pašalintas nedokumentuotas chromatic aberration sluoksnis (`linear-gradient(90deg, ...rgb...)`); liko tik DESIGN_SYSTEM aprašytos juodos linijos.
+
+### 🐛 Fixes
+- **12 lint klaidų** (0 liko) — `react-hooks/set-state-in-effect` + `react-hooks/purity` + `react-refresh`: visi sinchroniniai `setState` efektuose perkelti į "derived state during render" pattern (React dokumentuota praktika); `Date.now()` render metu pakeistas pure `tick` išvedimu (StoragePlannerPage); `useWorkshopStatus` perkeltas į `src/hooks/`, `toModRow` į `src/lib/modRow.ts` (fast-refresh). Liko 11 preegzistuojančių warning'ų backend functions/ + exhaustive-deps.
+- **ESLint ignores** — `.wrangler` nebe lintinamas (generuojami temp failai).
+
+### 🛡️ Privatumas
+- **Privacy Policy puslapis** (`/privacy`, `PrivacyPolicyPage.tsx`) + footer nuoroda. Aprašo faktinę praktiką: jokių asmens duomenų, telemetrija (viešas game-network duomenis), favorites lokalūs (localStorage), affiliate click'ų agreguoti KV counteriai, Cloudflare Web Analytics (be cookies), jokių trečių šalių fontų. GDPR aktualumas: asmens duomenų nėra, bet elgesys dokumentuotas.
+
+### ✅ Testai
+- **UI komponentų testai** — pridėta testavimo infrastruktūra: `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`, `jsdom`; vitest `include` išplėstas `.tsx`, `setupFiles` su jest-dom + cleanup. Nauji testai: `BottomNav` (5 tab'ai, arma3 prefiksas, aktyvi būsena, Tools sheet), `FavoriteModButton` (aria, toggle, touch target), `modFavorites` (persistence, dedupe, MAX cap, game normalizacija, subscribers). Web testai: 4 failai, 21 testas.
+
+### 📚 Dokumentacija
+- **DESIGN_SYSTEM.md** — "color by exception" pagrįstas ISA-101 (High-Performance HMI) pramonės standartu; "References" lentelėje pridėta ISA-101 eilutė. "Implementation Files" atnaujinti įgyvendinti item'ai (Bottom sheet → `BottomSheet.tsx`, Offline cache → PWA). Pridėta pastaba apie self-hosted fontus. Tipografijos lentelė: data values svoris "Black (900)" → "Black (800)" (JetBrains Mono max 800).
+- **LIGHTHOUSE.md** — pridėta pastaba, kad 2026-07-09 rezultatai yra iki fontų self-hosting; reikia pakartotinio matavimo po deploy'aus.
+- **DESIGN_SYSTEM.md** — nauja sekcija "Differentiation: Anti-Tasteful Terminal": privalomos taisyklės (mono tik duomenims, jokių CLI glyph'ų, jokio emoji, terminalo metaforos tik kur servuoja) + validacijos šaltiniai. Anti-Patterns lentelėje pridėta "Tasteful terminal / Bloomberg klonas" eilutė. Font Stack — pastaba, kad mono niekada nenaudojamas UI chrome.
+
 ## [1.22.22] - 2026-07-30
 
 ### 📚 Dokumentacija

@@ -4,7 +4,7 @@ import { copyToClipboard } from '../../lib/clipboard';
 import { formatModConfigPreview, formatModConfigSnippet } from '../../lib/modConfig';
 import { workshopPageUrl, workshopLabel } from '../../lib/workshop';
 import { ModThumbnail } from './ModThumbnail';
-import { useWorkshopStatus } from './ModWorkshopStatus';
+import { useWorkshopStatus } from '../../hooks/useWorkshopStatus';
 import type { WorkshopAvailability } from '../../types';
 
 interface ModConfigPanelProps {

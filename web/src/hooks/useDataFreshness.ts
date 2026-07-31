@@ -82,7 +82,6 @@ export function useDataFreshness(game: GameType): DataFreshness {
 
   useEffect(() => {
     let cancelled = false;
-    setState((prev) => (prev.loading ? prev : { ...prev, loading: true }));
 
     fetchFreshness(game).then((next) => {
       if (!cancelled) setState(next);

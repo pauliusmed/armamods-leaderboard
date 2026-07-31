@@ -49,10 +49,10 @@ Critical system events follow the PACE model (Primary, Alternate, Contingency, E
 
 **~95% of the interface is grayscale.** Color is used only in two narrowly-scoped roles:
 
-1. **Accent (`#ff6b00`)** — for interaction only: buttons, active nav, hover states, logo. Never decorative.
+1. **Brand copper (`#B8784A`)** — for interaction only: buttons, active nav, hover states, logo. Never decorative.
 2. **Signal colors** — for status indicators only: small dots (≤12px), badge text. Never on backgrounds, borders, cards, or large surfaces.
 
-This follows the "color by exception" pattern used by military C2 systems (ATAK), aerospace UX (Astro UXDS), and modern tactical UI frameworks (Voidframe, Trunk). Grayscale testing ensures hierarchy and meaning survive without hue.
+This follows the "color by exception" pattern used by military C2 systems (ATAK), aerospace UX (Astro UXDS), modern tactical UI frameworks (Voidframe, Trunk), and — most authoritatively — the industrial **High-Performance HMI** standard **ISA-101** (muted gray surfaces by default, color reserved for abnormal states such as alarms/deviations). Grayscale testing ensures hierarchy and meaning survive without hue.
 
 ### Core Palette (MIL-STD-1472H compliant)
 
@@ -60,7 +60,7 @@ Chromatic encoding is strictly functional. Maximum 5 signal colors. All are used
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-accent` | `#ff6b00` | Primary interactive accent — buttons, active nav, hover states, logo |
+| `--color-brand-copper` | `#B8784A` | Primary interactive accent — buttons, active nav, hover states, logo |
 | `--color-critical` | `#FF3838` | Small status text / dot: errors, critical alerts |
 | `--color-warning` | `#FFB302` | Small status text / dot: degraded, stale data |
 | `--color-ok` | `#2ECC71` | Small status text / dot: nominal, online |
@@ -112,12 +112,16 @@ A clear functional two-font-family system distinguishes structure from data.
 | Data values, telemetry | `JetBrains Mono`, `Share Tech Mono`, monospace | Tabular figures ensure aligned decimal points and stable column widths |
 | All numeric data | `tabular-nums` via font-variant | Fixed-width numbers for real-time updating values |
 
+Fonts are self-hosted via `@fontsource` (WOFF2, `font-display: swap`) — no third-party font CDN (privacy/GDPR precedent LG München 3 O 17493/20, no external connection setup).
+
+> **Mono yra tik duomenims.** `JetBrains Mono` naudojamas skaitinėms reikšmėms, ID, timestamp'ams ir kodui — **niekada** kaip UI chrome (nav, antraštės, mygtukai, etiketės, sekcijų pavadinimai). Tai vienas svarbiausių anti-"tasteful terminal" skirtumų (žr. [Diferenciacija](#diferenciacija-pries-tasteful-terminal)).
+
 ### Size & Weight Scale
 
 | Role | Size | Weight | Notes |
 |------|------|--------|-------|
 | Systematic body text | ≥ 14px (0.875rem) | Medium (500) | MIL-STD minimum; prevents eye fatigue during data analysis |
-| Data values | 14px (0.875rem) | Black (900) | Monospaced with tabular-nums |
+| Data values | 14px (0.875rem) | Black (800) | Monospaced with tabular-nums; JetBrains Mono max weight is 800 (no 900 exists in the typeface) |
 | Labels | 10–11px (0.625–0.6875rem) | Black (900) | UPPERCASE, wide tracking |
 | Nav links | 10px (0.625rem) | Bold (700) | UPPERCASE, wide tracking |
 | Section headings | 18–30px (1.125–1.875rem) | Black (900) | Minimal usage; data density over decorative titles |
@@ -219,9 +223,9 @@ File: `src/components/ui/Card.tsx`
 
 | Variant | Style |
 |---------|-------|
-| Primary | `background: #ff6b00, color: #000, font: Barlow Black uppercase, wide tracking` |
+| Primary | `background: #B8784A, color: #000, font: Barlow Black uppercase, wide tracking` |
 | Secondary (ghost) | `background: transparent, border: 1px rgba(255,255,255,0.1), color: #7A828E` |
-| Tonal | `background: rgba(255,107,0,0.1), border: 1px rgba(255,107,0,0.2), color: #ff6b00` |
+| Tonal | `background: rgba(184,120,74,0.1), border: 1px rgba(184,120,74,0.2), color: #B8784A` |
 | Destructive | `background: rgba(255,56,56,0.1), border: 1px rgba(255,56,56,0.2), color: #FF3838` |
 
 All interactive elements use `transition: all 200ms ease`.
@@ -283,7 +287,7 @@ Based on analysis of AI-generated "vibe code" patterns and failed gaming UIs.
 
 | Anti-Pattern | Why | Our Approach |
 |-------------|-----|--------------|
-| Blue gradient (#3B82F6 → #6366F1) | 80% of AI sites use this; signals generic template | Single hue outside blue range (#ff6b00) |
+| Blue gradient (#3B82F6 → #6366F1) | 80% of AI sites use this; signals generic template | Single mineral/copper accent outside the blue range |
 | Glassmorphism (frosted glass) | Creates visual noise under text, slows scanning | Opaque matte surfaces with border-only separation |
 | Nested cards | Wastes usable area with meaningless boxes | Data grouping via typography cascade and spacing |
 | Decorative glow / aurora effects | Reduces contrast, causes flicker in low light | Strictly flat surfaces, depth via luminance levels |
@@ -293,6 +297,7 @@ Based on analysis of AI-generated "vibe code" patterns and failed gaming UIs.
 | 3-column card grids everywhere | AI default pattern | Asymmetric grids, data-driven layouts |
 | "Pasukti ekraną" užuomina | Disruptive, priverčia keisti įprastą laikyseną; prieštarauja Apple HOG / Material | Mobile Data Density Tiers – Pirminis/Antrinis/Tretinis stulpeliai |
 | Visi duomenys vienoje mobile kortelėje | Sulėtina skanavimą; mažiau eilučių ekrane | Kortelė rodo tik Pirminius + 1–2 Antrinius; Tretiniai per detail |
+| "Tasteful terminal" / Bloomberg klonas | Antroji AI slop banga (žr. [Diferenciacija](#diferenciacija-pries-tasteful-terminal)): mono kaip UI chrome, `//` prefiksai, `▸`/`$` glyph'ai, emoji-brackets nav — "hacker terminal" tapo vieno kliko šablonu | Mono **tik** duomenims (skaičiai/ID/timestamps); jokių CLI glyph'ų; terminalo metaforos tik kur servuoja produktą; nav be emoji |
 
 ### Architecture Anti-Patterns
 
@@ -302,6 +307,32 @@ Based on analysis of AI-generated "vibe code" patterns and failed gaming UIs.
 | Identity merging (e.g., BattleMetrics) | Different players with same short name merged into one profile | Strict user-agent fingerprinting + Workshop ID linkage |
 | Hidden multi-level navigation menus | Common in AAA games (Battlefield, CoD) — confusing | Flat navigation, ≤ 5 primary items, always visible |
 | No error recovery in download flows | RHS hangs at 46% with no user action possible | PACE model: retry, alternate mirror, clear error UI |
+
+---
+
+## Differentiation: Anti-"Tasteful Terminal"
+
+2026-07-31 auditas (interneto validacija: [killaislop.com](https://killaislop.com) "The 'tasteful terminal'", [thecrit.co vibe-coding guide](https://www.thecrit.co/resources/vibe-coding-design-guide)) parodė, kad mūsų estetika konvergavo į **antrąją AI slop bangą** — "Bloomberg terminalo" kloną:
+
+> "Mono everywhere, near-black background, one warm accent, ASCII art: the look of 'an AI that read one Vercel blog post'. It isn't ugly, that's the trap; it's polished enough to have become the new default."
+
+Tai ypač smelkianti problema, nes atrodo "ne bjauriai" — bet nebeišskiria. **Vienintelė mūsų branduolinė tapatybė lieka** (taktinio vadavietės dashboard'o fikcija, karinė terminija, navy + mineralinė balta + varis, data density), o keičiamas **terminalo pateikimas**.
+
+### Privalomos taisyklės
+
+| Taisyklė | Ką reiškia | Pavyzdys |
+|----------|-----------|----------|
+| **Mono tik duomenims** | `JetBrains Mono` naudojamas TIK skaitinėms reikšmėms, ID, timestamp'ams, kodui. NIEKADA UI chrome: nav, header'iai, mygtukai, etiketės | ✅ `{mod.serverCount}` mono; ❌ `font-mono` ant app shell / nav / sekcijų antraščių |
+| **Jokių CLI glyph'ų** | `//`, `$`, `▸`, `>`, `[ ... ]` kaip dekoratyvūs prefiksai draudžiami | ❌ `// SERVER_NODE`; ✅ `SERVER NODE` |
+| **Jokio emoji funkciniame UI** | Header nav, status indikatoriai, mygtukai — tik lucide-react ikonai arba tekstas | ❌ `[ 📦 Mods Database ]`; ✅ `Mods Database` + lucide |
+| **Terminalo metaforos tik kur servuoja** | Karinė terminija (UPLINK, INTEL, DEPLOY) lieka — tai brandas. CLI pateikimas (ASCII, prompt'ai) šalinamas | ✅ "ESTABLISHING UPLINK"; ❌ `// ESTABLISHING_UPLINK` |
+| **Jokios 01/02/03 numeracijos** sekcijoms | AI slop ženklas (#30 killaislop) | ❌ `01 · Principle`; ✅ `Principle` |
+
+### Patvirtinti šaltiniai
+
+- [killaislop.com](https://killaislop.com) — "The 'tasteful terminal'" (#34) ir "editorial dashboard" (#35) kaip antroji AI default banga; code signal'ų sąrašas.
+- [thecrit.co](https://www.thecrit.co/resources/vibe-coding-design-guide) — "The Generic Vibe-Coded UI Recipe" (Inter + Lucide + gradientai) ir kodėl modeliai renkasi tikimybinius šablonus.
+- [Shuffle.dev](https://shuffle.dev/blog/2026/01/why-do-most-ai-generated-websites-look-the-same/) — AI prognozuoja šablonus, ne originalumą; konstrainčai veda prie diferenciacijos.
 
 ---
 
@@ -365,6 +396,7 @@ TOUCH_TARGET_BUTTON = 'min-h-11 min-w-11 sm:min-h-0 sm:min-w-0'
 | Astro Space UX Design System | Aerospace | Global status bar, geometric state encoding, muted dark tones (#172635), colorblind-safe shape dubbing |
 | Signal / Fortress Dashboards | DevOps / Finance | JetBrains Mono typography, extreme data density, amber accents, no wasted space |
 | MIL-STD-1472H | US Military | Ergonomic standards for contrast, typography, color coding, and table layout |
+| ISA-101 (High-Performance HMI) | Process control | Exception-based displays: gray by default, color only for alarms/deviation; analogous "color by exception" |
 
 ---
 
@@ -384,6 +416,6 @@ TOUCH_TARGET_BUTTON = 'min-h-11 min-w-11 sm:min-h-0 sm:min-w-0'
 | App shell | `src/components/Layout.tsx` |
 | Table header (mods) | `src/components/ui/ModLeaderboardHead.tsx` |
 | Colorblind-safe signal shapes | (planned) |
-| Bottom sheet mobile component | (planned) |
-| Offline cache service | (planned) |
+| Bottom sheet | `src/components/ui/BottomSheet.tsx` |
+| Offline cache (PWA) | `src/lib/db.ts` + `vite-plugin-pwa` Service Worker |
 | Enfusion error recovery flow | (planned) |

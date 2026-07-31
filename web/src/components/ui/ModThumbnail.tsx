@@ -73,10 +73,14 @@ export function ModThumbnail({
       ? thumbnailUrl
       : modListThumbnailUrl(modId, game, SIZE_PX[size]);
 
-  useEffect(() => {
+  // Adjust state during render when the source changes (React "derived state" pattern).
+  const [prevKey, setPrevKey] = useState<string | undefined>(undefined);
+  const resetKey = `${modId}:${game}:${thumbnailUrl ?? ''}:${priority}`;
+  if (prevKey !== resetKey) {
+    setPrevKey(resetKey);
     setFailed(false);
     setVisible(priority === 'eager');
-  }, [modId, game, thumbnailUrl, priority]);
+  }
 
   useEffect(() => {
     if (priority === 'eager') return;

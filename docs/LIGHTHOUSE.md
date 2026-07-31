@@ -10,6 +10,8 @@ See also: [PERFORMANCE.md](./PERFORMANCE.md) (what we optimized), [CHANGELOG.md]
 
 Captured **2026-07-09** after `attachCachedListFields`, thumbnail resize proxy, route code-splitting, and lazy row images shipped.
 
+> **Pending re-measure (2026-07-31):** v1.22.23 self-hosted the fonts via `@fontsource` (removed Google Fonts). Scores below predate that change — re-run PageSpeed Insights after deploy to confirm no CLS/FOIT regression and the removed third-party connection setup.
+
 | Category | Desktop | Mobile (Moto G Power, Slow 4G) |
 |----------|---------|--------------------------------|
 | **Performance** | **100** | **98** |

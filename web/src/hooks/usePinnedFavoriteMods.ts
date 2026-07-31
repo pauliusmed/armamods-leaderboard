@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { modsApi, type GameType } from '../api/client';
 import type { Mod } from '../types';
 import { isModFavorite } from '../lib/modFavorites';
@@ -7,13 +7,7 @@ function modIdKey(game: GameType, id: string): string {
   return game === 'reforger' ? id.toUpperCase() : id;
 }
 
-function modsEqual(a: Mod[], b: Mod[]): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i].id !== b[i].id || a[i].name !== b[i].name) return false;
-  }
-  return true;
-}
+const NO_MODS: Mod[] = [];
 
 /** Resolve favorite mods for pin block — reuse page slice, fetch missing by id. */
 export function usePinnedFavoriteMods(
@@ -22,37 +16,40 @@ export function usePinnedFavoriteMods(
   pageMods: Mod[],
   enabled: boolean
 ) {
-  const [pinnedMods, setPinnedMods] = useState<Mod[]>([]);
+  const [fetchedById, setFetchedById] = useState<Map<string, Mod>>(new Map());
   const [loading, setLoading] = useState(false);
-  const lastValueRef = useRef<Mod[]>([]);
 
-  function setIfChanged(next: Mod[]) {
-    if (!modsEqual(next, lastValueRef.current)) {
-      lastValueRef.current = next;
-      setPinnedMods(next);
-    }
+  const active = enabled && favoriteIds.length > 0;
+
+  const pageById = useMemo(
+    () => new Map(pageMods.map((mod) => [modIdKey(game, mod.id), mod])),
+    [game, pageMods]
+  );
+
+  const pinnedMods = useMemo(() => {
+    if (!active) return NO_MODS;
+    return favoriteIds
+      .map((id) => pageById.get(modIdKey(game, id)) ?? fetchedById.get(modIdKey(game, id)))
+      .filter((mod): mod is Mod => Boolean(mod));
+  }, [active, game, favoriteIds, pageById, fetchedById]);
+
+  // Reset loading when the set of missing ids changes (React "derived state" pattern).
+  const missingKey = active
+    ? favoriteIds.filter((id) => !pageById.has(modIdKey(game, id))).join(',')
+    : '';
+  const [prevMissingKey, setPrevMissingKey] = useState('');
+  if (prevMissingKey !== missingKey) {
+    setPrevMissingKey(missingKey);
+    setLoading(missingKey !== '');
   }
 
   useEffect(() => {
-    if (!enabled || favoriteIds.length === 0) {
-      setIfChanged([]);
-      return;
-    }
+    if (!active) return;
 
     let cancelled = false;
-    const pageById = new Map(pageMods.map((mod) => [modIdKey(game, mod.id), mod]));
-    const orderedFromPage = favoriteIds
-      .map((id) => pageById.get(modIdKey(game, id)))
-      .filter((mod): mod is Mod => Boolean(mod));
-
     const missingIds = favoriteIds.filter((id) => !pageById.has(modIdKey(game, id)));
+    if (missingIds.length === 0) return;
 
-    if (missingIds.length === 0) {
-      setIfChanged(orderedFromPage);
-      return;
-    }
-
-    setLoading(true);
     Promise.all(
       missingIds.map(async (id) => {
         try {
@@ -77,14 +74,13 @@ export function usePinnedFavoriteMods(
     )
       .then((fetched) => {
         if (cancelled) return;
-        const fetchedById = new Map<string, Mod>();
-        for (const mod of fetched) {
-          if (mod) fetchedById.set(modIdKey(game, mod.id), mod);
-        }
-        const merged = favoriteIds
-          .map((id) => pageById.get(modIdKey(game, id)) ?? fetchedById.get(modIdKey(game, id)))
-          .filter((mod): mod is Mod => Boolean(mod));
-        setIfChanged(merged);
+        setFetchedById((prev) => {
+          const next = new Map(prev);
+          for (const mod of fetched) {
+            if (mod) next.set(modIdKey(game, mod.id), mod);
+          }
+          return next;
+        });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -93,9 +89,9 @@ export function usePinnedFavoriteMods(
     return () => {
       cancelled = true;
     };
-  }, [game, favoriteIds, pageMods, enabled]);
+  }, [active, game, favoriteIds, pageById]);
 
-  return { pinnedMods, loadingPinned: loading };
+  return { pinnedMods, loadingPinned: active ? loading : false };
 }
 
 export function excludeFavoriteModsFromList(

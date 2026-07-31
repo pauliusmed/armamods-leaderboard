@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { serversApi, type GameType } from '../api/client';
 import type { Server } from '../types';
 import { isServerFavorite } from '../lib/serverFavorites';
+
+const NO_SERVERS: Server[] = [];
 
 /** Resolve favorite servers for pin block — reuse page slice, fetch missing by id. */
 export function usePinnedFavoriteServers(
@@ -10,29 +12,38 @@ export function usePinnedFavoriteServers(
   pageServers: Server[],
   enabled: boolean
 ) {
-  const [pinnedServers, setPinnedServers] = useState<Server[]>([]);
+  const [fetchedById, setFetchedById] = useState<Map<string, Server>>(new Map());
   const [loading, setLoading] = useState(false);
 
+  const active = enabled && favoriteIds.length > 0;
+
+  const pageById = useMemo(
+    () => new Map(pageServers.map((server) => [server.id, server])),
+    [pageServers]
+  );
+
+  const pinnedServers = useMemo(() => {
+    if (!active) return NO_SERVERS;
+    return favoriteIds
+      .map((id) => pageById.get(id) ?? fetchedById.get(id))
+      .filter((server): server is Server => Boolean(server));
+  }, [active, favoriteIds, pageById, fetchedById]);
+
+  // Reset loading when the set of missing ids changes (React "derived state" pattern).
+  const missingKey = active ? favoriteIds.filter((id) => !pageById.has(id)).join(',') : '';
+  const [prevMissingKey, setPrevMissingKey] = useState('');
+  if (prevMissingKey !== missingKey) {
+    setPrevMissingKey(missingKey);
+    setLoading(missingKey !== '');
+  }
+
   useEffect(() => {
-    if (!enabled || favoriteIds.length === 0) {
-      setPinnedServers([]);
-      return;
-    }
+    if (!active) return;
 
     let cancelled = false;
-    const pageById = new Map(pageServers.map((server) => [server.id, server]));
-    const orderedFromPage = favoriteIds
-      .map((id) => pageById.get(id))
-      .filter((server): server is Server => Boolean(server));
-
     const missingIds = favoriteIds.filter((id) => !pageById.has(id));
+    if (missingIds.length === 0) return;
 
-    if (missingIds.length === 0) {
-      setPinnedServers(orderedFromPage);
-      return;
-    }
-
-    setLoading(true);
     Promise.all(
       missingIds.map(async (id) => {
         try {
@@ -45,14 +56,13 @@ export function usePinnedFavoriteServers(
     )
       .then((fetched) => {
         if (cancelled) return;
-        const fetchedById = new Map<string, Server>();
-        for (const server of fetched) {
-          if (server) fetchedById.set(server.id, server);
-        }
-        const merged = favoriteIds
-          .map((id) => pageById.get(id) ?? fetchedById.get(id))
-          .filter((server): server is Server => Boolean(server));
-        setPinnedServers(merged);
+        setFetchedById((prev) => {
+          const next = new Map(prev);
+          for (const server of fetched) {
+            if (server) next.set(server.id, server);
+          }
+          return next;
+        });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -61,9 +71,9 @@ export function usePinnedFavoriteServers(
     return () => {
       cancelled = true;
     };
-  }, [game, favoriteIds, pageServers, enabled]);
+  }, [active, game, favoriteIds, pageById]);
 
-  return { pinnedServers, loadingPinned: loading };
+  return { pinnedServers, loadingPinned: active ? loading : false };
 }
 
 export function excludeFavoriteServersFromList(

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { useMods } from '../hooks/useMods';
 import { useModFavorites } from '../hooks/useModFavorites';
 import { excludeFavoriteModsFromList, usePinnedFavoriteMods } from '../hooks/usePinnedFavoriteMods';
@@ -181,8 +182,9 @@ export function ModList({ game = 'reforger' }: ModListProps) {
       {loading ? (
         <>
           {retryCount > 0 && (
-            <div className="mb-4 p-3 border border-signal-critical/30 bg-red-950/10 text-signal-critical text-[10px] font-black uppercase tracking-widest animate-pulse text-center">
-              ⚠ UPLINK LOST — Auto-retrying ({retryCount}/3)...
+            <div className="mb-4 p-3 border border-signal-critical/30 bg-red-950/10 text-signal-critical text-[10px] font-black uppercase tracking-widest animate-pulse text-center flex items-center justify-center gap-2">
+              <AlertTriangle size={12} className="shrink-0" />
+              UPLINK LOST — Auto-retrying ({retryCount}/3)...
             </div>
           )}
           <ModListSkeleton />

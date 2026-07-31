@@ -36,17 +36,23 @@ export function ModWorkshopGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const isInline = variant === 'inline';
 
-  useEffect(() => {
-    let cancelled = false;
+  const effectiveStatus = game !== 'reforger' ? 'hidden' : status;
+
+  // Adjust state during render when the mod changes (React "derived state" pattern).
+  const [prevKey, setPrevKey] = useState<string | undefined>(undefined);
+  const galleryKey = `${modId}:${game}:${isInline}`;
+  if (prevKey !== galleryKey) {
+    setPrevKey(galleryKey);
     setImages([]);
     setActive(0);
     setLightboxOpen(false);
     setStatus('loading');
+  }
 
-    if (game !== 'reforger') {
-      setStatus('hidden');
-      return;
-    }
+  useEffect(() => {
+    if (game !== 'reforger') return;
+
+    let cancelled = false;
 
     modsApi
       .getGallery(modId, game)
@@ -78,9 +84,9 @@ export function ModWorkshopGallery({
   }, [modId, game, isInline]);
 
   useEffect(() => {
-    onVisibilityChange?.(status === 'ready' && images.length > 0);
+    onVisibilityChange?.(effectiveStatus === 'ready' && images.length > 0);
     return () => onVisibilityChange?.(false);
-  }, [status, images.length, onVisibilityChange]);
+  }, [effectiveStatus, images.length, onVisibilityChange]);
 
   const go = useCallback(
     (delta: number) => {
@@ -90,14 +96,14 @@ export function ModWorkshopGallery({
   );
 
   const label = modName ?? 'Mod';
-  const hasGallery = status === 'ready' && images.length > 0;
+  const hasGallery = effectiveStatus === 'ready' && images.length > 0;
   const hasMultiple = hasGallery && images.length > 1;
   const navBtn = isInline ? 'w-11 h-11 sm:w-8 sm:h-8 text-base' : 'w-11 h-11 sm:w-9 sm:h-9';
   const footerPad = isInline ? 'py-2.5' : 'py-3';
   const frameClass = isInline ? 'aspect-[4/3]' : 'aspect-square';
 
   // Reserve space during loading to prevent CLS
-  if (game === 'reforger' && status === 'loading') {
+  if (effectiveStatus === 'loading') {
     return (
       <section className={`border border-white/5 bg-[#172635] ${isInline ? 'w-full' : 'w-full max-w-md sm:max-w-lg mx-auto'}`}>
         <div className={`w-full ${frameClass} bg-[#101923] animate-pulse`} />

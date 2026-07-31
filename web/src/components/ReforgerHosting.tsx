@@ -109,7 +109,7 @@ export function ReforgerHosting() {
 
   const calculateTotalPrice = (p: any) => {
     let total = 0;
-    let details = [];
+    const details: string[] = [];
 
     if (p.name === "EmpowerServers") {
       const ramCost = p.ramTiers[recRAM] || 0;
@@ -332,7 +332,7 @@ export function ReforgerHosting() {
                 rel="noopener noreferrer"
                 className={`inline-flex items-center justify-center gap-2 w-full min-h-11 px-5 font-black uppercase tracking-widest text-[10px] transition-all ${
                   p.isWinner
-                    ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(249,115,22,0.2)]'
+                     ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(184,120,74,0.2)]'
                     : 'border border-white/20 text-white hover:border-white'
                 }`}
               >
@@ -430,7 +430,7 @@ export function ReforgerHosting() {
                       rel="noopener noreferrer"
                       className={`inline-flex items-center gap-2 min-h-11 px-5 py-2.5 font-black uppercase tracking-widest text-[10px] transition-all ${
                         p.isWinner 
-                        ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
+                        ? 'bg-tactical-orange text-black hover:bg-white shadow-[0_0_20px_rgba(184,120,74,0.2)]' 
                         : 'border border-white/20 text-white hover:border-white'
                       }`}
                     >
@@ -461,7 +461,7 @@ export function ReforgerHosting() {
                 href="/api/click/empower?game=reforger"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-16 py-6 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_40px_rgba(249,115,22,0.3)] transform hover:scale-105"
+                className="w-full sm:w-auto px-16 py-6 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_40px_rgba(184,120,74,0.3)] transform hover:scale-105"
               >
                 Launch Your Reforger Server →
               </a>

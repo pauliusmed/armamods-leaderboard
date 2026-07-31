@@ -30,7 +30,7 @@ Monospaced numbers with `font-variant-numeric: tabular-nums` ensure:
 Military and aerospace UX research shows that color should be used only for signaling, never for decoration. Patterns from ATAK, Astro UXDS, Voidframe UI, and Trunk all converge on the same principle: **grayscale-first, color by exception.**
 
 Key rules:
-- Orange (`#ff6b00`) is used **only** for interactive elements (buttons, active nav, hover states, logo)
+- Brand copper (`#B8784A`) is used **only** for interactive elements (buttons, active nav, hover states, logo)
 - Signal colors are used **only** as small status indicators (text or ≤12px dots)
 - All surfaces — cards, banners, sections — are grayscale only (`#101923` / `#172635` / `#1C2E3F` with white borders)
 - No colored backgrounds, no colored borders on surfaces, no decorative color

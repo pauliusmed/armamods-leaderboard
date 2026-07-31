@@ -1,4 +1,4 @@
-
+import { AlertTriangle } from 'lucide-react';
 
 interface StatusStateProps {
   type: 'loading' | 'error' | 'empty';
@@ -20,22 +20,19 @@ export function StatusState({ type, message, details, onAction, actionText, retr
             <div className="w-2 h-2 bg-signal-ok/40 animate-pulse delay-200" style={{ animationDuration: '500ms' }}></div>
             <div className="w-1 h-1 bg-signal-ok/20 animate-pulse delay-300" style={{ animationDuration: '500ms' }}></div>
           </div>
-          <div className="text-[8px] text-signal-neutral font-mono uppercase tracking-[0.3em] space-y-1">
+          <div className="text-[8px] text-signal-neutral uppercase tracking-[0.3em] space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-signal-info">▸</span>
               <span>Establishing Uplink...</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-signal-info">▸</span>
               <span>Fetching Telemetry...</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-signal-info animate-pulse">▸</span>
               <span className="animate-pulse">Processing Intel...</span>
             </div>
             {retryCount != null && retryCount > 0 && (
               <div className="flex items-center gap-2 mt-3 pt-2 border-t border-white/5">
-                <span className="text-signal-critical">⚠</span>
+                <AlertTriangle size={12} className="text-signal-critical shrink-0" />
                 <span className="text-signal-critical">
                   UPLINK LOST — Auto-retrying ({retryCount}/3)...
                 </span>

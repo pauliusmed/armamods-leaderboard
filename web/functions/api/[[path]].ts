@@ -1336,7 +1336,7 @@ function escapeXml(s: string): string {
 }
 
 const BADGE_TIER_COLORS: Record<string, string> = {
-  S: '#ff6b00',
+  S: '#B8784A',
   A: '#ff8c3a',
   B: '#8a8a8a',
   C: '#5a5a5a',
@@ -1354,7 +1354,7 @@ function serverBadgeSvg(opts: { tier: string | null; rank: number | null; name: 
   <rect width="320" height="76" fill="#0a0a0a" stroke="${tierColor}" stroke-width="1.5"/>
   <rect x="0" y="0" width="64" height="76" fill="${tierColor}"/>
   <text x="32" y="49" font-size="32" font-weight="900" fill="#0a0a0a" text-anchor="middle">${tierLabel}</text>
-  <text x="76" y="28" font-size="11" font-weight="900" fill="#ff6b00" letter-spacing="2">${rankLabel}</text>
+  <text x="76" y="28" font-size="11" font-weight="900" fill="#B8784A" letter-spacing="2">${rankLabel}</text>
   <text x="76" y="48" font-size="12" font-weight="700" fill="#e0e0e0">${safeName}</text>
   <text x="76" y="65" font-size="8" font-weight="700" fill="#777" letter-spacing="2">REFORGERMODS.COM</text>
 </svg>`;

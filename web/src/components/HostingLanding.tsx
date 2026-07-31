@@ -49,7 +49,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
               href={affiliateUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-12 py-5 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_40px_rgba(249,115,22,0.3)]"
+              className="w-full sm:w-auto px-12 py-5 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_40px_rgba(184,120,74,0.3)]"
             >
               Deploy Your Server Now →
             </a>
@@ -92,7 +92,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
           </Card>
 
           {/* Official Partner */}
-          <Card className="bg-zinc-900 border-tactical-orange shadow-[0_0_30px_rgba(249,115,22,0.1)] relative transform md:scale-105 z-10">
+          <Card className="bg-zinc-900 border-tactical-orange shadow-[0_0_30px_rgba(184,120,74,0.1)] relative transform md:scale-105 z-10">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#172635] border border-white/10 text-signal-neutral font-black uppercase tracking-widest text-[10px] px-4 py-1">
               Official Partner Deal
             </div>
@@ -154,7 +154,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
 
       {/* Pricing / CTA Section */}
       <section className="bg-[#172635] border border-white/5 p-12 sm:p-20">
-        <div className="absolute top-0 right-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(249,115,22,0.02)_50%,transparent_75%)] bg-[length:20px_20px]" />
+        <div className="absolute top-0 right-0 w-full h-full bg-[linear-gradient(45deg,transparent_25%,rgba(184,120,74,0.02)_50%,transparent_75%)] bg-[length:20px_20px]" />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
           <div className="space-y-8">
@@ -186,7 +186,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
             </div>
           </div>
 
-          <div className="bg-black/60 border border-tactical-orange/40 p-10 space-y-8 text-center relative shadow-[0_0_50px_rgba(249,115,22,0.05)]">
+          <div className="bg-black/60 border border-tactical-orange/40 p-10 space-y-8 text-center relative shadow-[0_0_50px_rgba(184,120,74,0.05)]">
             <div className="absolute top-0 right-0 px-4 py-1 bg-[#172635] border border-white/10 text-signal-neutral text-[10px] font-black uppercase tracking-widest transform translate-x-4 -translate-y-4">
               Official Partner Deal
             </div>
@@ -198,7 +198,7 @@ export function HostingLanding({ game }: HostingLandingProps) {
             </div>
             <a 
               href={affiliateUrl}
-              className="block w-full py-5 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_20px_rgba(249,115,22,0.3)] transform hover:scale-105"
+              className="block w-full py-5 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-white transition-all shadow-[0_0_20px_rgba(184,120,74,0.3)] transform hover:scale-105"
             >
               Deploy My Server Now →
             </a>

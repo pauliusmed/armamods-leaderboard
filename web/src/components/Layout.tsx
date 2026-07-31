@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Satellite } from 'lucide-react';
 import { DATA_SOURCE_ATTRIBUTION, DATA_STALE_FOOTER, DATA_SYNC_NOTE } from '../lib/siteCopy';
 import { DONATION_GOAL_LABEL, DONATION_GOAL_MET } from '../lib/donation';
 import { DataStaleBanner } from './DataStaleBanner';
 import { OfflineBanner } from './OfflineBanner';
 import { BottomNav } from './ui/BottomNav';
+import { BrandLogo } from './ui/BrandLogo';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
 
 interface LayoutProps {
@@ -50,43 +52,33 @@ export function Layout({ children }: LayoutProps) {
 
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-[#101923] flex flex-col font-mono selection:bg-tactical-orange selection:text-black pb-14 lg:pb-0">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#101923] flex flex-col selection:bg-tactical-orange selection:text-black pb-14 lg:pb-0">
       {/* Top Bar - Tactical Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#101923]/80">
         <div className="max-w-screen-2xl mx-auto w-full flex items-stretch justify-between">
           <div className="flex items-center flex-1 min-w-0 px-4 sm:px-8 py-4 sm:py-6 lg:border-r lg:border-white/5 group">
             <Link to={gp || '/'} className="flex items-center gap-3 sm:gap-4 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 bg-tactical-orange flex items-center justify-center text-black font-black text-lg sm:text-xl tracking-tighter shadow-[0_0_15px_rgba(255,107,0,0.3)] group-hover:scale-110 transition-transform">
-                {isArma3 ? 'A3' : 'AR'}
-              </div>
-              <div className="min-w-0 space-y-0.5 sm:space-y-1">
-                <p className="text-base sm:text-xl font-black text-white tracking-[0.1em] uppercase leading-none truncate">
-                  Arma <span className="text-tactical-orange">{isArma3 ? '3' : 'Mods'}</span>
-                </p>
-                <p className="text-[7px] sm:text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] hidden sm:block truncate">
-                  {isArma3 ? 'Legacy Combat Intel' : 'Mission Intelligence Center'}
-                </p>
-              </div>
+              <BrandLogo />
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center shrink-0">
             <Link to={gp || '/'} className={navItemClass(gp || '/')}>
-              [ 📦 Mods Database ]
+              Mods Database
             </Link>
             <Link to={`${gp}/servers`} className={navItemClass(`${gp}/servers`)}>
-              [ 🖥️ Active Servers ]
+              Active Servers
             </Link>
             <Link to={`${gp}/trending`} className={navItemClass(`${gp}/trending`)}>
-              [ 📈 Trending Intel ]
+              Trending Intel
             </Link>
             <Link to={`${gp}/scenarios`} className={navItemClass(`${gp}/scenarios`)}>
-              [ 🗺️ Scenarios ]
+              Scenarios
             </Link>
             <div className="relative group/tools">
               <button type="button" className={toolsNavClass}>
-                [ 🛠 Tools ]
+                Tools
                 <svg className="inline-block ml-1 w-2 h-2 text-tactical-orange group-hover/tools:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -143,7 +135,9 @@ export function Layout({ children }: LayoutProps) {
                 isActive(`${gp}/status`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500 hover:text-tactical-orange hover:bg-white/5'
               }`}
             >
-              <span className="text-sm" aria-hidden="true">🛰</span>
+              <span className="text-sm" aria-hidden="true">
+                <Satellite size={18} strokeWidth={1.5} />
+              </span>
             </Link>
 
             {/* Mobile Theater Switch */}
@@ -247,9 +241,9 @@ export function Layout({ children }: LayoutProps) {
             <div className="space-y-4 sm:space-y-6">
               <h3 className="font-black text-white uppercase tracking-[0.3em] text-[10px] border-b border-white/10 pb-4">Telecommunication</h3>
               <div className="space-y-3 sm:space-y-4">
-                <a href="https://github.com/GrybasTV/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// External GitHub</a>
-                <a href="https://discord.com/channels/105462288051380224/1486438889638854706" target="_blank" rel="noopener noreferrer" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Secure Discord</a>
-                <Link to="/admin" className="block text-gray-600 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors">// Admin</Link>
+                <a href="https://github.com/GrybasTV/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">External GitHub</a>
+                <a href="https://discord.com/channels/105462288051380224/1486438889638854706" target="_blank" rel="noopener noreferrer" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">Secure Discord</a>
+                <Link to="/admin" className="block text-gray-600 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors">Admin</Link>
                 <ul className="space-y-4">
                   <li><Link to={isArma3 ? "/arma3" : "/"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Mod Database</Link></li>
                   <li><Link to={isArma3 ? "/arma3/servers" : "/servers"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Active Servers</Link></li>
@@ -261,7 +255,7 @@ export function Layout({ children }: LayoutProps) {
                     <li><Link to="/how-to-check-arma-reforger-modpack-size" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Check Modpack Size</Link></li>
                   </>)}
                 </ul>
-                <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">// Community Fund</Link>
+                <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">Community Fund</Link>
               </div>
             </div>
 
@@ -289,6 +283,12 @@ export function Layout({ children }: LayoutProps) {
             <p className="text-gray-600 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em] text-center sm:text-left">
               © 2026 COMMUNITY INTELLIGENCE PROJECT. NOT PART OF BOHEMIA INTERACTIVE.
             </p>
+            <Link
+              to="/privacy"
+              className="text-gray-600 hover:text-tactical-orange font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em] transition-colors"
+            >
+              Privacy Policy
+            </Link>
             <p className="text-gray-600 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em]">
               EST: ALPHA-0.3
             </p>
