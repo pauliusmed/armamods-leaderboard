@@ -24,8 +24,8 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [searchInput, setSearchInput] = useState('');
-  const [sortBy, setSortBy] = useState<ScenarioSortBy>('rank');
-  const [sortDir, setSortDir] = useState<ScenarioSortDir>('asc');
+  const [sortBy, setSortBy] = useState<ScenarioSortBy>('players');
+  const [sortDir, setSortDir] = useState<ScenarioSortDir>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
@@ -127,8 +127,8 @@ export function useScenarios(options: UseScenariosOptions = {}) {
 
   const resetFilters = () => {
     setSearchInput('');
-    setSortBy('rank');
-    setSortDir('asc');
+    setSortBy('players');
+    setSortDir('desc');
     setCurrentPage(1);
   };
 

@@ -162,8 +162,8 @@ export const CONSOLE_FIT_FILTER_OPTIONS = [
 ] as const;
 
 export const SCENARIO_LIST_SORT_OPTIONS = [
-  { value: 'rank', label: 'Sort: Rank' },
   { value: 'players', label: 'Sort: Players' },
+  { value: 'rank', label: 'Sort: Rank' },
   { value: 'servers', label: 'Sort: Servers' },
   { value: 'fill', label: 'Sort: Avg Fill' },
   { value: 'name', label: 'Sort: Name' },
