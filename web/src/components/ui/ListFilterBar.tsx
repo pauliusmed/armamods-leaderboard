@@ -26,8 +26,6 @@ export interface FilterSearchField {
 interface ListFilterBarProps {
   search: FilterSearchField;
   selects?: FilterSelectField[];
-  onReset?: () => void;
-  resetLabel?: string;
   footer?: ReactNode;
   sticky?: boolean;
   /** Tailwind md:grid-cols-N — 2–6 */
@@ -53,13 +51,11 @@ const selectClass = `${controlClass} appearance-none cursor-pointer`;
 export function ListFilterBar({
   search,
   selects = [],
-  onReset,
-  resetLabel = 'Reset',
   footer,
   sticky = true,
   columns,
 }: ListFilterBarProps) {
-  const fieldCount = 1 + selects.length + (onReset ? 1 : 0);
+  const fieldCount = 1 + selects.length;
   const gridCols = columns ?? (fieldCount <= 2 ? 2 : fieldCount <= 3 ? 3 : fieldCount <= 4 ? 4 : fieldCount <= 5 ? 5 : 6);
 
   return (
@@ -105,21 +101,6 @@ export function ListFilterBar({
             </select>
           </div>
         ))}
-
-        {onReset && (
-          <div>
-            <span className={`${labelClass} invisible select-none`} aria-hidden>
-              // ACTIONS
-            </span>
-            <button
-              type="button"
-              onClick={onReset}
-              className={`${selectClass} text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40`}
-            >
-              {resetLabel}
-            </button>
-          </div>
-        )}
       </div>
       {footer && <div className="mt-3">{footer}</div>}
     </div>

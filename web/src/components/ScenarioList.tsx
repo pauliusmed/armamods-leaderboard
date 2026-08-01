@@ -216,7 +216,6 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
             ariaLabel: 'Sort scenarios by',
           },
         ]}
-        onReset={resetFilters}
         columns={2}
       />
 

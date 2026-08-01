@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { useMods } from '../hooks/useMods';
 import { useModFavorites } from '../hooks/useModFavorites';
@@ -123,20 +122,6 @@ export function ModList({ game = 'reforger' }: ModListProps) {
           { label: 'Pages', value: statPlaceholder ?? stats.totalPages }
         ]}
       />
-
-      {game === 'reforger' && (
-        <nav
-          className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest"
-          aria-label="Guides"
-        >
-          <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-            How to find mods
-          </Link>
-          <Link to="/arma-reforger-console-mod-storage" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-            Console storage
-          </Link>
-        </nav>
-      )}
       <ListFilterBar
         search={{
           label: '// SEARCH',
@@ -163,7 +148,6 @@ export function ModList({ game = 'reforger' }: ModListProps) {
             ariaLabel: 'Sort mods by',
           },
         ]}
-        onReset={resetFilters}
         columns={3}
       />
 

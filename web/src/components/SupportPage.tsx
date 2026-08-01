@@ -14,7 +14,9 @@ import {
   donationProgressPercent,
 } from '../lib/donation';
 import { CommunityDonorsThanks } from './CommunityDonorsThanks';
+import { DiscordButton } from './ui/DiscordButton';
 import { DonationAmountButtons } from './DonationAmountButtons';
+import { FeaturedSlotInfo } from './FeaturedSlotInfo';
 
 export function SupportPage() {
   const pct = donationProgressPercent();
@@ -94,6 +96,8 @@ export function SupportPage() {
         </CardContent>
       </Card>
 
+      <FeaturedSlotInfo />
+
       <div className="text-center space-y-8 pt-8 pb-12">
         <div className="max-w-sm mx-auto">
           <DonationAmountButtons />
@@ -111,6 +115,10 @@ export function SupportPage() {
         <p className="text-gray-600 text-[9px] font-medium uppercase tracking-[0.3em]">
           {DONATION_FOOTNOTE}
         </p>
+
+        <div className="pt-4">
+          <DiscordButton />
+        </div>
 
         <div className="flex items-center justify-center gap-8 pt-12 border-t border-white/5">
           <Link

@@ -2,6 +2,29 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.29] - 2026-08-01
+
+### 🧹 UI supaprastinimas
+- **"Guides" blokai pašalinti** iš `ModList.tsx` (po "Mod Popularity Leaderboard") ir `ServerList.tsx` (po "Active Server Network") — SEO nuorodos "Find popular mods"/"Console storage"/"Server browser" lieka tik footer'yje.
+- **Reset mygtukas iš paieškos juostos** — `ListFilterBar.tsx`: pašalintas `onReset`/`resetLabel` props ir didelis Reset mygtukas, kuris iškraipydavo tinklelį; išvalyti kvietimai `ModList`, `ScenarioList`, `ServerList`, `ServerDetail` (reset lieka prieinamas tuščio rezultato būsenoje).
+
+## [1.22.28] - 2026-07-31
+
+### 💬 Discord bendruomenė (startuojama)
+- **Discord mygtukas** — daugkartinis `DiscordButton.tsx` (SVG piktograma, `PROJECT_DISCORD_URL` iš `siteLinks.ts`); įdėtas į footer (vietoj hardcoded nuorodos) ir `/support` puslapį.
+- **Kanalų šablonas** — `docs/DISCORD.md`: tikslai (feedback, feature ciklas, serverių savininkai, skaidrumas), kanalų struktūra (welcome/rules/announcements/status + bendruomenės + feedback/feature-requests/bug-reports/server-owners), moderavimo taisyklės.
+- **Automatinis release pranešimas** — `scripts/post-discord-release.mjs` + `DISCORD_RELEASES.md`: user-facing, angliškas, be techninio žargono ir monetizacijos aprašas siunčiamas Discord embed; `deploy.yml` siunčia tik kai pasikeičia `DISCORD_RELEASES.md` (CHANGELOG nebeišsiunčia — lieka dev auditorijai). Webhook per `DISCORD_WEBHOOK_URL` secret.
+- **docs/README.md** — pridėtas DISCORD.md į indeksą.
+
+## [1.22.27] - 2026-07-31
+
+### 💰 FEATURED — pirkėjo instrukcija
+- **Featured Slot Info sekcija** `/support` puslapyje (`FeaturedSlotInfo.tsx`) — kaina ($9.99/mėn), kas gaunama (FEATURED juosta + ženkliukas mod puslapiuose), sąžiningumo garantija, 3 žingsnių aktyvavimo instrukcija (PayPal → server ID per GitHub issue/Discord → featured per 24h).
+- **`siteLinks.ts`** — pridėti `PROJECT_GITHUB_URL` / `PROJECT_DISCORD_URL` (bendros outbound nuorodos).
+
+### 📚 Dokumentacija
+- **MONETIZATION.md** — fiksuotas sprendimas: rankinis modelis dabar, automatika TIK pasiekus trigger'į (3+ aktyvios featured vietos ARBA pirmas mėnesinės prenumeratos klientas). Žinomas automatikos kelias (Stripe Payment Link + webhook → KV → `/api/featured`), ~1 dienos apimtis.
+
 ## [1.22.26] - 2026-07-31
 
 ### 🐛 Affiliate linkų redirect fix

@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
+import { GraphicHero } from './ui/GraphicHero';
 import { howToJsonLd } from '../lib/seoJsonLd';
 import { SITE_ORIGIN } from '../lib/site';
+import serverNetwork960 from '../assets/generated/server-network-960.webp';
+import serverNetwork1600 from '../assets/generated/server-network-1600.webp';
 
 const PATH = '/how-to-find-popular-arma-reforger-mods';
 
@@ -36,6 +39,7 @@ export function HowToFindModsPage() {
         title="How to Find Popular Arma Reforger Mods"
         description={description}
         url={PATH}
+        image="/og-servers.png"
         jsonLd={howToJsonLd({
           name: 'How to Find Popular Arma Reforger Mods',
           description,
@@ -44,15 +48,15 @@ export function HowToFindModsPage() {
         })}
       />
 
-      <header className="space-y-4 border-b border-white/10 pb-8">
-        <p className="text-tactical-orange text-[10px] font-black uppercase tracking-[0.3em]">
-          // Guide
-        </p>
-        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter">
-          How to Find Popular Arma Reforger Mods
-        </h1>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-      </header>
+      <GraphicHero
+        compact
+        eyebrow="// MOD DISCOVERY GUIDE"
+        title="How to Find Popular Arma Reforger Mods"
+        description={description}
+        imageSrc={serverNetwork1600}
+        imageSrcSet={`${serverNetwork960} 960w, ${serverNetwork1600} 1600w`}
+        imageAlt="Modern military operations map linking active modded servers"
+      />
 
       <ol className="space-y-8 list-decimal list-inside">
         {STEPS.map((step) => (
@@ -65,18 +69,22 @@ export function HowToFindModsPage() {
         ))}
       </ol>
 
-      <nav className="grid gap-3 sm:grid-cols-2 border-t border-white/10 pt-8" aria-label="Related tools">
-        <Link to="/" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Mod leaderboard →
+      <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-6 text-[9px] font-black uppercase tracking-widest" aria-label="Related tools">
+        <span className="text-gray-600">Related tools</span>
+        <Link to="/" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Mod leaderboard
         </Link>
-        <Link to="/trending" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Trending mods →
+        <span className="text-gray-700" aria-hidden="true">·</span>
+        <Link to="/trending" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Trending mods
         </Link>
-        <Link to="/servers" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Server list →
+        <span className="text-gray-700" aria-hidden="true">·</span>
+        <Link to="/servers" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Server list
         </Link>
-        <Link to="/arma-reforger-console-mod-storage" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Console mod storage →
+        <span className="text-gray-700" aria-hidden="true">·</span>
+        <Link to="/arma-reforger-console-mod-storage" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Console mod storage
         </Link>
       </nav>
     </article>

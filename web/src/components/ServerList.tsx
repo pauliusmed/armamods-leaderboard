@@ -93,6 +93,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
         title={`${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} Servers - Live Network`}
         description={`Browse live ${game === 'reforger' ? 'Arma Reforger' : 'Arma 3'} servers by players, SQE rank, mod count, and console modpack fit. Real-time BattleMetrics-backed network snapshot.`}
         url={game === 'arma3' ? '/arma3/servers' : '/servers'}
+        image="/og-servers.png"
         jsonLd={
           filteredServers.length
             ? itemListJsonLd({
@@ -119,12 +120,6 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
           { label: 'Network Spans', value: stats.totalPages }
         ]}
       />
-
-      <nav className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest" aria-label="Guides">
-        <Link to="/arma-server-browser" className="min-h-11 px-3 py-2 border border-white/10 text-gray-400 hover:text-tactical-orange hover:border-tactical-orange/40">
-          Server browser guide
-        </Link>
-      </nav>
       <ListFilterBar
         search={{
           label: '// SEARCH',
@@ -180,7 +175,6 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
               ]
             : []),
         ]}
-        onReset={resetFilters}
         columns={game === 'reforger' ? 4 : 3}
         footer={
           game === 'reforger' ? (

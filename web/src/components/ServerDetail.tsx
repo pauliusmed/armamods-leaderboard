@@ -969,7 +969,6 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                   ariaLabel: 'Sort mods',
                 },
               ]}
-              onReset={resetModFilters}
             />
           ) : (
             <p className="text-gray-600 text-xs uppercase tracking-widest">

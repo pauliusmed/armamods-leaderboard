@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
+import { GraphicHero } from './ui/GraphicHero';
 import { howToJsonLd } from '../lib/seoJsonLd';
 import { SITE_ORIGIN } from '../lib/site';
+import storageModules960 from '../assets/generated/storage-modules-960.webp';
+import storageModules1600 from '../assets/generated/storage-modules-1600.webp';
 
 const PATH = '/how-to-check-arma-reforger-modpack-size';
 
@@ -36,6 +39,7 @@ export function HowToModpackSizePage() {
         title="How to Check Arma Reforger Modpack Size (PS5 / Xbox)"
         description={description}
         url={PATH}
+        image="/og-storage.png"
         jsonLd={howToJsonLd({
           name: 'How to Check Arma Reforger Modpack Size',
           description,
@@ -44,15 +48,15 @@ export function HowToModpackSizePage() {
         })}
       />
 
-      <header className="space-y-4 border-b border-white/10 pb-8">
-        <p className="text-tactical-orange text-[10px] font-black uppercase tracking-[0.3em]">
-          // Guide
-        </p>
-        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter">
-          How to Check Modpack Size on Console
-        </h1>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-      </header>
+      <GraphicHero
+        compact
+        eyebrow="// MODPACK STORAGE GUIDE"
+        title="How to Check Modpack Size on Console"
+        description={description}
+        imageSrc={storageModules1600}
+        imageSrcSet={`${storageModules960} 960w, ${storageModules1600} 1600w`}
+        imageAlt="Modern mission-data cases showing an optimized mod loadout"
+      />
 
       <ol className="space-y-8 list-decimal list-inside">
         {STEPS.map((step) => (
@@ -65,18 +69,22 @@ export function HowToModpackSizePage() {
         ))}
       </ol>
 
-      <nav className="grid gap-3 sm:grid-cols-2 border-t border-white/10 pt-8" aria-label="Related tools">
-        <Link to="/arma-reforger-console-mod-storage" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Console storage landing →
+      <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-6 text-[9px] font-black uppercase tracking-widest" aria-label="Related tools">
+        <span className="text-gray-600">Related tools</span>
+        <Link to="/arma-reforger-console-mod-storage" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Console storage
         </Link>
-        <Link to="/storage-planner" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Open Storage Planner →
+        <span className="text-gray-700" aria-hidden="true">·</span>
+        <Link to="/storage-planner" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Open planner
         </Link>
-        <Link to="/servers" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Browse servers →
+        <span className="text-gray-700" aria-hidden="true">·</span>
+        <Link to="/servers" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Browse servers
         </Link>
-        <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 px-4 py-3 border border-white/10 hover:border-tactical-orange/40 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-tactical-orange">
-          Find popular mods →
+        <span className="text-gray-700" aria-hidden="true">·</span>
+        <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+          Find popular mods
         </Link>
       </nav>
     </article>

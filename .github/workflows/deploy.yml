@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Check secrets
         run: |
@@ -62,3 +64,17 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # ========== DISCORD RELEASE ANNOUNCEMENT ==========
+      # Siunčiama tik tada, kai pasikeitė DISCORD_RELEASES.md (user-facing,
+      # angliškas release aprašas). Webhookas nustatomas per
+      # secrets.DISCORD_WEBHOOK_URL (kanalas #announcements).
+      - name: Announce release to Discord
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q "DISCORD_RELEASES.md"; then
+            node scripts/post-discord-release.mjs
+          else
+            echo "No Discord release note — skipping Discord announcement."
+          fi
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
