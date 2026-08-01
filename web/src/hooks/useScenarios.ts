@@ -6,15 +6,21 @@ import type { ScenarioRankingEntry, Server } from '../types';
 export type ScenarioSortBy = 'players' | 'servers' | 'fill' | 'name' | 'rank';
 export type ScenarioSortDir = 'asc' | 'desc';
 
+function isScenarioSortBy(value: string | undefined): value is ScenarioSortBy {
+  return value === 'players' || value === 'servers' || value === 'fill' || value === 'name' || value === 'rank';
+}
+
 const UNKNOWN_SCENARIO = '— Unknown —';
 
 interface UseScenariosOptions {
   game?: GameType;
   selectedName?: string;
+  sortParam?: string;
+  dirParam?: string;
 }
 
 export function useScenarios(options: UseScenariosOptions = {}) {
-  const { game = 'reforger', selectedName = '' } = options;
+  const { game = 'reforger', selectedName = '', sortParam, dirParam } = options;
   const [ranking, setRanking] = useState<ScenarioRankingEntry[]>([]);
   const [selectedServers, setSelectedServers] = useState<Server[]>([]);
   const [serversLoading, setServersLoading] = useState(false);
@@ -24,8 +30,8 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [searchInput, setSearchInput] = useState('');
-  const [sortBy, setSortBy] = useState<ScenarioSortBy>('players');
-  const [sortDir, setSortDir] = useState<ScenarioSortDir>('desc');
+  const [sortBy, setSortBy] = useState<ScenarioSortBy>(isScenarioSortBy(sortParam) ? sortParam : 'players');
+  const [sortDir, setSortDir] = useState<ScenarioSortDir>(dirParam === 'asc' || dirParam === 'desc' ? dirParam : 'desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
 
@@ -94,7 +100,10 @@ export function useScenarios(options: UseScenariosOptions = {}) {
     const dir = sortDir === 'asc' ? -1 : 1;
     return [...filtered].sort((a, b) => {
       if (sortBy === 'rank') return dir * (a.rank - b.rank);
-      if (sortBy === 'players') return dir * (a.totalPlayers - b.totalPlayers);
+      if (sortBy === 'players') {
+        const byPlayers = dir * (a.totalPlayers - b.totalPlayers);
+        return byPlayers !== 0 ? byPlayers : dir * (a.serverCount - b.serverCount);
+      }
       if (sortBy === 'servers') return dir * (a.serverCount - b.serverCount);
       if (sortBy === 'fill') return dir * (a.avgFillPercent - b.avgFillPercent);
       return dir * a.name.localeCompare(b.name);

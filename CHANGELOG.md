@@ -2,6 +2,12 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.30] - 2026-08-01
+
+### 🐛 Scenarijų rikiavimas — garantuotas pagal žaidėjus
+- **Sort sinchronizuojamas į URL** (`?sort=players&dir=desc`) — `useScenarios` init iš URL paramų, `handleSort` atnaujina URL; senas cache'as nebegali užfiksuoti kitos tvarkos.
+- **Tie-breaker pagal serverius** — kai žaidėjų skaičius lygus, rikiuoja pagal serverių skaičių (anksčiau tvarka likdavo API atsitiktinė, todėl scenarijai su 0 žaidėjų galėjo atsidurti viršuje).
+
 ## [1.22.29] - 2026-08-01
 
 ### 🧹 UI supaprastinimas
