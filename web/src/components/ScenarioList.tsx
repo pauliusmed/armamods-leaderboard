@@ -12,6 +12,7 @@ import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '.
 import { DATA_STALE_HERO_NOTE, SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/siteCopy';
 import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import type { ScenarioSortBy } from '../hooks/useScenarios';
 import type { GameType } from '../api/client';
 import type { ScenarioRankingEntry } from '../types';
 
@@ -84,6 +85,8 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
   const freshness = useDataFreshness(game);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedName = searchParams.get('s') ?? '';
+  const sortParam = searchParams.get('sort') ?? undefined;
+  const dirParam = searchParams.get('dir') ?? undefined;
 
   const {
     scenarios,
@@ -106,7 +109,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
     getScenarioByName,
     resetFilters,
     refresh,
-  } = useScenarios({ game, selectedName });
+  } = useScenarios({ game, selectedName, sortParam, dirParam });
 
   const selectedScenario = selectedName ? getScenarioByName(selectedName) : null;
 
@@ -143,6 +146,18 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
       next.set('s', name);
     }
     setSearchParams(next, { replace: true });
+  };
+
+  const handleSort = (column: ScenarioSortBy) => {
+    const next = new URLSearchParams(searchParams);
+    if (sortBy === column) {
+      next.set('dir', sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      next.set('sort', column);
+      next.set('dir', column === 'name' || column === 'rank' ? 'asc' : 'desc');
+    }
+    setSearchParams(next, { replace: true });
+    toggleSort(column);
   };
 
   if (initialLoading) return <StatusState type="loading" retryCount={retryCount} />;
@@ -229,7 +244,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   sortKey="rank"
                   activeSort={sortBy}
                   sortDir={sortDir}
-                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  onSort={(key) => handleSort(key as typeof sortBy)}
                   className="pl-4 pr-2"
                 />
                 <SortableTh
@@ -237,7 +252,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   sortKey="name"
                   activeSort={sortBy}
                   sortDir={sortDir}
-                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  onSort={(key) => handleSort(key as typeof sortBy)}
                   className="pr-4"
                 />
                 <SortableTh
@@ -245,7 +260,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   sortKey="servers"
                   activeSort={sortBy}
                   sortDir={sortDir}
-                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  onSort={(key) => handleSort(key as typeof sortBy)}
                   align="right"
                   className="px-4"
                 />
@@ -254,7 +269,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   sortKey="players"
                   activeSort={sortBy}
                   sortDir={sortDir}
-                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  onSort={(key) => handleSort(key as typeof sortBy)}
                   align="right"
                   className="px-4"
                 />
@@ -266,7 +281,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   sortKey="fill"
                   activeSort={sortBy}
                   sortDir={sortDir}
-                  onSort={(key) => toggleSort(key as typeof sortBy)}
+                  onSort={(key) => handleSort(key as typeof sortBy)}
                   align="right"
                   className="hidden md:table-cell px-4"
                 />
