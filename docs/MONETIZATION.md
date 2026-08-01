@@ -51,6 +51,21 @@ reciprocity, ne labdara.
 FEATURED ženkliukas reiškia apmokamą vietą; jis niekada neįtakoja reitingų ar duomenų.
 Ši eilutė dubliuojama Privacy Policy puslapyje.
 
+### Rankinis modelis — sprendimas (2026-07-31)
+
+**Dabar veikia rankiniu būdu** (`featuredServers.ts` + commit), be webhooko, Stripe ar
+dashboardo. Automatika NEįdiegiama, nes jos nauda atsiranda tik turint mokančių klientų,
+o kaina reali jau dabar (KV migracija, webhook su parašo verifikacija, Stripe onboarding,
+naujas puolimo paviršius).
+
+**Perėjimo trigger'is (matuojamas):** automatizuoti, kai turėsime **3+ aktyvias featured
+vietas ARBA pirmą klientą, norintį mėnesinės prenumeratos**. Tada kelias:
+Stripe Payment Link + webhook → Cloudflare KV → `/api/featured`; frontend pakeičia duomenų
+šaltinį iš config failo į API. ~1 dienos projektas.
+
+Pirkėjo instrukcija rodoma `/support` ("Featured Server Slot") ir nukreipia mokėti PayPal,
+po to aktyvavimui — GitHub issue / Discord.
+
 ## Donation (Community Sync Fund)
 
 - Etapo modelis: tikslas $50 (etapas 2), surinkta suma perkeliama kaip progresas,

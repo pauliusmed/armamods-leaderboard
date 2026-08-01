@@ -1,6 +1,9 @@
 /** Shared outbound links for the site */
 export const PAYPAL_DONATE_URL = 'https://www.paypal.com/paypalme/sachta2023';
 
+export const PROJECT_GITHUB_URL = 'https://github.com/GrybasTV/armamods-leaderboard';
+export const PROJECT_DISCORD_URL = 'https://discord.gg/q98s7DmcWv';
+
 /** Prefilled-amount PayPal link — `/amount` path keeps checkout one step shorter. */
 export function paypalDonateUrl(amount?: number): string {
   if (amount && amount > 0) return `${PAYPAL_DONATE_URL}/${amount}`;
