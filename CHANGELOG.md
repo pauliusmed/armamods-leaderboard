@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.31] - 2026-08-08
+
+### 🐛 Modo dydžio refresh — pasenę KV raktai nebeišliks amžinai
+- **`CloudflareKVClient.put` neperduodavo `expirationTtl`** (scripts/collector.ts) — kolektorius į KV rašė `cache:mod-size:*` (ir kitus workshop raktus) be TTL, todėl jie niekada nesibaigdavo ir pasenę modų dydžiai likdavo rodomi amžinai (pvz. Tactical Flava rodė 2.83 GB, nors workshop jau rodo 23.21 KB).
+- **Fix:** `put` dabar priima `{ expirationTtl }` ir perduoda kaip `expiration_ttl` URL parametrą; atnaujintas `CloudflareKV` interface. Dabar dydžiai atsinaujins kas 7 dienas (top-300 kolektoriaus šildymas arba puslapio atidarymas po TTL pabaigos).
+- **Regression testas** — `test/collector-kv.test.ts` (užregistruotas `npm test` sąraše).
+- Ištrintas pasenęs KV raktas `cache:mod-size:reforger:5D550926D43F1409` — kitą kolektoriaus run (~2h) ar puslapio atidarymą dydis bus atnaujintas.
+
 ## [1.22.30] - 2026-08-01
 
 ### 🐛 Scenarijų rikiavimas — garantuotas pagal žaidėjus

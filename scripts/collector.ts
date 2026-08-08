@@ -37,7 +37,7 @@ import {
 type BattleMetricsServer = Awaited<ReturnType<BattleMetricsService['fetchAllServers']>>[number];
 
 interface CloudflareKV {
-  put: (key: string, value: string) => Promise<void>;
+  put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>;
   get: (key: string, type: 'json') => Promise<any>;
 }
 
@@ -63,10 +63,16 @@ export class CloudflareKVClient {
     return `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/storage/kv/namespaces/${this.namespaceId}${path}`;
   }
 
-  async put(key: string, value: string): Promise<void> {
+  async put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void> {
+    // TTL turi patekti i URL, kitaip cache:mod-size ir panasūs raktai rašomi be
+    // galiojimo ir niekada nebeatnaujinami (stale dydžiai lieka amžinai).
+    const url =
+      options?.expirationTtl && options.expirationTtl > 0
+        ? this.baseUrl(`/values/${key}?expiration_ttl=${options.expirationTtl}`)
+        : this.baseUrl(`/values/${key}`);
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
-      const response = await fetch(this.baseUrl(`/values/${key}`), {
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
