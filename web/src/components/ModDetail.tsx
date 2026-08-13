@@ -398,6 +398,30 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 </p>
               )}
 
+              <div className="space-y-2">
+                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em]">Live stats</p>
+                <div className="grid grid-cols-3 gap-2 w-full">
+                  <div className="px-3 py-3 bg-zinc-900/70 border border-white/10 min-w-0">
+                    <p className="font-mono text-lg sm:text-xl font-black text-white tabular-nums truncate">
+                      {(mod.stats?.totalPlayers || mod.totalPlayers || 0).toLocaleString()}
+                    </p>
+                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.12em] mt-1">Personnel</p>
+                  </div>
+                  <div className="px-3 py-3 bg-zinc-900/70 border border-white/10 min-w-0">
+                    <p className="font-mono text-lg sm:text-xl font-black text-white tabular-nums truncate">
+                      {(mod.stats?.serverCount || mod.serverCount || 0).toLocaleString()}
+                    </p>
+                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.12em] mt-1">Servers</p>
+                  </div>
+                  <div className="px-3 py-3 bg-zinc-900/70 border border-white/10 min-w-0">
+                    <p className="font-mono text-lg sm:text-xl font-black text-tactical-orange tabular-nums truncate">
+                      {(mod.stats?.marketShare || 0).toFixed(1)}%
+                    </p>
+                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.12em] mt-1">Share</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 w-full">
                 {game === 'reforger' && (
                   <div className="px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px]">
@@ -431,30 +455,6 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             />
           )}
         </header>
-
-          <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 py-3 border-b border-white/5">
-            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 w-full sm:w-auto">
-              Live stats
-            </span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-mono text-lg font-black text-white tabular-nums">
-                {(mod.stats?.totalPlayers || mod.totalPlayers || 0).toLocaleString()}
-              </span>
-              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Personnel</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-mono text-lg font-black text-white tabular-nums">
-                {mod.stats?.serverCount || mod.serverCount || 0}
-              </span>
-              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Servers</span>
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-mono text-lg font-black text-tactical-orange tabular-nums">
-                {(mod.stats?.marketShare || 0).toFixed(1)}%
-              </span>
-              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Share</span>
-            </div>
-          </div>
 
           {/* Affiliate Section */}
           <AffiliateBanner />

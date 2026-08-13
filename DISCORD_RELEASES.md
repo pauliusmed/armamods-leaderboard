@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.22.43] - 2026-08-13
+
+- Mod pages now show live personnel, server count and share directly beside the mod details, so the key numbers are visible without scrolling.
+
 ## [1.22.42] - 2026-08-13
 
 - Mod pages now put the Workshop screenshots front and center, with the mod details, download size, rank and server config actions grouped beside them.

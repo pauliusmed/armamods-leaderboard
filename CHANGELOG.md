@@ -2,6 +2,13 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.43] - 2026-08-13
+
+### 📊 Mod detail hero — Live stats perkelti į pagrindinį bloką
+- **Fix:** Personnel, Servers ir Share statistika dabar rodoma šalia mod'o informacijos, po santrauka.
+- Pašalintas pasikartojantis stats blokas prieš performance timeline, o serverių skaičius formatuojamas su tūkstančių skirtuku.
+- **Heavy CI:** skipped because presentation-only UI layout.
+
 ## [1.22.42] - 2026-08-13
 
 ### 🎨 Mod detail hero — didesnė galerija ir aiškesni veiksmai
