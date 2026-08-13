@@ -303,7 +303,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
     <div className="max-w-5xl mx-auto px-4 py-16 space-y-10">
       <SEO
         title="Server config audit | Arma Mods"
-        description="Paste your Reforger config.json for post-1.7 mod risk, trends, and alternatives from similar servers."
+        description="Paste your Reforger config.json for post-update mod risk, trends, and alternatives from similar servers."
         url="/audit"
       />
 
@@ -315,7 +315,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           Server mod audit
         </h1>
         <p className="text-gray-400 text-sm leading-relaxed max-w-3xl">
-          Find <strong className="text-white">broken or dead mods</strong> after Reforger 1.7 Partisan – paste or
+          Find <strong className="text-white">broken or dead mods</strong> after the latest Reforger update – paste or
           upload <code className="text-tactical-orange">config.json</code>. Your file is{' '}
           <strong className="text-white">not stored</strong>; only mod IDs are sent.
         </p>
@@ -511,7 +511,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           </button>
           {filter === 'remove' && buckets && buckets.remove.length > 0 && (
             <p className="text-[11px] text-red-300/90">
-              Showing mods likely broken or safe to remove after 1.7 – worst first.
+              Showing mods likely broken or safe to remove after the update – worst first.
             </p>
           )}
 
@@ -580,15 +580,15 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       {row.dropPct != null && row.dropPct > 0 && (
                         <span
                           className="text-red-400 font-black text-base mr-2"
-                          title="Drop from before 1.7 to first days after update"
+                          title="Drop from before the update to first days after it"
                         >
                           −{row.dropPct}%
                         </span>
                       )}
-                      Before 1.7: <strong>{row.beforeAvg ?? '—'}</strong>/day
+                      Before update: <strong>{row.beforeAvg ?? '—'}</strong>/day
                     </div>
                     <div>
-                      After 1.7 update: <strong>{row.earlyAfterAvg ?? '—'}</strong>/day
+                      After update: <strong>{row.earlyAfterAvg ?? '—'}</strong>/day
                       <span className="text-gray-600 ml-1">(first ~4d)</span>
                     </div>
                     <div>
@@ -667,7 +667,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           {filter !== 'all' && buckets && buckets[filter].length === 0 && (
             <p className="text-gray-500 text-sm">
               {filter === 'remove'
-                ? 'No broken or failing mods detected – your config looks clean after 1.7.'
+                ? 'No broken or failing mods detected – your config looks clean after the update.'
                 : `No mods in “${AUDIT_BUCKET_SHORT[filter]}”.`}
             </p>
           )}

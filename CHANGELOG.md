@@ -2,6 +2,27 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.36] - 2026-08-13
+
+### 🆕 Reforger 1.8 pasiruošimas — patch registras vietoj hardcode
+- **`REFORGER_PATCHES`** masyvas audit-config.ts: `1.7 Partisan (2026-05-28)` + `1.8 (2026-08-13)`; `LATEST_REFORGER_PATCH` — naujausias patch naudojamas automatiškai (audit atskaitos taškas, timeline, patch meta).
+- **Audit dabar vertina pagal 1.8**: "before" langas = 26 d. iki patch (buvo hardcoded `2026-05-02`, kuris tiksliai atitiko 1.7 − 26 d.), tekstai "after 1.7" → parametrizuoti per patch label ("Broken after 1.8", "Ecosystem dip after 1.8"…).
+- **Timeline (ModDetail)** — rodo **visas** patch linijas, kurias apima istorija (1.7 Partisan + 1.8); raudonas broken fonas nuo naujausio patch.
+- **UI tekstai** — ConfigAuditPage / auditLabels: "1.7" → neutralūs "after the update".
+- **Testai** — audit testai izoliuoti su explicit 1.7 parametrais; naujas testas "Ecosystem dip after 1.8".
+- **Ateičiai:** naujas Reforger patch → viena eilutė `REFORGER_PATCHES` masyve.
+- Heavy CI: required because audit algoritmas.
+
+## [1.22.35] - 2026-08-13
+
+### ↩️ Sąrašų būsena URL — back atkuria viską (filtrai, paieška, puslapis, scroll)
+- **Problem:** modų/serverių/scenarijų sąrašai laikė filtrus, sort ir puslapį tik useState — grįžus back sąrašas permontuodavosi su default'ais: paieškos radiniai, filtrai ir puslapis dingo.
+- **Fix:** naujas `useUrlListState` hook'as — URL yra vienintelis tiesos šaltinis (be useEffect sinchronizacijos): `?q=&activity=&sort=&dir=&page=&console=&status=`. Paieška — replace+debounce (300ms), puslapis — push (back vaikšto per puslapius), filtrai — replace.
+- **`useMods`, `useServers`, `useScenarios`** — visas sąrašo state pervedė ant URL.
+- **Scroll atkūrimas** — `useListScrollRestoration` (sessionStorage, key su puslapiu): grįžus back atstatoma tiksli pozicija; page keitimas ranka lieka scroll-to-top.
+- **Testai** — `useUrlListState.test.tsx` (7 atvejai: init iš URL, fallback, rašymas į URL, fallback pašalinimas, išorinis keitimas, parse helperiai).
+- Heavy CI: skipped because UI hooks — web vitest (28 testai) + tsc + eslint pakanka.
+
 ## [1.22.34] - 2026-08-13
 
 ### ⚙️ Config snippet — comma-first struktūra

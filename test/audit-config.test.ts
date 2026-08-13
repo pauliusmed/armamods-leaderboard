@@ -62,7 +62,7 @@ describe('analyzeTrend', () => {
       { date: '2026-06-01', totalPlayers: 489, overallRank: 11 },
       { date: '2026-06-02', totalPlayers: 450, overallRank: 12 },
     ];
-    const t = analyzeTrend(history);
+    const t = analyzeTrend(history, '2026-05-28', '1.7');
     assert.equal(t.label, 'Ecosystem dip after 1.7');
     assert.equal(t.phase, 'stable');
   });
@@ -76,8 +76,23 @@ describe('analyzeTrend', () => {
       { date: '2026-05-31', totalPlayers: 45 },
       { date: '2026-06-01', totalPlayers: 90 },
     ];
-    const t = analyzeTrend(history);
+    const t = analyzeTrend(history, '2026-05-28', '1.7');
     assert.equal(t.phase, 'recovering');
+  });
+
+  it('labels ecosystem dip for the 1.8 patch with its own label', () => {
+    const history = [
+      { date: '2026-07-25', totalPlayers: 2800, overallRank: 9 },
+      { date: '2026-08-01', totalPlayers: 2750, overallRank: 10 },
+      { date: '2026-08-10', totalPlayers: 2650, overallRank: 10 },
+      { date: '2026-08-14', totalPlayers: 820, overallRank: 11 },
+      { date: '2026-08-15', totalPlayers: 640, overallRank: 11 },
+      { date: '2026-08-16', totalPlayers: 500, overallRank: 12 },
+      { date: '2026-08-17', totalPlayers: 430, overallRank: 12 },
+    ];
+    const t = analyzeTrend(history);
+    assert.equal(t.label, 'Ecosystem dip after 1.8');
+    assert.equal(t.phase, 'stable');
   });
 });
 
@@ -86,7 +101,7 @@ describe('classifyModAudit', () => {
     const trend = { phase: 'declining' as const, label: '', detail: '', recentAvg: 0, earlyAfterAvg: 0 };
     const r = classifyModAudit({ beforeAvg: 200, afterAvg: 2, currentPlayers: 0, trend });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after 1.7/i);
+    assert.match(r.title, /Broken after/i);
   });
 
   it('marks recovering ecosystem trend as ok even after a big drop', () => {
@@ -155,7 +170,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after 1.7/i);
+    assert.match(r.title, /Broken after/i);
     assert.ok((r.dropPct ?? 0) < 70);
   });
 
@@ -175,7 +190,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after 1.7/i);
+    assert.match(r.title, /Broken after/i);
     assert.ok((r.dropPct ?? 0) >= 70);
   });
 
@@ -197,7 +212,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after 1.7/i);
+    assert.match(r.title, /Broken after/i);
     assert.match(r.detail, /12/);
   });
 
@@ -223,7 +238,7 @@ describe('classifyModAudit', () => {
     };
     const r = classifyModAudit({ beforeAvg: 100, afterAvg: 8, currentPlayers: 3, trend });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after 1.7/i);
+    assert.match(r.title, /Broken after/i);
   });
 
   it('current zero but high recent post-patch usage is ok not warning', () => {
@@ -286,7 +301,9 @@ describe('buildModAuditRow', () => {
     const row = buildModAuditRow(
       { modId: 'AAAAAAAAAAAAAAAA', name: 'Wrong In Config' },
       [],
-      { totalPlayers: 0, serverCount: 0, name: 'Workshop Name' }
+      { totalPlayers: 0, serverCount: 0, name: 'Workshop Name' },
+      '2026-05-28',
+      '1.7'
     );
     assert.equal(row.name, 'Workshop Name');
   });
@@ -303,7 +320,9 @@ describe('buildModAuditRow', () => {
     const row = buildModAuditRow(
       { modId: 'AAAAAAAAAAAAAAAA', name: 'Test' },
       history,
-      { totalPlayers: 0, serverCount: 10 }
+      { totalPlayers: 0, serverCount: 10 },
+      '2026-05-28',
+      '1.7'
     );
     assert.equal(row.status, 'dead');
     assert.ok((row.dropPct ?? 0) >= 90);

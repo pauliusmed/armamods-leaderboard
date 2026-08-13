@@ -1,9 +1,28 @@
 /**
- * Server config audit – checks if the mod "died" after Reforger 1.7 (2026-05-28).
+ * Server config audit – checks if the mod "died" after a Reforger update.
  * + trend (rising / recovering / declining) and alternatives from co-deploy data.
  */
 
-export const REFORGER_PATCH_17 = '2026-05-28';
+export interface ReforgerPatchInfo {
+  version: string;
+  label: string;
+  date: string;
+}
+
+/** Reforger updates used as audit reference points (newest last). */
+export const REFORGER_PATCHES: readonly ReforgerPatchInfo[] = [
+  { version: '1.7', label: '1.7 Partisan', date: '2026-05-28' },
+  { version: '1.8', label: '1.8', date: '2026-08-13' },
+];
+
+/** Newest Reforger update — the audit's default reference point. */
+export const LATEST_REFORGER_PATCH: ReforgerPatchInfo = REFORGER_PATCHES[REFORGER_PATCHES.length - 1];
+
+/** Backward-compat: the 1.7 patch date (original audit reference). */
+export const REFORGER_PATCH_17 = REFORGER_PATCHES[0].date;
+
+/** Label of the newest patch, used in user-facing audit strings. */
+export const LATEST_PATCH_LABEL = LATEST_REFORGER_PATCH.label;
 
 export type AuditStatus = 'dead' | 'risky' | 'warning' | 'ok' | 'niche' | 'unknown';
 export type TrendPhase = 'rising' | 'recovering' | 'declining' | 'stable' | 'unknown';
@@ -294,10 +313,12 @@ function subtractDays(isoDate: string, days: number): string {
 
 export function analyzeTrend(
   history: HistoryPoint[],
-  patchDate: string = REFORGER_PATCH_17
+  patchDate: string = LATEST_REFORGER_PATCH.date,
+  patchLabel: string = LATEST_PATCH_LABEL
 ): TrendInsight {
-  const beforeAvg = avgPlayersInRange(history, '2026-05-02', patchDate);
-  const rankBefore = avgRankInRange(history, '2026-05-02', patchDate);
+  const beforeStart = addDays(patchDate, -26);
+  const beforeAvg = avgPlayersInRange(history, beforeStart, patchDate);
+  const rankBefore = avgRankInRange(history, beforeStart, patchDate);
   // First 4 days after the patch - "impact" / "dip"
   const earlyAfterAvg = avgPlayersInRange(history, patchDate, addDays(patchDate, 4));
   // Last days after the patch (no overlap with pre-patch)
@@ -326,7 +347,7 @@ export function analyzeTrend(
   const rankHeld =
     rankBefore != null && rankRecent != null && rankRecent <= rankBefore * 1.25;
 
-  // Recovering: post-1.7 impact, but recent days are improving
+  // Recovering: post-patch impact, but recent days are improving
   if (
     beforeAvg >= 15 &&
     early < beforeAvg * 0.55 &&
@@ -336,14 +357,14 @@ export function analyzeTrend(
     return {
       phase: 'recovering',
       label: TREND_LABEL.recovering,
-      detail: `After 1.7 update dipped to ~${early} players/day (first days); last 7 days ~${recentAvg} – recovering.`,
+      detail: `After ${patchLabel} update dipped to ~${early} players/day (first days); last 7 days ~${recentAvg} – recovering.`,
       recentAvg,
       earlyAfterAvg: early,
       ...rankFields,
     };
   }
 
-  // Entire Reforger BM player base decreased after 1.7 - mod remains popular, but absolute numbers are lower
+  // Entire Reforger BM player base decreased after the patch - mod remains popular, but absolute numbers are lower
   if (
     beforeAvg >= 50 &&
     recentAvg >= 30 &&
@@ -358,7 +379,7 @@ export function analyzeTrend(
         : '';
     return {
       phase: 'stable',
-      label: 'Ecosystem dip after 1.7',
+      label: `Ecosystem dip after ${patchLabel}`,
       detail:
         `Absolute players down (~${beforeAvg}→~${recentAvg}/day) – most servers have not returned to pre-patch levels yet;` +
         ` this mod still has real usage, not a solo crash.${rankNote}`,
@@ -380,7 +401,7 @@ export function analyzeTrend(
     };
   }
 
-  // Krenta toliau – mod-specific (ne tik bendras 1.7 dip)
+  // Krenta toliau – mod-specific (ne tik bendras patch dip)
   if (
     recentAvg < early * 0.85 &&
     beforeAvg > recentAvg * 1.25 &&
@@ -402,7 +423,7 @@ export function analyzeTrend(
   return {
     phase: 'stable',
     label: TREND_LABEL.stable,
-    detail: 'No major change between post-1.7 update window and the last 7 days.',
+    detail: `No major change between post-${patchLabel} update window and the last 7 days.`,
     recentAvg,
     earlyAfterAvg: early,
     ...rankFields,
@@ -433,7 +454,7 @@ function isEffectivelyEmpty(players: number): boolean {
 }
 
 /**
- * Mod was hurt by 1.7: empty right after the update and/or still empty (0 ≈ handful).
+ * Mod was hurt by the patch: empty right after the update and/or still empty (0 ≈ handful).
  * Does not flag mods that dipped then recovered (high last-7-days avg).
  */
 function isDamagedAfter17Update(trend: TrendInsight, currentPlayers: number): boolean {
@@ -467,7 +488,7 @@ function isHealthyRecovery(trend: TrendInsight, currentPlayers: number): boolean
   return false;
 }
 
-/** 0 players now but mod still on multiple BM server lists – typical stale/broken 1.7 config. */
+/** 0 players now but mod still on multiple BM server lists – typical stale/broken post-patch config. */
 function isGhostBrokenAfter17(
   serverCount: number,
   currentPlayers: number,
@@ -486,14 +507,16 @@ export function classifyModAudit(params: {
   currentPlayers: number;
   serverCount?: number;
   trend: TrendInsight;
+  patchLabel?: string;
 }): Pick<ModAuditRow, 'status' | 'title' | 'detail' | 'dropPct'> {
   const { beforeAvg, afterAvg, currentPlayers, serverCount = 0, trend } = params;
+  const patchLabel = params.patchLabel ?? LATEST_PATCH_LABEL;
 
   if (beforeAvg === null || afterAvg === null) {
     return {
       status: 'unknown',
       title: 'No history',
-      detail: 'Not enough daily data before/after 1.7 to assess this mod.',
+      detail: `Not enough daily data before/after ${patchLabel} to assess this mod.`,
       dropPct: null,
     };
   }
@@ -531,15 +554,15 @@ export function classifyModAudit(params: {
     return {
       status: 'niche',
       title: 'Niche mod',
-      detail: `Avg. <${MIN_SIGNAL_AVG} players before 1.7 – drop may be noise, not a broken mod.`,
+      detail: `Avg. <${MIN_SIGNAL_AVG} players before ${patchLabel} – drop may be noise, not a broken mod.`,
       dropPct,
     };
   }
 
-  if (trend.label === 'Ecosystem dip after 1.7' && !isEffectivelyEmpty(currentPlayers)) {
+  if (trend.label.startsWith('Ecosystem dip') && !isEffectivelyEmpty(currentPlayers)) {
     return {
       status: 'ok',
-      title: 'Popular – network-wide dip after 1.7',
+      title: `Popular – network-wide dip after ${patchLabel}`,
       detail:
         `${trend.detail} Absolute −${dropPct}% vs pre-patch is normal while the whole BM player base is still down; compare rank, not only raw players.`,
       dropPct,
@@ -551,10 +574,10 @@ export function classifyModAudit(params: {
     return {
       status: 'ok',
       title:
-        trend.phase === 'recovering' ? 'Recovering after 1.7' : 'Growing after 1.7',
+        trend.phase === 'recovering' ? `Recovering after ${patchLabel}` : `Growing after ${patchLabel}`,
       detail:
         trend.phase === 'recovering'
-          ? `${trend.detail} Ecosystem is re-adopting this mod – likely updated for 1.7, not abandoned.`
+          ? `${trend.detail} Ecosystem is re-adopting this mod – likely updated for ${patchLabel}, not abandoned.`
           : `${trend.detail} Usage is increasing again across servers.`,
       dropPct,
     };
@@ -562,7 +585,7 @@ export function classifyModAudit(params: {
 
   const patchWindowAvg = early ?? trend.recentAvg ?? afterAvg;
 
-  // Popular before 1.7, effectively empty after patch
+  // Popular before patch, effectively empty after patch
   if (isDamagedAfter17Update(trend, currentPlayers)) {
     const isGhostDead = isGhostBrokenAfter17(serverCount, currentPlayers, trend);
 
@@ -578,16 +601,16 @@ export function classifyModAudit(params: {
     if (isGhostDead || isZeroNowBroken || isSevereDropBroken) {
       const detail = isGhostDead
         ? `Still on ~${serverCount} BattleMetrics server configs but ${currentPlayers} players now – ` +
-          'likely broken with 1.7 (stale config, no restart, or outdated Workshop build). Remove from config and check RPT.'
+          `likely broken with ${patchLabel} (stale config, no restart, or outdated Workshop build). Remove from config and check RPT.`
         : isZeroNowBroken && !isSevereDropBroken
-          ? `~${beforeAvg} players/day before 1.7, now ${currentPlayers} on BM after update ` +
-            `(last 7d ~${trend.recentAvg ?? '—'}/day). Nobody plays this mod – treat as broken for 1.7.`
-          : `~${beforeAvg} players/day before 1.7 → ~${early ?? patchWindowAvg ?? 0}/day after update, ` +
+          ? `~${beforeAvg} players/day before ${patchLabel}, now ${currentPlayers} on BM after update ` +
+            `(last 7d ~${trend.recentAvg ?? '—'}/day). Nobody plays this mod – treat as broken for ${patchLabel}.`
+          : `~${beforeAvg} players/day before ${patchLabel} → ~${early ?? patchWindowAvg ?? 0}/day after update, ` +
             `~${trend.recentAvg ?? 0}/day last 7 days, ${currentPlayers} now (−${dropPct}% on BM). Ecosystem no longer runs this mod.`;
 
       return {
         status: 'dead',
-        title: 'Broken after 1.7',
+        title: `Broken after ${patchLabel}`,
         detail,
         dropPct,
       };
@@ -595,35 +618,35 @@ export function classifyModAudit(params: {
 
     return {
       status: 'warning',
-      title: 'Empty after 1.7 – monitor',
+      title: `Empty after ${patchLabel} – monitor`,
       detail:
-        `Had ~${beforeAvg} players/day before 1.7. After update ~${early ?? '—'}/day, ` +
+        `Had ~${beforeAvg} players/day before ${patchLabel}. After update ~${early ?? '—'}/day, ` +
         `~${trend.recentAvg ?? '—'}/day last 7 days, ${currentPlayers} now. Drop −${dropPct}% – not conclusive yet. ` +
         (serverCount > 0
-          ? `On ~${serverCount} BM servers – verify Workshop 1.7, restart, RPT.`
-          : 'Check Workshop 1.7 and server logs.'),
+          ? `On ~${serverCount} BM servers – verify Workshop ${patchLabel}, restart, RPT.`
+          : `Check Workshop ${patchLabel} and server logs.`),
       dropPct,
     };
   }
 
-  // Still on servers after 1.7 but usage fell hard (not a “empty after” case)
+  // Still on servers after patch but usage fell hard (not a “empty after” case)
   if (dropPct >= 55 && !isEffectivelyEmpty(currentPlayers)) {
     return {
       status: 'risky',
       title: 'Heavy drop, still some players',
       detail:
-        `Down ~${dropPct}% since 1.7 but ~${currentPlayers} players still on BattleMetrics – monitor, not necessarily broken.`,
+        `Down ~${dropPct}% since ${patchLabel} but ~${currentPlayers} players still on BattleMetrics – monitor, not necessarily broken.`,
       dropPct,
     };
   }
 
   return {
     status: 'ok',
-    title: 'Still used after 1.7',
+    title: `Still used after ${patchLabel}`,
     detail:
       !isEffectivelyEmpty(currentPlayers)
         ? `~${currentPlayers} players now – ecosystem still runs this mod after the update.`
-        : 'Usage after 1.7 is within normal range for this mod.',
+        : `Usage after ${patchLabel} is within normal range for this mod.`,
     dropPct,
   };
 }
@@ -654,7 +677,7 @@ export function pickAlternatives(
 
     let reason = `Often on similar server stacks (co-deploy ×${co.count})`;
     if (trend.phase === 'rising') reason += ' · rising now';
-    else if (trend.phase === 'recovering') reason += ' · recovering after 1.7';
+    else if (trend.phase === 'recovering') reason += ` · recovering after ${LATEST_PATCH_LABEL}`;
     else if (trend.phase === 'stable') reason += ' · stable';
 
     candidates.push({
@@ -695,21 +718,24 @@ export function buildModAuditRow(
   mod: ParsedConfigMod,
   history: HistoryPoint[],
   live: LiveModSnapshot | null,
-  patchDate: string = REFORGER_PATCH_17,
+  patchDate: string = LATEST_REFORGER_PATCH.date,
+  patchLabel: string = LATEST_PATCH_LABEL,
   opts?: AuditBuildOptions
 ): ModAuditRow {
-  const beforeAvg = avgPlayersInRange(history, '2026-05-02', patchDate);
+  const beforeStart = addDays(patchDate, -26);
+  const beforeAvg = avgPlayersInRange(history, beforeStart, patchDate);
   const earlyAfterAvg = avgPlayersInRange(history, patchDate, addDays(patchDate, 4));
   const afterAvg = avgPlayersInRange(history, patchDate, '2026-12-31');
   const currentPlayers = live?.totalPlayers ?? 0;
   const serverCount = live?.serverCount ?? 0;
-  const trend = analyzeTrend(history, patchDate);
+  const trend = analyzeTrend(history, patchDate, patchLabel);
   const classified = classifyModAudit({
     beforeAvg,
     afterAvg,
     currentPlayers,
     serverCount,
     trend,
+    patchLabel,
   });
 
   const needsAlternatives =
@@ -799,7 +825,8 @@ export function buildClassificationHint(
     | 'currentPlayers'
     | 'trendPhase'
     | 'trendLabel'
-  >
+  >,
+  patchLabel: string = LATEST_PATCH_LABEL
 ): string | null {
   if (row.status === 'dead' || row.status === 'warning') return null;
 
@@ -808,13 +835,13 @@ export function buildClassificationHint(
   const recent = row.recentAvg;
 
   if (before < MIN_SIGNAL_AVG) {
-    return `Not WARNING: only ~${before} players/day before 1.7 (under ${MIN_SIGNAL_AVG} on BM – counted as niche, not a mass-market drop).`;
+    return `Not WARNING: only ~${before} players/day before ${patchLabel} (under ${MIN_SIGNAL_AVG} on BM – counted as niche, not a mass-market drop).`;
   }
   if (early !== null && early > EFFECTIVELY_EMPTY_MAX) {
-    return `Not WARNING: ~${early}/day right after the 1.7 update – still had ecosystem traffic (not “empty after patch”).`;
+    return `Not WARNING: ~${early}/day right after the ${patchLabel} update – still had ecosystem traffic (not “empty after patch”).`;
   }
   if (recent !== null && recent > EFFECTIVELY_EMPTY_MAX * 2) {
-    return `Not WARNING: ~${recent}/day in the last 7 days – looks recovered compared to the first days after 1.7.`;
+    return `Not WARNING: ~${recent}/day in the last 7 days – looks recovered compared to the first days after ${patchLabel}.`;
   }
   if (row.trendPhase === 'recovering' || row.trendPhase === 'rising') {
     return `Not WARNING: trend “${row.trendLabel}” – servers are bringing usage back.`;

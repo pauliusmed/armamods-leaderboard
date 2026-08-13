@@ -12,11 +12,11 @@ export const AUDIT_STATUS_SHORT: Record<AuditStatus, string> = {
 
 /** One-line explanation for tooltips / report sections. */
 export const AUDIT_STATUS_HINT: Record<AuditStatus, string> = {
-  dead: 'Likely broken after 1.7 – 0–1 players on BM now (remove from config)',
-  warning: 'Was popular before 1.7, empty-ish after – drop not yet severe enough for Broken',
-  risky: 'Big drop since 1.7 but still on some BattleMetrics servers',
-  ok: 'Still used on BM (or normal post-1.7 network dip)',
-  niche: 'Too few players before 1.7 – drop may be noise',
+  dead: 'Likely broken after the update – 0–1 players on BM now (remove from config)',
+  warning: 'Was popular before the update, empty-ish after – drop not yet severe enough for Broken',
+  risky: 'Big drop since the update but still on some BattleMetrics servers',
+  ok: 'Still used on BM (or normal post-update network dip)',
+  niche: 'Too few players before the update – drop may be noise',
   unknown: 'Not enough history to assess',
 };
 
@@ -33,8 +33,8 @@ export const AUDIT_BUCKET_SHORT = {
 } as const;
 
 export const AUDIT_BUCKET_HINT = {
-  remove: 'Broken, empty after 1.7, or declining – likely safe to drop from config',
+  remove: 'Broken, empty after the update, or declining – likely safe to drop from config',
   review: 'Big drop since patch but still on some servers – verify before removing',
-  keep: 'Still used on BattleMetrics (or normal post-1.7 network dip)',
+  keep: 'Still used on BattleMetrics (or normal post-update network dip)',
   other: 'Too few players to judge, or not enough BM history',
 } as const;

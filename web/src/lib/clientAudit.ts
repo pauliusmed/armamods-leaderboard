@@ -1,7 +1,8 @@
 import {
   auditHighlights,
   buildModAuditRow,
-  REFORGER_PATCH_17,
+  LATEST_REFORGER_PATCH,
+  LATEST_PATCH_LABEL,
   sortAuditRowsWorstFirst,
   type CoDeployedRef,
   type HistoryPoint,
@@ -76,7 +77,7 @@ export async function runClientSideAudit(
 
   const rows = sortAuditRowsWorstFirst(
     mods.map((mod) =>
-      buildModAuditRow(mod, historyFor(mod.modId), modMap.get(mod.modId) ?? null, REFORGER_PATCH_17, buildOpts)
+      buildModAuditRow(mod, historyFor(mod.modId), modMap.get(mod.modId) ?? null, LATEST_REFORGER_PATCH.date, LATEST_PATCH_LABEL, buildOpts)
     )
   );
 
@@ -93,7 +94,7 @@ export async function runClientSideAudit(
   return {
     data: rows,
     meta: {
-      patchDate: REFORGER_PATCH_17,
+      patchDate: LATEST_REFORGER_PATCH.date,
       modCount: rows.length,
       summary,
       highlights: auditHighlights(rows),

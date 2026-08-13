@@ -16,7 +16,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from 'recharts';
-import { buildModAuditRow, REFORGER_PATCH_17, type AuditStatus } from '@audit-config';
+import { buildModAuditRow, REFORGER_PATCHES, type AuditStatus } from '@audit-config';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { SITE_ORIGIN, modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { softwareApplicationJsonLd, breadcrumbJsonLd } from '../lib/seoJsonLd';
@@ -204,10 +204,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
     const sorted = [...chartHistory].map((h) => h.date).sort();
     const minDate = sorted[0];
     const maxDate = sorted[sorted.length - 1];
-    const showPatchLine =
-      minDate <= REFORGER_PATCH_17 && maxDate >= REFORGER_PATCH_17;
+    const patches = REFORGER_PATCHES.filter((p) => minDate <= p.date && maxDate >= p.date);
     const broken = row.status === 'dead' || row.status === 'warning';
-    return { row, showPatchLine, maxDate, broken };
+    return { row, maxDate, broken, patches };
   }, [game, modId, mod, chartHistory]);
 
   const sortedDeployedServers = useMemo(() => {
@@ -657,11 +656,11 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                           return [value, name];
                         }}
                       />
-                      {patchInsight?.showPatchLine && (
+                      {patchInsight && patchInsight.patches.length > 0 && (
                         <>
                           {patchInsight.broken && (
                             <ReferenceArea
-                              x1={REFORGER_PATCH_17}
+                              x1={patchInsight.patches[patchInsight.patches.length - 1].date}
                               x2={patchInsight.maxDate}
                               yAxisId="players"
                               fill="#ef4444"
@@ -669,24 +668,27 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                               strokeOpacity={0}
                             />
                           )}
-                          <ReferenceLine
-                            x={REFORGER_PATCH_17}
-                            yAxisId="players"
-                            stroke="#fbbf24"
-                            strokeWidth={2}
-                            strokeDasharray="6 4"
-                            label={
-                              isMobileChart
-                                ? undefined
-                                : {
-                                    value: '1.7 Partisan',
-                                    position: 'insideTopLeft',
-                                    fill: '#fbbf24',
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                  }
-                            }
-                          />
+                          {patchInsight.patches.map((patch) => (
+                            <ReferenceLine
+                              key={patch.date}
+                              x={patch.date}
+                              yAxisId="players"
+                              stroke="#fbbf24"
+                              strokeWidth={2}
+                              strokeDasharray="6 4"
+                              label={
+                                isMobileChart
+                                  ? undefined
+                                  : {
+                                      value: patch.label,
+                                      position: 'insideTopLeft',
+                                      fill: '#fbbf24',
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                    }
+                              }
+                            />
+                          ))}
                         </>
                       )}
                       <Line

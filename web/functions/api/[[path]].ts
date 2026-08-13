@@ -17,7 +17,8 @@ import {
   auditHighlights,
   buildModAuditRow,
   parseServerConfig,
-  REFORGER_PATCH_17,
+  LATEST_REFORGER_PATCH,
+  LATEST_PATCH_LABEL,
   sortAuditRowsWorstFirst,
   type AuditStatus,
   type HistoryPoint,
@@ -1712,7 +1713,7 @@ app.post('/audit/config', async (c) => {
   const game = getGameFromQuery(c);
   if (game !== 'reforger') {
     return c.json(
-      { error: 'Unsupported game', message: 'Config audit is only available for Reforger (1.7 Partisan).' },
+      { error: 'Unsupported game', message: `Config audit is only available for Reforger (${LATEST_PATCH_LABEL} update).` },
       400
     );
   }
@@ -1806,7 +1807,7 @@ app.post('/audit/config', async (c) => {
     parsedMods.map((mod) => {
       const history = historyFor(mod.modId);
       const live = modMap.get(mod.modId.toUpperCase()) ?? modMap.get(mod.modId) ?? null;
-      return buildModAuditRow(mod, history, live, REFORGER_PATCH_17, buildOpts);
+      return buildModAuditRow(mod, history, live, LATEST_REFORGER_PATCH.date, LATEST_PATCH_LABEL, buildOpts);
     })
   );
 
@@ -1825,7 +1826,7 @@ app.post('/audit/config', async (c) => {
   const response = c.json({
     data: rows,
     meta: {
-      patchDate: REFORGER_PATCH_17,
+      patchDate: LATEST_REFORGER_PATCH.date,
       modCount: rows.length,
       summary,
       highlights,
@@ -1834,8 +1835,8 @@ app.post('/audit/config', async (c) => {
         'Your config.json is not stored. Only mod IDs are processed; display names come from the reforgermods database, not from your config file.',
       disclaimer:
         'Heuristic based on BattleMetrics data from all Reforger servers (reforgermods collector), not your server list alone. ' +
-        'Now = only servers BM sees online today with this mod. Daily averages (before 1.7 / after update / last 7 days) aggregate every BM-indexed server seen on that day – servers that shut down or removed the mod after 1.7 lower those averages but are not listed one-by-one. ' +
-        '“Ecosystem dip” = whole BM player base is still down after 1.7; popular mods look smaller in absolute numbers but may still be healthy (check BM rank). ' +
+        'Now = only servers BM sees online today with this mod. Daily averages (before patch / after update / last 7 days) aggregate every BM-indexed server seen on that day – servers that shut down or removed the mod after the update lower those averages but are not listed one-by-one. ' +
+        '“Ecosystem dip” = whole BM player base is still down after the update; popular mods look smaller in absolute numbers but may still be healthy (check BM rank). ' +
         '“Recovering” / “rising” reflect mod-specific trends, not a guarantee they work on your server. ' +
         'Alternatives are mods often used alongside this one on other servers (co-deploy). ' +
         'Workshop gameVersion and server RPT logs are the final confirmation.',
