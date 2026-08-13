@@ -9,6 +9,10 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **UI (`ModDependencyTable`)** — "Total modpack size" badge virš lentelės (`~X GB` su `sizes known N/M` kai dalis dydžių nežinomi; tikslus dydis kai visi žinomi) + naujas "Size" stulpelis su rikiavimu.
 - **Testai** — `sumModpackSizes` (3 atvejai) `test/workshop-meta.test.ts`.
 
+### 🔧 Dependency dydžių live scrape — "—" nebebus amžinas
+- Dependencies endpoint'as dydžius skaitė **tik iš KV** (`maxFetch: 0`), o kolektorius warmina tik top-300 modus — niche dependency'jų dydžiai niekada nepasiekdavo cache (pvz. ZBK modpack'as visi dydžiai "—").
+- **Fix:** `maxFetch: dependencies.length + 1` — pirmas puslapio atidarymas live scraipina trūkstamus dydžius (concurrency 10, įrašo į KV su 7 d. TTL), vėlesni atidarymai — iš cache.
+
 ## [1.22.31] - 2026-08-08
 
 ### 🐛 Modo dydžio refresh — pasenę KV raktai nebeišliks amžinai

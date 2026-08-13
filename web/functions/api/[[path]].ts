@@ -920,7 +920,8 @@ app.get('/mods/:modId/dependencies', async (c) => {
     c.env.TRENDING_KV,
     game,
     [modId.toUpperCase(), ...dependencies.map((d) => d.id)],
-    { maxFetch: 0 }
+    // Live scrape missing sizes — deps are rarely warmed by the collector (not top-300).
+    { maxFetch: dependencies.length + 1, concurrency: 10 }
   );
 
   const withSizes = dependencies.map((dep) => ({
