@@ -115,3 +115,23 @@ export function howToJsonLd(input: {
     })),
   };
 }
+
+export function newsArticleJsonLd(input: {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  image?: string;
+}): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: input.headline,
+    description: input.description,
+    url: input.url,
+    datePublished: input.datePublished,
+    dateModified: input.datePublished,
+    mainEntityOfPage: input.url,
+    ...(input.image ? { image: input.image } : {}),
+  };
+}

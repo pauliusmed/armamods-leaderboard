@@ -29,6 +29,7 @@ export function staticSitemapUrls(): SitemapUrl[] {
     { loc: `${SITE_ORIGIN}/arma-server-browser`, changefreq: 'weekly', priority: 0.8 },
     { loc: `${SITE_ORIGIN}/how-to-find-popular-arma-reforger-mods`, changefreq: 'monthly', priority: 0.7 },
     { loc: `${SITE_ORIGIN}/how-to-check-arma-reforger-modpack-size`, changefreq: 'monthly', priority: 0.7 },
+    { loc: `${SITE_ORIGIN}/reforger-1-8`, changefreq: 'monthly', priority: 0.7 },
     { loc: `${SITE_ORIGIN}/best-arma-reforger-hosting`, changefreq: 'monthly', priority: 0.6 },
     { loc: `${SITE_ORIGIN}/hosting`, changefreq: 'monthly', priority: 0.5 },
     { loc: `${SITE_ORIGIN}/support`, changefreq: 'monthly', priority: 0.5 },

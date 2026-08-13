@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.38] - 2026-08-13
+
+### 📰 Reforger 1.8 landing — oficialūs patchnotes + toolso nuorodos
+- **Naujas puslapis `/reforger-1-8`** — "Stay Low, Stay Hidden" (1.8 Major Update, 2026-08-13): oficialių patchnotes santrauka (Far Hide, specialistų rolės, smoke & signals, kiti pakeitimai) su nuorodomis į oficialų changelog ir Steam announcement.
+- **"What it means for your modpack"** sekcija — CTA kortelės: Config Audit (lūžę modai po 1.8), Mod Leaderboard, Storage Planner, Server Browser.
+- **SEO** — `newsArticleJsonLd` (NewsArticle schema) + breadcrumb; įtraukta į sitemap (`staticSitemapUrls`).
+- Turinys — santrauka iš oficialaus (ne kopija), kad nebūtų duplicate content.
+
 ## [1.22.37] - 2026-08-13
 
 ### 🔧 Audito "before" langas — 26d → 7d, signalo slenkstis 15 → 8

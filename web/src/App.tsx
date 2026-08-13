@@ -45,6 +45,9 @@ const HowToFindModsPage = lazy(() =>
 const HowToModpackSizePage = lazy(() =>
   import('./components/HowToModpackSizePage').then((m) => ({ default: m.HowToModpackSizePage }))
 );
+const Reforger18UpdatePage = lazy(() =>
+  import('./components/Reforger18UpdatePage').then((m) => ({ default: m.Reforger18UpdatePage }))
+);
 
 function RouteFallback() {
   return <StatusState type="loading" />;
@@ -145,6 +148,7 @@ function App() {
               <Route path="/arma-server-browser" element={<ServerSearchLanding />} />
               <Route path="/how-to-find-popular-arma-reforger-mods" element={<HowToFindModsPage />} />
               <Route path="/how-to-check-arma-reforger-modpack-size" element={<HowToModpackSizePage />} />
+              <Route path="/reforger-1-8" element={<Reforger18UpdatePage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
