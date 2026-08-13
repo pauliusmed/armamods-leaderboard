@@ -22,7 +22,7 @@ import { SITE_ORIGIN, modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { softwareApplicationJsonLd, breadcrumbJsonLd } from '../lib/seoJsonLd';
 import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE, CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_INACTIVE, CHART_SYNC_GAP_LEGEND } from '../lib/siteCopy';
 import { useDataFreshness } from '../hooks/useDataFreshness';
-import { withSyncGapMarker, maxGapMsForRange } from '../lib/chartSyncGap';
+import { withSyncGapMarker, maxGapMsForRange, formatGapSummary } from '../lib/chartSyncGap';
 import { ModAuthorLink } from './ui/ModAuthorLink';
 import { ModThumbnail } from './ui/ModThumbnail';
 import { formatBytes } from '../lib/formatBytes';
@@ -562,9 +562,15 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                         Rank
                       </span>
                       {syncGaps.length > 0 && (
-                        <span className="inline-flex items-center gap-2 text-amber-400">
+                        <span
+                          className="inline-flex items-center gap-2 text-amber-400"
+                          title="Collector was offline during these periods — not a mod decline"
+                        >
                           <span className="w-3 h-3 rounded-sm bg-amber-500/25 border border-amber-500/40" aria-hidden />
                           {CHART_SYNC_GAP_LEGEND}
+                          <span className="font-mono normal-case tracking-normal">
+                            {formatGapSummary(syncGaps)}
+                          </span>
                         </span>
                       )}
                     </div>

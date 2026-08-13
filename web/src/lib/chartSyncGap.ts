@@ -91,3 +91,15 @@ export function withSyncGapMarker<T extends { [K in TimeKey]: string }, TimeKey 
 
   return { data, gaps };
 }
+
+/**
+ * Short legend label for sync gaps, e.g. "· 07/21 → 07/24" or "· 07/21 → 07/24 +2".
+ * Makes it explicit *when* the collector was offline instead of a vague "no data".
+ */
+export function formatGapSummary(gaps: ChartGap[]): string {
+  if (gaps.length === 0) return '';
+  const short = (iso: string): string => (iso.length >= 10 ? iso.slice(5).replace('-', '/') : iso);
+  const first = gaps[0];
+  const extra = gaps.length > 1 ? ` +${gaps.length - 1}` : '';
+  return ` · ${short(first.x1)} → ${short(first.x2)}${extra}`;
+}

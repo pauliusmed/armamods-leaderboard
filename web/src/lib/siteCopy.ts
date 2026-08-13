@@ -24,7 +24,7 @@ export const CHART_NO_DATA_TITLE = 'No chart data';
 export const CHART_NO_DATA_SYNC_PAUSED =
   'Live sync paused — amber band = periods with no samples';
 
-export const CHART_SYNC_GAP_LEGEND = 'No data (gap in sync)';
+export const CHART_SYNC_GAP_LEGEND = 'Sync gap · collector offline';
 
 export const CHART_NO_DATA_INACTIVE =
   'Data may be archived or this module is currently inactive';

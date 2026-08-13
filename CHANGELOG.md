@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.41] - 2026-08-13
+
+### 📊 Chart sync gap — aiškus atvaizdavimas su datomis
+- **Problem:** "No data (gap in sync)" žymė skambėjo kaip mod problema ir nerodė, KADA kolektorius neveikė.
+- **Fix:**
+  - Legenda: **"Sync gap · collector offline"** + konkrečios datos (`· 07/20 → 07/25`, jei keli — `+2`) — `formatGapSummary` (gryna funkcija chartSyncGap.ts).
+  - Tooltip: "Collector was offline during these periods — not a mod decline".
+- **Testai** — `test/chart-sync-gap.test.ts` (7 atvejai: gap formatas, keli gaps, detection, slenksčiai; registruotas `npm test`).
+
 ## [1.22.40] - 2026-08-13
 
 ### 💬 Discord release automatika — disciplina, ne spam
