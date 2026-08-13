@@ -1,6 +1,3 @@
-/** Indent for one mod entry inside `game.mods[]` in Reforger config.json. */
-const MOD_ENTRY_INDENT = '            ';
-
 function modEntry(modId: string, name: string) {
   return {
     modId: modId.trim().toUpperCase(),
@@ -8,25 +5,25 @@ function modEntry(modId: string, name: string) {
   };
 }
 
-/** Compact JSON for sidebar preview — copy still uses full config.json indent. */
+/** Compact JSON for sidebar preview — same comma-first layout as the copy snippet. */
 export function formatModConfigPreview(modId: string, name: string): string {
-  const lines = JSON.stringify(modEntry(modId, name), null, 2).split('\n');
-  lines[lines.length - 1] = `${lines[lines.length - 1]},`;
-  return lines.join('\n');
+  return `,${JSON.stringify(modEntry(modId, name), null, 2)}`;
 }
 
-/** Ready-to-paste mod block for server config.json. */
+/**
+ * Ready-to-paste mod block for server config.json — comma-first style.
+ * The comma sits *before* the block on the same line as `{`, so the last mod in a
+ * list never carries a trailing comma (trailing comma after a final entry is invalid
+ * in Reforger config.json).
+ */
 export function formatModConfigSnippet(
   modId: string,
   name: string,
-  options?: { trailingComma?: boolean }
+  options?: { leadingComma?: boolean }
 ): string {
-  const lines = JSON.stringify(modEntry(modId, name), null, 4).split('\n');
-  if (options?.trailingComma !== false) {
-    lines[lines.length - 1] = `${lines[lines.length - 1]},`;
-  }
-
-  return lines.map((line) => `${MOD_ENTRY_INDENT}${line}`).join('\n');
+  const body = JSON.stringify(modEntry(modId, name), null, 2);
+  if (options?.leadingComma === false) return body;
+  return `,${body}`;
 }
 
 export interface ServerModConfigEntry {
@@ -34,7 +31,7 @@ export interface ServerModConfigEntry {
   name: string;
 }
 
-/** Full game.mods[] body — one block per mod, matching Reforger config.json layout. */
+/** Full game.mods[] body — comma-first between blocks, first entry has no comma. */
 export function formatServerModsConfigSnippet(
   mods: ReadonlyArray<ServerModConfigEntry>
 ): string {
@@ -43,7 +40,7 @@ export function formatServerModsConfigSnippet(
   return mods
     .map((mod, index) =>
       formatModConfigSnippet(mod.id, mod.name, {
-        trailingComma: index < mods.length - 1,
+        leadingComma: index > 0,
       })
     )
     .join('\n');

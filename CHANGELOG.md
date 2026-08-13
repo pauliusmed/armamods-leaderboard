@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.34] - 2026-08-13
+
+### ⚙️ Config snippet — comma-first struktūra
+- **Problem:** `game.mods[]` snippet generavo trailing comma (`},`) ir 12 tarpų indentą; kai modas įdedamas paskutiniu sąraše, trailing comma po paskutinio elemento sulaužo Reforger config.json.
+- **Fix (`modConfig.ts`):** kablelis dabar **prieš** bloką toje pačioje eilutėje (`,{\n{...}}`), 2 tarpų indentas, jokio trailing comma. Pirmas sąrašo modas be kablelio, likę — su kableliu prieš (`formatServerModsConfigSnippet`).
+- **Preview** (`formatModConfigPreview`) — ta pati comma-first struktūra.
+- **Testai** — `test/mod-config.test.ts` atnaujinti pagal naują formatą (6 atvejai).
+
 ## [1.22.33] - 2026-08-13
 
 ### 🏆 Serverių #1 stabilumas — diferencijuotas Elite Inertia cushion
