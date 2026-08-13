@@ -882,3 +882,29 @@ export async function resolveModSizesBatch(
 export function isDefaultOgImage(url: string): boolean {
   return url.includes('/og-image.png');
 }
+
+export interface ModpackSizeSummary {
+  modSizeBytes: number | null;
+  totalBytes: number | null;
+  knownSizeCount: number;
+  totalSizeCount: number;
+}
+
+/** Sum known sizes of a mod plus its direct dependencies; unknown entries count toward totals but not bytes. */
+export function sumModpackSizes(
+  modSizeBytes: number | null,
+  depSizeBytes: (number | null)[]
+): ModpackSizeSummary {
+  const totalSizeCount = depSizeBytes.length + 1;
+  const knownSizes = [modSizeBytes, ...depSizeBytes].filter(
+    (bytes): bytes is number => bytes != null && bytes > 0
+  );
+  const totalBytes =
+    knownSizes.length > 0 ? knownSizes.reduce((sum, bytes) => sum + bytes, 0) : null;
+  return {
+    modSizeBytes,
+    totalBytes,
+    knownSizeCount: knownSizes.length,
+    totalSizeCount,
+  };
+}

@@ -2,6 +2,13 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.32] - 2026-08-13
+
+### 📦 Total modpack dydis — modas su visais dependency'jais
+- **`GET /api/mods/:id/dependencies`** (Reforger) dabar grąžina `sizeBytes` prie kiekvieno dependency (KV-only skaitymas, be papildomų workshop scrape'ų) ir meta bloke total: `modSizeBytes`, `totalBytes`, `knownSizeCount`, `totalSizeCount` (`sumModpackSizes` — suma mod + tiesioginiai deps).
+- **UI (`ModDependencyTable`)** — "Total modpack size" badge virš lentelės (`~X GB` su `sizes known N/M` kai dalis dydžių nežinomi; tikslus dydis kai visi žinomi) + naujas "Size" stulpelis su rikiavimu.
+- **Testai** — `sumModpackSizes` (3 atvejai) `test/workshop-meta.test.ts`.
+
 ## [1.22.31] - 2026-08-08
 
 ### 🐛 Modo dydžio refresh — pasenę KV raktai nebeišliks amžinai

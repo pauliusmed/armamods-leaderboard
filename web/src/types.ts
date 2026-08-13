@@ -56,6 +56,7 @@ export interface ModDependency {
   serverCount?: number;
   overallRank?: number;
   marketShare?: number;
+  sizeBytes?: number | null;
 }
 
 export interface ServerMod {

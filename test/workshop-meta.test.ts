@@ -8,6 +8,7 @@ import {
   parseReforgerDatesFromHtml,
   formatWorkshopDate,
   isReforgerWorkshopPageAvailable,
+  sumModpackSizes,
 } from '../web/functions/lib/workshop-fetch.ts';
 
 const SAMPLE_NEXT = `<script id="__NEXT_DATA__" type="application/json">{
@@ -120,6 +121,30 @@ describe('parseReforgerDatesFromHtml', () => {
 describe('formatWorkshopDate', () => {
   it('formats ISO strings to DD.MM.YYYY', () => {
     assert.equal(formatWorkshopDate('2024-10-15T12:00:00.000Z'), '15.10.2024');
+  });
+});
+
+describe('sumModpackSizes', () => {
+  it('sums mod and known dep sizes, counting unknown entries', () => {
+    const summary = sumModpackSizes(1024, [2048, null, 4096]);
+    assert.equal(summary.modSizeBytes, 1024);
+    assert.equal(summary.totalBytes, 7168);
+    assert.equal(summary.knownSizeCount, 3);
+    assert.equal(summary.totalSizeCount, 4);
+  });
+
+  it('returns null total when no sizes are known', () => {
+    const summary = sumModpackSizes(null, [null, null]);
+    assert.equal(summary.totalBytes, null);
+    assert.equal(summary.knownSizeCount, 0);
+    assert.equal(summary.totalSizeCount, 3);
+  });
+
+  it('ignores zero/negative dep sizes', () => {
+    const summary = sumModpackSizes(100, [0, -5]);
+    assert.equal(summary.totalBytes, 100);
+    assert.equal(summary.knownSizeCount, 1);
+    assert.equal(summary.totalSizeCount, 3);
   });
 });
 

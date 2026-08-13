@@ -28,7 +28,7 @@ import {
   lookupModsByIds,
   type ShareGame,
 } from '../lib/share-meta';
-import { authorCacheKey, ogImageCacheKey, statusCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch } from '../lib/workshop-fetch';
+import { authorCacheKey, ogImageCacheKey, statusCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch, sumModpackSizes } from '../lib/workshop-fetch';
 import { findServerById, ServerLookup } from '../lib/server-lookup';
 import { findReverseDependentsOnServer } from '../lib/reverse-deps';
 import { analyzeStoragePlan } from '../lib/storage-calc';
@@ -915,13 +915,32 @@ app.get('/mods/:modId/dependencies', async (c) => {
   }
 
   const dependencies = await resolveModDependencies(c.env.TRENDING_KV, game, modId);
+
+  const sizes = await resolveModSizesBatch(
+    c.env.TRENDING_KV,
+    game,
+    [modId.toUpperCase(), ...dependencies.map((d) => d.id)],
+    { maxFetch: 0 }
+  );
+
+  const withSizes = dependencies.map((dep) => ({
+    ...dep,
+    sizeBytes: sizes.get(dep.id) ?? null,
+  }));
+
+  const summary = sumModpackSizes(
+    sizes.get(modId.toUpperCase()) ?? null,
+    withSizes.map((d) => d.sizeBytes)
+  );
+
   const response = c.json({
-    data: dependencies,
+    data: withSizes,
     meta: {
       source: 'reforger_workshop',
       supported: true,
       modId,
       count: dependencies.length,
+      ...summary,
     },
   });
   response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');

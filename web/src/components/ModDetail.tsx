@@ -74,6 +74,12 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [mod, setMod] = useState<ModDetailData | null>(null);
   const [history, setHistory] = useState<ModHistory[]>([]);
   const [dependencies, setDependencies] = useState<ModDependency[]>([]);
+  const [depsMeta, setDepsMeta] = useState<{
+    modSizeBytes: number | null;
+    totalBytes: number | null;
+    knownSizeCount: number;
+    totalSizeCount: number;
+  }>({ modSizeBytes: null, totalBytes: null, knownSizeCount: 0, totalSizeCount: 0 });
   const [depsLoading, setDepsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,11 +138,19 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       setRetryCount(0);
       setMod(modRes.data);
       setDependencies([]);
+      setDepsMeta({ modSizeBytes: null, totalBytes: null, knownSizeCount: 0, totalSizeCount: 0 });
       setDepsLoading(game === 'reforger');
       if (game === 'reforger') {
         modsApi.getDependencies(modId, game)
           .then((depsRes) => {
-            if (!signal?.aborted) setDependencies(depsRes.data || []);
+            if (signal?.aborted) return;
+            setDependencies(depsRes.data || []);
+            setDepsMeta({
+              modSizeBytes: depsRes.meta?.modSizeBytes ?? null,
+              totalBytes: depsRes.meta?.totalBytes ?? null,
+              knownSizeCount: depsRes.meta?.knownSizeCount ?? 0,
+              totalSizeCount: depsRes.meta?.totalSizeCount ?? 0,
+            });
           })
           .catch(() => {
             if (!signal?.aborted) setDependencies([]);
@@ -767,7 +781,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   No declared dependencies for this mod (standalone module).
                 </p>
               ) : (
-                <ModDependencyTable deps={dependencies} game={game} />
+                <ModDependencyTable deps={dependencies} game={game} total={depsMeta} />
               )}
             </section>
           )}

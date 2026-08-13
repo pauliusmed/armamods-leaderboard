@@ -5,10 +5,18 @@ import type { GameType } from '../../api/client';
 import { ModThumbnail } from './ModThumbnail';
 import { OpenModStatsButton } from './OpenModStatsButton';
 import { workshopPageUrl } from '../../lib/workshop';
+import { formatBytes } from '../../lib/formatBytes';
 import { SortableTh } from './SortableTh';
 
-type DepSortBy = 'name' | 'players' | 'servers';
+type DepSortBy = 'name' | 'players' | 'servers' | 'size';
 type DepSortDir = 'asc' | 'desc';
+
+export interface ModpackTotalInfo {
+  modSizeBytes: number | null;
+  totalBytes: number | null;
+  knownSizeCount: number;
+  totalSizeCount: number;
+}
 
 interface DependencyRowProps {
   dep: ModDependency;
@@ -56,6 +64,12 @@ export function DependencyRow({ dep, game = 'reforger' }: DependencyRowProps) {
         )}
       </td>
 
+      <td className="hidden sm:table-cell py-3 md:py-2.5 px-4 text-right align-middle whitespace-nowrap">
+        <span className="font-mono text-xs tabular-nums text-gray-400">
+          {formatBytes(dep.sizeBytes)}
+        </span>
+      </td>
+
       <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
         <div className="inline-flex items-center justify-end gap-1.5">
           <OpenModStatsButton modId={dep.id} modName={dep.name} game={game} />
@@ -73,7 +87,15 @@ export function DependencyRow({ dep, game = 'reforger' }: DependencyRowProps) {
   );
 }
 
-export function ModDependencyTable({ deps, game = 'reforger' }: { deps: ModDependency[]; game?: GameType }) {
+export function ModDependencyTable({
+  deps,
+  game = 'reforger',
+  total = null,
+}: {
+  deps: ModDependency[];
+  game?: GameType;
+  total?: ModpackTotalInfo | null;
+}) {
   const [sortBy, setSortBy] = useState<DepSortBy>('name');
   const [sortDir, setSortDir] = useState<DepSortDir>('asc');
   const toggleSort = (column: DepSortBy) => {
@@ -89,13 +111,31 @@ export function ModDependencyTable({ deps, game = 'reforger' }: { deps: ModDepen
     const dir = sortDir === 'asc' ? -1 : 1;
     return [...deps].sort((a, b) => {
       if (sortBy === 'name') return dir * a.name.localeCompare(b.name);
+      if (sortBy === 'size') return dir * ((a.sizeBytes ?? 0) - (b.sizeBytes ?? 0));
       if (sortBy === 'players') return dir * ((a.totalPlayers ?? 0) - (b.totalPlayers ?? 0));
       return dir * ((a.serverCount ?? 0) - (b.serverCount ?? 0));
     });
   }, [deps, sortBy, sortDir]);
 
+  const allSizesKnown = total != null && total.totalSizeCount > 0 && total.knownSizeCount === total.totalSizeCount;
+
   return (
     <div className="border border-white/5 bg-black/40">
+      {total != null && total.totalBytes != null && total.totalSizeCount > 0 && (
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 border-b border-white/10 bg-white/[0.03]">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+            Total modpack size
+          </span>
+          <span className="font-mono text-sm sm:text-base font-black text-tactical-orange tabular-nums">
+            {allSizesKnown ? formatBytes(total.totalBytes) : `~${formatBytes(total.totalBytes)}`}
+          </span>
+          {!allSizesKnown && (
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
+              sizes known {total.knownSizeCount}/{total.totalSizeCount}
+            </span>
+          )}
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -118,6 +158,15 @@ export function ModDependencyTable({ deps, game = 'reforger' }: { deps: ModDepen
                 sortDir={sortDir}
                 onSort={(key) => toggleSort(key as DepSortBy)}
                 className="hidden md:table-cell px-4"
+              />
+              <SortableTh
+                label="Size"
+                sortKey="size"
+                activeSort={sortBy}
+                sortDir={sortDir}
+                onSort={(key) => toggleSort(key as DepSortBy)}
+                align="right"
+                className="hidden sm:table-cell px-4"
               />
               <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
                 Actions

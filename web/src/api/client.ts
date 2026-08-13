@@ -100,7 +100,16 @@ export const modsApi = {
     return getCached(key, async () => {
       const response = await api.get<{
         data: import('../types').ModDependency[];
-        meta: { source: string; supported: boolean; count?: number; message?: string };
+        meta: {
+          source: string;
+          supported: boolean;
+          count?: number;
+          message?: string;
+          modSizeBytes?: number | null;
+          totalBytes?: number | null;
+          knownSizeCount?: number;
+          totalSizeCount?: number;
+        };
       }>(`mods/${modId}/dependencies`, { params: { game } });
       return response.data;
     }, 86400000); // Workshop deps change rarely — cache 24h client-side
