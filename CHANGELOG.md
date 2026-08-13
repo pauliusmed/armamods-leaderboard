@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.42] - 2026-08-13
+
+### 🎨 Mod detail hero — didesnė galerija ir aiškesni veiksmai
+- **Problem:** mod detail hero informacija buvo išskaidyta į atskiras kolonas, o Workshop galerija buvo per maža ir atsirasdavo kaip papildoma kolona.
+- **Fix:** desktop'e galerija dabar yra pagrindinis kairysis vizualas, o dešinėje viename bloke sujungti pavadinimas, metaduomenys, santrauka, statistika ir serverio config veiksmai.
+- **Responsive:** mobiliajame galerija ir informacija lieka vienoje natūralioje kolonoje; jei galerijos nėra, rodomas tvarkingas pilno pločio informacijos blokas.
+- **Heavy CI:** skipped because presentation-only UI layout; web lint, 29 Vitest testai ir production build sėkmingi.
+
 ## [1.22.41] - 2026-08-13
 
 ### 📊 Chart sync gap — aiškus atvaizdavimas su datomis

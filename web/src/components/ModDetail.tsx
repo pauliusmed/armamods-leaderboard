@@ -324,24 +324,26 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
         checkedAt={mod.workshopStatusCheckedAt}
       />
 
-      {/*
-        Full-width page body. Config panel sits in the hero header on desktop
-        (not a side column) so charts, workshop copy, and tables use 100% width.
-      */}
+      {/* Full-width page body; the hero is the only split layout on desktop. */}
       <div className="w-full min-w-0 space-y-12">
-          <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
-            <div
-              className={`flex flex-col gap-6 lg:gap-8 lg:items-start ${
-                heroGalleryVisible
-                  ? 'lg:grid lg:grid-cols-3'
-                  : 'lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]'
-              }`}
-            >
-              <div className="space-y-4 min-w-0 order-1">
-                <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
-                  // MODULE_IDENTIFIER: {mod.id}
-                </span>
-                <div className="flex items-start gap-4 sm:gap-5">
+        <header className="border-b border-white/10 pb-10 sm:pb-12 space-y-6">
+          <div className={heroGalleryVisible ? 'grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,1fr)] lg:gap-8' : ''}>
+            <div className={heroGalleryVisible ? 'order-1 min-w-0' : 'hidden'}>
+              <ModWorkshopGallery
+                modId={mod.id}
+                modName={mod.name}
+                game={game}
+                variant="inline"
+                onVisibilityChange={setHeroGalleryVisible}
+              />
+            </div>
+
+            <div className={`order-2 min-w-0 space-y-5 ${heroGalleryVisible ? 'lg:border-l lg:border-white/5 lg:pl-8' : ''}`}>
+              <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
+                // MODULE_IDENTIFIER: {mod.id}
+              </span>
+              <div className="flex items-start gap-4 sm:gap-5">
+                {!heroGalleryVisible && (
                   <ModThumbnail
                     modId={mod.id}
                     modName={mod.name}
@@ -351,114 +353,84 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     thumbnailUrl={mod.thumbnail}
                     priority="eager"
                   />
-                  <div className="min-w-0 space-y-3 flex-1">
-                    <div className="flex flex-wrap items-start gap-3">
-                      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter leading-none break-words flex-1 min-w-0">
-                        {mod.name}
-                      </h1>
-                      <FavoriteModButton
-                        active={isFavorite(mod.id)}
-                        modName={mod.name}
-                        onToggle={() => toggle(mod.id)}
-                        className="shrink-0 mt-1"
-                      />
-                    </div>
-                    {mod.author && (
-                      <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                        Workshop author ·{' '}
-                        <ModAuthorLink author={mod.author} game={game} />
-                      </p>
-                    )}
-                    {(mod.workshopCreated || mod.workshopModified) && (
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
-                        {mod.workshopCreated && (
-                          <span>
-                            Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
-                          </span>
-                        )}
-                        {mod.workshopModified && (
-                          <span>
-                            Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {mod.workshopSummary ? (
-                  <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
-                    {mod.workshopSummary}
-                  </p>
-                ) : (
-                  <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
-                    {MOD_DETAIL_LIVE_FALLBACK}
-                  </p>
                 )}
-              </div>
-
-              <div
-                className={`order-2 min-w-0 w-full ${
-                  heroGalleryVisible ? 'lg:border-x lg:border-white/5 lg:px-6' : 'hidden'
-                }`}
-              >
-                <ModWorkshopGallery
-                  modId={mod.id}
-                  modName={mod.name}
-                  game={game}
-                  variant="inline"
-                  onVisibilityChange={setHeroGalleryVisible}
-                />
-              </div>
-
-              <div className="flex flex-col gap-3 min-w-0 w-full order-3">
-                <div className="grid grid-cols-2 gap-3 w-full">
-                  {game === 'reforger' && (
-                    <div className="px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px]">
-                      <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
-                      <p className="text-lg sm:text-xl font-black font-mono text-tactical-orange tabular-nums leading-none">
-                        {formatBytes(mod.sizeBytes)}
-                      </p>
-                      <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1.5">Workshop ver.</p>
+                <div className="min-w-0 space-y-3 flex-1">
+                  <div className="flex flex-wrap items-start gap-3">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tighter leading-none break-words flex-1 min-w-0">
+                      {mod.name}
+                    </h1>
+                    <FavoriteModButton
+                      active={isFavorite(mod.id)}
+                      modName={mod.name}
+                      onToggle={() => toggle(mod.id)}
+                      className="shrink-0 mt-1"
+                    />
+                  </div>
+                  {mod.author && (
+                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                      Workshop author ·{' '}
+                      <ModAuthorLink author={mod.author} game={game} />
+                    </p>
+                  )}
+                  {(mod.workshopCreated || mod.workshopModified) && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                      {mod.workshopCreated && (
+                        <span>
+                          Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
+                        </span>
+                      )}
+                      {mod.workshopModified && (
+                        <span>
+                          Last Modified · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopModified}</span>
+                        </span>
+                      )}
                     </div>
                   )}
-                  <div
-                    className={`px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px] ${
-                      game !== 'reforger' ? 'col-span-2' : ''
-                    }`}
-                  >
-                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
-                    <p className="text-3xl font-black text-white">#{mod.stats?.overallRank ?? mod.overallRank ?? '—'}</p>
-                  </div>
-                </div>
-                <div className="hidden lg:block">
-                  <ModConfigPanel
-                    modId={mod.id}
-                    modName={mod.name}
-                    game={game}
-                    workshopStatus={mod.workshopStatus}
-                  />
                 </div>
               </div>
-            </div>
+              {mod.workshopSummary ? (
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
+                  {mod.workshopSummary}
+                </p>
+              ) : (
+                <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
+                  {MOD_DETAIL_LIVE_FALLBACK}
+                </p>
+              )}
 
-            {game === 'reforger' && mod.workshopDescription && (
-              <ModWorkshopCopy
+              <div className="grid grid-cols-2 gap-3 w-full">
+                {game === 'reforger' && (
+                  <div className="px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px]">
+                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
+                    <p className="text-lg sm:text-xl font-black font-mono text-tactical-orange tabular-nums leading-none">
+                      {formatBytes(mod.sizeBytes)}
+                    </p>
+                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1.5">Workshop ver.</p>
+                  </div>
+                )}
+                <div className={`px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px] ${game !== 'reforger' ? 'col-span-2' : ''}`}>
+                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                  <p className="text-3xl font-black text-white">#{mod.stats?.overallRank ?? mod.overallRank ?? '—'}</p>
+                </div>
+              </div>
+
+              <ModConfigPanel
                 modId={mod.id}
+                modName={mod.name}
                 game={game}
-                description={mod.workshopDescription}
+                workshopStatus={mod.workshopStatus}
               />
-            )}
-          </header>
-
-          {/* Mobile: config panel below gallery — desktop panel is in the header column. */}
-          <div className="lg:hidden w-full">
-            <ModConfigPanel
-              modId={mod.id}
-              modName={mod.name}
-              game={game}
-              workshopStatus={mod.workshopStatus}
-            />
+            </div>
           </div>
+
+          {game === 'reforger' && mod.workshopDescription && (
+            <ModWorkshopCopy
+              modId={mod.id}
+              game={game}
+              description={mod.workshopDescription}
+            />
+          )}
+        </header>
 
           <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 py-3 border-b border-white/5">
             <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 w-full sm:w-auto">

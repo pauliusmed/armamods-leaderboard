@@ -3,6 +3,11 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.22.42] - 2026-08-13
+
+- Mod pages now put the Workshop screenshots front and center, with the mod details, download size, rank and server config actions grouped beside them.
+- The layout is cleaner on desktop and stacks naturally on mobile, making the important mod information easier to scan without opening Workshop first.
+
 ## [1.22.38] - 2026-08-13
 
 - Reforger 1.8 "Stay Low, Stay Hidden" is out! The config audit and mod timelines now track the 1.8 update — paste your server config.json to see which mods broke after the patch.
