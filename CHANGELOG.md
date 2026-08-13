@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.33] - 2026-08-13
+
+### 🏆 Serverių #1 stabilumas — diferencijuotas Elite Inertia cushion
+- **Problema:** #1 vieta keitėsi ~8 kartus per mėnesį (pvz. 4 skirtingi #1 per 08-10→08-13). Root cause: top serveriai turi 128 žaidėjų cap, baseScore vienodi, #1 lemia tik lengvai svyruojantis `uniquenessBonus`; be to, Elite Inertia cushion (+5%) buvo taikomas **visiems** top-3, tad tarp #1 ir #2 jis atsargasirdavo — champion nebuvo apsaugotas nuo artimiausio reto.
+- **Fix:** cushion diferencijuotas — **#1: +8%, #2: +4%, #3: +2%** (`ELITE_INERTIA_TIERS`). Dabar #1 ir #2 tarpusavyje atskiriami: esant raw tie 500/500, cushion #1 → 540, #2 → 520. Vienas modpack pakeitimas (~50 taškų) vis dar prasimuša, bet EMA microsvyravimai — nebe.
+- **Refactor:** cushion logika ištraukta į gryną modulį `scripts/server-elite-inertia.ts` (`applyEliteInertiaCushion`), kolektorius importuoja.
+- **Testai** — `test/server-elite-inertia.test.ts` (7 atvejai, registruotas `npm test`).
+- Heavy CI: required because rankinimo algoritmas.
+
 ## [1.22.32] - 2026-08-13
 
 ### 📦 Total modpack dydis — modas su visais dependency'jais

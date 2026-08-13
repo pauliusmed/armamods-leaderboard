@@ -21,6 +21,7 @@ import {
   isServerOnlineSample,
   mergeServerHistorySnapshot,
 } from '../web/functions/lib/server-uptime-history.js';
+import { applyEliteInertiaCushion, ELITE_INERTIA_TIERS } from './server-elite-inertia.js';
 import {
   fetchReforgerWorkshopHtml,
   cacheReforgerFieldsFromWorkshopHtml,
@@ -1241,18 +1242,20 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
           rankingScores[id] = weighted;
       }
 
-      // Elite inertia: a small ranking-only cushion for established top servers so #1-#3 don't
-      // flip on tiny score deltas. Age-gated so a brand-new server can't benefit.
-      const ELITE_INERTIA_SIZE = 3;
-      const ELITE_INERTIA_BONUS_PCT = 0.05; // 5% cushion, ranking only
-      if (oldLeaderboard && Array.isArray(oldLeaderboard)) {
-          for (let i = 0; i < Math.min(ELITE_INERTIA_SIZE, oldLeaderboard.length); i++) {
-              const eliteId = oldLeaderboard[i]?.id;
-              if (eliteId && rankingScores[eliteId] !== undefined && (emaMap[eliteId]?.a ?? 0) >= MIN_AGE_ELITE) {
-                  rankingScores[eliteId] = Math.floor(rankingScores[eliteId] * (1 + ELITE_INERTIA_BONUS_PCT));
-              }
-          }
-      }
+      // Elite inertia: a differentiated ranking-only cushion for the previous leaderboard's
+      // elite so #1↔#2 don't flip on tiny score deltas. Tiers are #1 > #2 > #3 — a flat cushion
+      // applied to all of top-3 cancels out when comparing them to each other, so the champion
+      // was never actually insulated from #2. Age-gated (MIN_AGE_ELITE) so newcomers can't lock #1.
+      const ages: Record<string, number> = {};
+      for (const [id, entry] of Object.entries(emaMap)) ages[id] = entry.a;
+      const cushioned = applyEliteInertiaCushion(
+        rankingScores,
+        oldLeaderboard,
+        ages,
+        ELITE_INERTIA_TIERS,
+        MIN_AGE_ELITE
+      );
+      for (const [id, score] of Object.entries(cushioned)) rankingScores[id] = score;
 
       const sortedIds = Object.keys(rankingScores).sort((a, b) => rankingScores[b] - rankingScores[a]);
       const currentRanks: Record<string, number> = {};

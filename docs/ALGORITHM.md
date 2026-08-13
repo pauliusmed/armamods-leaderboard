@@ -118,16 +118,22 @@ A brand-new server starts at **25%** rank weight and reaches **100%** only after
 
 ### Elite Rank Inertia
 
-Because the top servers often run with similar player counts, tiny differences in the `UniquenessBonus` can cause the #1-#3 spots to flip every snapshot. To make the highest ranks feel authoritative and stable, the system applies a small **ranking-only cushion** to the previous leaderboard's top 3 servers:
+Because the top servers often run with similar player counts, tiny differences in the `UniquenessBonus` can cause the #1-#3 spots to flip every snapshot. To make the highest ranks feel authoritative and stable, the system applies a **differentiated ranking-only cushion** to the previous leaderboard's top 3 servers:
 
 ```
-RankingScore(top3) = SQEPoints × 1.05
+RankingScore(prev #1) = SQEPoints × 1.08
+RankingScore(prev #2) = SQEPoints × 1.04
+RankingScore(prev #3) = SQEPoints × 1.02
 ```
+
+**Why differentiated tiers (not flat):** a flat cushion applied to all of top-3 cancels out when comparing #1 against #2 — both got the same boost, so the champion was never insulated from its nearest rival, only from #4+. Tiered cushions (8% / 4% / 2%) create real separation *within* the elite: the #1 needs a meaningfully larger lead to be displaced than to overtake #3.
 
 **Rules:**
-- The 5% cushion is used **only** to determine rank order; the stored `sqePoints` remain unchanged.
+- The cushion is used **only** to determine rank order; the stored `sqePoints` remain unchanged (pure quality × tenure).
 - It applies only to the **top 3** servers from the previous leaderboard **that also have `age ≥ 12`** (~24h of history). A brand-new server cannot benefit from elite inertia.
-- If another server genuinely pulls ahead by more than ~5%, it will still overtake the cushioned elite server.
+- A genuine challenger still breaks through: a raw-SQE lead larger than the cushion margin (~8% over the champion) overtakes regardless.
+
+Implementation: `scripts/server-elite-inertia.ts` (`applyEliteInertiaCushion`, `ELITE_INERTIA_TIERS`).
 
 This creates a "hysteresis" effect: once a server reaches the elite tier, it needs a meaningful lead by a challenger to be displaced, eliminating noisy #1-#3 swaps while still allowing true shifts in popularity.
 
