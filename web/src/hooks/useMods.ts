@@ -1,12 +1,23 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { modsApi, type GameType } from '../api/client';
 import { fetchWithRetry } from '../lib/fetchWithRetry';
+import { useUrlListState, parseEnum, parsePositiveInt, parseSortDir } from './useUrlListState';
 import type { Mod } from '../types';
 
 export type PlayerFilter = 'all' | 'high' | 'medium' | 'low';
 export type ModSortBy = 'overall' | 'players' | 'servers' | 'name' | 'share' | 'author' | 'size';
 export type SortDir = 'asc' | 'desc';
+
+const PLAYER_FILTERS: readonly PlayerFilter[] = ['all', 'high', 'medium', 'low'];
+const MOD_SORTS: readonly ModSortBy[] = [
+  'overall',
+  'players',
+  'servers',
+  'name',
+  'share',
+  'author',
+  'size',
+];
 
 interface UseModsOptions {
   game?: GameType;
@@ -14,8 +25,6 @@ interface UseModsOptions {
 
 export function useMods(options: UseModsOptions = {}) {
   const { game = 'reforger' } = options;
-  const [searchParams] = useSearchParams();
-  const qFromUrl = searchParams.get('q') ?? '';
   const [mods, setMods] = useState<Mod[]>([]);
   const [totalMods, setTotalMods] = useState(0);
   const [globalStats, setGlobalStats] = useState({ totalPlayers: 0, totalServers: 0, totalMods: 0 });
@@ -23,15 +32,44 @@ export function useMods(options: UseModsOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  const [searchQuery, setSearchQuery] = useState(qFromUrl);
+  const parsePlayerFilter = useCallback(
+    (raw: string | null) => parseEnum(PLAYER_FILTERS)(raw, 'all'),
+    []
+  );
+  const parseSort = useCallback((raw: string | null) => parseEnum(MOD_SORTS)(raw, 'overall'), []);
 
-  useEffect(() => {
-    setSearchQuery(qFromUrl);
-  }, [qFromUrl]);
-  const [playerFilter, setPlayerFilter] = useState<PlayerFilter>('all');
-  const [sortBy, setSortBy] = useState<ModSortBy>('overall');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useUrlListState({
+    param: 'q',
+    fallback: '',
+    parse: (raw) => raw ?? '',
+    serialize: (v) => v.trim() || null,
+    delayMs: 300,
+  });
+  const [playerFilter, setPlayerFilter] = useUrlListState<PlayerFilter>({
+    param: 'activity',
+    fallback: 'all',
+    parse: parsePlayerFilter,
+    serialize: (v) => (v === 'all' ? null : v),
+  });
+  const [sortBy, setSortBy] = useUrlListState<ModSortBy>({
+    param: 'sort',
+    fallback: 'overall',
+    parse: parseSort,
+    serialize: (v) => (v === 'overall' ? null : v),
+  });
+  const [sortDir, setSortDir] = useUrlListState<SortDir>({
+    param: 'dir',
+    fallback: 'asc',
+    parse: (raw) => parseSortDir(raw, 'asc'),
+    serialize: (v) => (v === 'asc' ? null : v),
+  });
+  const [currentPage, setCurrentPage] = useUrlListState<number>({
+    param: 'page',
+    fallback: 1,
+    parse: (raw) => parsePositiveInt(raw, 1),
+    serialize: (v) => (v <= 1 ? null : String(v)),
+    mode: 'push',
+  });
   const itemsPerPage = 24;
 
   const loadMods = useCallback(async () => {
@@ -68,7 +106,7 @@ export function useMods(options: UseModsOptions = {}) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, playerFilter, sortBy, sortDir]);
+  }, [searchQuery, playerFilter, sortBy, sortDir, setCurrentPage]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

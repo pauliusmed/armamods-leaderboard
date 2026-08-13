@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { scenariosApi, modsApi, type GameType } from '../api/client';
 import { fetchWithRetry } from '../lib/fetchWithRetry';
+import { useUrlListState, parsePositiveInt } from './useUrlListState';
 import type { ScenarioRankingEntry, Server } from '../types';
 
 export type ScenarioSortBy = 'players' | 'servers' | 'fill' | 'name' | 'rank';
@@ -29,10 +30,22 @@ export function useScenarios(options: UseScenariosOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useUrlListState({
+    param: 'q',
+    fallback: '',
+    parse: (raw) => raw ?? '',
+    serialize: (v) => v.trim() || null,
+    delayMs: 300,
+  });
   const [sortBy, setSortBy] = useState<ScenarioSortBy>(isScenarioSortBy(sortParam) ? sortParam : 'players');
   const [sortDir, setSortDir] = useState<ScenarioSortDir>(dirParam === 'asc' || dirParam === 'desc' ? dirParam : 'desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useUrlListState<number>({
+    param: 'page',
+    fallback: 1,
+    parse: (raw) => parsePositiveInt(raw, 1),
+    serialize: (v) => (v <= 1 ? null : String(v)),
+    mode: 'push',
+  });
   const itemsPerPage = 24;
 
   const loadScenarios = useCallback(async () => {
@@ -64,7 +77,7 @@ export function useScenarios(options: UseScenariosOptions = {}) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchInput, sortBy]);
+  }, [searchInput, sortBy, setCurrentPage]);
 
   useEffect(() => {
     if (!selectedName) {

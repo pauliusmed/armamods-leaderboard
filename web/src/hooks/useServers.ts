@@ -5,6 +5,7 @@ import { matchesServerSearch } from '../lib/searchMatch';
 import { matchesConsoleFilter, type ConsoleFitFilter } from '../lib/serverModpack';
 import { matchesBmStatusFilter, type BmStatusFilter } from '../lib/serverStatus';
 import { loadStorageProfile } from '../lib/storageProfile';
+import { useUrlListState, parseEnum, parsePositiveInt, parseSortDir } from './useUrlListState';
 import type { Server } from '../types';
 
 export type { ConsoleFitFilter };
@@ -12,6 +13,10 @@ export type { BmStatusFilter };
 
 export type ServerSortBy = 'rank' | 'players' | 'name' | 'mods' | 'modpack';
 export type ServerSortDir = 'asc' | 'desc';
+
+const SERVER_SORTS: readonly ServerSortBy[] = ['rank', 'players', 'name', 'mods', 'modpack'];
+const CONSOLE_FILTERS: readonly ConsoleFitFilter[] = ['all', 'vanilla', 'ps5', 'xbox-x', 'xbox-s'];
+const BM_STATUS_FILTERS: readonly BmStatusFilter[] = ['all', 'online', 'offline'];
 
 function modpackSortBytes(server: Server): number {
   if ((server.mods?.length ?? 0) === 0) return 0;
@@ -30,12 +35,58 @@ export function useServers(options: UseServersOptions = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [searchInput, setSearchInput] = useState('');
-  const [sortBy, setSortBy] = useState<ServerSortBy>('rank');
-  const [sortDir, setSortDir] = useState<ServerSortDir>('asc');
-  const [consoleFilter, setConsoleFilter] = useState<ConsoleFitFilter>('all');
-  const [bmStatusFilter, setBmStatusFilter] = useState<BmStatusFilter>('all');
-  const [currentPage, setCurrentPage] = useState(1);
+
+  const parseServerSort = useCallback(
+    (raw: string | null) => parseEnum(SERVER_SORTS)(raw, 'rank'),
+    []
+  );
+  const parseConsole = useCallback(
+    (raw: string | null) => parseEnum(CONSOLE_FILTERS)(raw, 'all'),
+    []
+  );
+  const parseBmStatus = useCallback(
+    (raw: string | null) => parseEnum(BM_STATUS_FILTERS)(raw, 'all'),
+    []
+  );
+
+  const [searchInput, setSearchInput] = useUrlListState({
+    param: 'q',
+    fallback: '',
+    parse: (raw) => raw ?? '',
+    serialize: (v) => v.trim() || null,
+    delayMs: 300,
+  });
+  const [sortBy, setSortBy] = useUrlListState<ServerSortBy>({
+    param: 'sort',
+    fallback: 'rank',
+    parse: parseServerSort,
+    serialize: (v) => (v === 'rank' ? null : v),
+  });
+  const [sortDir, setSortDir] = useUrlListState<ServerSortDir>({
+    param: 'dir',
+    fallback: 'asc',
+    parse: (raw) => parseSortDir(raw, 'asc'),
+    serialize: (v) => (v === 'asc' ? null : v),
+  });
+  const [consoleFilter, setConsoleFilter] = useUrlListState<ConsoleFitFilter>({
+    param: 'console',
+    fallback: 'all',
+    parse: parseConsole,
+    serialize: (v) => (v === 'all' ? null : v),
+  });
+  const [bmStatusFilter, setBmStatusFilter] = useUrlListState<BmStatusFilter>({
+    param: 'status',
+    fallback: 'all',
+    parse: parseBmStatus,
+    serialize: (v) => (v === 'all' ? null : v),
+  });
+  const [currentPage, setCurrentPage] = useUrlListState<number>({
+    param: 'page',
+    fallback: 1,
+    parse: (raw) => parsePositiveInt(raw, 1),
+    serialize: (v) => (v <= 1 ? null : String(v)),
+    mode: 'push',
+  });
   const itemsPerPage = 24;
 
   const loadServers = useCallback(async (search?: string) => {
@@ -85,7 +136,7 @@ export function useServers(options: UseServersOptions = {}) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchInput, sortBy, sortDir, consoleFilter, bmStatusFilter]);
+  }, [searchInput, sortBy, sortDir, consoleFilter, bmStatusFilter, setCurrentPage]);
 
   const toggleSort = useCallback((column: ServerSortBy) => {
     if (sortBy === column) {
@@ -94,7 +145,7 @@ export function useServers(options: UseServersOptions = {}) {
     }
     setSortBy(column);
     setSortDir(column === 'name' ? 'asc' : column === 'rank' ? 'asc' : 'desc');
-  }, [sortBy]);
+  }, [sortBy, setSortBy, setSortDir]);
 
   useEffect(() => {
     loadServers(searchInput);

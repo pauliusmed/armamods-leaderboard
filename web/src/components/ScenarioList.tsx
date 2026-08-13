@@ -12,6 +12,7 @@ import { scenarioDetailHref, scenarioKindBadgeClass, scenarioKindLabel } from '.
 import { DATA_STALE_HERO_NOTE, SCENARIO_EMPTY, SCENARIO_SUBTITLE } from '../lib/siteCopy';
 import { SCENARIO_LIST_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { useListScrollRestoration } from '../hooks/useListScrollRestoration';
 import type { ScenarioSortBy } from '../hooks/useScenarios';
 import type { GameType } from '../api/client';
 import type { ScenarioRankingEntry } from '../types';
@@ -133,6 +134,9 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
       return dir * ((a.mods?.length ?? 0) - (b.mods?.length ?? 0));
     });
   }, [selectedServers, deployedSortBy, deployedSortDir]);
+
+  // Restore scroll position when coming back (POP) — URL state is restored by useScenarios.
+  useListScrollRestoration(`scenarios:${game}:${currentPage}`);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -20,6 +20,7 @@ import { CONSOLE_FIT_FILTER_OPTIONS, SERVER_LIST_SORT_OPTIONS } from '../lib/mod
 import { BM_STATUS_FILTER_OPTIONS } from '../lib/serverStatus';
 import { DATA_STALE_HERO_NOTE, SERVER_STATUS_FILTER_ARIA } from '../lib/siteCopy';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { useListScrollRestoration } from '../hooks/useListScrollRestoration';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { SEO } from './ui/SEO';
 import { SITE_ORIGIN, serverPageUrl } from '../lib/site';
@@ -77,6 +78,9 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
     () => excludeFavoriteServersFromList(game, filteredServers, favoriteIds, showFavoritesPin),
     [game, filteredServers, favoriteIds, showFavoritesPin]
   );
+
+  // Restore scroll position when coming back (POP) — URL state is restored by useServers.
+  useListScrollRestoration(`servers:${game}:${currentPage}`);
 
   // Scroll to top when page changes
   useEffect(() => {

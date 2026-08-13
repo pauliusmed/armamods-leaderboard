@@ -17,6 +17,7 @@ import type { GameType } from '../api/client';
 import type { ModSortBy } from '../hooks/useMods';
 import { ACTIVITY_FILTER_OPTIONS, MOD_LEADERBOARD_SORT_OPTIONS } from '../lib/modListFilters';
 import { useDataFreshness, formatSyncAge } from '../hooks/useDataFreshness';
+import { useListScrollRestoration } from '../hooks/useListScrollRestoration';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { DATA_STALE_HERO_NOTE } from '../lib/siteCopy';
 import { SITE_ORIGIN, modPageUrl } from '../lib/site';
@@ -65,6 +66,9 @@ export function ModList({ game = 'reforger' }: ModListProps) {
   );
 
   const itemsPerPage = 24;
+
+  // Restore scroll position when coming back (POP) — URL state is restored by useMods.
+  useListScrollRestoration(`mods:${game}:${currentPage}`);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
