@@ -21,6 +21,9 @@ function Harness({ initialPage = 1 }: { initialPage?: number }) {
       <button type="button" onClick={() => setPage(5)}>
         go5
       </button>
+      <button type="button" onClick={() => setPage((cur) => cur + 1)}>
+        inc
+      </button>
       <button type="button" onClick={() => setPage(initialPage)}>
         reset
       </button>
@@ -66,6 +69,13 @@ describe('useUrlListState', () => {
     await userEvent.click(screen.getByText('reset'));
     expect(screen.getByTestId('page').textContent).toBe('1');
     expect(screen.getByTestId('url').textContent).not.toContain('page');
+  });
+
+  it('supports updater functions resolving against the current URL value', async () => {
+    renderHarness('/?page=3');
+    await userEvent.click(screen.getByText('inc'));
+    expect(screen.getByTestId('page').textContent).toBe('4');
+    expect(screen.getByTestId('url').textContent).toContain('page=4');
   });
 
   it('syncs state when the URL changes externally (back/forward)', () => {

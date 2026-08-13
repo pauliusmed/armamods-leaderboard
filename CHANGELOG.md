@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.39] - 2026-08-13
+
+### 🐛 CI build fix — `useUrlListState` functional updater
+- **Problema:** `tsc -b` (web build) lūžo — `setSortDir((d) => d === 'asc' ? 'desc' : 'asc')` perduodavo updater funkciją, bet `useUrlListState` `set` priėmė tik reikšmę (root `tsc --noEmit` to nepastebėjo — web strict nustatymai).
+- **Fix:** `set` dabar priima `T | ((current: T) => T)` — updater resolvinamas prieš **dabartinę URL reikšmę** (source of truth) setSearchParams updater viduje; palaikomi debounce atvejai.
+- **Testas** — "supports updater functions resolving against the current URL value" (29 web testai).
+- **Pamoka:** po web hook'ų pakeitimų būtina paleisti `npm --prefix web run build` (ne tik root `tsc --noEmit`).
+
 ## [1.22.38] - 2026-08-13
 
 ### 📰 Reforger 1.8 landing — oficialūs patchnotes + toolso nuorodos

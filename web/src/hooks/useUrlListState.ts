@@ -22,8 +22,13 @@ export interface UseUrlListStateOptions<T> {
  * so browser back from a detail page re-mounted the list with defaults — search results,
  * filters and pagination were lost. Mirroring state into the URL means back/forward and
  * share links re-render the list with the exact restored view, no imperative sync needed.
+ *
+ * `set` accepts either a value or an updater function `(current) => next`, mirroring the
+ * React setState API (used by toggle-sort patterns).
  */
-export function useUrlListState<T>(options: UseUrlListStateOptions<T>): [T, (next: T) => void] {
+export function useUrlListState<T>(
+  options: UseUrlListStateOptions<T>
+): [T, (next: T | ((current: T) => T)) => void] {
   const { param, parse, serialize, mode = 'replace', delayMs = 0 } = options;
   const [searchParams, setSearchParams] = useSearchParams();
   const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,13 +52,17 @@ export function useUrlListState<T>(options: UseUrlListStateOptions<T>): [T, (nex
   // re-renders, so the value always reflects the current URL (never an out-of-sync state).
   const value = parse(searchParams.get(param));
 
-  const set = useCallback((next: T) => {
+  const set = useCallback((next: T | ((current: T) => T)) => {
     const apply = () => {
       if (!mountedRef.current) return;
-      const { param: p, serialize: ser, mode: m } = optionsRef.current;
-      const serialized = ser(next);
+      const { param: p, parse: pr, serialize: ser, mode: m } = optionsRef.current;
       setSearchParams(
         (prev) => {
+          // Resolve updater functions against the *current* URL value (source of truth),
+          // so toggle patterns like setDir(d => d === 'asc' ? 'desc' : 'asc') stay correct.
+          const current = pr(prev.get(p));
+          const resolved = typeof next === 'function' ? (next as (cur: T) => T)(current) : next;
+          const serialized = ser(resolved);
           const qp = new URLSearchParams(prev);
           if (serialized == null) {
             qp.delete(p);
