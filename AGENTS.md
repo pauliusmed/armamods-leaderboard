@@ -62,6 +62,7 @@ PR aprašyme: `Heavy CI: required because <priežastis>` arba `Heavy CI: skipped
 - Komentaruose aiškink KODĖL, ne KĄ.
 - Nešalink esamų komentarų, nebent klaidingi ar pasenę.
 - **Visada** atnaujink `CHANGELOG.md` po reikšmingų pakeitimų (user-facing release žinutė, su versijos numeriu).
+- **`DISCORD_RELEASES.md`** — po user-facing pakeitimo (naujas puslapis, matomas elgesio pokytis žaidėjams/serverių savininkams) privaloma atnaujinti ir šį failą: viršuje naujas `## [versija] - data` įrašas, anglų kalba, 1–5 eilutės, tik vartotojo vertė (be techninio žargono/monetizacijos). Deploy'as automatiškai išsiunčia viršutinį įrašą į Discord #announcements. Techniniams fix'ams (CI, refaktoriai) — nereikia.
 - Dokumentaciją atnaujink tik jei pasenusi – **pirma paklausk patvirtinimo**.
 
 ## Git / PR

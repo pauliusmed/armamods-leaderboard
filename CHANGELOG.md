@@ -2,6 +2,13 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.40] - 2026-08-13
+
+### 💬 Discord release automatika — disciplina, ne spam
+- **`DISCORD_RELEASES.md`** — užpildyta praleistų user-facing release'ų suvestinė (1.8 audit/landing, modpack total size, back-state, #1 stabilumas, config snippet) — 1.22.38 top entry.
+- **`AGENTS.md`** — privaloma taisyklė: po user-facing pakeitimo atnaujinti `DISCORD_RELEASES.md` (deploy išsiunčia viršutinį įrašą į Discord #announcements); techniniams fix'ams nereikia.
+- **Kodėl ne automatinis siuntimas kiekvienam push:** CHANGELOG techninis/lietuviškas — Discord gautų spam'ą; rankinis filtras (2 failai release'ui) užtikrina žaidėjams pritaikytą žinutę.
+
 ## [1.22.39] - 2026-08-13
 
 ### 🐛 CI build fix — `useUrlListState` functional updater
