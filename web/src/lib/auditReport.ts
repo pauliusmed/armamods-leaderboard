@@ -24,6 +24,7 @@ export interface ReportModRow {
 
 export interface AuditReportInput {
   patchDate: string;
+  patchLabel: string;
   summary: Record<string, number>;
   rows: ReportModRow[];
 }
@@ -39,12 +40,12 @@ const STATUS_HEADING: Record<AuditStatus, string> = {
   unknown: AUDIT_STATUS_SHORT.unknown,
 };
 
-function lineForMod(r: ReportModRow): string {
+function lineForMod(r: ReportModRow, patchLabel: string): string {
   const drop = r.dropPct != null ? ` | drop ${r.dropPct}%` : '';
   const now =
     r.currentPlayers === 0 ? 'now 0 [ZERO ON BM TODAY]' : `now ${r.currentPlayers}`;
   const stats =
-    `before ${r.beforeAvg ?? '—'} | after 1.7 update ${r.earlyAfterAvg ?? '—'} | last 7d ${r.recentAvg ?? '—'} | since patch ${r.afterAvg ?? '—'} | ${now}`;
+    `before ${r.beforeAvg ?? '—'} | after ${patchLabel} update ${r.earlyAfterAvg ?? '—'} | last 7d ${r.recentAvg ?? '—'} | since patch ${r.afterAvg ?? '—'} | ${now}`;
   return `${r.modId} | ${r.name} | ${r.title}${drop}\n  ${stats}\n  ${r.detail}`;
 }
 
@@ -67,7 +68,7 @@ export function formatAuditReportText(input: AuditReportInput): string {
     lines.push('Exact zero today – separate from “a few players/day” in averages.');
     for (const r of zeroNow) {
       lines.push(
-        `${r.modId} | ${r.name} | ${r.status.toUpperCase()} | last 7d ${r.recentAvg ?? '—'}/day | after 1.7 update ${r.earlyAfterAvg ?? '—'}/day`
+        `${r.modId} | ${r.name} | ${r.status.toUpperCase()} | last 7d ${r.recentAvg ?? '—'}/day | after ${input.patchLabel} update ${r.earlyAfterAvg ?? '—'}/day`
       );
     }
     lines.push('');
@@ -78,7 +79,7 @@ export function formatAuditReportText(input: AuditReportInput): string {
     if (!group.length) continue;
     lines.push(`=== ${STATUS_HEADING[status]} (${group.length}) ===`);
     for (const r of group) {
-      lines.push(lineForMod(r));
+      lines.push(lineForMod(r, input.patchLabel));
       lines.push('');
     }
   }

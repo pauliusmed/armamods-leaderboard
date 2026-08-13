@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.44] - 2026-08-13
+
+### 🐛 Mod audit — Broken verdiktas nebeklaidinamas iškart po patch
+- **Fix:** Pirmąsias 4 dienas po Reforger patch kolektorius neturi pakankamai BM duomenų – „Broken after 1.8" dabar slopinamas (statusas → „Monitor" su tekstu „Too early to judge after 1.8"), kol `daysSincePatch < 4`.
+- **Fix:** „Broken" / „Monitor" kortelėse nebepasirodo prieštaraujantis „Stable — No major change" trend chip ir trendDetail.
+- **Fix:** `dropPct` tooltip aiškiai pažymėtas kaip rank-based (Zipf); kai skaičiuojama iš BM rank, prie `−%` rodoma „rank" žymė.
+- **Fix:** `afterAvg` langas nebehardcodintas `2026-12-31` → `2099-01-01`; report teksto „after 1.7 update" → dinaminis patch label.
+- **Testai** — nauji atvejai: warmup slopinimas (classifyModAudit + buildModAuditRow), dead po 4 dienų, `daysSincePatch` helper (5 atvejai).
+- **Heavy CI:** required because audit klasifikacijos logika keičiama; pilnas `npm test` (194) + `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
 ## [1.22.43] - 2026-08-13
 
 ### 📊 Mod detail hero — Live stats perkelti į pagrindinį bloką

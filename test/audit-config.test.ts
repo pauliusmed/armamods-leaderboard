@@ -11,6 +11,7 @@ import {
   sortAuditRowsWorstFirst,
   buildClassificationHint,
   resolveModDisplayName,
+  daysSincePatch,
 } from '../web/functions/api/audit-config.ts';
 
 describe('parseServerConfig', () => {
@@ -257,6 +258,51 @@ describe('classifyModAudit', () => {
     });
     assert.equal(r.status, 'ok');
   });
+
+  it('suppresses Broken verdict during post-patch warmup (too early)', () => {
+    const trend = {
+      phase: 'declining' as const,
+      label: 'Still declining',
+      detail: 'x',
+      recentAvg: 6,
+      earlyAfterAvg: 4,
+      rankBefore: 100,
+      rankRecent: 156,
+    };
+    const r = classifyModAudit({
+      beforeAvg: 80,
+      afterAvg: 4,
+      currentPlayers: 0,
+      serverCount: 12,
+      trend,
+      daysSincePatch: 2,
+    });
+    assert.equal(r.status, 'warning');
+    assert.match(r.title, /Too early/i);
+    assert.match(r.detail, /not enough/i);
+  });
+
+  it('allows Broken verdict after the 4-day warmup window', () => {
+    const trend = {
+      phase: 'declining' as const,
+      label: 'Still declining',
+      detail: 'x',
+      recentAvg: 6,
+      earlyAfterAvg: 4,
+      rankBefore: 100,
+      rankRecent: 156,
+    };
+    const r = classifyModAudit({
+      beforeAvg: 80,
+      afterAvg: 4,
+      currentPlayers: 0,
+      serverCount: 12,
+      trend,
+      daysSincePatch: 4,
+    });
+    assert.equal(r.status, 'dead');
+    assert.match(r.title, /Broken after/i);
+  });
 });
 
 describe('pickAlternatives', () => {
@@ -326,6 +372,23 @@ describe('buildModAuditRow', () => {
     );
     assert.equal(row.status, 'dead');
     assert.ok((row.dropPct ?? 0) >= 90);
+  });
+
+  it('suppresses Broken verdict when history ends on patch day (warmup)', () => {
+    const history = [
+      { date: '2026-05-20', totalPlayers: 100 },
+      { date: '2026-05-27', totalPlayers: 95 },
+      { date: '2026-05-28', totalPlayers: 2 },
+    ];
+    const row = buildModAuditRow(
+      { modId: 'AAAAAAAAAAAAAAAA', name: 'Test' },
+      history,
+      { totalPlayers: 0, serverCount: 10 },
+      '2026-05-28',
+      '1.7'
+    );
+    assert.equal(row.status, 'warning');
+    assert.match(row.title, /Too early/i);
   });
 });
 
@@ -468,5 +531,25 @@ describe('avgPlayersInRange', () => {
       '2026-05-28'
     );
     assert.equal(avg, 20);
+  });
+});
+
+describe('daysSincePatch', () => {
+  it('returns days from patch to last history point', () => {
+    assert.equal(
+      daysSincePatch('2026-05-28', [
+        { date: '2026-05-20', totalPlayers: 10 },
+        { date: '2026-06-01', totalPlayers: 10 },
+      ]),
+      4
+    );
+  });
+
+  it('returns 0 when history ends before the patch or is empty', () => {
+    assert.equal(
+      daysSincePatch('2026-05-28', [{ date: '2026-05-20', totalPlayers: 10 }]),
+      0
+    );
+    assert.equal(daysSincePatch('2026-05-28', []), 0);
   });
 });

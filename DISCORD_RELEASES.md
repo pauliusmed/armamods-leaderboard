@@ -3,6 +3,11 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.22.44] - 2026-08-13
+
+- Mod audit no longer calls mods "Broken" on the very first days after a Reforger update, when there isn't enough data yet — it now tells you to wait and verify before removing anything.
+- Confusing "Stable" labels are hidden on Broken/Monitor mods, and the drop percentage is clearly marked as rank-based so it can't be mistaken for a player-count drop.
+
 ## [1.22.43] - 2026-08-13
 
 - Mod pages now show live personnel, server count and share directly beside the mod details, so the key numbers are visible without scrolling.

@@ -436,6 +436,19 @@ function addDays(isoDate: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Full calendar days between patch date and the last known history point (0 when history is empty or stale). */
+export function daysSincePatch(patchDate: string, history: HistoryPoint[]): number {
+  const last =
+    [...history].sort((a, b) => (a.date || a.time || '').localeCompare(b.date || b.time || ''))[
+      history.length - 1
+    ]?.date || '';
+  if (!last) return 0;
+  const diff =
+    (new Date(last + 'T12:00:00Z').getTime() - new Date(patchDate + 'T12:00:00Z').getTime()) /
+    86_400_000;
+  return Math.max(0, Math.round(diff));
+}
+
 const MIN_SIGNAL_AVG = 8;
 /**
  * On BattleMetrics scale, 0 and “a few” players/day are the same bucket – not a living mod.
@@ -448,6 +461,8 @@ const GHOST_DEPLOYMENT_MIN_SERVERS = 3;
 const ZERO_NOW_BROKEN_MAX = 1;
 /** Recent avg players/day – recovery is real when the ecosystem is coming back */
 const MIN_RECOVERY_RECENT = 10;
+/** Days after patch with too little BM data for a reliable “Broken” verdict. */
+export const POST_PATCH_WARMUP_DAYS = 4;
 
 function isEffectivelyEmpty(players: number): boolean {
   return players <= EFFECTIVELY_EMPTY_MAX;
@@ -508,8 +523,10 @@ export function classifyModAudit(params: {
   serverCount?: number;
   trend: TrendInsight;
   patchLabel?: string;
+  /** Days since patch from the last BM history point – 0 = patch day, no days = no suppression. */
+  daysSincePatch?: number;
 }): Pick<ModAuditRow, 'status' | 'title' | 'detail' | 'dropPct'> {
-  const { beforeAvg, afterAvg, currentPlayers, serverCount = 0, trend } = params;
+  const { beforeAvg, afterAvg, currentPlayers, serverCount = 0, trend, daysSincePatch } = params;
   const patchLabel = params.patchLabel ?? LATEST_PATCH_LABEL;
 
   if (beforeAvg === null || afterAvg === null) {
@@ -599,6 +616,20 @@ export function classifyModAudit(params: {
       trend.phase !== 'recovering';
 
     if (isGhostDead || isZeroNowBroken || isSevereDropBroken) {
+      const warmup =
+        daysSincePatch !== undefined && daysSincePatch < POST_PATCH_WARMUP_DAYS;
+      if (warmup) {
+        return {
+          status: 'warning',
+          title: `Too early to judge after ${patchLabel}`,
+          detail:
+            `Only ~${daysSincePatch}d of post-${patchLabel} BattleMetrics data – not enough to call this Broken. ` +
+            `Still on ~${serverCount} BM server configs with ${currentPlayers} players now. ` +
+            `Verify Workshop ${patchLabel}, restart, RPT before removing.`,
+          dropPct,
+        };
+      }
+
       const detail = isGhostDead
         ? `Still on ~${serverCount} BattleMetrics server configs but ${currentPlayers} players now – ` +
           `likely broken with ${patchLabel} (stale config, no restart, or outdated Workshop build). Remove from config and check RPT.`
@@ -725,7 +756,7 @@ export function buildModAuditRow(
   const beforeStart = addDays(patchDate, -7);
   const beforeAvg = avgPlayersInRange(history, beforeStart, patchDate);
   const earlyAfterAvg = avgPlayersInRange(history, patchDate, addDays(patchDate, 4));
-  const afterAvg = avgPlayersInRange(history, patchDate, '2026-12-31');
+  const afterAvg = avgPlayersInRange(history, patchDate, '2099-01-01');
   const currentPlayers = live?.totalPlayers ?? 0;
   const serverCount = live?.serverCount ?? 0;
   const trend = analyzeTrend(history, patchDate, patchLabel);
@@ -736,6 +767,7 @@ export function buildModAuditRow(
     serverCount,
     trend,
     patchLabel,
+    daysSincePatch: daysSincePatch(patchDate, history),
   });
 
   const needsAlternatives =

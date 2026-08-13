@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { SEO } from './ui/SEO';
 import type { GameType } from '../api/client';
 import { parseServerConfig } from '../lib/parseServerConfig';
-import { isAuditRemoveCandidate, sortAuditRowsWorstFirst } from '@audit-config';
+import { isAuditRemoveCandidate, sortAuditRowsWorstFirst, LATEST_PATCH_LABEL } from '@audit-config';
 import { parseApiJson, runClientSideAudit } from '../lib/clientAudit';
 import { formatAuditReportJson, formatAuditReportText } from '../lib/auditReport';
 import { PAYPAL_DONATE_URL } from '../lib/siteLinks';
@@ -159,6 +159,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
       if (!result) return;
       const payload = {
         patchDate: result.meta.patchDate,
+        patchLabel: LATEST_PATCH_LABEL,
         summary: result.meta.summary,
         rows: result.data,
       };
@@ -542,11 +543,13 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       >
                         {AUDIT_STATUS_SHORT[row.status]}
                       </span>
-                      <span
-                        className={`text-[9px] px-1.5 py-0.5 border rounded font-bold ${TREND_STYLE[row.trendPhase]}`}
-                      >
-                        {row.trendLabel}
-                      </span>
+                      {row.status !== 'dead' && row.status !== 'warning' && (
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 border rounded font-bold ${TREND_STYLE[row.trendPhase]}`}
+                        >
+                          {row.trendLabel}
+                        </span>
+                      )}
                       {isZeroOnBm(row.currentPlayers) && (
                         <span className="text-[9px] px-1.5 py-0.5 border border-red-500/60 rounded font-black uppercase tracking-wider text-red-300 bg-red-950/50">
                           Zero today
@@ -568,7 +571,9 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                     </div>
                     <p className="text-xs opacity-90 mt-1 font-semibold">{row.title}</p>
                     <p className="text-xs opacity-75 mt-1">{row.detail}</p>
-                    <p className="text-[11px] opacity-60 mt-1 italic">{row.trendDetail}</p>
+                    {row.status !== 'dead' && row.status !== 'warning' && (
+                      <p className="text-[11px] opacity-60 mt-1 italic">{row.trendDetail}</p>
+                    )}
                     {row.classificationHint && (
                       <p className="text-[11px] text-amber-300/90 mt-2 border-l-2 border-amber-500/40 pl-2">
                         {row.classificationHint}
@@ -580,9 +585,18 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       {row.dropPct != null && row.dropPct > 0 && (
                         <span
                           className="text-red-400 font-black text-base mr-2"
-                          title="Drop from before the update to first days after it"
+                          title={
+                            row.rankBefore != null && row.rankRecent != null
+                              ? 'Popularity drop based on BM rank (Zipf): 1 − rankBefore/rankRecent. Absolute players/day shown beside may differ.'
+                              : 'Drop from before the update to first days after it'
+                          }
                         >
                           −{row.dropPct}%
+                          {row.rankBefore != null && row.rankRecent != null && (
+                            <span className="align-super text-[8px] font-bold uppercase tracking-wider text-gray-500 ml-0.5">
+                              rank
+                            </span>
+                          )}
                         </span>
                       )}
                       Before update: <strong>{row.beforeAvg ?? '—'}</strong>/day
