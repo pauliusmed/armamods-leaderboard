@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.37] - 2026-08-13
+
+### 🔧 Audito "before" langas — 26d → 7d, signalo slenkstis 15 → 8
+- **Problem:** `beforeAvg` (26 d. vidurkis iki patch) buvo klaidinantis po ankstesnių update'ų — langas apėmė post-1.7 dip'o likučius, tad modai, sumažėję po 1.7 ir vėl lūžę po 1.8, atrodė "niche" (per mažai signalo) ir buvo ignoruojami.
+- **Fix:**
+  - `beforeStart = addDays(patchDate, -7)` (anksčiau -26) — pilna savaitė prieš patch, atspindi realią prieš-update būseną, ne sumaišytą tarpperiodį.
+  - `MIN_SIGNAL_AVG` 15 → 8 — sugauna vidutinio dydžio modus (8–15/d.), kurie po 1.7 sumažėję, o po 1.8 visai dingo.
+- **Testai** — niche hint testas atnaujintas (beforeAvg 8 → 5, regex /under 15/ → /under/).
+- Heavy CI: required because audit algoritmas.
+
 ## [1.22.36] - 2026-08-13
 
 ### 🆕 Reforger 1.8 pasiruošimas — patch registras vietoj hardcode

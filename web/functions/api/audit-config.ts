@@ -316,7 +316,7 @@ export function analyzeTrend(
   patchDate: string = LATEST_REFORGER_PATCH.date,
   patchLabel: string = LATEST_PATCH_LABEL
 ): TrendInsight {
-  const beforeStart = addDays(patchDate, -26);
+  const beforeStart = addDays(patchDate, -7);
   const beforeAvg = avgPlayersInRange(history, beforeStart, patchDate);
   const rankBefore = avgRankInRange(history, beforeStart, patchDate);
   // First 4 days after the patch - "impact" / "dip"
@@ -436,7 +436,7 @@ function addDays(isoDate: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const MIN_SIGNAL_AVG = 15;
+const MIN_SIGNAL_AVG = 8;
 /**
  * On BattleMetrics scale, 0 and “a few” players/day are the same bucket – not a living mod.
  */
@@ -722,7 +722,7 @@ export function buildModAuditRow(
   patchLabel: string = LATEST_PATCH_LABEL,
   opts?: AuditBuildOptions
 ): ModAuditRow {
-  const beforeStart = addDays(patchDate, -26);
+  const beforeStart = addDays(patchDate, -7);
   const beforeAvg = avgPlayersInRange(history, beforeStart, patchDate);
   const earlyAfterAvg = avgPlayersInRange(history, patchDate, addDays(patchDate, 4));
   const afterAvg = avgPlayersInRange(history, patchDate, '2026-12-31');
