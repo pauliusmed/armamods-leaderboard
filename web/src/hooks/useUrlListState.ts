@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface UseUrlListStateOptions<T> {
@@ -34,11 +34,24 @@ export function useUrlListState<T>(
   const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
-  // Keep latest options in a ref so `set` stays referentially stable (hooks can list it
-  // in effect deps without re-running on every render) while still reading fresh closures.
+  // Live value mirrors the URL but also reflects in-flight typing immediately.
+  // Debouncing the VALUE (as before) made React reset the controlled input to the
+  // stale URL value on any re-render, dropping keystrokes while a write was pending.
+  const [value, setValue] = useState<T>(() => parse(searchParams.get(param)));
+  const valueRef = useRef(value);
+  const searchParamsRef = useRef(searchParams);
+  // Param value as of the last `set` call — the debounced write is dropped if the
+  // URL changed externally in the meantime (back/forward must win over typing).
+  const pendingBaseRef = useRef(searchParams.get(param));
+
+  // Keep latest options/value in refs so `set` stays referentially stable (hooks can
+  // list it in effect deps without re-running on every render) while still reading
+  // fresh closures.
   const optionsRef = useRef({ param, parse, serialize, mode, delayMs });
   useEffect(() => {
     optionsRef.current = { param, parse, serialize, mode, delayMs };
+    valueRef.current = value;
+    searchParamsRef.current = searchParams;
   });
 
   useEffect(() => {
@@ -48,21 +61,23 @@ export function useUrlListState<T>(
     };
   }, []);
 
-  // Single source of truth: the URL. Back/forward restores the params and React Router
-  // re-renders, so the value always reflects the current URL (never an out-of-sync state).
-  const value = parse(searchParams.get(param));
+  // Mirror external URL changes (back/forward, share links) into local state during
+  // render — the React-sanctioned "adjusting state when props change" pattern, which
+  // avoids cascading renders that setState-in-effect would cause.
+  const [prevRaw, setPrevRaw] = useState<string | null>(searchParams.get(param));
+  const raw = searchParams.get(param);
+  if (prevRaw !== raw) {
+    setPrevRaw(raw);
+    setValue(parse(raw));
+  }
 
-  const set = useCallback((next: T | ((current: T) => T)) => {
-    const apply = () => {
+  const writeUrl = useCallback(
+    (resolved: T) => {
       if (!mountedRef.current) return;
-      const { param: p, parse: pr, serialize: ser, mode: m } = optionsRef.current;
+      const { param: p, serialize: ser, mode: m } = optionsRef.current;
+      const serialized = ser(resolved);
       setSearchParams(
         (prev) => {
-          // Resolve updater functions against the *current* URL value (source of truth),
-          // so toggle patterns like setDir(d => d === 'asc' ? 'desc' : 'asc') stay correct.
-          const current = pr(prev.get(p));
-          const resolved = typeof next === 'function' ? (next as (cur: T) => T)(current) : next;
-          const serialized = ser(resolved);
           const qp = new URLSearchParams(prev);
           if (serialized == null) {
             qp.delete(p);
@@ -73,15 +88,30 @@ export function useUrlListState<T>(
         },
         { replace: m !== 'push' }
       );
-    };
-    const d = optionsRef.current.delayMs;
-    if (d > 0) {
-      if (delayRef.current) clearTimeout(delayRef.current);
-      delayRef.current = setTimeout(apply, d);
-    } else {
-      apply();
-    }
-  }, [setSearchParams]);
+    },
+    [setSearchParams]
+  );
+
+  const set = useCallback(
+    (next: T | ((current: T) => T)) => {
+      const resolved = typeof next === 'function' ? (next as (cur: T) => T)(valueRef.current) : next;
+      setValue(resolved);
+      const d = optionsRef.current.delayMs;
+      if (d > 0) {
+        const { param: p } = optionsRef.current;
+        pendingBaseRef.current = searchParamsRef.current.get(p);
+        if (delayRef.current) clearTimeout(delayRef.current);
+        delayRef.current = setTimeout(() => {
+          const { param: p2 } = optionsRef.current;
+          if (searchParamsRef.current.get(p2) !== pendingBaseRef.current) return;
+          writeUrl(resolved);
+        }, d);
+      } else {
+        writeUrl(resolved);
+      }
+    },
+    [writeUrl]
+  );
 
   return [value, set];
 }

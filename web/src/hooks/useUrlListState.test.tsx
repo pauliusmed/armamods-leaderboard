@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
-import { render, screen, act, cleanup } from '@testing-library/react';
+import { describe, expect, it, vi, afterEach } from 'vitest';
+import { render, screen, act, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider, useSearchParams } from 'react-router-dom';
 import { useUrlListState, parseEnum, parsePositiveInt, parseSortDir } from './useUrlListState';
@@ -39,6 +39,37 @@ function renderHarness(initialEntry: string) {
   render(<RouterProvider router={router} />);
   return router;
 }
+
+function SearchHarness() {
+  const [q, setQ] = useUrlListState<string>({
+    param: 'q',
+    fallback: '',
+    parse: (raw) => raw ?? '',
+    serialize: (v) => v.trim() || null,
+    delayMs: 300,
+  });
+  const [searchParams] = useSearchParams();
+  return (
+    <div>
+      <input aria-label="search" value={q} onChange={(e) => setQ(e.target.value)} />
+      <span data-testid="url">{searchParams.toString()}</span>
+    </div>
+  );
+}
+
+function renderSearchHarness(initialEntry = '/') {
+  const router = createMemoryRouter(
+    [{ path: '*', element: <SearchHarness /> }],
+    { initialEntries: [initialEntry] }
+  );
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 describe('useUrlListState', () => {
   it('initializes state from URL params', () => {
@@ -84,6 +115,50 @@ describe('useUrlListState', () => {
       router.navigate('/?page=7');
     });
     expect(screen.getByTestId('page').textContent).toBe('7');
+  });
+});
+
+describe('useUrlListState debounced search input', () => {
+  it('keeps every keystroke in the input while the URL write is debounced', () => {
+    vi.useFakeTimers();
+    renderSearchHarness('/');
+    const input = screen.getByLabelText('search');
+    fireEvent.change(input, { target: { value: 'a' } });
+    fireEvent.change(input, { target: { value: 'ab' } });
+    fireEvent.change(input, { target: { value: 'abc' } });
+    expect(input).toHaveValue('abc');
+    expect(screen.getByTestId('url').textContent).not.toContain('q=');
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.getByTestId('url').textContent).toContain('q=abc');
+  });
+
+  it('does not reset the input to the stale URL value on re-render while typing', () => {
+    vi.useFakeTimers();
+    renderSearchHarness('/?q=old');
+    const input = screen.getByLabelText('search');
+    fireEvent.change(input, { target: { value: 'oldx' } });
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
+    expect(input).toHaveValue('oldx');
+  });
+
+  it('lets external URL changes win over a pending debounced write', () => {
+    vi.useFakeTimers();
+    const router = renderSearchHarness('/');
+    const input = screen.getByLabelText('search');
+    fireEvent.change(input, { target: { value: 'abc' } });
+    act(() => {
+      router.navigate('/?q=restored');
+    });
+    expect(input).toHaveValue('restored');
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(screen.getByTestId('url').textContent).toContain('q=restored');
+    expect(screen.getByTestId('url').textContent).not.toContain('q=abc');
   });
 });
 

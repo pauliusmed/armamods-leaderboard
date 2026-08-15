@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.22.45] - 2026-08-15
+
+- Fixed laggy search boxes on the mod, server and scenario lists — typing is now instant and no longer drops letters.
+
 ## [1.22.44] - 2026-08-13
 
 - Mod audit no longer calls mods "Broken" on the very first days after a Reforger update, when there isn't enough data yet — it now tells you to wait and verify before removing anything.

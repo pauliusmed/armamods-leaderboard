@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.45] - 2026-08-15
+
+### 🐛 Paieškos inputo lagas ir prarytos raidės (mods/servers/scenarios sąrašai)
+- **Problem:** rašant paiešką sąrašų puslapiuose inputas lagino ir kartais „prarydavo" raides.
+- **Fix:** `useUrlListState` grąžindavo reikšmę tik iš URL (po 300 ms debounce) — per debounce langą bet koks re-renderis resetindavo inputą į seną URL reikšmę. Dabar hook turi optimistinę „gyvą" reikšmę: inputas atsako iškart, debounce liko tik URL rašymui, o back/forward sinchronizacija išsaugota (išorinis URL pokytis atšaukia laukiantį įrašą).
+- **Testai:** 3 nauji atvejai — raidės neišnyksta per debounce, re-render neresetina inputo, išorinis URL pokytis laimi prieš laukiantį įrašą (11 viso šiame faile).
+- **Heavy CI:** skipped because client-side state hook fix; `tsc --noEmit`, web eslint (0 klaidų) ir 32 Vitest testai sėkmingi.
+
 ## [1.22.44] - 2026-08-13
 
 ### 🐛 Mod audit — Broken verdiktas nebeklaidinamas iškart po patch
