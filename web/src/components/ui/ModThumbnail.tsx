@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GameType } from '../../api/client';
-import { modListThumbnailUrl } from '../../lib/workshop';
+import { modListThumbnailUrl, cdnResizedThumbnailUrl, ENABLE_CDN_TRANSFORMS } from '../../lib/workshop';
 
 const SIZE_PX = { sm: 64, md: 96, lg: 128 } as const;
 
@@ -68,10 +68,15 @@ export function ModThumbnail({
   const [visible, setVisible] = useState(priority === 'eager');
   const rootRef = useRef<HTMLSpanElement>(null);
   const sizeClass = SIZE_CLASS[size];
-  const resolvedSrc =
-    thumbnailUrl && priority === 'eager'
-      ? thumbnailUrl
-      : modListThumbnailUrl(modId, game, SIZE_PX[size]);
+  const sizePx = SIZE_PX[size];
+
+  const eagerSrc = thumbnailUrl && priority === 'eager' ? thumbnailUrl : null;
+  const cdnSrc =
+    ENABLE_CDN_TRANSFORMS && thumbnailUrl && !thumbnailUrl.includes('og-image')
+      ? cdnResizedThumbnailUrl(thumbnailUrl, sizePx)
+      : null;
+  const proxySrc = modListThumbnailUrl(modId, game, sizePx);
+  const [src, setSrc] = useState<string>(eagerSrc ?? cdnSrc ?? proxySrc);
 
   // Adjust state during render when the source changes (React "derived state" pattern).
   const [prevKey, setPrevKey] = useState<string | undefined>(undefined);
@@ -80,7 +85,18 @@ export function ModThumbnail({
     setPrevKey(resetKey);
     setFailed(false);
     setVisible(priority === 'eager');
+    setSrc(eagerSrc ?? cdnSrc ?? proxySrc);
   }
+
+  // If the edge-transform URL fails (transformations not enabled), fall back to the
+  // Worker proxy; only then to the letter placeholder.
+  const handleError = () => {
+    if (src === cdnSrc && proxySrc && proxySrc !== cdnSrc) {
+      setSrc(proxySrc);
+      return;
+    }
+    setFailed(true);
+  };
 
   useEffect(() => {
     if (priority === 'eager') return;
@@ -109,14 +125,14 @@ export function ModThumbnail({
     <span ref={rootRef} className={`inline-flex shrink-0 ${className}`}>
       {visible ? (
         <img
-          src={resolvedSrc}
+          src={src}
           alt={modName?.trim() ? `${modName} thumbnail` : `Mod ${modId} thumbnail`}
           loading={priority === 'eager' ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={priority === 'eager' ? 'high' : 'low'}
           width={size === 'lg' ? 96 : size === 'md' ? 48 : 32}
           height={size === 'lg' ? 96 : size === 'md' ? 48 : 32}
-          onError={() => setFailed(true)}
+          onError={handleError}
           className={`${sizeClass} object-cover border border-white/10 bg-black/60`}
         />
       ) : (

@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.48] - 2026-08-20
+
+### 🖼️ Thumbnail'ai be Worker invokacijos (Cloudflare Image Transformations)
+- **Tikslas:** panaikinti ~24 Worker užklausas kiekvienam lentelės vaizdų krovimui — kiekviena eilutė šaukdavo `/api/mods/:id/thumbnail/img` (Worker + KV + CDN fetch + resize, ~345 ms vienam).
+- **Sprendimas:** `web/src/lib/workshop.ts` pridėta `cdnResizedThumbnailUrl()` — generuoja `/cdn-cgi/image/width=..,height=..,fit=cover,quality=75/<cdnUrl>`. Vaizdai keičiami pačiame Cloudflare edge be Worker; payload lieka ~1–2 KB (kaip ir anksčiau per proxy).
+- **Safety:** `ENABLE_CDN_TRANSFORMS = false` pagal nutylėjimą — kol transformacijos neišjungtos, elgesys nekinta (naudojamas esamas Worker proxy). `ModThumbnail` turi fallback: jei `/cdn-cgi/image/` grąžina klaidą → atsarginis Worker proxy → tik tada raidė.
+- **Reikia įjungti (dashboard, kad veiktų):** Cloudflare zonoje `reforgermods.com` → **Resize Images / Image Transformations** ON, ir leidžiamas origin `ar-gcp-cdn.bistudio.com`. Tada `ENABLE_CDN_TRANSFORMS = true` + redeploy → 24 Worker invokacijos → 0.
+- **Matavimas:** tiesioginis bistudio CDN netinka (14–84 KB vienam, ~840 KB / 24 eilutėms, ir TTFB ~400–560 ms iš čia) — todėl būtinas būtent edge-resize, ne grynas CDN.
+- **Heavy CI:** skipped because only web thumbnail URL generation changed (no API contract / data model / collector changes); `npx tsc --noEmit` + 32 web Vitest sėkmingi.
+
 ## [1.22.47] - 2026-08-20
 
 ### ⚡ Greitesnis pakartotinis lentelės krovimas (SWR kliento kešas)

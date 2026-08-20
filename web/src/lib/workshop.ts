@@ -28,6 +28,22 @@ export function modListThumbnailUrl(
   return `/api/mods/${encodeURIComponent(modId)}/thumbnail/img?game=${game}&w=${width}`;
 }
 
+/**
+ * Edge-resized thumbnail via Cloudflare Image Transformations — served from the CDN
+ * edge with NO Worker invocation (unlike modListThumbnailUrl), payload stays ~1-2KB.
+ *
+ * Requires "Image Transformations" (Resize Images) enabled on the zone with origin
+ * `ar-gcp-cdn.bistudio.com` allowed. Leave the flag below false until that is done;
+ * when true AND enabled, a leaderboard view drops ~24 Worker invocations. If enabled
+ * incorrectly (transformations off) the UI falls back to modListThumbnailUrl on error.
+ */
+export const ENABLE_CDN_TRANSFORMS = false;
+
+export function cdnResizedThumbnailUrl(cdnUrl: string, px: number): string {
+  const opts = `width=${px},height=${px},fit=cover,quality=75`;
+  return `/cdn-cgi/image/${opts}/${cdnUrl}`;
+}
+
 export function workshopLabel(game: GameType = 'reforger'): string {
   return game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop';
 }
