@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.49] - 2026-08-20
+
+### 💡 Kraunamojo skeleton'o išdėstymas atitinka lentelę (nulis layout shift)
+- **Problem:** `ModListSkeleton` rodė 4 stulpelių **kortelių grid'ą**, nors tikras turinys (desktop) yra **8 stulpelių lentelė**. Kraunant įvykdavo „šuolis" — vartotojas matė seną struktūrą, tada staiga lentelę → atrodė lėčiau nei yra.
+- **Fix:** `web/src/components/ui/ModListSkeleton.tsx` perrašytas — desktop'e rodo **lentelės skeleton'ą**, kuris per `ModLeaderboardHead` naudoja **identiškus `table-fixed` stulpelių pločius** kaip tikra lentelė (Rank / Module / Author / Personnel / Deploy / Size / Share / Actions). Mobile'e — `ModCard` formos skeleton'as. Abu `animate-pulse`, tame pačiame `border bg-black/40` konteineryje.
+- **Poveikis:** užkrovos metu matoma būsima lentelės forma → užpildymas vientisas, be vizinio šuolio (CLS ≈ 0 šiame etape).
+- **Progressive loading neimta:** duomenų fetch'as jau ~200 ms (warm) / ~800 ms (cold); po SWR pakeitimo pakartotiniai lankytojai skeleton'o beveik nemato (IndexedDB). Dalinis krovimas įvestų API/schema kompleksybę be matomos naudos.
+- **Heavy CI:** skipped because only web skeleton UI changed (no API contract / data model / collector changes); `npx tsc --noEmit` + 32 web Vitest sėkmingi.
+
 ## [1.22.48] - 2026-08-20
 
 ### 🖼️ Thumbnail'ai be Worker invokacijos (Cloudflare Image Transformations)
