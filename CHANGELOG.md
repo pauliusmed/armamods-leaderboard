@@ -11,6 +11,12 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Poveikis:** pakartotinis atidarymas rodo lentelę be tinklo laukimo; pirmas krovimas ~300 ms greičiau (nebėra dirbtinio delsimo + SWR neblokuoja renderio).
 - **Heavy CI:** skipped because only web client cache behaviour changed (no data model / API contract / collector changes); `npx tsc --noEmit` + 32 web Vitest sėkmingi.
 
+## [1.22.47] - 2026-08-20
+
+### 💰 Affiliate baneris — dinaminis social proof
+- **Feat:** `AffiliateBanner` dabar traukia realius `/stats` skaičius (sekamų Arma serverių ir indeksuotų modų kiekį) ir rodo juos po CTA — „Trusted by N Arma servers • M mods indexed". Social proof naudoja tikrus KV duomenis (visada aktualu, be hardcodintų skaičių).
+- **Heavy CI:** required because monetizacijos (affiliate) elgsena keičiama; `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
 ## [1.22.46] - 2026-08-20
 
 ### 💰 Affiliate konversijos pataisos (Empower)

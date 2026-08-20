@@ -1,10 +1,20 @@
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { empowerGameUrl } from '../../lib/siteLinks';
+import { api } from '../../api/client';
 
 export function AffiliateBanner() {
   const location = useLocation();
   const isArma3 = location.pathname.startsWith('/arma3');
   const affiliateUrl = empowerGameUrl(isArma3 ? 'arma3' : 'reforger');
+
+  const [stats, setStats] = useState<{ totalServers: number; totalMods: number } | null>(null);
+  useEffect(() => {
+    api
+      .get(`/stats?game=${isArma3 ? 'arma3' : 'reforger'}`)
+      .then((r) => setStats({ totalServers: r.data.totalServers, totalMods: r.data.totalMods }))
+      .catch(() => {});
+  }, [isArma3]);
 
   return (
     <a 
@@ -62,6 +72,11 @@ export function AffiliateBanner() {
           </div>
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center">
             Instant Setup • Cancel Anytime • No Slot Limits
+          </p>
+          <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest text-center">
+            {stats
+              ? `Trusted by ${stats.totalServers.toLocaleString('en-US')} Arma servers • ${stats.totalMods.toLocaleString('en-US')} mods indexed`
+              : ' '}
           </p>
           <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest text-center">
             Affiliate link — supports this project at no extra cost to you
