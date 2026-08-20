@@ -5,26 +5,33 @@ function modEntry(modId: string, name: string) {
   };
 }
 
-/** Sidebar preview — clean object, same as copy snippet (no leading comma). */
+function formatBlock(modId: string, name: string): string {
+  const raw = JSON.stringify(modEntry(modId, name), null, 4);
+  return raw
+    .split('\n')
+    .map((line) => `            ${line}`)
+    .join('\n');
+}
+
+/** Sidebar preview — indented block with leading comma on its own line. */
 export function formatModConfigPreview(modId: string, name: string): string {
-  return JSON.stringify(modEntry(modId, name), null, 2);
+  return `,\n${formatBlock(modId, name)}`;
 }
 
 /**
- * Ready-to-paste mod block for server config.json — trailing-comma style.
- * Returns a plain object `{\n  "modId": "...",\n  "name": "..."\n}` without a
- * leading comma. Use `formatServerModsConfigSnippet` for a comma-separated list.
- * The optional `leadingComma` flag is kept for backward compat — when true it
- * prefixes `,` for appending after existing entries.
+ * Ready-to-paste mod block for server config.json — indented for direct paste
+ * into `game.mods[]` (outer 12 spaces, inner 16). When `leadingComma` is true
+ * the block is prefixed with `,` on its own line (`,\n` + block) for appending
+ * after existing entries.
  */
 export function formatModConfigSnippet(
   modId: string,
   name: string,
   options?: { leadingComma?: boolean }
 ): string {
-  const body = JSON.stringify(modEntry(modId, name), null, 2);
-  if (options?.leadingComma) return `,${body}`;
-  return body;
+  const block = formatBlock(modId, name);
+  if (options?.leadingComma) return `,\n${block}`;
+  return block;
 }
 
 export interface ServerModConfigEntry {
@@ -32,13 +39,11 @@ export interface ServerModConfigEntry {
   name: string;
 }
 
-/** Full game.mods[] body — trailing comma between blocks, no trailing comma after last. */
+/** Full game.mods[] body — indented blocks joined with comma on its own line. */
 export function formatServerModsConfigSnippet(
   mods: ReadonlyArray<ServerModConfigEntry>
 ): string {
   if (!mods.length) return '';
 
-  return mods
-    .map((mod) => formatModConfigSnippet(mod.id, mod.name, { leadingComma: false }))
-    .join(',\n');
+  return mods.map((mod) => formatBlock(mod.id, mod.name)).join(',\n');
 }

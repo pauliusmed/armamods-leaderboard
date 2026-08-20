@@ -6,8 +6,8 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ### 🧩 Copy config formatas sutvarkytas (gražus, vienodas JSON)
 - **Problem:** kopijuojamas `game.mods[]` fragmentas buvo nenuoseklus — vienas įrašas su 12 tarpų įtrauka ir `},` gale, kitas su 2 tarpais ir `,{\n` priekyje (`formatModConfigPreview` / `formatServerModsConfigSnippet` naudojo comma-first `,{\n` stilių, o pavieniai ir sąrašo įrašai maišėsi, todėl įklijuotas blokas sąraše atrodė negražiai).
-- **Fix:** `web/src/lib/modConfig.ts` suvienodintas — *preview* ir *snippet* dabar grąžina švarų `{\n  "modId": "...",\n  "name": "..."\n}` (be priekyje esančio `,`), o `formatServerModsConfigSnippet` jungia blokus su trailing `,\n` (standartinis JSON: `},\n{`). Rezultatas nuoseklus 2-space, be prieštaraujančių `,{\n` / `},` formų.
-- **Pavyzdys (buvo):** `            },{\n  "modId": ...` → **dabar:** `},\n{\n  "modId": ...` (vienodas).
+- **Fix:** `web/src/lib/modConfig.ts` suvienodintas — visi blokai dabar **12 tarpų outer / 16 inner** (4-space JSON + 12 outer), atitinka `game.mods[]` lygį faile. Pavienis *preview/snippet* su `leadingComma` grąžina `,\n` + indentuotą bloką (`,\n            {\n                "modId": ...`), be jo — tik bloką. `formatServerModsConfigSnippet` jungia indentuotus blokus su `,\n`.
+- **Pavyzdys (buvo):** `,{  "modId": "69EA..."` (`,{` toje pačioje eilutėje, 2-space) → **dabar:** `,\n            {\n                "modId": "69EA..."` (`, ` atskiroje eilutėje, 12/16). Serverio sąrašas: abu įrašai `            {\n                "modId"` vienodai.
 - **Testai:** `test/mod-config.test.ts` atnaujinti; `npx tsc --noEmit` + 194 pilni testai + 32 web Vitest žali.
 - **Heavy CI:** skipped because only web copy-format helper changed (no API contract / data model / collector changes).
 
