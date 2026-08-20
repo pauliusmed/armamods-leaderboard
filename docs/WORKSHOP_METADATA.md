@@ -192,6 +192,40 @@ Mods deleted from Reforger Workshop still appear in BattleMetrics telemetry unti
 
 ---
 
+## Thumbnail sourcing & cost decision (2026-08-20)
+
+**Source of truth:** every mod thumbnail originates from Bohemia's CDN
+(`ar-gcp-cdn.bistudio.com`). We store only the **URL string** in KV, never the
+image bytes (see "What we deliberately do NOT do"). The recurring question — *"we
+already get the images from Arma/Bohemia's site, why re-serve them through our
+Worker?"* — has two answers:
+
+1. **Bandwidth.** The raw CDN originals are large (~1280×1280, 14–84 KB) while list
+   rows render 32–48 px avatars. The proxy resizes via Cloudflare `cf.image` down to
+   ~1.7 KB — roughly a 20× client payload saving vs. hotlinking the original.
+2. **Stability & fallback.** The Worker layer adds an edge-cached (7 d) copy plus a
+   letter-avatar fallback if Bohemia changes or blocks the URL, so a CDN change
+   never breaks the UI.
+
+**Decision — keep the Worker `cf.image` resize proxy (current design).**
+We evaluated moving thumbnail resizing to Cloudflare edge **Image Transformations**
+(`/cdn-cgi/image/...`, no Worker) to remove ~24 Worker invocations per list view.
+**Rejected:** the Transformations product is a paid SKU we chose not to enable. The
+existing Worker proxy already uses `cf.image` resizing, so this keeps the current
+(accepted) per-image resizing cost while preserving the tiny 1.7 KB payload.
+
+**Alternative considered & rejected:** hotlink Bohemia's CDN directly
+(`ModThumbnail` → raw `thumbnailUrl`, zero Worker / zero transform cost). Rejected
+to avoid the ~700–840 KB first-load payload that full-resolution originals imply.
+The proxy's resizing is the cheaper option *for the client* even though it costs *on
+our side*.
+
+> Net: we deliberately pay for `cf.image` resize so end users download ~1.7 KB
+> thumbnails instead of ~35 KB originals. The no-cost path exists (direct CDN
+> hotlink) but was declined in favour of smaller client payloads.
+
+---
+
 ## Related docs
 
 - [PLAN.md](../PLAN.md) — product roadmap, Phase 2
