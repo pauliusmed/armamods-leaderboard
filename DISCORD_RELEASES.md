@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.22.47] - 2026-08-20
+
+- Leaderboard and server lists now appear instantly on repeat visits — the site serves the last loaded data from your device and quietly refreshes it in the background, so you no longer wait on a full reload every time you open the page.
+
 ## [1.22.45] - 2026-08-15
 
 - Fixed laggy search boxes on the mod, server and scenario lists — typing is now instant and no longer drops letters.

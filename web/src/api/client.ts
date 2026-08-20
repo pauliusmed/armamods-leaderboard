@@ -14,7 +14,33 @@ export const api = axios.create({
 
 // Simple in-memory cache to prevent redundant requests
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 120000; // 2 minutes
+// 15 min — matches the edge API Cache-Control (max-age=900). The previous 2 min TTL
+// discarded IndexedDB data on every reload, forcing a fresh fetch on each visit.
+const CACHE_TTL = 900000;
+
+// Background (stale-while-revalidate) refresh dedupe, keyed by cache key.
+const revalidateInflight = new Map<string, Promise<void>>();
+
+/** Revalidate a key in the background; never throws, dedupes concurrent refreshes. */
+async function revalidateInBackground<T>(key: string, fetcher: () => Promise<T>): Promise<void> {
+  const existing = revalidateInflight.get(key);
+  if (existing) return existing;
+  const run = (async () => {
+    try {
+      const data = await fetcher();
+      cache.set(key, { data, timestamp: Date.now() });
+      await persistentCache.set(key, { data }, Date.now());
+    } catch {
+      // Keep the stale value; background refresh failures must not reach the UI.
+    }
+  })();
+  revalidateInflight.set(key, run);
+  try {
+    await run;
+  } finally {
+    revalidateInflight.delete(key);
+  }
+}
 
 /** Dedupe concurrent thumbnail URL lookups for the same mod. */
 const thumbnailInflight = new Map<string, Promise<string | null>>();
@@ -33,26 +59,33 @@ const workshopStatusInflight = new Map<
 const galleryInflight = new Map<string, Promise<import('../types').ModGalleryImage[]>>();
 
 async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl = CACHE_TTL): Promise<T> {
-  const cached = cache.get(key);
   const now = Date.now();
-  
-  if (cached && (now - cached.timestamp < ttl)) {
-    return cached.data;
-  }
-  
-  // IndexedDB fallback: same TTL online, stale-tolerant offline
+  const memHit = cache.get(key);
+  const memFresh = memHit != null && now - memHit.timestamp < ttl;
+
+  // persistentCache stores { data: { data: T }, timestamp } — payload is at idbEntry.data.data.
   const idbEntry = await persistentCache.get<{ data: T }>(key);
-  if (idbEntry && idbEntry.data) {
-    const isExpired = now - idbEntry.timestamp >= ttl;
-    if (!isExpired || (isExpired && !navigator.onLine)) {
-      cache.set(key, { data: idbEntry.data.data, timestamp: now });
-      return idbEntry.data.data;
-    }
+  const idbData = idbEntry?.data?.data;
+  const idbFresh = idbData !== undefined && now - (idbEntry?.timestamp ?? 0) < ttl;
+
+  if (memFresh) return memHit!.data;
+  if (idbFresh) {
+    cache.set(key, { data: idbData, timestamp: now });
+    return idbData;
   }
-  
+
+  // Stale entry present (memory or IndexedDB): serve it immediately, refresh in background.
+  const stale: T | undefined = memHit != null ? memHit.data : idbData;
+  if (stale !== undefined) {
+    cache.set(key, { data: stale, timestamp: now });
+    void revalidateInBackground(key, fetcher);
+    return stale;
+  }
+
+  // Nothing cached: wait for the network.
   const data = await fetcher();
   cache.set(key, { data, timestamp: now });
-  persistentCache.set(key, { data }, now);
+  await persistentCache.set(key, { data }, now);
   return data;
 }
 

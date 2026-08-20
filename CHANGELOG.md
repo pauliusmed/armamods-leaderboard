@@ -2,6 +2,36 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.47] - 2026-08-20
+
+### ⚡ Greitesnis pakartotinis lentelės krovimas (SWR kliento kešas)
+- **Problem:** svetainė užkraudavo „greitai", bet turinys (modų lentelė) ilgai vėluodavo kiekvieną kartą — kiekvienas pilnas perkrovimas iš naujo šaukdavo `/api/mods`.
+- **Fix:** `api/client.ts` perėjo prie **stale-while-revalidate** — esamas (net pasenęs) IndexedDB įrašas grąžinamas iškart, duomenys atnaujinami fone. Kliento kešo TTL pakeltas nuo **2 min → 15 min** (sinchronizuota su edge `Cache-Control: max-age=900`).
+- **Fix:** `useMods.ts` nuėmė 300 ms debounce iš **pradinio** krovimo — filtrų/paieškos pasikeitimai vis dar debounce'uojami, bet pirmasis užkrovimas startuoja be vėlavimo.
+- **Poveikis:** pakartotinis atidarymas rodo lentelę be tinklo laukimo; pirmas krovimas ~300 ms greičiau (nebėra dirbtinio delsimo + SWR neblokuoja renderio).
+- **Heavy CI:** skipped because only web client cache behaviour changed (no data model / API contract / collector changes); `npx tsc --noEmit` + 32 web Vitest sėkmingi.
+
+## [1.22.48] - 2026-08-20
+
+### 💰 Affiliate klikų matavimas — datuoti shard'ai
+- **Feat:** visi `/click/*` handleriai dabar inkrementuoja ir dienos shard'ą (`click:provider:YYYY-MM-DD`) per `bumpClick` helperį — lifetime skaičius išlieka, bet atsiranda before/after matavimas po optimizacijų.
+- **Feat:** `/admin/clicks` grąžina `daily` objektą (šios dienos klikai pagal providerį) + `today` datą.
+- **Heavy CI:** required because monetizacijos (affiliate) elgsena keičiama; `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
+## [1.22.47] - 2026-08-20
+
+### 💰 Affiliate baneris — dinaminis social proof
+- **Feat:** `AffiliateBanner` dabar traukia realius `/stats` skaičius (sekamų Arma serverių ir indeksuotų modų kiekį) ir rodo juos po CTA — „Trusted by N Arma servers • M mods indexed". Social proof naudoja tikrus KV duomenis (visada aktualu, be hardcodintų skaičių).
+- **Heavy CI:** required because monetizacijos (affiliate) elgsena keičiama; `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
+## [1.22.46] - 2026-08-20
+
+### 💰 Affiliate konversijos pataisos (Empower)
+- **Fix:** `/api/click/empower` redirectas dabar nukreipia į žaidimo-specifinį Empower landing (`/games/arma3/` arba `/games/arma-reforger/`) vietoj bendrinio `billing.empowerservers.com/aff.php` puslapio — vartotojas patenka ten, kur tikėjosi, mažiau frikcijos.
+- **Fix:** Affiliate baneryje „$9.99/mo" → „from $9.99/mo" — reali kaina su 10–16 GB RAM (daugumai 40 žaidėjų + modų serverių) yra $12.49–$20.49, todėl ankstesnis teiginys kėlė lūkesčių neatitikimą ir bounce.
+- **Fix:** Pašalintas nepatikrintas „48H Refund" teiginys (pakeistas į „Cancel Anytime") — venghiama klaidingų reklaminių teiginių rizika.
+- **Heavy CI:** required because monetizacijos (affiliate) elgsena keičiama; `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
 ## [1.22.45] - 2026-08-15
 
 ### 🐛 Paieškos inputo lagas ir prarytos raidės (mods/servers/scenarios sąrašai)
