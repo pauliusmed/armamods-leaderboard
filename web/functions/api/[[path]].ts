@@ -2006,6 +2006,8 @@ app.post('/storage/plan', async (c) => {
   }
 });
 
+const EMPOWER_AFFILIATE_ID = '294';
+
 /** Track affiliate link clicks */
 app.get('/click/empower', async (c) => {
   const game = c.req.query('game') || 'reforger';
@@ -2020,7 +2022,10 @@ app.get('/click/empower', async (c) => {
     // best-effort
   }
 
-  const url = `https://billing.empowerservers.com/aff.php?aff=294`;
+  const url =
+    game === 'arma3'
+      ? `https://empowerservers.com/games/arma3/?aff=${EMPOWER_AFFILIATE_ID}`
+      : `https://empowerservers.com/games/arma-reforger/?aff=${EMPOWER_AFFILIATE_ID}`;
   return c.redirect(url, 302);
 });
 

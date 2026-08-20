@@ -54,14 +54,14 @@ export function AffiliateBanner() {
         <div className="flex flex-col items-center md:items-end gap-3 min-w-[240px] w-full md:w-auto p-6 md:p-0 bg-black/60 md:bg-transparent border md:border-none border-white/5">
           <div className="text-center md:text-right">
             <p className="text-4xl sm:text-5xl font-black text-white tracking-tighter italic shadow-black drop-shadow-md">
-              $9.99<span className="text-base sm:text-xl text-gray-500 not-italic">/mo</span>
+              from $9.99<span className="text-base sm:text-xl text-gray-500 not-italic">/mo</span>
             </p>
           </div>
           <div className="w-full md:w-auto px-10 py-4 bg-tactical-orange text-black font-black uppercase tracking-[0.2em] text-sm transition-all group-hover:bg-white shadow-[0_0_25px_rgba(184,120,74,0.3)] group-hover:shadow-[0_0_35px_rgba(255,255,255,0.4)] text-center transform group-hover:-translate-y-1">
             Rent Your Server →
           </div>
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center">
-            Instant Setup • 48H Refund • No Slot Limits
+            Instant Setup • Cancel Anytime • No Slot Limits
           </p>
           <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest text-center">
             Affiliate link — supports this project at no extra cost to you

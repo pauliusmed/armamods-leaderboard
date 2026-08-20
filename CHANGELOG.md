@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.46] - 2026-08-20
+
+### 💰 Affiliate konversijos pataisos (Empower)
+- **Fix:** `/api/click/empower` redirectas dabar nukreipia į žaidimo-specifinį Empower landing (`/games/arma3/` arba `/games/arma-reforger/`) vietoj bendrinio `billing.empowerservers.com/aff.php` puslapio — vartotojas patenka ten, kur tikėjosi, mažiau frikcijos.
+- **Fix:** Affiliate baneryje „$9.99/mo" → „from $9.99/mo" — reali kaina su 10–16 GB RAM (daugumai 40 žaidėjų + modų serverių) yra $12.49–$20.49, todėl ankstesnis teiginys kėlė lūkesčių neatitikimą ir bounce.
+- **Fix:** Pašalintas nepatikrintas „48H Refund" teiginys (pakeistas į „Cancel Anytime") — venghiama klaidingų reklaminių teiginių rizika.
+- **Heavy CI:** required because monetizacijos (affiliate) elgsena keičiama; `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
 ## [1.22.45] - 2026-08-15
 
 ### 🐛 Paieškos inputo lagas ir prarytos raidės (mods/servers/scenarios sąrašai)
