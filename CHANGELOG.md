@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.47] - 2026-08-20
+
+### ⚡ Greitesnis pakartotinis lentelės krovimas (SWR kliento kešas)
+- **Problem:** svetainė užkraudavo „greitai", bet turinys (modų lentelė) ilgai vėluodavo kiekvieną kartą — kiekvienas pilnas perkrovimas iš naujo šaukdavo `/api/mods`.
+- **Fix:** `api/client.ts` perėjo prie **stale-while-revalidate** — esamas (net pasenęs) IndexedDB įrašas grąžinamas iškart, duomenys atnaujinami fone. Kliento kešo TTL pakeltas nuo **2 min → 15 min** (sinchronizuota su edge `Cache-Control: max-age=900`).
+- **Fix:** `useMods.ts` nuėmė 300 ms debounce iš **pradinio** krovimo — filtrų/paieškos pasikeitimai vis dar debounce'uojami, bet pirmasis užkrovimas startuoja be vėlavimo.
+- **Poveikis:** pakartotinis atidarymas rodo lentelę be tinklo laukimo; pirmas krovimas ~300 ms greičiau (nebėra dirbtinio delsimo + SWR neblokuoja renderio).
+- **Heavy CI:** skipped because only web client cache behaviour changed (no data model / API contract / collector changes); `npx tsc --noEmit` + 32 web Vitest sėkmingi.
+
 ## [1.22.46] - 2026-08-20
 
 ### 💰 Affiliate konversijos pataisos (Empower)

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { modsApi, type GameType } from '../api/client';
 import { fetchWithRetry } from '../lib/fetchWithRetry';
 import { useUrlListState, parseEnum, parsePositiveInt, parseSortDir } from './useUrlListState';
@@ -108,7 +108,14 @@ export function useMods(options: UseModsOptions = {}) {
     setCurrentPage(1);
   }, [searchQuery, playerFilter, sortBy, sortDir, setCurrentPage]);
 
+  const didInitialLoad = useRef(false);
   useEffect(() => {
+    if (!didInitialLoad.current) {
+      didInitialLoad.current = true;
+      loadMods();
+      return;
+    }
+    // Debounce subsequent filter/search/page changes to avoid request storms.
     const timer = setTimeout(() => {
       loadMods();
     }, 300);
