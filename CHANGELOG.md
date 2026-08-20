@@ -11,6 +11,13 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Poveikis:** pakartotinis atidarymas rodo lentelę be tinklo laukimo; pirmas krovimas ~300 ms greičiau (nebėra dirbtinio delsimo + SWR neblokuoja renderio).
 - **Heavy CI:** skipped because only web client cache behaviour changed (no data model / API contract / collector changes); `npx tsc --noEmit` + 32 web Vitest sėkmingi.
 
+## [1.22.48] - 2026-08-20
+
+### 💰 Affiliate klikų matavimas — datuoti shard'ai
+- **Feat:** visi `/click/*` handleriai dabar inkrementuoja ir dienos shard'ą (`click:provider:YYYY-MM-DD`) per `bumpClick` helperį — lifetime skaičius išlieka, bet atsiranda before/after matavimas po optimizacijų.
+- **Feat:** `/admin/clicks` grąžina `daily` objektą (šios dienos klikai pagal providerį) + `today` datą.
+- **Heavy CI:** required because monetizacijos (affiliate) elgsena keičiama; `tsc --noEmit` + web eslint (0 klaidų) sėkmingi.
+
 ## [1.22.47] - 2026-08-20
 
 ### 💰 Affiliate baneris — dinaminis social proof

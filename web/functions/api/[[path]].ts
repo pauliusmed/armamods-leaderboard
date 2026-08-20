@@ -2008,16 +2008,25 @@ app.post('/storage/plan', async (c) => {
 
 const EMPOWER_AFFILIATE_ID = '294';
 
+/** Increment a click counter and a date-sharded copy (YYYY-MM-DD) for trend analysis. */
+async function bumpClick(kv: KVNamespace, key: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  const dayKey = `${key}:${day}`;
+  const [raw, rawDay] = await Promise.all([kv.get(key, 'text'), kv.get(dayKey, 'text')]);
+  const count = (parseInt(raw || '0', 10) || 0) + 1;
+  const dayCount = (parseInt(rawDay || '0', 10) || 0) + 1;
+  await Promise.all([kv.put(key, String(count)), kv.put(dayKey, String(dayCount))]);
+  return { count, dayCount };
+}
+
 /** Track affiliate link clicks */
 app.get('/click/empower', async (c) => {
   const game = c.req.query('game') || 'reforger';
   const key = game === 'arma3' ? 'click:empower:arma3' : 'click:empower:reforger';
 
   try {
-    const raw = await c.env.TRENDING_KV.get(key, 'text');
-    const count = (parseInt(raw || '0', 10) || 0) + 1;
-    await c.env.TRENDING_KV.put(key, String(count));
-    console.log(`[CLICK] Empower ${game} — total ${count}`);
+    const { count, dayCount } = await bumpClick(c.env.TRENDING_KV, key);
+    console.log(`[CLICK] Empower ${game} — total ${count} (today ${dayCount})`);
   } catch {
     // best-effort
   }
@@ -2032,10 +2041,8 @@ app.get('/click/empower', async (c) => {
 /** Track Nitrado affiliate link clicks */
 app.get('/click/nitrado', async (c) => {
   try {
-    const raw = await c.env.TRENDING_KV.get('click:nitrado', 'text');
-    const count = (parseInt(raw || '0', 10) || 0) + 1;
-    await c.env.TRENDING_KV.put('click:nitrado', String(count));
-    console.log(`[CLICK] Nitrado — total ${count}`);
+    const { count, dayCount } = await bumpClick(c.env.TRENDING_KV, 'click:nitrado');
+    console.log(`[CLICK] Nitrado — total ${count} (today ${dayCount})`);
   } catch {
     // best-effort
   }
@@ -2046,10 +2053,8 @@ app.get('/click/nitrado', async (c) => {
 /** Track GTXGaming affiliate link clicks */
 app.get('/click/gtxgaming', async (c) => {
   try {
-    const raw = await c.env.TRENDING_KV.get('click:gtxgaming', 'text');
-    const count = (parseInt(raw || '0', 10) || 0) + 1;
-    await c.env.TRENDING_KV.put('click:gtxgaming', String(count));
-    console.log(`[CLICK] GTXGaming — total ${count}`);
+    const { count, dayCount } = await bumpClick(c.env.TRENDING_KV, 'click:gtxgaming');
+    console.log(`[CLICK] GTXGaming — total ${count} (today ${dayCount})`);
   } catch {
     // best-effort
   }
@@ -2060,10 +2065,8 @@ app.get('/click/gtxgaming', async (c) => {
 /** Track PingPerfect affiliate link clicks */
 app.get('/click/pingperfect', async (c) => {
   try {
-    const raw = await c.env.TRENDING_KV.get('click:pingperfect', 'text');
-    const count = (parseInt(raw || '0', 10) || 0) + 1;
-    await c.env.TRENDING_KV.put('click:pingperfect', String(count));
-    console.log(`[CLICK] PingPerfect — total ${count}`);
+    const { count, dayCount } = await bumpClick(c.env.TRENDING_KV, 'click:pingperfect');
+    console.log(`[CLICK] PingPerfect — total ${count} (today ${dayCount})`);
   } catch {
     // best-effort
   }
@@ -2073,12 +2076,18 @@ app.get('/click/pingperfect', async (c) => {
 
 /** Get click stats for admin panel */
 app.get('/admin/clicks', async (c) => {
-  const [reforger, arma3, nitrado, gtxgaming, pingperfect] = await Promise.all([
+  const day = new Date().toISOString().slice(0, 10);
+  const [reforger, arma3, nitrado, gtxgaming, pingperfect, dReforger, dArma3, dNitrado, dGtx, dPing] = await Promise.all([
     c.env.TRENDING_KV.get('click:empower:reforger', 'text'),
     c.env.TRENDING_KV.get('click:empower:arma3', 'text'),
     c.env.TRENDING_KV.get('click:nitrado', 'text'),
     c.env.TRENDING_KV.get('click:gtxgaming', 'text'),
     c.env.TRENDING_KV.get('click:pingperfect', 'text'),
+    c.env.TRENDING_KV.get(`click:empower:reforger:${day}`, 'text'),
+    c.env.TRENDING_KV.get(`click:empower:arma3:${day}`, 'text'),
+    c.env.TRENDING_KV.get(`click:nitrado:${day}`, 'text'),
+    c.env.TRENDING_KV.get(`click:gtxgaming:${day}`, 'text'),
+    c.env.TRENDING_KV.get(`click:pingperfect:${day}`, 'text'),
   ]);
   return c.json({
     empower: {
@@ -2089,6 +2098,17 @@ app.get('/admin/clicks', async (c) => {
     nitrado: parseInt(nitrado || '0', 10) || 0,
     gtxgaming: parseInt(gtxgaming || '0', 10) || 0,
     pingperfect: parseInt(pingperfect || '0', 10) || 0,
+    today: day,
+    daily: {
+      empower: {
+        reforger: parseInt(dReforger || '0', 10) || 0,
+        arma3: parseInt(dArma3 || '0', 10) || 0,
+        total: (parseInt(dReforger || '0', 10) || 0) + (parseInt(dArma3 || '0', 10) || 0),
+      },
+      nitrado: parseInt(dNitrado || '0', 10) || 0,
+      gtxgaming: parseInt(dGtx || '0', 10) || 0,
+      pingperfect: parseInt(dPing || '0', 10) || 0,
+    },
   });
 });
 
