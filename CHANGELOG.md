@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.50] - 2026-08-20
+
+### 🧩 Copy config formatas sutvarkytas (gražus, vienodas JSON)
+- **Problem:** kopijuojamas `game.mods[]` fragmentas buvo nenuoseklus — vienas įrašas su 12 tarpų įtrauka ir `},` gale, kitas su 2 tarpais ir `,{\n` priekyje (`formatModConfigPreview` / `formatServerModsConfigSnippet` naudojo comma-first `,{\n` stilių, o pavieniai ir sąrašo įrašai maišėsi, todėl įklijuotas blokas sąraše atrodė negražiai).
+- **Fix:** `web/src/lib/modConfig.ts` suvienodintas — *preview* ir *snippet* dabar grąžina švarų `{\n  "modId": "...",\n  "name": "..."\n}` (be priekyje esančio `,`), o `formatServerModsConfigSnippet` jungia blokus su trailing `,\n` (standartinis JSON: `},\n{`). Rezultatas nuoseklus 2-space, be prieštaraujančių `,{\n` / `},` formų.
+- **Pavyzdys (buvo):** `            },{\n  "modId": ...` → **dabar:** `},\n{\n  "modId": ...` (vienodas).
+- **Testai:** `test/mod-config.test.ts` atnaujinti; `npx tsc --noEmit` + 194 pilni testai + 32 web Vitest žali.
+- **Heavy CI:** skipped because only web copy-format helper changed (no API contract / data model / collector changes).
+
 ## [1.22.49] - 2026-08-20
 
 ### 💡 Kraunamojo skeleton'o išdėstymas atitinka lentelę (nulis layout shift)
