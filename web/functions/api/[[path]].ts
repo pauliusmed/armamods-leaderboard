@@ -38,6 +38,7 @@ import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } fro
 import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
 import { parseServerHistoryFields } from '../lib/server-uptime-history';
 import { extractModFromChunks } from '../lib/mod-lookup';
+import { loadAliasedModIdSet, modAliasKey, type ModAliasRecord } from '../lib/mod-alias';
 import {
   extractServerModChanges,
   modpackDiffKeys,
@@ -330,6 +331,14 @@ app.get('/mods', async (c) => {
   const mods = await getChunkedData(c.env.TRENDING_KV, keys.MODS, isDefaultView ? 1 : undefined);
   let filtered = [...mods];
 
+  // Re-uploaded mods: senieji GUID'ai nukreipti į naujus – slepiam iš viešų sąrašų.
+  if (game === 'reforger') {
+    const aliased = await loadAliasedModIdSet(c.env.TRENDING_KV, game);
+    if (aliased.size) {
+      filtered = filtered.filter((m) => !aliased.has(String(m.id).toUpperCase()));
+    }
+  }
+
   // Author lives in workshop KV cache — only load when name/id search finds nothing.
   if (search) {
     const byNameOrId = filtered.filter((m) => matchesModSearchByNameOrId(m, search));
@@ -386,6 +395,25 @@ app.get('/mods', async (c) => {
 });
 
 app.get('/mods/:modId', async (c) => {
+  const game = getGameFromQuery(c);
+  const modId = c.req.param('modId');
+
+  // Re-uploaded mod: senas GUID negalioja – 301 į naują prieš bet kokį cache/KV darbą.
+  if (game === 'reforger') {
+    try {
+      const aliasRaw = await c.env.TRENDING_KV.get(modAliasKey(game, modId), 'text');
+      if (aliasRaw) {
+        const alias = JSON.parse(aliasRaw) as ModAliasRecord;
+        if (alias && typeof alias.targetId === 'string' && alias.targetId) {
+          const search = new URL(c.req.url).search;
+          return c.redirect(`/api/mods/${alias.targetId.toUpperCase()}${search}`, 301);
+        }
+      }
+    } catch {
+      /* sugadintas alias – tęsiam kaip įprasta */
+    }
+  }
+
   const cache = await caches.open('armamods:details');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) {
@@ -394,8 +422,6 @@ app.get('/mods/:modId', async (c) => {
   }
 
   const start = Date.now();
-  const game = getGameFromQuery(c);
-  const modId = c.req.param('modId');
   const keys = getKVKeys(game);
 
   console.log(`[MODS_DETAIL] Starting optimized fetch for ${modId}...`);
@@ -1463,6 +1489,21 @@ app.get('/trending/:period?', async (c) => {
     if (!trendingData) {
         console.log(`[TRENDING] No data found for key ${keys.TRENDING}:${period}`);
         return c.json({ data: { rising: [], falling: [], new: [] }, meta: { lastUpdated: new Date().toISOString() } });
+    }
+
+    // Re-uploaded mods: senieji GUID'ai nukreipti – slepiam ir iš trending.
+    if (game === 'reforger' && trendingData?.data) {
+      const aliased = await loadAliasedModIdSet(c.env.TRENDING_KV, game);
+      if (aliased.size) {
+        for (const bucket of ['rising', 'falling', 'new'] as const) {
+          const rows = trendingData.data[bucket];
+          if (Array.isArray(rows)) {
+            trendingData.data[bucket] = rows.filter(
+              (entry: any) => !aliased.has(String(entry?.id || '').toUpperCase())
+            );
+          }
+        }
+      }
     }
 
     const response = c.json(trendingData);

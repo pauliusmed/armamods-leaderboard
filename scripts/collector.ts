@@ -23,9 +23,17 @@ import {
 } from '../web/functions/lib/server-uptime-history.js';
 import { applyEliteInertiaCushion, ELITE_INERTIA_TIERS } from './server-elite-inertia.js';
 import {
-  fetchReforgerWorkshopHtml,
+  fetchReforgerWorkshopPage,
+  isReforgerWorkshopPageAvailable,
   cacheReforgerFieldsFromWorkshopHtml,
 } from '../web/functions/lib/workshop-fetch.ts';
+import {
+  findModAliasTarget,
+  modAliasKey,
+  modAliasIndexKey,
+  MOD_ALIAS_TTL_SECONDS,
+  type ModAliasRecord,
+} from '../web/functions/lib/mod-alias.ts';
 import {
   appendModpackDiffDay,
   buildModpackDiffDay,
@@ -270,12 +278,78 @@ async function attachModSizesFromKvCache(
   console.log(`  - sizeBytes attached: ${attached}/${modList.length} from workshop KV cache`);
 }
 
+/**
+ * 404 arba „dead shell" puslapis = itemas ištrintas/paslėptas.
+ * Tinklo klaida (html null, status != 404) NELAIKOMA neprieinamu – apsauga
+ * nuo masinių klaidingų alias'ų, kai workshop laikinai neveikia.
+ */
+function isUnavailableWorkshopResult(page: { html: string | null; httpStatus: number | null }): boolean {
+  if (page.httpStatus === 404) return true;
+  return Boolean(page.html) && !isReforgerWorkshopPageAvailable(page.html);
+}
+
+/**
+ * Re-upload aptikimas: senas itemas nepasiekiamas + LYGIAGAI VIENAS kandidatas
+ * su ta pačia pavadinimo + autoriaus pora → rašom alias į KV. Dviprasmybė =
+ * nesujungiam (žr. mod-alias.ts). Aliass vėliau naudoja edge 301 redirectui
+ * ir seno ID slėpimui iš sąrašų.
+ */
+async function detectModAliases(
+  kv: CloudflareKVClient,
+  game: GameType,
+  modList: Array<{ id: string; name?: string | null; author?: string | null }>,
+  unavailableIds: string[]
+): Promise<void> {
+  if (game !== 'reforger' || !unavailableIds.length) return;
+
+  let created = 0;
+  for (const rawId of unavailableIds) {
+    const upper = rawId.toUpperCase();
+    try {
+      const existing = await kv.get(modAliasKey('reforger', upper), 'text');
+      // Jau nukreiptas – nieko nekeičiam (idempotentiška per pakartotinus run'us).
+      if (existing) continue;
+
+      const row = modList.find((m) => String(m.id).toUpperCase() === upper);
+      // Be pavadinimo/autoriaus telemetrijos poros nesuderinam – paliekam kaip yra.
+      if (!row || !row.name || !row.author) continue;
+
+      const targetId = findModAliasTarget(row, modList);
+      if (!targetId) continue;
+
+      const record: ModAliasRecord = {
+        targetId,
+        matchedBy: 'name+author',
+        createdAt: new Date().toISOString(),
+      };
+      await kv.put(modAliasKey('reforger', upper), JSON.stringify(record), {
+        expirationTtl: MOD_ALIAS_TTL_SECONDS,
+      });
+
+      // Reverse index – edge sąrašams (/mods, trending, sitemap) filtruoti vienu read'u.
+      const rawIndex = await kv.get(modAliasIndexKey('reforger'), 'json');
+      const index: string[] = Array.isArray(rawIndex) ? rawIndex : [];
+      if (!index.includes(upper)) index.push(upper);
+      await kv.put(modAliasIndexKey('reforger'), JSON.stringify(index), {
+        expirationTtl: MOD_ALIAS_TTL_SECONDS,
+      });
+
+      created++;
+      console.log(`  - mod alias: ${upper} -> ${targetId}`);
+    } catch (err) {
+      console.log(`  - mod alias check failed for ${upper}:`, err);
+    }
+  }
+  if (created) console.log(`  - mod aliases created: ${created}/${unavailableIds.length}`);
+}
+
 /** Fetch workshop version size for top-ranked mods missing KV cache (populates cache:mod-size). */
 async function warmTopModSizesFromWorkshop(
   kv: CloudflareKVClient,
   game: GameType,
   modList: Array<{ id: string; overallRank: number; sizeBytes?: number | null; author?: string | null }>,
-  limit = 300
+  limit = 300,
+  unavailableIds: string[] = []
 ): Promise<void> {
   if (game !== 'reforger') return;
 
@@ -293,9 +367,13 @@ async function warmTopModSizesFromWorkshop(
     await Promise.all(
       batch.map(async (mod) => {
         try {
-          const html = await fetchReforgerWorkshopHtml(mod.id);
-          if (!html) return;
-          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, mod.id, html);
+          const page = await fetchReforgerWorkshopPage(mod.id);
+          if (isUnavailableWorkshopResult(page)) {
+            unavailableIds.push(mod.id);
+            return;
+          }
+          if (!page.html) return;
+          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, mod.id, page.html);
           if (sizeBytes) mod.sizeBytes = sizeBytes;
           if (author) mod.author = author;
           if (sizeBytes || author) warmed++;
@@ -315,7 +393,8 @@ async function warmServerModpackModSizes(
   game: GameType,
   serverList: Array<{ players?: number; mods?: Array<{ id: string }> }>,
   modList: Array<{ id: string; sizeBytes?: number | null; author?: string | null }>,
-  limit = 500
+  limit = 500,
+  unavailableIds: string[] = []
 ): Promise<void> {
   if (game !== 'reforger') return;
 
@@ -359,9 +438,13 @@ async function warmServerModpackModSizes(
     await Promise.all(
       batch.map(async (modId) => {
         try {
-          const html = await fetchReforgerWorkshopHtml(modId);
-          if (!html) return;
-          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, modId, html);
+          const page = await fetchReforgerWorkshopPage(modId);
+          if (isUnavailableWorkshopResult(page)) {
+            unavailableIds.push(modId);
+            return;
+          }
+          if (!page.html) return;
+          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, modId, page.html);
           const row = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
           if (row) {
             if (sizeBytes) row.sizeBytes = sizeBytes;
@@ -612,10 +695,12 @@ interface ServerMod {
   });
 
   // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
+  const unavailableWorkshopIds: string[] = [];
   await attachModSizesFromKvCache(kv, game, modList);
   await attachModAuthorsFromKvCache(kv, game, modList);
-  await warmTopModSizesFromWorkshop(kv, game, modList, 300);
-  await warmServerModpackModSizes(kv, game, serverList, modList, 500);
+  await warmTopModSizesFromWorkshop(kv, game, modList, 300, unavailableWorkshopIds);
+  await warmServerModpackModSizes(kv, game, serverList, modList, 500, unavailableWorkshopIds);
+  await detectModAliases(kv, game, modList, unavailableWorkshopIds);
 
   const modSizeById = new Map<string, number>();
   for (const m of modList) {
