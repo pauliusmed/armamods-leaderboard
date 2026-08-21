@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.51] - 2026-08-21
+
+### 🔁 Modų re-upload'ai: senas GUID automatiškai nukreipiamas į naują
+- **Problem:** autorius persikelia modą po nauju GUID (senas Workshop itemas ištrintas), bet svetainė juos laiko dviem nepriklausomais įrašais – senasis lieka viešuose sąrašuose, o jo puslapis rodo negaliojantį modą ir „valgo" SEO.
+- **Sprendimas (Reforger):** kolektorius, workshop warm metu radęs nepasiekiamą itemą (404 arba dead-shell HTML; tinklo klaida Nelaikoma neprieinama), ieško **lygiai vieno** kandidato su ta pačia normalizuota pavadinimo + autoriaus pora ir rašo alias `cache:mod-alias:reforger:<SENAS_ID>` (TTL 365 d.) bei reverse index `cache:mod-aliases:reforger`. Dviprasmybė (0 arba >1 kandidatų) arba nežinomas autorius = nesujungiama – be tylaus spėjimo.
+- **Edge:** `/mod/<senas>` (middleware, visiems – vartotojams ir crawleriams) ir `/api/mods/<senas>` → **301** į naują ID (išsaugant query); senieji ID filtruojami iš `/api/mods` sąrašo, trending ir sitemap. Telemetrija viduje lieka atskira – sujungiamas tik identitetas.
+- **Testai:** naujas `test/mod-alias.test.ts` (12 testų: normalizacija, unikalumo taisyklė, dviprasmybių atmetimas, index parse) prijungtas prie `npm test`; `npx tsc --noEmit` + 206 pilni testai žali; web lint 0 klaidų.
+- **Heavy CI:** required because collector logic + API URL contract changed.
+
 ## [1.22.50] - 2026-08-20
 
 ### 🧩 Copy config formatas sutvarkytas (gražus, vienodas JSON)

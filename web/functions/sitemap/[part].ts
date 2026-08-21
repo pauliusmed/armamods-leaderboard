@@ -1,4 +1,5 @@
 import { loadListIdsFromKv } from '../lib/sitemap-kv';
+import { loadAliasedModIdSet } from '../lib/mod-alias';
 import {
   modDetailUrl,
   renderUrlset,
@@ -30,7 +31,12 @@ async function buildPart(kv: KVNamespace, part: Part): Promise<string> {
   const urls: SitemapUrl[] = [];
   if (part === 'mods') {
     for (const game of ['reforger', 'arma3'] as const) {
-      const ids = await loadListIdsFromKv(kv, 'mods', game);
+      let ids = await loadListIdsFromKv(kv, 'mods', game);
+      // Re-uploaded mods: senieji GUID'ai nukreipti – neindeksuojam sename URL.
+      if (game === 'reforger') {
+        const aliased = await loadAliasedModIdSet(kv, game);
+        if (aliased.size) ids = ids.filter((id) => !aliased.has(id.toUpperCase()));
+      }
       urls.push(
         ...urlsFromIds(ids, (id) => modDetailUrl(id, game), 'daily', game === 'reforger' ? 0.7 : 0.6)
       );

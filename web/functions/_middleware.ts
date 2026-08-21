@@ -5,6 +5,7 @@ import {
   parseShareRoute,
   renderShareHtml,
 } from './lib/share-meta';
+import { modAliasKey, type ModAliasRecord } from './lib/mod-alias';
 
 interface Env {
   TRENDING_KV: KVNamespace;
@@ -27,12 +28,43 @@ export async function onRequest(context: EventContext<Env, any, any>) {
     return next();
   }
 
+  const route = parseShareRoute(url.pathname);
+
+  // Re-uploaded mods: senas GUID negalioja – 301 visiems (vartotojams ir
+  // crawleriams), kol alias egzistuoja KV. Trumpas cache, nes alias'as gali
+  // atsirasti bet kada po artimiausio kolektoriaus run'o.
+  if (route && route.kind === 'mod' && route.game === 'reforger') {
+    let targetId: string | null = null;
+    try {
+      const raw = await env.TRENDING_KV.get(modAliasKey(route.game, route.id), 'text');
+      if (raw) {
+        const alias = JSON.parse(raw) as ModAliasRecord;
+        if (alias && typeof alias.targetId === 'string' && alias.targetId) {
+          targetId = alias.targetId.toUpperCase();
+        }
+      }
+    } catch {
+      /* sugadintas alias įrašas – elgiamės lyg jo nebūtų */
+    }
+
+    if (targetId) {
+      const targetPath =
+        route.game === 'arma3' ? `/arma3/mod/${targetId}` : `/mod/${targetId}`;
+      return new Response(null, {
+        status: 301,
+        headers: {
+          Location: `${targetPath}${url.search}`,
+          'Cache-Control': 'public, max-age=300',
+        },
+      });
+    }
+  }
+
   const userAgent = request.headers.get('user-agent') || '';
   if (!isShareCrawler(userAgent)) {
     return next();
   }
 
-  const route = parseShareRoute(url.pathname);
   if (!route) {
     return next();
   }
