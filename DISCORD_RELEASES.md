@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.22.52] - 2026-08-22
+
+- Workshop descriptions on mod pages now show in full without an extra click — only very long texts are folded.
+
 ## [1.22.51] - 2026-08-21
 
 - Mods that were re-uploaded under a new workshop item now automatically send old links to the new page, and the outdated entry no longer clutters the leaderboards or search results.

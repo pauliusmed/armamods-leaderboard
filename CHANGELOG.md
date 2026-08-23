@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.22.52] - 2026-08-22
+
+### 📄 Workshop aprašymų suskleidimo riba pakelta (320 → 700 simb.)
+- **Problem:** modų autoriai matydavo tik pirmus 320 simbolių aprašymo ir „Read full description" mygtuką – trumpesni nei pusės ekrano tekstai atrodė kaip pasenę/neatnaujinti duomenys (realus atvejis: autorius manė, kad puslapis neatspindi workshop'o summary).
+- **Fix:** `web/src/components/ui/ModWorkshopCopy.tsx` `COLLAPSE_CHARS` 320 → **700** – dauguma aprašymų dabar rodomi pilni be paspaudimo; ilgesni vis dar suskleidžiami su išskleidimu.
+- **Patikra:** `npx tsc --noEmit` švarus; web lint 0 klaidų (11 pre-existing warning'ų).
+- **Heavy CI:** skipped because single UI constant change (no API contract / data model / collector changes).
+
 ## [1.22.51] - 2026-08-21
 
 ### 🔁 Modų re-upload'ai: senas GUID automatiškai nukreipiamas į naują

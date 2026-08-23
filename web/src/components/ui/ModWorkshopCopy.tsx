@@ -3,7 +3,9 @@ import type { GameType } from '../../api/client';
 import { workshopPageUrl, workshopLabel } from '../../lib/workshop';
 import { WORKSHOP_NOT_NETWORK_STATS } from '../../lib/siteCopy';
 
-const COLLAPSE_CHARS = 320;
+// 700 simb. dengia daugumą workshop aprašymų – trumpesni rodomi pilni be
+// „Read full description" paspaudimo (autoriai klaidas supranta kaip senus duomenis).
+const COLLAPSE_CHARS = 700;
 
 interface ModWorkshopCopyProps {
   modId: string;
