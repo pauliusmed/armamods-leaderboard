@@ -35,9 +35,11 @@ export default function ModHistoryChart({
   isMobileChart,
   patchInsight,
 }: ModHistoryChartProps) {
+  // Fallback handled by parent CardContent fixed height; ResponsiveContainer
+  // needs explicit parent dimensions and minWidth/minHeight to avoid -1 error.
   return (
-    <div className="flex-1 min-h-0 min-w-0 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-full min-h-0 min-w-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <LineChart
           data={chartHistory}
           margin={{

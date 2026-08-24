@@ -575,7 +575,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       </span>
                     )}
                   </div>
-                  <div className="flex-1 min-h-0 min-w-0 w-full">
+                  <div className="w-full h-[300px] sm:h-[340px]">
                 <Suspense fallback={<div className="w-full h-full bg-black/20 animate-pulse rounded" aria-label="Loading chart" />}>
   <ServerHistoryChart chartHistory={chartHistory} syncGaps={syncGaps} offlineBands={offlineBands} selectedDays={selectedDays} isMobileChart={isMobileChart} />
 </Suspense>

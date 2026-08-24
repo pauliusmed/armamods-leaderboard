@@ -773,13 +773,10 @@ async function fetchModHistoryPoints(
   const meta = (await kv.get(`${baseKey}:meta`, 'json')) as { chunks?: number } | null;
 
   if (meta?.chunks) {
-    const shardPromises = [];
+    // Sequential to avoid "Worker exceeded memory limit" (8×5 MB = 40 MB if parallel).
+    // History is cold path — +200ms latency is cheaper than 40 MB RAM.
     for (let i = 0; i < meta.chunks; i++) {
-      shardPromises.push(kv.get(`${baseKey}:${i}`, 'text'));
-    }
-    const shardsText = await Promise.all(shardPromises);
-
-    for (const shardText of shardsText) {
+      const shardText = await kv.get(`${baseKey}:${i}`, 'text');
       if (shardText?.includes(`"${modId}":{`)) {
         modHistory.push(...scanHistoryPoints(shardText, modId));
       }
@@ -1689,15 +1686,9 @@ app.get('/servers/:serverId/history', async (c) => {
     return finalResponse;
   }
 
-  // Parallel retrieval of history shards
-  const shardPromises = [];
+  // Sequential to avoid RAM spike (see fetchModHistoryPoints comment).
   for (let i = 0; i < meta.chunks; i++) {
-    shardPromises.push(c.env.TRENDING_KV.get(`${plan.baseKey}:${i}`, 'text'));
-  }
-  const shardsText = await Promise.all(shardPromises);
-
-  for (let i = 0; i < shardsText.length; i++) {
-    const shardText = shardsText[i];
+    const shardText = await c.env.TRENDING_KV.get(`${plan.baseKey}:${i}`, 'text');
     if (!shardText || !shardText.includes(serversKey)) continue;
 
     let searchPos = 0;
