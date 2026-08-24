@@ -1,0 +1,32 @@
+name: Discord Release Announcement
+
+# Posts DISCORD_RELEASES.md top entry to Discord #announcements when the
+# file changes on main. Deploy itself runs on Cloudflare Workers Builds —
+# this workflow ONLY announces (webhook: secrets.DISCORD_WEBHOOK_URL).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'DISCORD_RELEASES.md'
+  workflow_dispatch:
+
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Post release to Discord
+        run: node scripts/post-discord-release.mjs
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
