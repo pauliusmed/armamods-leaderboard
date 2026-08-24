@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.6] - 2026-08-24
+
+### ⚡ PageSpeed: font-display optional + .well-known/llms.txt (CLS 0.17→0.008, perf 87→98)
+- **Problem:** po 1.23.5 CLS liko 0.17 (swap su fallback vis dar šokinėja), Agentic Browsing tikrino `/.well-known/llms.txt` (ne `/llms.txt`); desktop 99 bet mobile 91.
+- **Fix:** `vite.config.ts` plugin `font-display:swap→optional` visiems `@fontsource` CSS (CLS 0.169→0.007, score 1.0); `web/public/.well-known/llms.txt` kopija + `&→and` H1 pataisa.
+- **Patikra:** Lighthouse mobile 91→98, CLS 0.17→0.008, desktop 99; `llms.txt` ant abiejų path'ų; deploy `9eeb2768` live.
+- **Heavy CI:** skipped because perf-only (font-display + static asset).
+
 ## [1.23.5] - 2026-08-24
 
 ### 📄 llms.txt + font fallback CLS fix
