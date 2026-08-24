@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.4] - 2026-08-24
+
+### ⚡ PageSpeed: font CLS, render-blocking, contrast
+- **Problem:** Lighthouse 87/95 — CLS 0.167 iš 14 fontų (8× latin-ext), render-blocking 900ms (`registerSW.js` + `preconnect` į bistudio CDN), `text-gray-500/600` kontrastas ant `#101923`.
+- **Fix:** `main.tsx` latin-ext pašalinti (14→6 fontai: Barlow 400/500/700/900 + JetBrains 400/700), `index.html` preconnect pašalintas, `vite.config.ts` `VitePWA injectRegister:null` + `main.tsx` SW registracija po `load` (defer), `StatsHero`/`ListFilterBar` `gray-500/600→gray-400`.
+- **Patikra:** `tsc` švaru; lint 0 klaidų (11 warnings); 206/206 + 32/32; `web build` precache 52→46 entries (1281 KiB); deploy `049377f5` live; health ok.
+- **Heavy CI:** skipped because perf-only (no API / data / algorithm).
+
 ## [1.23.3] - 2026-08-24
 
 ### ✨ UI švara: emoji pakeisti lucide ikonomis

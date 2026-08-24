@@ -41,7 +41,7 @@ const GRID_COLS: Record<NonNullable<ListFilterBarProps['columns']>, string> = {
 };
 
 const labelClass =
-  'block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 group-hover:text-tactical-orange transition-colors italic';
+  'block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-2 group-hover:text-tactical-orange transition-colors italic';
 
 const controlClass =
   'w-full px-8 py-3 bg-black/60 border border-white/10 focus:border-tactical-orange focus:bg-black transition-all font-black text-white placeholder-gray-700 uppercase tracking-widest text-[13px] rounded-none outline-none';
