@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.8] - 2026-08-24
+
+### ⚡ Server detail: lazy Recharts (62→97 perf, CLS 0.010)
+- **Problem:** `/server/*` perf 73 — ServerDetail kraunė Recharts tiesiogiai (ne lazy kaip ModDetail po 1.23.7).
+- **Fix:** naujas `ui/ServerHistoryChart.tsx` (React.lazy + Suspense, bendras chunk su ModHistoryChart); ServerDetail recharts importas pašalintas.
+- **Patikra:** Lighthouse mobile — `/server/*` **97 CLS 0.010** (buvo 62/0.23); `/mod/*` 77 CLS 0.061; `/` 98 CLS 0.007. `tsc` švaru, lint 0 kl., 206/206 + 32/32. Deploy `6d9a4105`.
+- **Heavy CI:** skipped because perf-only (component extraction, no behavior change).
+
 ## [1.23.7] - 2026-08-24
 
 ### ⚡ Vidiniai puslapiai: lazy Recharts + CLS skeleton (mod 53→77, servers 85→97)
