@@ -3,6 +3,18 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.8] - 2026-08-24
+
+- Every page of the site now loads noticeably faster and no longer jumps around while content appears — mod and server pages, charts and galleries open smoothly even on slower mobile connections.
+
+## [1.23.3] - 2026-08-24
+
+- Cleaner look across the site: section icons are now consistent, and the redundant "Frequently Deployed Together" table on mod pages is gone (its data mixed popular mods with related ones — the Dependencies section already covers real requirements).
+
+## [1.23.0] - 2026-08-24
+
+- Site infrastructure moved to a faster hosting setup — same pages, same data, quicker delivery worldwide.
+
 ## [1.22.53] - 2026-08-23
 
 - Mod page summaries and descriptions now pick up your Workshop edits within a couple of days instead of up to a week.
