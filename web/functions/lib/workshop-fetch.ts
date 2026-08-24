@@ -79,6 +79,9 @@ export function statusCacheKey(game: ShareGame, modId: string): string {
 }
 
 const WORKSHOP_KV_TTL = 604800; // 7 days
+// Summary/description keičiasi dažniau už kitus metadata (autorių redagavimai,
+// release'ai) – 48 h, kad puslapis atspindėtų pakeitimus per porą dienų, ne per savaitę.
+const WORKSHOP_COPY_KV_TTL = 172800; // 48 hours
 /** Shorter TTL so mods that return to Workshop are picked up within ~2 days. */
 const WORKSHOP_STATUS_UNAVAILABLE_TTL = 172800; // 48 hours
 
@@ -554,7 +557,7 @@ export async function ensureReforgerWorkshopMetadata(
   if (!copyCached) {
     const copy = parseReforgerWorkshopCopyFromHtml(html);
     if (copy.summary || copy.description) {
-      writes.push(kv.put(copyKey, JSON.stringify(copy), { expirationTtl: WORKSHOP_KV_TTL }));
+      writes.push(kv.put(copyKey, JSON.stringify(copy), { expirationTtl: WORKSHOP_COPY_KV_TTL }));
     }
   }
 
