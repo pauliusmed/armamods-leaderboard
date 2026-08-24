@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.7] - 2026-08-24
+
+### ⚡ Vidiniai puslapiai: lazy Recharts + CLS skeleton (mod 53→77, servers 85→97)
+- **Problem:** vidiniai puslapiai atsilikę nuo homepage — `/mod/*` perf 53 CLS 0.56, `/server/*` 62, `/servers` 85 CLS 0.23. Lighthouse `cls-culprits`: (1) hero galerijos kolona `hidden` kol async fetch, tada staiga įkišama (~0.33), (2) `StatusState` loading 500px — footeris matomas ir perstumiamas kai atsiranda content (0.227 visiems puslapiams), (3) Recharts 350 KiB kraunamas su pagrindiniu bundle.
+- **Fix:** naujas `ui/ModHistoryChart.tsx` (React.lazy + Suspense su pulse skeleton) — Recharts atsiskiria į atskirą chunk (`LineChart-*.js` 346 KiB nebekraunamas su `index.js`); `ModWorkshopGallery` `onStatusChange` — hero kolona rezervuoja vietą (skeleton) nuo pirmo paint; `StatusState` `min-h 500px→80vh` (footeris už fold'o kol krauna); `StatsHero` min-h + invisible placeholder.
+- **Patikra:** Lighthouse mobile — `/` 97 CLS 0.007; `/servers` 97 CLS 0.035; `/trending` 98; `/mod/*` **77 CLS 0.061** (buvo 53/0.56); `/server/*` **73 CLS 0.035** (buvo 62/0.23). `tsc` švaru, lint 0 kl., 206/206 + 32/32. Deploy `1db8eb7f`.
+- **Heavy CI:** skipped because UI/perf-only (no API / data / algorithm changes).
+
 ## [1.23.6] - 2026-08-24
 
 ### ⚡ PageSpeed: font-display optional + .well-known/llms.txt (CLS 0.17→0.008, perf 87→98)

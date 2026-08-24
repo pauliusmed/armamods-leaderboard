@@ -21,6 +21,8 @@ interface ModWorkshopGalleryProps {
   /** inline = compact square in mod hero row; standalone = full-width block below hero */
   variant?: 'inline' | 'standalone';
   onVisibilityChange?: (visible: boolean) => void;
+  /** Resolved status so parents can reserve space during loading (CLS prevention). */
+  onStatusChange?: (status: 'loading' | 'ready' | 'hidden') => void;
 }
 
 export function ModWorkshopGallery({
@@ -29,6 +31,7 @@ export function ModWorkshopGallery({
   game = 'reforger',
   variant = 'standalone',
   onVisibilityChange,
+  onStatusChange,
 }: ModWorkshopGalleryProps) {
   const [images, setImages] = useState<ModGalleryImage[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'hidden'>('loading');
@@ -85,8 +88,9 @@ export function ModWorkshopGallery({
 
   useEffect(() => {
     onVisibilityChange?.(effectiveStatus === 'ready' && images.length > 0);
+    onStatusChange?.(effectiveStatus);
     return () => onVisibilityChange?.(false);
-  }, [effectiveStatus, images.length, onVisibilityChange]);
+  }, [effectiveStatus, images.length, onVisibilityChange, onStatusChange]);
 
   const go = useCallback(
     (delta: number) => {

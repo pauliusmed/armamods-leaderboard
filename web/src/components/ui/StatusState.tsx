@@ -66,7 +66,7 @@ export function StatusState({ type, message, details, onAction, actionText, retr
 
   return (
     <div className={`
-      flex flex-col items-center justify-center min-h-[500px] w-full
+      flex flex-col items-center justify-center min-h-[80vh] w-full
       bg-[#101923] border border-white/5 p-16
     `}>
       <div className="mb-8">

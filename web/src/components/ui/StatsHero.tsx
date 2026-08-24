@@ -19,7 +19,7 @@ interface StatsHeroProps {
  */
 export function StatsHero({ title, subtitle, stats, note, noteTone = 'default' }: StatsHeroProps) {
   return (
-    <div className="mb-4 pb-3 border-b border-white/5">
+    <div className="mb-4 pb-3 border-b border-white/5 min-h-[68px]">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-lg sm:text-2xl font-black text-white uppercase tracking-tight leading-none">
@@ -28,7 +28,7 @@ export function StatsHero({ title, subtitle, stats, note, noteTone = 'default' }
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1.5 hidden sm:block">
             {subtitle}
           </p>
-          {note && (
+          {note ? (
             <p
               className={`text-[9px] font-bold uppercase tracking-wider mt-1.5 ${
                 noteTone === 'warning' ? 'text-amber-400' : 'text-gray-400'
@@ -36,16 +36,26 @@ export function StatsHero({ title, subtitle, stats, note, noteTone = 'default' }
             >
               {note}
             </p>
+          ) : (
+            <p className="text-[9px] font-bold uppercase tracking-wider mt-1.5 invisible" aria-hidden="true">
+              placeholder
+            </p>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
-          {stats.map((stat, i) => (
-            <div key={i} className="flex items-baseline gap-1.5 whitespace-nowrap">
-              <span className="font-mono text-sm font-black text-white tabular-nums">{stat.value}</span>
-              <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{stat.label}</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 min-h-[20px] min-w-[180px]">
+          {stats.length > 0 ? (
+            stats.map((stat, i) => (
+              <div key={i} className="flex items-baseline gap-1.5 whitespace-nowrap">
+                <span className="font-mono text-sm font-black text-white tabular-nums">{stat.value}</span>
+                <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{stat.label}</span>
+              </div>
+            ))
+          ) : (
+            <span className="invisible text-[9px] font-black uppercase tracking-widest" aria-hidden="true">
+              0 placeholder
+            </span>
+          )}
         </div>
       </div>
     </div>
