@@ -32,7 +32,9 @@ function parseTimeMs(value: string): number | null {
 export function maxGapMsForRange(selectedDays: number): number {
   // Hourly view: collector is ~2h — more than ~5h without a sample = gap
   if (selectedDays <= 1) return 5 * 60 * 60 * 1000;
-  // Daily (and longer) buckets: more than ~1.5 days between points = gap
+  // 1Y view uses weekly buckets (7d apart) — allow up to 8.5 days
+  if (selectedDays > 60) return 205 * 60 * 60 * 1000;
+  // Daily (and 1M) buckets: more than ~1.5 days between points = gap
   return 36 * 60 * 60 * 1000;
 }
 

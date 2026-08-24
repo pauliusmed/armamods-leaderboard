@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.9] - 2026-08-24
+
+### 📈 Fix: 1Y chart weekly buckets flagged as sync gaps
+- **Problem:** `maxGapMsForRange(366)` buvo 36h, bet 1Y istorija yra weekly (7d tarpai) → visi 12 intervalai (06/01→06/08, ...) pažymėti kaip „Sync gap · collector offline" +11, visas grafas oranžinis.
+- **Fix:** `web/src/lib/chartSyncGap.ts` `maxGapMsForRange` >60d → 205h (8.5d), kad weekly 7d neflag'intų; daily 1d lieka 36h.
+- **Patikra:** `findHistoryGaps` 5 weekly taškams 30d→1 gap, 366d→0; `reforgermods.com/mod/629B2BA37EFFD577` 1Y neberodo melagingo gap. Deploy `d712a633`.
+- **Heavy CI:** skipped because 1 line threshold (no data model).
+
 ## [1.23.8] - 2026-08-24
 
 ### ⚡ Server detail: lazy Recharts (62→97 perf, CLS 0.010)
