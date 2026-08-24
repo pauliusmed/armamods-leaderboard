@@ -65,7 +65,7 @@ export function AdminPage() {
                   <p>Mods: {data.mods?.total?.toLocaleString() ?? '—'}</p>
                   <p>Servers: {data.servers?.total?.toLocaleString() ?? '—'}</p>
                   <p>Last update: {data.lastUpdate ? new Date(data.lastUpdate).toLocaleString() : '—'}</p>
-                  <p>Stale: {data.isStale ? '⚠ YES' : '✓ No'}</p>
+                  <p>Stale: {data.isStale ? 'YES' : 'No'}</p>
                 </div>
               </div>
             ))}

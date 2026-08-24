@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { serversApi, modsApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
+import { Server as ServerIcon } from 'lucide-react';
 import { SEO } from './ui/SEO';
 import { SITE_ORIGIN, serverPageUrl, serverPreviewImageUrl } from '../lib/site';
 import { breadcrumbJsonLd } from '../lib/seoJsonLd';
@@ -750,8 +751,9 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       {similarServers.length > 0 && (
         <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
           <div className="border-b border-white/5 pb-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-              🖥️ Similar Deployed Servers
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+              <ServerIcon className="w-6 h-6 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
+              Similar Deployed Servers
             </h2>
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
               Alternative nodes running similar mod configurations and player activity

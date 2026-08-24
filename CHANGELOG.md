@@ -2,6 +2,22 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.3] - 2026-08-24
+
+### ✨ UI švara: emoji pakeisti lucide ikonomis
+- **Problem:** sekcijų antraštės (`📈 Performance Timeline`, `📦 Required Dependencies`, `📡 Active Deployed Servers`, `Trending` kategorijos, `Community Reciprocity`, `Similar Servers`) naudojo emoji, prieštaraujančius taisyklėms (ikonomis naudojame `lucide-react`).
+- **Fix:** `ModDetail`, `ServerDetail`, `TrendingPage`, `HostingLanding`, `StatusPage`, `AdminPage` — emoji pakeisti į `lucide-react` (`TrendingUp`, `Package`, `Server`, `TrendingDown`, `Sparkles`, `HeartHandshake`); `TrendingPage` kategorijų žymos paverstos ikonų+teksto badge'ais. Funkciniai `★/☆` mėgstamiausi palikti.
+- **Patikra:** `npx tsc --noEmit` švaru; web lint 0 klaidų (11 pre-existing warnings); 206/206 + 32/32 testai; `web build` + `wrangler deploy` ok.
+- **Heavy CI:** skipped because UI icon swap only (no API / data / algorithm changes).
+
+## [1.23.2] - 2026-08-24
+
+### 🗑️ Pašalinta „Frequently Deployed Together" lentelė — less is more
+- **Problem:** `Frequently Deployed Together` (co-deployment) rankino pagal žaliavinį bendrą serverių skaičių, todėl dominuoja must-have modai (populiariausi), ne prasmingi asocijuotieji. Funkcija dubliuoja `Required Dependencies` ir klaidina.
+- **Fix:** pašalinta ModDetail sekcija + `CoDeployTable.tsx` + `CO_DEPLOY_SUBTITLE` + Worker `/mods/:id` co-deploy praturtinimas (dead code po UI šalinimo; sutaupo hot-path CPU). Collector co-deploy skaičiavimas paliktas — jį naudoja Config Audit „Alternatives".
+- **Patikra:** `npx tsc --noEmit` švaru; web lint 0 klaidų; 206/206 + 32/32 testai; `wrangler deploy` ok.
+- **Heavy CI:** skipped because UI + dead code removal only.
+
 ## [1.23.1] - 2026-08-24
 
 ### 🕒 Mod Changes: aiškus atnaujinimo ritmas + „data as of"

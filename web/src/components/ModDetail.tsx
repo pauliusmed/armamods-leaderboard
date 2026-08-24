@@ -17,6 +17,7 @@ import {
   ReferenceArea,
 } from 'recharts';
 import { buildModAuditRow, REFORGER_PATCHES, type AuditStatus } from '@audit-config';
+import { TrendingUp, Package, Server as ServerIcon } from 'lucide-react';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { SITE_ORIGIN, modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { softwareApplicationJsonLd, breadcrumbJsonLd } from '../lib/seoJsonLd';
@@ -460,8 +461,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
           <section className="space-y-6 sm:space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
-              <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-                📈 Performance Timeline
+              <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                <TrendingUp className="w-6 h-6 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
+                Performance Timeline
               </h2>
               <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">
                 {[
@@ -743,8 +745,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           {game === 'reforger' && (
             <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
               <div className="border-b border-white/5 pb-6">
-                <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-                  📦 Required Dependencies
+                <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                  <Package className="w-6 h-6 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
+                  Required Dependencies
                 </h2>
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
                   Author-declared on Reforger Workshop — technical install requirements, not popularity stats
@@ -767,8 +770,9 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
           <section className="space-y-6 sm:space-y-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between border-b border-white/5 pb-6">
-              <h2 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tighter leading-tight">
-                📡 Active Deployed Servers
+              <h2 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tighter leading-tight flex items-center gap-3">
+                <ServerIcon className="w-5 h-5 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
+                Active Deployed Servers
               </h2>
               <span className="text-[10px] sm:text-[10px] font-black text-gray-500 uppercase tracking-wide sm:tracking-widest shrink-0">
                 {deployedServersLabel}

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 import { trendingApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
 import { SEO } from './ui/SEO';
@@ -134,12 +135,10 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
     </div>
   );
 
-  const getCategoryLabel = (cat: TrendCategory, short = false) => {
-    switch (cat) {
-      case 'rising': return short ? '📈 Rising' : '📈 Rising Mods';
-      case 'falling': return short ? '📉 Falling' : '📉 Falling Mods';
-      case 'new': return short ? '⭐ New' : '⭐ New Mods';
-    }
+  const CATEGORY_META: Record<TrendCategory, { label: string; shortLabel: string; Icon: typeof TrendingUp }> = {
+    rising: { label: 'Rising Mods', shortLabel: 'Rising', Icon: TrendingUp },
+    falling: { label: 'Falling Mods', shortLabel: 'Falling', Icon: TrendingDown },
+    new: { label: 'New Mods', shortLabel: 'New', Icon: Sparkles },
   };
 
   const getCategoryDescription = (cat: TrendCategory) => {
@@ -235,8 +234,16 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
                   : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'
               }`}
             >
-              <span className="sm:hidden">{getCategoryLabel(category, true)}</span>
-              <span className="hidden sm:inline">{getCategoryLabel(category)}</span>
+              {(() => {
+                const { label, shortLabel, Icon } = CATEGORY_META[category];
+                return (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <span className="sm:hidden">{shortLabel}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </span>
+                );
+              })()}
             </button>
           ))}
         </div>

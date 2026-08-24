@@ -161,7 +161,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               <div className="space-y-1">
                 <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Collector Status</p>
                 <p className="text-xs font-bold text-white uppercase tracking-wider">
-                  {isCollectorDelayed() ? '⚠️ Refresh Delayed' : '⚡ Synchronized'}
+                  {isCollectorDelayed() ? 'Refresh Delayed' : 'Synchronized'}
                 </p>
               </div>
               <span className={`text-[9px] font-black uppercase tracking-widest ${
@@ -324,7 +324,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               <p className="text-[10px] font-black uppercase tracking-widest text-signal-critical mb-2">Errors:</p>
               <ul className="space-y-1">
                 {health.errors.map((err: string, i: number) => (
-                  <li key={i} className="text-[10px] font-mono text-signal-critical/80">⚠ {err}</li>
+                  <li key={i} className="text-[10px] font-mono text-signal-critical/80">{err}</li>
                 ))}
               </ul>
             </div>

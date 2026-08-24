@@ -1,6 +1,6 @@
 import { SEO } from './ui/SEO';
 import { Card, CardContent } from './ui/Card';
-import { Shield, Zap, Globe, Cpu } from 'lucide-react';
+import { Shield, Zap, Globe, Cpu, HeartHandshake } from 'lucide-react';
 import type { GameType } from '../api/client';
 
 interface HostingLandingProps {
@@ -180,8 +180,11 @@ export function HostingLanding({ game }: HostingLandingProps) {
             </ul>
             
             <div className="pt-4 border-t border-white/10">
-              <p className="text-tactical-orange text-xs font-bold uppercase tracking-widest leading-loose">
-                🤝 Community Reciprocity: <span className="text-gray-400">By deploying through this page, you directly support the ArmaMods Leaderboard project, keeping our daily tracking systems online.</span>
+              <p className="text-tactical-orange text-xs font-bold uppercase tracking-widest leading-loose flex items-start gap-2">
+                <HeartHandshake className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>
+                  Community Reciprocity: <span className="text-gray-400">By deploying through this page, you directly support the ArmaMods Leaderboard project, keeping our daily tracking systems online.</span>
+                </span>
               </p>
             </div>
           </div>
