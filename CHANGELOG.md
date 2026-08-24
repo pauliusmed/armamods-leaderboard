@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.1] - 2026-08-24
+
+### 🕒 Mod Changes: aiškus atnaujinimo ritmas + „data as of"
+- **Problem:** serverių savininkai „Mod Changes" sekciją suvokdavo kaip vėluojančią — diff'ai skaičiuojami kartą per parą (pirmas kolektoriaus run'as po 00:00 UTC), todėl dienos metu pakeitimo nematyti ir atrodė, kad duomenys senseni.
+- **Fix:** `GET /api/servers/:id/mod-changes` meta papildytas `lastSnapshotDate` (naujausia diena iš 30d žiedo); serverio puslapyje po antrašte rodoma „Updates once daily (~00:00 UTC) · data as of <data>". Duomenų logika nepakitusi — tik komunikacija.
+- **Patikra:** `npx tsc --noEmit` + web lint 0 klaidų; 206/206 + 32/32 testai; live patikra `/mod-changes` meta su `lastSnapshotDate: 2026-08-24`.
+- **Heavy CI:** skipped because additive meta field + UI text only (no data model / collector / algorithm changes).
+
 ## [1.23.0] - 2026-08-24
 
 ### ☁️ Pages → Workers migracija + deploy per Cloudflare
