@@ -345,3 +345,4 @@ share-meta, and search matching.
   from the Reforger workshop on first request per mod (KV 7d), not by the collector.
   One HTML fetch fills both caches; the UI resolves CDN URLs via JSON and loads images
   directly — see [`docs/WORKSHOP_METADATA.md`](./docs/WORKSHOP_METADATA.md).
+- **Chart rendering (CLS/perf).** `Recharts` kraunamas tiesiogiai kritiniams grafikams (`ModDetail` `Performance Timeline`) — `lazy` sukėlė tuščius grafikus visiems dėl hash mismatch (`ChunkLoadError`) ir `width(-1) height(-1)` klaidą. `ServerDetail` chartas paliktas `lazy` (veikia). `ResponsiveContainer` tėvas privalo turėti fiksuotą `h-[340px]` + `minWidth/minHeight={0}`, kitaip matuoja `-1`. Fontai: `latin-ext` pašalinti (14→6), `font-display: optional` per Vite pluginą — CLS 0.167→0.007.

@@ -95,6 +95,18 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 
 Heavy routes (`ModDetail`, `ServerDetail`, Storage Planner, Audit, Dependency Blockers) are `React.lazy()` in `App.tsx` — smaller initial JS bundle for list pages.
 
+### Charts (Recharts) — direct import for critical path
+
+`ModDetail` `Performance Timeline` imports `Recharts` **directly** (not `React.lazy`). `React.lazy` caused chunk hash mismatch after deploy → empty chart for all users until hard refresh (`ChunkLoadError` + `width(-1) height(-1)`). Keep `Recharts` in the main mod-detail chunk; `ServerDetail` chart may stay lazy (its chunk is stable). See `walkthrough.md` §10.
+
+### Fonts
+
+`main.tsx` imports only 6 fonts (Barlow 400/500/700/900 + JetBrains 400/700); `latin-ext` removed (14→6). `vite.config.ts` transforms `@fontsource` `font-display: swap` → `optional` (CLS 0.17→0.008). `index.css` fallback `@font-face` with `size-adjust`/`ascent-override`. `index.html` has no `preconnect` to `ar-gcp-cdn.bistudio.com` (unused preconnect removed after Lighthouse).
+
+### PowerShell file edits
+
+`Get-Content`/`Set-Content` without `-Encoding UTF8` corrupts `—` → `â€"` (mangled em-dash, `minus` → `âˆ'`). Use the `Edit` tool or `node fs` with `utf8` — never PowerShell for file edits.
+
 ### Mod favorites (client-only, v1.22+)
 
 `web/src/lib/modFavorites.ts` — no KV/API; up to 20 mod IDs per game in `localStorage`. Zero edge cost.

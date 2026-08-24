@@ -93,6 +93,8 @@ Spąstai:
 - Deploy automatinis su push į `main` — necommit'ink tiesiai į main su nepatikrintais pakeitimais.
 - `.env` reikalingas lokaliems kolektoriaus run'ams (BM API raktai) — niekada nesiųsk jo į repo (`.env` yra gitignore).
 - Kolektorius ir web dalis turi atskiras `package.json` — priklausomybės nededamos į vieną root sąrašą.
+- **PowerShell `Get-Content`/`Set-Content` be `-Encoding UTF8` gadina `—` → `â€"`** — naudoti `Edit` įrankį arba `node fs` su `utf8`; niekada `bash` su PowerShell failų redagavimui.
+- **Recharts `lazy` ant kritinių grafikų** — `React.lazy` + hash mismatch po deploy → tuščias grafikas visiems (ChunkLoadError, `width(-1)`). Laikyti `Recharts` tiesioginiame importe `ModDetail`; `ServerDetail` gali likti `lazy`.
 
 ## Kur skaityti (ne kopijuoti čia)
 
