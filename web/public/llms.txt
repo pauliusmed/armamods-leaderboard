@@ -1,0 +1,25 @@
+# Arma Reforger & Arma 3 Mod Leaderboard
+
+> Live telemetry for the Arma Reforger and Arma 3 Workshop ecosystem — player counts, server rankings, and trending mods from BattleMetrics. Not affiliated with Bohemia Interactive.
+
+## Overview
+- [Homepage — Mod Leaderboard](https://reforgermods.com/)
+- [Server Leaderboard](https://reforgermods.com/servers)
+- [Trending Mods](https://reforgermods.com/trending)
+- [Scenario Leaderboard](https://reforgermods.com/scenarios)
+- [Console Mod Storage Planner](https://reforgermods.com/arma-reforger-console-mod-storage)
+- [Config Audit](https://reforgermods.com/audit)
+- [Support / Community Fund](https://reforgermods.com/support)
+
+## API
+- [Stats](https://reforgermods.com/api/stats)
+- [Mods](https://reforgermods.com/api/mods)
+- [Servers](https://reforgermods.com/api/servers)
+- [Scenarios](https://reforgermods.com/api/scenarios)
+- [Sitemap Index](https://reforgermods.com/sitemap.xml)
+
+## Docs
+- [Walkthrough — Data Pipeline](https://github.com/pauliusmed/armamods-leaderboard/blob/main/walkthrough.md)
+- [Algorithm — Ranking & Trending](https://github.com/pauliusmed/armamods-leaderboard/blob/main/docs/ALGORITHM.md)
+- [Data Sync — BattleMetrics & KV](https://github.com/pauliusmed/armamods-leaderboard/blob/main/docs/DATA_SYNC.md)
+- [Storage Planner](https://github.com/pauliusmed/armamods-leaderboard/blob/main/docs/STORAGE_PLANNER.md)

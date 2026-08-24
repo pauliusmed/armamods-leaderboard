@@ -12,8 +12,24 @@
   --color-surface-base: #101923;
   --color-surface-card: #172635;
   --color-surface-elevated: #1C2E3F;
-  --font-sans: 'Barlow', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+  --font-sans: 'Barlow', 'Barlow Fallback', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', 'SF Mono', Monaco, monospace;
+}
+
+/* Fallback font metrics to eliminate CLS (PageSpeed 0.167 → <0.05) */
+@font-face {
+  font-family: 'Barlow Fallback';
+  src: local('Arial');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src: local('Consolas'), local('Courier New');
+  size-adjust: 102%;
+  ascent-override: 94%;
 }
 
 html,
