@@ -502,20 +502,6 @@ app.get('/mods/:modId', async (c) => {
     };
   }
 
-  if (Array.isArray(mod.coDeployed) && mod.coDeployed.length > 0 && modChunksText.length > 0) {
-    mod.coDeployed = mod.coDeployed.map((co: { id: string; name: string; count: number }) => {
-      const full = extractModFromChunks(modChunksText, co.id);
-      if (!full) return co;
-      return {
-        ...co,
-        totalPlayers: full.totalPlayers,
-        serverCount: full.serverCount,
-        overallRank: full.overallRank,
-        marketShare: full.marketShare,
-      };
-    });
-  }
-
   /**
    * ULTRA-OPTIMIZED SERVER LOOKUP:
    * Instead of parsing 20MB+ of JSON, we first scan the raw string for the modId.

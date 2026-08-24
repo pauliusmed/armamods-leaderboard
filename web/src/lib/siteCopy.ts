@@ -41,9 +41,6 @@ export const MOD_DETAIL_LIVE_FALLBACK =
 export const MOD_DETAIL_SEO_PLAYERS = (players: number, servers: number, rank: string | number) =>
   `${players.toLocaleString()} players on ${servers} active servers. Rank #${rank}.`;
 
-export const CO_DEPLOY_SUBTITLE =
-  'Mods on the same servers as this one — shared server count, not global popularity or workshop dependencies';
-
 export const SERVER_STATUS_FILTER_ARIA = 'Filter servers by online status';
 
 export const SERVER_STATUS_TITLE = (label: string) => `Server status: ${label}`;

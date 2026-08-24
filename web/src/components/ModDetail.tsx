@@ -20,7 +20,7 @@ import { buildModAuditRow, REFORGER_PATCHES, type AuditStatus } from '@audit-con
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { SITE_ORIGIN, modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { softwareApplicationJsonLd, breadcrumbJsonLd } from '../lib/seoJsonLd';
-import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CO_DEPLOY_SUBTITLE, CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_INACTIVE, CHART_SYNC_GAP_LEGEND } from '../lib/siteCopy';
+import { MOD_DETAIL_LIVE_FALLBACK, MOD_DETAIL_SEO_PLAYERS, CHART_NO_DATA_TITLE, CHART_NO_DATA_SYNC_PAUSED, CHART_NO_DATA_INACTIVE, CHART_SYNC_GAP_LEGEND } from '../lib/siteCopy';
 import { useDataFreshness } from '../hooks/useDataFreshness';
 import { withSyncGapMarker, maxGapMsForRange, formatGapSummary } from '../lib/chartSyncGap';
 import { ModAuthorLink } from './ui/ModAuthorLink';
@@ -35,7 +35,6 @@ import { useModFavorites } from '../hooks/useModFavorites';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { ModWorkshopUnavailableBanner } from './ui/ModWorkshopStatus';
 import { ModDependencyTable } from './ui/ModDependencyTable';
-import { CoDeployTable } from './ui/CoDeployTable';
 import { ServerDataTable, type ServerDataTableSortBy, type ServerDataTableSortDir } from './ui/ModDataTable';
 import { ServerRow } from './ServerRow';
 import { Pagination } from './ui/Pagination';
@@ -763,26 +762,6 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               ) : (
                 <ModDependencyTable deps={dependencies} game={game} total={depsMeta} />
               )}
-            </section>
-          )}
-
-          {/* Frequently Deployed Together Section */}
-          {mod.coDeployed && mod.coDeployed.length > 0 && (
-            <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
-              <div className="border-b border-white/5 pb-6">
-                <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
-                  🤝 Frequently Deployed Together
-                </h2>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
-                  {CO_DEPLOY_SUBTITLE}
-                </p>
-              </div>
-
-              <CoDeployTable
-                items={mod.coDeployed}
-                parentServerCount={mod.serverCount ?? mod.stats?.serverCount ?? 0}
-                game={game}
-              />
             </section>
           )}
 
