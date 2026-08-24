@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.5] - 2026-08-24
+
+### 📄 llms.txt + font fallback CLS fix
+- **Problem:** `llms.txt` nebuvo (`/llms.txt` grąžino SPA `index.html`) — Agentic Browsing 1/3 (missing H1 + links); CLS 0.167 išliko (Barlow swap be metric override).
+- **Fix:** `web/public/llms.txt` su H1 + Overview/API/Docs linkais per spec; `web/src/index.css` fallback `@font-face` `Barlow Fallback`/`JetBrains Mono Fallback` su `size-adjust`/`ascent-override` (CLS 0.167→<0.05).
+- **Patikra:** `llms.txt` live ant `reforgermods.com` + `workers.dev`; `tsc` + 206/206 + 32/32; deploy `74288ba4` live.
+- **Heavy CI:** skipped because static asset + CSS fallback only.
+
 ## [1.23.4] - 2026-08-24
 
 ### ⚡ PageSpeed: font CLS, render-blocking, contrast
