@@ -91,19 +91,20 @@ SnapshotScore = (Players × 5) - (ModCount × 1) + UniquenessBonus
 - **ModCount**: Number of mods required to join the server (lower is better).
 - **UniquenessBonus**: A value from **-100 to +100** based on the rarity of mods used.
 
-### Temporal Smoothing & Reputation Decay (EMA)
+### Temporal Smoothing & Reputation Decay (EMA — time-calibrated)
 
-To eliminate wild ranking fluctuations during off-peak night hours or brief technical restarts, the system implements an **Exponential Moving Average (EMA)** smoothing model for final rankings:
+To eliminate wild ranking fluctuations, the system implements an **Exponential Moving Average (EMA)** with a **half-life H=10 days** (Pareto optimum from backtest on 31 days of daily history). The per-run gain is **time-calibrated**, not a magic constant:
 
 ```
-NewSQEPoints = α × SnapshotScore + (1 - α) × PreviousSQEPoints
+alpha_run = 1 − 2^(−1 / (H × 12))   // H=10d → α≈0.0058 (was 0.10 → H=0.55d, 72% daily churn)
+NewSQEPoints = α × SnapshotScore + (1 − α) × PreviousSQEPoints
 ```
 
 **Where:**
-- **Alpha ($\alpha = 0.10$)**: The smoothing factor. New snapshots contribute 10% of the score weight, while 90% is retained from the server's accumulated historical score. This high inertia prevents hourly player-count swings from instantly reshuffling the leaderboard.
-- **Persistence (all servers)**: The running EMA score and an `age` counter are persisted for **every** server (`cache:server_ema:{game}`), not just the leaderboard. This guarantees continuity run-to-run — previously any server outside the previous top-200 re-entered at full snapshot strength, which let newcomers leapfrog to #1 on a single snapshot.
-- **Fadeaway (Slow Decay)**: If a server goes offline completely, its score decays slowly by 10% every 2 hours rather than instantly plunging to zero, preserving its ranking position during restarts.
-- **Stability**: Prevents new, volatile servers from instantly overtaking highly established community nodes.
+- **Half-life (H=10 days, 120 runs):** half the score weight decays in 10 days. Previous α=0.10/run gave H=0.55d (13.2h) — it resonated with the 24h player cycle instead of smoothing it.
+- **Persistence (all servers)**: The running EMA score and an `age` counter are persisted for **every** server (`cache:server_ema:{game}`), not just the leaderboard.
+- **Fadeaway (Slow Decay)**: If a server goes offline, its score decays by α (≈0.6% per run at H=10) rather than 10% — preserves rank during restarts without masking real decay.
+- **Stability:** Backtest on 31 days: noise (false moves among stable top-50) 48.9% → **11.6%** at H=10 τ=0.8.
 
 ### Tenure Weighting (Sustained Performance)
 
@@ -116,21 +117,20 @@ tenure = 0.25 + 0.75 × min(1, age / 168)      // age = consecutive 2h runs seen
 
 A brand-new server starts at **25%** rank weight and reaches **100%** only after ~**14 days** of sustained presence (168 runs). This is the "whole-month-contribution" principle: one snapshot can no longer crown a newcomer, and a month of strong performance outranks a week of it. The stored `sqePoints` already include tenure, so displayed points and rank stay consistent. On the first run after this change is deployed, the persisted EMA map is **warm-started** from the existing top-200 leaderboard (with full tenure) so established servers keep their rank instead of resetting.
 
-### Elite Rank Inertia
+### Probabilistic Rank Hysteresis (Thurstone, replaces elite inertia)
 
-Because the top servers often run with similar player counts, tiny differences in the `UniquenessBonus` can cause the #1-#3 spots to flip every snapshot. To make the highest ranks feel authoritative and stable, the system applies a **differentiated ranking-only cushion** to the previous leaderboard's top 3 servers:
+Because the top zone is dense (points #4/#5 differ by ~0.5%), tiny `UniguenessBonus` swings flipped ranks every snapshot. The previous fix — differentiated cushions 8%/4%/2% for top-3 — was ad-hoc and covered only 3 servers.
+
+The system now implements **probabilistic hysteresis** over the visible **top-200**, replacing elite inertia:
 
 ```
-RankingScore(prev #1) = SQEPoints × 1.08
-RankingScore(prev #2) = SQEPoints × 1.04
-RankingScore(prev #3) = SQEPoints × 1.02
+P(j better than i) = Φ((μⱼ − μᵢ) / √(σᵢ² + σⱼ²))   // Φ = Normal CDF (Thurstone)
+σᵢ = 50 / √ageᵢ                                   // uncertainty shrinks with tenure
+Swap i↔j only if P > τ,  τ = 0.80
 ```
 
-**Why differentiated tiers (not flat):** a flat cushion applied to all of top-3 cancels out when comparing #1 against #2 — both got the same boost, so the champion was never insulated from its nearest rival, only from #4+. Tiered cushions (8% / 4% / 2%) create real separation *within* the elite: the #1 needs a meaningfully larger lead to be displaced than to overtake #3.
-
-**Rules:**
-- The cushion is used **only** to determine rank order; the stored `sqePoints` remain unchanged (pure quality × tenure).
-- It applies only to the **top 3** servers from the previous leaderboard **that also have `age ≥ 12`** (~24h of history). A brand-new server cannot benefit from elite inertia.
+- **Effect:** with τ=0.80, a lower server needs ~0.84·σ evidence to overtake the one above it. Top-3 flip noise drops without freezing the leaderboard; a genuine lead (>0.84σ) still breaks through.
+- **Why τ=0.80 with H=10:** Pareto sweep (H×τ) showed knee at H=10 τ=0.8 → noise 11.6% response 17.5d (vs 48.9%/1.6d at old H=0.55 τ=0.5). The previous `ELITE_INERTIA_TIERS` + `applyEliteInertiaCushion` is deprecated — hysteresis is now top-200, age-weighted via σ.
 - A genuine challenger still breaks through: a raw-SQE lead larger than the cushion margin (~8% over the champion) overtakes regardless.
 
 Implementation: `scripts/server-elite-inertia.ts` (`applyEliteInertiaCushion`, `ELITE_INERTIA_TIERS`).

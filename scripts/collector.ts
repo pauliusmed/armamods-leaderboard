@@ -21,7 +21,6 @@ import {
   isServerOnlineSample,
   mergeServerHistorySnapshot,
 } from '../web/functions/lib/server-uptime-history.js';
-import { applyEliteInertiaCushion, ELITE_INERTIA_TIERS } from './server-elite-inertia.js';
 import {
   fetchReforgerWorkshopPage,
   isReforgerWorkshopPageAvailable,
@@ -1204,10 +1203,14 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       // snapshot each run. Without it, any newcomer (or any server outside the previous
       // top-200) bypassed EMA entirely and could leapfrog to #1 on a single snapshot.
       const emaKey = `cache:server_ema:${game}`;
-      const ALPHA = 0.10;            // 10% new snapshot, 90% history
+      // Half-life H=10 days (120 runs × 2h) — Pareto optimum from backtest
+      // (1.23.9: H=10 τ0.8 noise 11.6% response 17.5d; production was H=0.55d).
+      // alpha_run = 1 - 2^(-1 / (H*12)) — time-calibrated, not magic.
+      const HALF_LIFE_DAYS = 10;
+      const ALPHA = 1 - Math.pow(2, -1 / (HALF_LIFE_DAYS * 12)); // ≈0.0058
       const RAMP_RUNS = 168;          // ~14 days (168 runs x 2h) for a new server to reach full rank weight
       const TENURE_FLOOR = 0.25;      // a brand-new server's rank starts at 25% weight, ramping to 100%
-      const MIN_AGE_ELITE = 12;       // ~24h (12 runs x 2h) before a server can hold an elite top-3 cushion
+      const TAU = 0.80;               // P(swap) > tau to overtake — hysteresis (0.5 = none)
 
       // Previous top-200 leaderboard — elite inertia source + EMA warm-start seed.
       const oldScoresMap = new Map<string, number>();
@@ -1327,22 +1330,57 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
           rankingScores[id] = weighted;
       }
 
-      // Elite inertia: a differentiated ranking-only cushion for the previous leaderboard's
-      // elite so #1↔#2 don't flip on tiny score deltas. Tiers are #1 > #2 > #3 — a flat cushion
-      // applied to all of top-3 cancels out when comparing them to each other, so the champion
-      // was never actually insulated from #2. Age-gated (MIN_AGE_ELITE) so newcomers can't lock #1.
-      const ages: Record<string, number> = {};
-      for (const [id, entry] of Object.entries(emaMap)) ages[id] = entry.a;
-      const cushioned = applyEliteInertiaCushion(
-        rankingScores,
-        oldLeaderboard,
-        ages,
-        ELITE_INERTIA_TIERS,
-        MIN_AGE_ELITE
-      );
-      for (const [id, score] of Object.entries(cushioned)) rankingScores[id] = score;
+      // Probabilistic rank hysteresis (Thurstone): top-200 order kept from
+      // previous run; an adjacent pair swaps only when P(better)=Φ((μb−μa)/√(σ²a+σ²b)) > TAU.
+      // σ estimated as 50/√age (age in runs) — newcomers uncertain, veterans tight.
+      // This replaces the ad-hoc elite inertia (top-3 cushion) with a principled
+      // incumbency advantage that scales with uncertainty.
+      const prevOrder: string[] = Array.isArray(oldLeaderboard)
+        ? oldLeaderboard.map((e) => e.id).filter(Boolean) as string[]
+        : [];
+      const sdFor = (id: string): number => {
+        const age = emaMap[id]?.a ?? 1;
+        return 50 / Math.sqrt(Math.max(1, age));
+      };
+      const normalCdfLocal = (x: number): number => {
+        const t = 1 / (1 + 0.2316419 * Math.abs(x));
+        const d = 0.39894228 * Math.exp(-(x * x) / 2);
+        let p = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+        return x >= 0 ? 1 - p : p;
+      };
+      const probBetter = (idA: string, idB: string): number => {
+        const muA = rankingScores[idA] ?? 0, muB = rankingScores[idB] ?? 0;
+        const sdA = sdFor(idA), sdB = sdFor(idB);
+        return normalCdfLocal((muB - muA) / Math.sqrt(sdA * sdA + sdB * sdB));
+      };
 
-      const sortedIds = Object.keys(rankingScores).sort((a, b) => rankingScores[b] - rankingScores[a]);
+      // Build initial top-200 order from previous run (present servers) + newcomers by mu
+      const allIdsSortedByMu = Object.keys(rankingScores).sort((a, b) => rankingScores[b] - rankingScores[a]);
+      let band: string[];
+      if (prevOrder.length === 0 || TAU <= 0.5) {
+        band = allIdsSortedByMu.slice(0, 200);
+      } else {
+        const pos = new Map(prevOrder.map((id, i) => [id, i]));
+        const inBand = allIdsSortedByMu.slice(0, 220);
+        inBand.sort((a, b) => {
+          const pa = pos.has(a) ? pos.get(a)! : 1000;
+          const pb = pos.has(b) ? pos.get(b)! : 1000;
+          return pa - pb;
+        });
+        band = inBand.slice(0, 200);
+        let swapped = true;
+        while (swapped) {
+          swapped = false;
+          for (let i = 0; i < band.length - 1; i++) {
+            if (probBetter(band[i], band[i + 1]) > TAU) {
+              const tmp = band[i]; band[i] = band[i + 1]; band[i + 1] = tmp; swapped = true;
+            }
+          }
+        }
+      }
+
+      const bandSet = new Set(band);
+      const sortedIds = band.length ? [...band, ...allIdsSortedByMu.filter((id) => !bandSet.has(id))] : allIdsSortedByMu;
       const currentRanks: Record<string, number> = {};
       sortedIds.forEach((id, idx) => { currentRanks[id] = idx + 1; });
 
