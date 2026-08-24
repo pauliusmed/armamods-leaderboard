@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [Unreleased] — Backtest framework (SQE v2) — no deploy
+
+### 🔬 Server reitingavimas — akademinės formulės + backtest (auksinis viduriukas)
+- **Problema:** serveriai keitėsi per dažnai (`36172377`: 33→43→61→29→5→2→1 per 7d) — 4-tas patch ant to paties audinio.
+- **Šaknis rasta:** `ALPHA=0.10/run × 12 run/d = 72%` balo keičiasi kas dieną; pusamžis 13.2h rezonuoja su 24h paros ciklu (matuojame bangą, ne kokybę) + nėra neapibrėžtumo + tankio zona (top-5 skiriasi 0.5%).
+- **Teorija:** Thurstone latent strength + Kalman (H dienomis, ne α/run) + TF-IDF uniqueness + tikimybinė hysteresė `P(θⱼ>θᵢ)=Φ((μⱼ−μᵢ)/√(σᵢ²+σⱼ²))>τ`. Svoriai `WEIGHTS` konfige.
+- **Backtest (31d, 7474 serveriai, daily shards, `players×5`):** `scripts/backtest/sqe-framework.ts` — Pareto sweep H×τ; metrikos: noiseRate (stabilūs top-50 >5 pozicijų), responseDays (mid→top-20 improver). Frontier + knee. Rezultatas: EB-Kalman su gryna daily peak imtimi **nepralenkė** dabartinio EMA α=0.10/day duotojo ρ (0.98 vs 0.69) — įrodymas, kad be hourly diurnal kreivės EK modelis nebeatperka kompleksiškumo. Rekomendacija: **hourly tinklo sumų kaupimas** kelias savaites, tada v2 su tikra diurnal normalizacija; kol kas **α 0.10→0.05** ant daily duoda +20% ρ ir −5% maxJump su minimaliu churn padidėjimu (0.307→0.367) — įrodytas mažas žingsnis, ne 5-tas lopas.
+- **Testai:** `test/sqe-framework.test.ts` 9 atvejai (gainForHalfLife, normalCdf, knee, hysteresis: breakthrough vs stability).
+- **Kolektorius nepakeistas šiame PR — ataskaita prieš deploy;** kita iteracija naudos `H=10d τ=0.8` zoną (`α_run≈0.0058`, noise 11.6% response 17.5d) arba `H=14d τ=0.8` (10.6%/18d).
+
 ## [1.23.9] - 2026-08-24
 
 ### 📈 Fix: 1Y chart weekly buckets flagged as sync gaps

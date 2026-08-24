@@ -1,0 +1,543 @@
+{
+  "meta": {
+    "days": 31,
+    "sigmaE": 31.5,
+    "productionEquivalent": {
+      "H": 0.55,
+      "alphaRun": 0.1
+    }
+  },
+  "sweep": [
+    {
+      "H": 0.55,
+      "tau": 0.5,
+      "noiseRate": 0.4889,
+      "responseDays": 1.6,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.6,
+      "noiseRate": 0.2498,
+      "responseDays": 1.9,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.7,
+      "noiseRate": 0.1979,
+      "responseDays": 8.9,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.75,
+      "noiseRate": 0.1959,
+      "responseDays": 8.8,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.8,
+      "noiseRate": 0.1891,
+      "responseDays": 13,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.85,
+      "noiseRate": 0.1845,
+      "responseDays": 15.6,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.5,
+      "noiseRate": 0.4681,
+      "responseDays": 2.3,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.6,
+      "noiseRate": 0.2236,
+      "responseDays": 5.5,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.7,
+      "noiseRate": 0.2032,
+      "responseDays": 12.3,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.75,
+      "noiseRate": 0.191,
+      "responseDays": 16.2,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.8,
+      "noiseRate": 0.1876,
+      "responseDays": 15.2,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.85,
+      "noiseRate": 0.1789,
+      "responseDays": 13.5,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.5,
+      "noiseRate": 0.3803,
+      "responseDays": 6.7,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.6,
+      "noiseRate": 0.228,
+      "responseDays": 11.6,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.7,
+      "noiseRate": 0.1894,
+      "responseDays": 13.5,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.75,
+      "noiseRate": 0.1817,
+      "responseDays": 11.7,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.8,
+      "noiseRate": 0.167,
+      "responseDays": 16.2,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.85,
+      "noiseRate": 0.1413,
+      "responseDays": 18,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.5,
+      "noiseRate": 0.2952,
+      "responseDays": 10.8,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.6,
+      "noiseRate": 0.1967,
+      "responseDays": 14.1,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.7,
+      "noiseRate": 0.1824,
+      "responseDays": 13.6,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.75,
+      "noiseRate": 0.1694,
+      "responseDays": 13.3,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.8,
+      "noiseRate": 0.1442,
+      "responseDays": 17,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.85,
+      "noiseRate": 0.1323,
+      "responseDays": 16.8,
+      "reached": true
+    },
+    {
+      "H": 4,
+      "tau": 0.5,
+      "noiseRate": 0.2719,
+      "responseDays": 13.6,
+      "reached": true
+    },
+    {
+      "H": 4,
+      "tau": 0.6,
+      "noiseRate": 0.1916,
+      "responseDays": 15.6,
+      "reached": true
+    },
+    {
+      "H": 4,
+      "tau": 0.7,
+      "noiseRate": 0.1742,
+      "responseDays": 14.5,
+      "reached": true
+    },
+    {
+      "H": 4,
+      "tau": 0.75,
+      "noiseRate": 0.151,
+      "responseDays": 18.3,
+      "reached": true
+    },
+    {
+      "H": 4,
+      "tau": 0.8,
+      "noiseRate": 0.1336,
+      "responseDays": 17.8,
+      "reached": true
+    },
+    {
+      "H": 4,
+      "tau": 0.85,
+      "noiseRate": 0.126,
+      "responseDays": 18.5,
+      "reached": true
+    },
+    {
+      "H": 5,
+      "tau": 0.5,
+      "noiseRate": 0.2482,
+      "responseDays": 15.4,
+      "reached": true
+    },
+    {
+      "H": 5,
+      "tau": 0.6,
+      "noiseRate": 0.1767,
+      "responseDays": 15.5,
+      "reached": true
+    },
+    {
+      "H": 5,
+      "tau": 0.7,
+      "noiseRate": 0.167,
+      "responseDays": 17.5,
+      "reached": true
+    },
+    {
+      "H": 5,
+      "tau": 0.75,
+      "noiseRate": 0.1466,
+      "responseDays": 18.3,
+      "reached": true
+    },
+    {
+      "H": 5,
+      "tau": 0.8,
+      "noiseRate": 0.1324,
+      "responseDays": 18.5,
+      "reached": true
+    },
+    {
+      "H": 5,
+      "tau": 0.85,
+      "noiseRate": 0.1238,
+      "responseDays": 18.2,
+      "reached": true
+    },
+    {
+      "H": 7,
+      "tau": 0.5,
+      "noiseRate": 0.2395,
+      "responseDays": 15.7,
+      "reached": true
+    },
+    {
+      "H": 7,
+      "tau": 0.6,
+      "noiseRate": 0.1654,
+      "responseDays": 17.4,
+      "reached": true
+    },
+    {
+      "H": 7,
+      "tau": 0.7,
+      "noiseRate": 0.1566,
+      "responseDays": 17.5,
+      "reached": true
+    },
+    {
+      "H": 7,
+      "tau": 0.75,
+      "noiseRate": 0.1376,
+      "responseDays": 18.8,
+      "reached": true
+    },
+    {
+      "H": 7,
+      "tau": 0.8,
+      "noiseRate": 0.1246,
+      "responseDays": 18.3,
+      "reached": true
+    },
+    {
+      "H": 7,
+      "tau": 0.85,
+      "noiseRate": 0.1175,
+      "responseDays": 18.3,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.5,
+      "noiseRate": 0.2304,
+      "responseDays": 18.2,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.6,
+      "noiseRate": 0.1607,
+      "responseDays": 17.3,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.7,
+      "noiseRate": 0.1508,
+      "responseDays": 18.3,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.75,
+      "noiseRate": 0.1327,
+      "responseDays": 17.5,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.8,
+      "noiseRate": 0.1162,
+      "responseDays": 17.5,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.85,
+      "noiseRate": 0.114,
+      "responseDays": 20,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.5,
+      "noiseRate": 0.2221,
+      "responseDays": 18.8,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.6,
+      "noiseRate": 0.1504,
+      "responseDays": 18.5,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.7,
+      "noiseRate": 0.1439,
+      "responseDays": 17.5,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.75,
+      "noiseRate": 0.1264,
+      "responseDays": 18,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.8,
+      "noiseRate": 0.106,
+      "responseDays": 18,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.85,
+      "noiseRate": 0.0967,
+      "responseDays": 20,
+      "reached": true
+    },
+    {
+      "H": 21,
+      "tau": 0.5,
+      "noiseRate": 0.2159,
+      "responseDays": 18.7,
+      "reached": true
+    },
+    {
+      "H": 21,
+      "tau": 0.6,
+      "noiseRate": 0.1455,
+      "responseDays": 19,
+      "reached": true
+    },
+    {
+      "H": 21,
+      "tau": 0.7,
+      "noiseRate": 0.1379,
+      "responseDays": 19.5,
+      "reached": true
+    },
+    {
+      "H": 21,
+      "tau": 0.75,
+      "noiseRate": 0.1237,
+      "responseDays": 20,
+      "reached": true
+    },
+    {
+      "H": 21,
+      "tau": 0.8,
+      "noiseRate": 0.0983,
+      "responseDays": 25,
+      "reached": false
+    },
+    {
+      "H": 21,
+      "tau": 0.85,
+      "noiseRate": 0.0933,
+      "responseDays": 25,
+      "reached": false
+    }
+  ],
+  "paretoFrontier": [
+    {
+      "H": 0.55,
+      "tau": 0.5,
+      "noiseRate": 0.4889,
+      "responseDays": 1.6,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.6,
+      "noiseRate": 0.2498,
+      "responseDays": 1.9,
+      "reached": true
+    },
+    {
+      "H": 1,
+      "tau": 0.6,
+      "noiseRate": 0.2236,
+      "responseDays": 5.5,
+      "reached": true
+    },
+    {
+      "H": 0.55,
+      "tau": 0.75,
+      "noiseRate": 0.1959,
+      "responseDays": 8.8,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.75,
+      "noiseRate": 0.1817,
+      "responseDays": 11.7,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.75,
+      "noiseRate": 0.1694,
+      "responseDays": 13.3,
+      "reached": true
+    },
+    {
+      "H": 2,
+      "tau": 0.8,
+      "noiseRate": 0.167,
+      "responseDays": 16.2,
+      "reached": true
+    },
+    {
+      "H": 3,
+      "tau": 0.85,
+      "noiseRate": 0.1323,
+      "responseDays": 16.8,
+      "reached": true
+    },
+    {
+      "H": 10,
+      "tau": 0.8,
+      "noiseRate": 0.1162,
+      "responseDays": 17.5,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.8,
+      "noiseRate": 0.106,
+      "responseDays": 18,
+      "reached": true
+    },
+    {
+      "H": 14,
+      "tau": 0.85,
+      "noiseRate": 0.0967,
+      "responseDays": 20,
+      "reached": true
+    },
+    {
+      "H": 21,
+      "tau": 0.85,
+      "noiseRate": 0.0933,
+      "responseDays": 25,
+      "reached": false
+    }
+  ],
+  "chordKnee": {
+    "H": 0.55,
+    "tau": 0.6,
+    "noiseRate": 0.2498,
+    "responseDays": 1.9,
+    "reached": true
+  },
+  "constrainedOptimum": {
+    "H": 14,
+    "tau": 0.8,
+    "noiseRate": 0.106,
+    "responseDays": 18,
+    "reached": true
+  },
+  "constraints": {
+    "noiseRateMax": 0.13,
+    "responseDaysMax": 18,
+    "feasibleCount": 3
+  },
+  "recommendation": {
+    "halfLifeDays": 14,
+    "tau": 0.8,
+    "alphaPerRun": 0.0041,
+    "alphaPerRunFormula": "alpha_run = 1 - 2^(-1 / (H_days * 12))"
+  }
+}
