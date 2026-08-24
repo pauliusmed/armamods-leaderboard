@@ -2,6 +2,25 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.0] - 2026-08-24
+
+### ☁️ Pages → Workers migracija + deploy per Cloudflare
+- **Kas:** Pages Functions (`web/functions/api/[[path]].ts`, `_middleware.ts`, `sitemap*.ts` + `wrangler pages deploy` per GitHub) sujungti į vieną Cloudflare Worker `web/worker.ts` su Static Assets (`web/wrangler.toml` `assets` + `run_worker_first`).
+- **Deploy:** `.github/workflows/deploy.yml` pašalintas — deploy dabar vykdo **Cloudflare Workers Builds** (push į `main` → build `web/dist` + `wrangler deploy` Cloudflare pusėje; Root dir `web`). Kolektorius lieka GitHub Actions cron.
+- **Funkcionalumas nepakitęs:** Hono API, sitemap, share prerender (mod/server OG), KV `TRENDING_KV` ir Cache API logika identiška; SPA fallback per `ASSETS` + `not_found_handling = single-page-application`.
+- **Local dev:** naudok `npx wrangler dev --cwd web --local` (production parity); `src/index.ts` paliktas kaip deprecated proxy.
+- **Patikra:** `npm run build` + `wrangler deploy --dry-run` (84 assets, 227 KiB) ok; `npx tsc --noEmit` švarus; 206/206 root + 32/32 web testai.
+- **Heavy CI:** required because API hosting + deploy contract changed.
+
+## [1.22.53] - 2026-08-23
+
+### 🕒 Workshop aprašymų kešo TTL sutrumpintas (7 d. → 48 val.)
+- **Problem:** autorius atnaujinęs summary/description Workshop'e puslapyje matydavo seną tekstą iki **7 dienų** (`cache:mod-copy` TTL 604800) – realus atvejis: modas išleistas, aprašymas perrašytas, o svetainė rodė seną „test mod" tekstą.
+- **Fix:** `web/functions/lib/workshop-fetch.ts` – nauja `WORKSHOP_COPY_KV_TTL = 172800` (48 val.) tik `cache:mod-copy` raktui; kiti workshop metadata (og, deps, author, gallery, dates, size) lieka su 7 d. TTL.
+- **Pastaba:** modų dydžiai (`cache:mod-size`) vis dar 7 d. – atsinaujina per kolektoriaus warm'ą; jei reikės greitesnių – atskiras sprendimas.
+- **Patikra:** `npx tsc --noEmit` švarus; 206/206 pilni testai.
+- **Heavy CI:** skipped because single cache TTL constant change (no API contract / data model / collector algorithm changes).
+
 ## [1.22.52] - 2026-08-22
 
 ### 📄 Workshop aprašymų suskleidimo riba pakelta (320 → 700 simb.)

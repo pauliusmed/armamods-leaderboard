@@ -81,20 +81,20 @@ graph TD
         COL --> |co-deploy / EMA / sharding| KV[(Cloudflare KV)]
     end
 
-    subgraph "Edge API Cloudflare Pages Functions"
-        API[Hono Workers API] --> |Promise.all reads| KV
+    subgraph "Edge Worker (Static Assets + API)"
+        API[Hono on Workers] --> |Promise.all reads| KV
         API --> |surgical JSON extract| API
-        API --> |Cache API| User((End user))
+        API --> |Cache API + ASSETS| User((End user))
     end
 
-    subgraph "Frontend"
+    subgraph "Frontend (Vite SPA)"
         WEB[React 19 / Tailwind 4 / Recharts] --> API
     end
 
     BM --> COL
 ```
 
-Collector schedule: `.github/workflows/collector.yml` (`0 */2 * * *`). Ops: [docs/DATA_SYNC.md](docs/DATA_SYNC.md).
+Collector schedule: `.github/workflows/collector.yml` (`0 */2 * * *`). Deploy via Cloudflare Workers Builds (push į `main` → `web/dist` build + `wrangler deploy` Cloudflare pusėje; buvęs Pages deploy pašalintas 2026-08-24). Ops: [docs/DATA_SYNC.md](docs/DATA_SYNC.md).
 
 ---
 
@@ -102,9 +102,9 @@ Collector schedule: `.github/workflows/collector.yml` (`0 */2 * * *`). Ops: [doc
 
 | Layer | Technologies | Role |
 | :--- | :--- | :--- |
-| **Frontend** | React 19, Vite, Tailwind CSS v4, Recharts, TypeScript | Leaderboards, charts, client cache |
-| **API** | Hono on Cloudflare Pages Functions / Workers | Edge reads, workshop scrape, caching |
-| **Storage** | Cloudflare KV | Sharded rankings, history, metadata |
+| **Frontend** | React 19, Vite, Tailwind CSS v4, Recharts, TypeScript | Leaderboards, charts, client cache (served via Workers Assets) |
+| **API** | Hono on Cloudflare Workers (unified `web/worker.ts` + `assets` + `run_worker_first`) | Edge reads, workshop scrape, sitemap, share prerender, caching |
+| **Storage** | Cloudflare KV (`TRENDING_KV`) | Sharded rankings, history, metadata |
 | **Ingestion** | TypeScript collector, BattleMetrics REST, GitHub Actions | Cron ~2h collect + trending |
 
 ---
@@ -169,8 +169,9 @@ TBT **970 ms → 0 ms** (desktop) by collapsing ~72 per-row API calls into one `
    Ops: [docs/DATA_SYNC.md](docs/DATA_SYNC.md).
 
 4. **Run**
-   * Backend proxy: `npm run dev` (local proxy; production API is `web/functions/api/[[path]].ts` on Pages Functions).
-   * Frontend: `cd web && npm run dev`
+   * Full Worker (API + SPA, production parity): `npx wrangler dev --cwd web --local` (build `web` first via `npm --prefix web run build`).
+   * Frontend only: `cd web && npm run dev`
+   * Legacy proxy (deprecated): `npm run dev` → proxies to production Worker.
 
 ---
 
