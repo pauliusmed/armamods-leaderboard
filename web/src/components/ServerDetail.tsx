@@ -99,6 +99,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     removed: Array<{ id: string; name: string }>;
   }>
 >([]);
+  const [modChangesMeta, setModChangesMeta] = useState<{ lastSnapshotDate?: string | null } | null>(null);
   const [expandedModSections, setExpandedModSections] = useState<Set<string>>(new Set());
 
   const [modSearch, setModSearch] = useState('');
@@ -213,10 +214,12 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       const res = await serversApi.getModChanges(serverId, modChangeDays, game);
       if (cancelled) return;
       setModChanges(res.data || []);
+      setModChangesMeta(res.meta ?? null);
       setExpandedModSections(new Set());
       } catch {
         if (cancelled) return;
       setModChanges([]);
+      setModChangesMeta(null);
       }
     })();
     return () => {
@@ -792,6 +795,10 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             </h2>
             <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
               Daily added / removed vs previous snapshot
+            </p>
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-gray-600">
+              Updates once daily (~00:00 UTC)
+              {modChangesMeta?.lastSnapshotDate ? ` · data as of ${modChangesMeta.lastSnapshotDate}` : ''}
             </p>
           </div>
           <div className="flex gap-2 p-1 bg-zinc-900 border border-white/10">

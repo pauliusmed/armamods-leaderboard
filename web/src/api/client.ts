@@ -317,7 +317,7 @@ export const serversApi = {
           added: Array<{ id: string; name: string }>;
           removed: Array<{ id: string; name: string }>;
         }>;
-        meta: { days: number; retention: number; tracking: boolean; daysAvailable?: number };
+        meta: { days: number; retention: number; tracking: boolean; daysAvailable?: number; lastSnapshotDate?: string | null };
       }>(`servers/${serverId}/mod-changes`, {
         params: { days, game },
       });

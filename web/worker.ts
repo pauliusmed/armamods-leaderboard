@@ -4,7 +4,8 @@
  * Serves static assets (Vite SPA) + Hono API + sitemap + share prerender.
  * Migrated from Pages Functions (functions/api/[[path]].ts + _middleware.ts).
  */
-// @ts-nocheck — Workers bundling via wrangler handles types; CI checks src/ separately
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck — worker.ts not in any tsconfig (wrangler bundles it; types come from workers-types reference below).
 /// <reference types="@cloudflare/workers-types" />
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -1317,6 +1318,8 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
   }
 
   const data = extractServerModChanges(history, serverId, days);
+  // lastSnapshotDate — newest day in the ring, so the UI can show "data as of"
+  // and users don't mistake the once-daily cadence for stale data.
   const response = c.json({
     data,
     meta: {
@@ -1324,6 +1327,7 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
       retention: MODPACK_DIFF_RETENTION_DAYS,
       tracking: true,
       daysAvailable: history.length,
+      lastSnapshotDate: history.length > 0 ? history[history.length - 1]?.time ?? null : null,
     },
   });
   response.headers.set('Cache-Control', 'public, max-age=300');
