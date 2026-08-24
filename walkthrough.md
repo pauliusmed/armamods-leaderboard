@@ -37,19 +37,16 @@ scripts/collector.ts  ──  ranks, trends, SQE scores, scenario leaderboard, h
 Cloudflare KV  (namespace TRENDING_KV)
         │  parallel Promise.all reads
         ▼
-web/functions/api/[[path]].ts  ──  Hono edge API (Cloudflare Pages Functions)
+web/worker.ts  ──  Hono edge API + SPA assets (Cloudflare Workers Static Assets)
         │  surgical string extraction (no full JSON.parse on large blobs)
         ▼
 React 19 + Vite + Tailwind 4 + Recharts  (web/src)
 ```
 
-The repository ships **two entrypoints**, and this is the single most important
-thing to understand up front:
+The repository ships **one unified entrypoint** (migrated from Pages Functions 2026-08-24):
 
-- `src/index.ts` — a **local-only Express proxy** that mirrors the production
-  Worker for frontend development. It contains no business logic (37 lines).
-- `web/functions/api/[[path]].ts` — the **real edge API** (1000+ lines). This is
-  where all read paths live in production.
+- `web/worker.ts` — the **real edge Worker** (API + sitemap + share prerender + ASSETS fallback). Exports `default { fetch }` with `run_worker_first` for `/api/*`, `/sitemap/*`, `/mod/*`, `/server/*`.
+- `src/index.ts` — **deprecated** Express proxy (37 lines), kept for `npm run dev` compat. Production uses `npx wrangler dev --cwd web` instead.
 
 ---
 
@@ -265,10 +262,11 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 
 ## 7. Infrastructure & automation
 
-- **Hosting**: Cloudflare Pages (frontend + Functions) and KV.
+- **Hosting**: Cloudflare Workers (Static Assets + API) and KV — migrated from Pages 2026-08-24 (`web/worker.ts`, `web/wrangler.toml` with `assets` + `run_worker_first`).
+- **Deploy**: Cloudflare Workers Builds (GitHub-connected). Push į `main` automatiškai buildina `web` (`npm run build` → `web/dist`) ir `npx wrangler deploy` Cloudflare pusėje. `.github/workflows/deploy.yml` pašalintas — deploy nebevyksta per GitHub Actions. Konfigūracija: Cloudflare dashboard → Workers & Pages → `armamods-leaderboard` → Settings → Builds → Root directory `web`, Build `npm run build`, Deploy `npx wrangler deploy`.
 - **Collector cron**: `.github/workflows/collector.yml`, `0 */2 * * *`. Runs
   Reforger collect → Arma 3 collect → Reforger trending → Arma 3 trending, with
-  dependencies so Arma 3 reuses leftover BM quota.
+  dependencies so Arma 3 reuses leftover BM quota. (Lieka GitHub — KV writes via API token).
 - **BattleMetrics API**: since ~2026-07-20 all BM requests require a paid
   subscription PAT (`BATTLEMETRICS_API_KEY` in GitHub Actions secrets). Without
   it the collector fails; the UI keeps serving the last KV snapshot and shows a
@@ -277,7 +275,6 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
   sets `enabled=false|true`. Re-enabled **2026-07-25** after BM PAT in GitHub
   secrets (`BATTLEMETRICS_API_KEY`). Set back to `false` if the key is revoked.
 - **CI**: `.github/workflows/ci.yml` runs the test suite on PRs.
-- **Deploy**: `.github/workflows/deploy.yml` publishes to Cloudflare.
 
 KV writes are the scarce resource on the free tier (~1000/day, ~41/run at 24
 runs/day). The collector is designed around this: SQE scores are computed before
@@ -291,8 +288,13 @@ the first server write to avoid a second pass, and co-deployment adds zero write
 npm install                 # root deps
 cd web && npm install       # frontend deps
 
-npm run dev                 # local proxy mirroring the production Worker
-cd web && npm run dev       # Vite dev server (frontend)
+# Preferred local Worker (API + SPA assets, same as production):
+npx wrangler dev --cwd web --local
+
+# Alt Vite only (frontend):
+cd web && npm run dev
+# Legacy proxy (deprecated):
+npm run dev
 ```
 
 Env vars (see `.env.example`): `PORT`, `BATTLEMETRICS_API_KEY` (required for

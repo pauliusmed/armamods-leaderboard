@@ -1,18 +1,13 @@
 /**
- * @file [[path]].ts
- * @description API Gateway for Arma Mods Leaderboard.
- * Built with Hono and deployed as Cloudflare Pages Functions.
- *
- * PERFORMANCE STRATEGY:
- * 1. Global Edge Caching: Leverages Cloudflare Cache API for sub-1ms response times.
- * 2. CPU Efficiency: Utilizes string-based scanning within large JSON blobs to
- *    minimize V8 parsing overhead.
- * 3. Sharded Data Retrieval: Orchestrates multi-key KV reads for datasets
- *    exceeding 25MB.
+ * @file worker.ts
+ * @description Unified Cloudflare Worker for Arma Mods Leaderboard.
+ * Serves static assets (Vite SPA) + Hono API + sitemap + share prerender.
+ * Migrated from Pages Functions (functions/api/[[path]].ts + _middleware.ts).
  */
+// @ts-nocheck — Workers bundling via wrangler handles types; CI checks src/ separately
+/// <reference types="@cloudflare/workers-types" />
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { handle } from 'hono/cloudflare-pages';
 import {
   auditHighlights,
   buildModAuditRow,
@@ -22,32 +17,63 @@ import {
   sortAuditRowsWorstFirst,
   type AuditStatus,
   type HistoryPoint,
-} from './audit-config';
-import { resolveHistoryQuery, type GameType as HistoryGameType } from './history-query';
+} from './functions/api/audit-config';
+import { resolveHistoryQuery, type GameType as HistoryGameType } from './functions/api/history-query';
 import {
+  buildShareMeta,
   defaultOgImage,
+  isIndexerCrawler,
+  isShareCrawler,
   lookupModsByIds,
+  parseShareRoute,
+  renderShareHtml,
   type ShareGame,
-} from '../lib/share-meta';
-import { authorCacheKey, ogImageCacheKey, statusCacheKey, resolveModDependencies, resolveModAuthor, resolveModWorkshopCopy, resolveModGallery, resolveModThumbnailUrl, resolveModWorkshopDates, resolveModWorkshopStatus, resolveModSizeBytes, resolveModSizesBatch, sumModpackSizes } from '../lib/workshop-fetch';
-import { findServerById, ServerLookup } from '../lib/server-lookup';
-import { findReverseDependentsOnServer } from '../lib/reverse-deps';
-import { analyzeStoragePlan } from '../lib/storage-calc';
-import { buildServerStoragePack } from '../lib/storage-service';
-import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from '../lib/search-match';
-import { buildScenarioRanking, scenarioKey } from '../lib/scenario-ranking';
-import { parseServerHistoryFields } from '../lib/server-uptime-history';
-import { extractModFromChunks } from '../lib/mod-lookup';
-import { loadAliasedModIdSet, modAliasKey, type ModAliasRecord } from '../lib/mod-alias';
+} from './functions/lib/share-meta';
+import {
+  authorCacheKey,
+  ogImageCacheKey,
+  statusCacheKey,
+  resolveModDependencies,
+  resolveModAuthor,
+  resolveModWorkshopCopy,
+  resolveModGallery,
+  resolveModThumbnailUrl,
+  resolveModWorkshopDates,
+  resolveModWorkshopStatus,
+  resolveModSizeBytes,
+  resolveModSizesBatch,
+  sumModpackSizes,
+} from './functions/lib/workshop-fetch';
+import { findServerById, ServerLookup } from './functions/lib/server-lookup';
+import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
+import { analyzeStoragePlan } from './functions/lib/storage-calc';
+import { buildServerStoragePack } from './functions/lib/storage-service';
+import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from './functions/lib/search-match';
+import { buildScenarioRanking, scenarioKey } from './functions/lib/scenario-ranking';
+import { parseServerHistoryFields } from './functions/lib/server-uptime-history';
+import { extractModFromChunks } from './functions/lib/mod-lookup';
+import { loadAliasedModIdSet, modAliasKey, type ModAliasRecord } from './functions/lib/mod-alias';
 import {
   extractServerModChanges,
   modpackDiffKeys,
   MODPACK_DIFF_RETENTION_DAYS,
   type ModpackDiffDay,
-} from '../lib/modpack-diff';
+} from './functions/lib/modpack-diff';
+import {
+  modDetailUrl,
+  renderSitemapIndex,
+  renderUrlset,
+  serverDetailUrl,
+  sitemapIndexEntries,
+  staticSitemapUrls,
+  urlsFromIds,
+  xmlResponse,
+} from './functions/lib/sitemap';
+import { loadListIdsFromKv } from './functions/lib/sitemap-kv';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
+  ASSETS: Fetcher;
   CLOUDFLARE_API_TOKEN?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
 };
@@ -1417,7 +1443,7 @@ app.get('/badge/server/:serverId', async (c) => {
   const cached = await cache.match(c.req.raw);
   if (cached) return cached;
 
-  const serverId = c.param('serverId');
+  const serverId = c.req.param('serverId');
   const game = getGameFromQuery(c);
   const keys = getKVKeys(game);
 
@@ -2225,4 +2251,114 @@ app.get('/admin/analytics', async (c) => {
   return c.json(result);
 });
 
-export const onRequest = handle(app);
+// ──────────────────────────────────────────────
+// Sitemap helpers for Worker (mirrors Pages Functions)
+// ──────────────────────────────────────────────
+async function buildSitemapPart(kv: KVNamespace, part: string): Promise<string | null> {
+  const p = part.replace(/\.xml$/i, '').toLowerCase();
+  if (p === 'pages') return renderUrlset(staticSitemapUrls());
+  if (p === 'mods' || p === 'servers') {
+    const urls: Array<{ loc: string; changefreq?: any; priority?: number }> = [];
+    if (p === 'mods') {
+      for (const game of ['reforger', 'arma3'] as const) {
+        let ids = await loadListIdsFromKv(kv, 'mods', game);
+        if (game === 'reforger') {
+          const aliased = await loadAliasedModIdSet(kv, game);
+          if (aliased.size) ids = ids.filter((id) => !aliased.has(id.toUpperCase()));
+        }
+        urls.push(...urlsFromIds(ids, (id) => modDetailUrl(id, game), 'daily', game === 'reforger' ? 0.7 : 0.6));
+      }
+    } else {
+      for (const game of ['reforger', 'arma3'] as const) {
+        const ids = await loadListIdsFromKv(kv, 'servers', game);
+        urls.push(...urlsFromIds(ids, (id) => serverDetailUrl(id, game), 'daily', game === 'reforger' ? 0.6 : 0.5));
+      }
+    }
+    return renderUrlset(urls as any);
+  }
+  return null;
+}
+
+// ──────────────────────────────────────────────
+// Unified Worker fetch — replaces Pages Functions routing
+// Handles: /api/* (Hono), /sitemap*, prerender for crawlers, SPA assets
+// ──────────────────────────────────────────────
+export default {
+  async fetch(request: Request, env: Bindings, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+
+    // API — delegate to Hono (includes /api/sitemap* if needed, but root sitemap handled below)
+    if (url.pathname.startsWith('/api/')) {
+      return app.fetch(request, env as any, ctx as any);
+    }
+
+    // Root sitemap index
+    if (url.pathname === '/sitemap.xml') {
+      const cache = caches.default as Cache;
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      const body = renderSitemapIndex(sitemapIndexEntries());
+      const response = xmlResponse(body, 3600);
+      ctx.waitUntil(cache.put(request, response.clone()));
+      return response;
+    }
+
+    // Child sitemaps: /sitemap/pages.xml, /sitemap/mods.xml, /sitemap/servers.xml
+    if (url.pathname.startsWith('/sitemap/')) {
+      const part = url.pathname.slice('/sitemap/'.length);
+      const cache = caches.default as Cache;
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      const body = await buildSitemapPart(env.TRENDING_KV as KVNamespace, part);
+      if (!body) return new Response('Not found', { status: 404 });
+      const response = xmlResponse(body, 3600);
+      ctx.waitUntil(cache.put(request, response.clone()));
+      return response;
+    }
+
+    // Share prerender — same logic as Pages _middleware.ts
+    // Skip static asset extensions and API
+    const pathname = url.pathname;
+    if (
+      !pathname.startsWith('/assets') &&
+      !pathname.startsWith('/api') &&
+      pathname !== '/sitemap.xml' &&
+      !pathname.startsWith('/sitemap/')
+    ) {
+      const route = parseShareRoute(pathname);
+      // Alias redirect for reforger mods (301 for all UAs, not just crawlers)
+      if (route && route.kind === 'mod' && route.game === 'reforger') {
+        try {
+          const raw = await (env.TRENDING_KV as KVNamespace).get(modAliasKey(route.game, route.id), 'text');
+          if (raw) {
+            const alias = JSON.parse(raw) as ModAliasRecord;
+            if (alias?.targetId) {
+              const targetPath = `/mod/${encodeURIComponent(alias.targetId.toUpperCase())}`;
+              return new Response(null, {
+                status: 301,
+                headers: { Location: `${targetPath}${url.search}`, 'Cache-Control': 'public, max-age=300' },
+              });
+            }
+          }
+        } catch {
+          /* ignore corrupt alias */
+        }
+      }
+
+      const userAgent = request.headers.get('user-agent') || '';
+      if (route && isShareCrawler(userAgent)) {
+        const meta = await buildShareMeta(env.TRENDING_KV as KVNamespace, route);
+        if (meta) {
+          const mode = isIndexerCrawler(userAgent) ? 'indexer' : 'social';
+          return new Response(renderShareHtml(meta, { mode }), {
+            headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+          });
+        }
+      }
+    }
+
+    // Fallback to static assets (SPA). With not_found_handling = single-page-application,
+    // non-asset routes serve index.html automatically.
+    return env.ASSETS.fetch(request);
+  },
+} satisfies ExportedHandler<Bindings>;

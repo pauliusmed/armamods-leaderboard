@@ -76,14 +76,15 @@ PR aprašyme: `Heavy CI: required because <priežastis>` arba `Heavy CI: skipped
 
 | Grupė | Komandos | Pastaba |
 | ----- | -------- | ------- |
-| Dev (API) | `npm run dev` | Express API (`src/index.ts`, tsx watch) |
-| Dev (web) | `npm --prefix web run dev` | Vite dev serveris (React SPA) |
+| Dev (Worker) | `npx wrangler dev --cwd web --local` | Unified Worker (API + SPA assets `web/worker.ts` + `ASSETS`) — production parity |
+| Dev (web) | `npm --prefix web run dev` | Vite dev serveris (React SPA only) |
+| Dev (legacy) | `npm run dev` | Deprecated Express proxy (`src/index.ts`) — nenaudoti prod |
 | Kolektorius | `npm run collect` / `collect:arma3` / `trending` / `trending:arma3` | BattleMetrics → KV; production'e paleidžia GitHub Actions cron |
 | Test (root) | `npm test` | tsx --test; **explicit failų sąrašas package.json — naują testų failą PRIDĖK į sąrašą!** |
 | Test (web) | `npm --prefix web test` | Vitest |
-| Lint / type | `npm --prefix web run lint` (eslint web/), `npx tsc --noEmit` (visas repo) | |
-| Build | `npm run build` | web build + `dist/` kopijavimas |
-| Deploy | push į `main` | Cloudflare Pages + KV (`TRENDING_KV`) per `.github/workflows/deploy.yml`; Discord release žinutė per webhook |
+| Lint / type | `npm --prefix web run lint` (eslint web/), `npx tsc --noEmit` (visas repo), `npx --cwd web wrangler deploy --dry-run` (Worker bundling) | |
+| Build | `npm --prefix web run build` | Vite → `web/dist` (Workers assets) |
+| Deploy | push į `main` | Cloudflare Workers Builds (GitHub-connected, Root `web`, Build `npm run build`, Deploy `wrangler deploy`); Discord release per `DISCORD_RELEASES.md` webhook (GitHub Action jei paliktas) |
 
 Spąstai:
 

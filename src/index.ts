@@ -1,3 +1,8 @@
+/**
+ * @deprecated — legacy local proxy (Pages era).
+ * Naudok `npx wrangler dev --cwd web` (Workers su ASSETS) vietoj `npm run dev`.
+ * Paliktas laikinai dev patogumui, bet nebedalyvauja production deploy.
+ */
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';

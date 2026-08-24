@@ -1,16 +1,16 @@
-# Cloudflare Workers — unified SPA + API (migrated from Pages Functions 2026-08-24)
+# Root wrapper — real config lives in web/wrangler.toml
+# Allows `npx wrangler deploy` from repo root (calls web/worker). Cloudflare Builds should use Root directory = web.
 name = "armamods-leaderboard"
 compatibility_date = "2026-08-24"
 compatibility_flags = ["nodejs_compat"]
-main = "./worker.ts"
+main = "web/worker.ts"
 
 [assets]
-directory = "./dist"
+directory = "web/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*", "/sitemap.xml", "/sitemap/*", "/mod/*", "/server/*", "/arma3/*", "/og/*", "/badge/*"]
 
-# KV Namespace for mods, servers and history (same as before)
 [[kv_namespaces]]
 binding = "TRENDING_KV"
 id = "a8f21c595e39452e95e7e41e3d812013"
