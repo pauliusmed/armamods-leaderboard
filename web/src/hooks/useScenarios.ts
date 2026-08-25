@@ -110,7 +110,7 @@ export function useScenarios(options: UseScenariosOptions = {}) {
       ? ranking.filter((s) => s.name.toLowerCase().includes(query))
       : ranking;
 
-    const dir = sortDir === 'asc' ? -1 : 1;
+    const dir = sortDir === 'asc' ? 1 : -1;
     return [...filtered].sort((a, b) => {
       if (sortBy === 'rank') return dir * (a.rank - b.rank);
       if (sortBy === 'players') {

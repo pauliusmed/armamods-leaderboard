@@ -88,18 +88,18 @@ export function sortServerMods<T extends FilterableServerMod>(
   sortDir: 'asc' | 'desc' = 'desc'
 ): T[] {
   const list = [...mods];
-  const dir = sortDir === 'asc' ? -1 : 1;
+  const dir = sortDir === 'asc' ? 1 : -1;
   list.sort((a, b) => {
     if (sort === 'name') return dir * a.name.localeCompare(b.name);
     if (sort === 'rank') return dir * (a.playerRank - b.playerRank);
-    if (sort === 'size') return dir * ((b.sizeBytes ?? 0) - (a.sizeBytes ?? 0));
-    if (sort === 'deploy') return dir * ((b.serverCount || 0) - (a.serverCount || 0));
+    if (sort === 'size') return dir * ((a.sizeBytes ?? 0) - (b.sizeBytes ?? 0));
+    if (sort === 'deploy') return dir * ((a.serverCount || 0) - (b.serverCount || 0));
     if (sort === 'share') {
       const shareA = totalServers > 0 ? (a.serverCount || 0) / totalServers : 0;
       const shareB = totalServers > 0 ? (b.serverCount || 0) / totalServers : 0;
-      return dir * (shareB - shareA);
+      return dir * (shareA - shareB);
     }
-    return dir * ((b.totalPlayers || 0) - (a.totalPlayers || 0));
+    return dir * ((a.totalPlayers || 0) - (b.totalPlayers || 0));
   });
   return list;
 }

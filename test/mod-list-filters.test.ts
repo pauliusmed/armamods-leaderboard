@@ -77,4 +77,23 @@ describe('sortServerMods', () => {
     const out = sortServerMods(mods, 'size', 100, 'asc');
     assert.deepEqual(out.map((m) => m.id), ['A', 'B']);
   });
+
+  it('sorts by name ascending alphabetically', () => {
+    const out = sortServerMods(mods, 'name', 100, 'asc');
+    assert.deepEqual(out.map((m) => m.id), ['B', 'A']);
+  });
+
+  it('sorts by rank ascending with best rank first', () => {
+    const ranked = [
+      mod({ id: 'A', name: 'Zulu', playerRank: 42 }),
+      mod({ id: 'B', name: 'Alpha', playerRank: 7 }),
+    ];
+    const out = sortServerMods(ranked, 'rank', 100, 'asc');
+    assert.deepEqual(out.map((m) => m.id), ['B', 'A']);
+  });
+
+  it('sorts by players descending with most players first', () => {
+    const out = sortServerMods(mods, 'players', 100, 'desc');
+    assert.deepEqual(out.map((m) => m.id), ['B', 'A']);
+  });
 });

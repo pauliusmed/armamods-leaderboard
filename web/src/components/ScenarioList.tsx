@@ -126,7 +126,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
     setDeployedSortDir(column === 'name' || column === 'rank' ? 'asc' : 'desc');
   };
   const sortedDeployedServers = useMemo(() => {
-    const dir = deployedSortDir === 'asc' ? -1 : 1;
+    const dir = deployedSortDir === 'asc' ? 1 : -1;
     return [...selectedServers].sort((a, b) => {
       if (deployedSortBy === 'rank') return dir * ((a.sqeRank ?? 99999) - (b.sqeRank ?? 99999));
       if (deployedSortBy === 'name') return dir * a.name.localeCompare(b.name);

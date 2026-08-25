@@ -108,7 +108,7 @@ export function ModDependencyTable({
   };
 
   const sortedDeps = useMemo(() => {
-    const dir = sortDir === 'asc' ? -1 : 1;
+    const dir = sortDir === 'asc' ? 1 : -1;
     return [...deps].sort((a, b) => {
       if (sortBy === 'name') return dir * a.name.localeCompare(b.name);
       if (sortBy === 'size') return dir * ((a.sizeBytes ?? 0) - (b.sizeBytes ?? 0));

@@ -212,7 +212,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
 
   const sortedDeployedServers = useMemo(() => {
     if (!mod?.servers) return [];
-    const dir = serversSortDir === 'asc' ? -1 : 1;
+    const dir = serversSortDir === 'asc' ? 1 : -1;
     return [...mod.servers].sort((a, b) => {
       if (serversSortBy === 'rank') return dir * ((a.sqeRank ?? 99999) - (b.sqeRank ?? 99999));
       if (serversSortBy === 'name') return dir * a.name.localeCompare(b.name);

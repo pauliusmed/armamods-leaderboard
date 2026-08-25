@@ -115,7 +115,7 @@ function OfficialScenariosTable({ gamePrefix }: { gamePrefix: string }) {
     setSortDir('asc');
   };
   const sorted = useMemo(() => {
-    const dir = sortDir === 'asc' ? -1 : 1;
+    const dir = sortDir === 'asc' ? 1 : -1;
     return [...OFFICIAL_SCENARIOS].sort((a, b) => {
       if (sortBy === 'title') return dir * a.title.localeCompare(b.title);
       return dir * a.scenarioId.localeCompare(b.scenarioId);

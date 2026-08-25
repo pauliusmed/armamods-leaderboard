@@ -38,7 +38,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
   const [depSortDir, setDepSortDir] = useState<'asc' | 'desc'>('asc');
   const sortedDependents = useMemo(() => {
     if (!result) return [];
-    const dir = depSortDir === 'asc' ? -1 : 1;
+    const dir = depSortDir === 'asc' ? 1 : -1;
     return [...result.dependents].sort((a, b) => dir * a.name.localeCompare(b.name));
   }, [result, depSortDir]);
 
