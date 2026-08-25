@@ -2,6 +2,12 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.14] - 2026-08-24
+
+### 📋 GUI atskirame stulpelyje (tarp Author ir Personnel)
+- **Problema:** GUI buvo po pavadinimu `MODULE` stulpelyje — ankšta, sunkiai kopijuojama, ypač `ArmaConflict_VinDrop` tipo 1051 eilutėje.
+- **Fix:** naujas `GUI` stulpelis (`hidden md:table-cell`, `w-132px`) tarp `AUTHOR` ir `PERSONNEL`; desktop atskiras stulpelis su `code` + `Copy`, mobile paliktas po pavadinimu (`md:hidden`). `MOD_LEADERBOARD_COL_COUNT` 8→9.
+
 ## [1.23.13] - 2026-08-24
 
 ### ↩️ Mod puslapis: paieška pašalinta
