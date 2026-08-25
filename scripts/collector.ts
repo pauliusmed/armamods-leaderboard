@@ -26,6 +26,7 @@ import {
   isReforgerWorkshopPageAvailable,
   cacheReforgerFieldsFromWorkshopHtml,
 } from '../web/functions/lib/workshop-fetch.ts';
+import { persistModsSearchIndexFromWarm } from '../web/functions/lib/mods-search-index.ts';
 import {
   findModAliasTarget,
   modAliasKey,
@@ -348,7 +349,8 @@ async function warmTopModSizesFromWorkshop(
   game: GameType,
   modList: Array<{ id: string; overallRank: number; sizeBytes?: number | null; author?: string | null }>,
   limit = 300,
-  unavailableIds: string[] = []
+  unavailableIds: string[] = [],
+  copiesOut?: Map<string, { summary?: string | null; description?: string | null }>
 ): Promise<void> {
   if (game !== 'reforger') return;
 
@@ -372,7 +374,10 @@ async function warmTopModSizesFromWorkshop(
             return;
           }
           if (!page.html) return;
-          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, mod.id, page.html);
+          const { sizeBytes, author, copy } = await cacheReforgerFieldsFromWorkshopHtml(kv, mod.id, page.html);
+          if ((copy.summary || copy.description) && copiesOut) {
+            copiesOut.set(mod.id.toUpperCase(), copy);
+          }
           if (sizeBytes) mod.sizeBytes = sizeBytes;
           if (author) mod.author = author;
           if (sizeBytes || author) warmed++;
@@ -393,7 +398,8 @@ async function warmServerModpackModSizes(
   serverList: Array<{ players?: number; mods?: Array<{ id: string }> }>,
   modList: Array<{ id: string; sizeBytes?: number | null; author?: string | null }>,
   limit = 500,
-  unavailableIds: string[] = []
+  unavailableIds: string[] = [],
+  copiesOut?: Map<string, { summary?: string | null; description?: string | null }>
 ): Promise<void> {
   if (game !== 'reforger') return;
 
@@ -443,7 +449,10 @@ async function warmServerModpackModSizes(
             return;
           }
           if (!page.html) return;
-          const { sizeBytes, author } = await cacheReforgerFieldsFromWorkshopHtml(kv, modId, page.html);
+          const { sizeBytes, author, copy } = await cacheReforgerFieldsFromWorkshopHtml(kv, modId, page.html);
+          if ((copy.summary || copy.description) && copiesOut) {
+            copiesOut.set(modId.toUpperCase(), copy);
+          }
           const row = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
           if (row) {
             if (sizeBytes) row.sizeBytes = sizeBytes;
@@ -695,10 +704,15 @@ interface ServerMod {
 
   // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
   const unavailableWorkshopIds: string[] = [];
+  const warmedCopies = new Map<string, { summary?: string | null; description?: string | null }>();
   await attachModSizesFromKvCache(kv, game, modList);
   await attachModAuthorsFromKvCache(kv, game, modList);
-  await warmTopModSizesFromWorkshop(kv, game, modList, 300, unavailableWorkshopIds);
-  await warmServerModpackModSizes(kv, game, serverList, modList, 500, unavailableWorkshopIds);
+  await warmTopModSizesFromWorkshop(kv, game, modList, 300, unavailableWorkshopIds, warmedCopies);
+  await warmServerModpackModSizes(kv, game, serverList, modList, 500, unavailableWorkshopIds, warmedCopies);
+  const searchIndexSize = await persistModsSearchIndexFromWarm(kv, game, modList, warmedCopies);
+  if (searchIndexSize > 0) {
+    console.log(`  - mods search index: ${searchIndexSize} entries (${warmedCopies.size} warmed this run)`);
+  }
   await detectModAliases(kv, game, modList, unavailableWorkshopIds);
 
   const modSizeById = new Map<string, number>();

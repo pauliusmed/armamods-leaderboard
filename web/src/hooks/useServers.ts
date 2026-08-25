@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { serversApi, modsApi, type GameType } from '../api/client';
 import { fetchWithRetry } from '../lib/fetchWithRetry';
 import { matchesServerSearch } from '../lib/searchMatch';

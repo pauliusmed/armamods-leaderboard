@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { scenariosApi, modsApi, type GameType } from '../api/client';
 import { fetchWithRetry } from '../lib/fetchWithRetry';
 import { useUrlListState, parsePositiveInt } from './useUrlListState';

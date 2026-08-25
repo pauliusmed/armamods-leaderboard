@@ -45,6 +45,10 @@ import {
   resolveModSizesBatch,
   sumModpackSizes,
 } from './functions/lib/workshop-fetch';
+import {
+  modsSearchIndexCacheKey,
+  searchModsInIndex,
+} from './functions/lib/mods-search-index';
 import { findServerById, ServerLookup } from './functions/lib/server-lookup';
 import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
 import { analyzeStoragePlan } from './functions/lib/storage-calc';
@@ -368,6 +372,8 @@ app.get('/mods', async (c) => {
 
   // Author lives in workshop KV cache — only load when name/id search finds nothing.
   if (search) {
+    // Aliased-cleaned rows — the description-index tier must not resurrect hidden mods.
+    const searchableRows = filtered;
     const byNameOrId = filtered.filter((m) => matchesModSearchByNameOrId(m, search));
     if (byNameOrId.length > 0) {
       filtered = byNameOrId;
@@ -382,6 +388,16 @@ app.get('/mods', async (c) => {
       }
     } else {
       filtered = [];
+    }
+
+    // Last tier — description/summary haystack index (Steam-style title+description
+    // search). Only reached when name/id/author found nothing; single KV read.
+    if (game !== 'arma3' && filtered.length === 0) {
+      const index = await c.env.TRENDING_KV.get(modsSearchIndexCacheKey('reforger'), 'json');
+      const ids = searchModsInIndex(index, search);
+      if (ids.size > 0) {
+        filtered = searchableRows.filter((m: { id: string }) => ids.has(String(m.id).toUpperCase()));
+      }
     }
   }
 
