@@ -2,6 +2,13 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.17] - 2026-08-25
+
+### ⭐ Dependency Blockers: favoritai pickerio viršuje
+- **Problema:** serverio paieškos sąraše `/dependency-blockers` be užklausos rodomi pirmi 100 pagal API eiliškę — savo favoritus reikėdavo ieškoti ranka.
+- **Fix:** favoritai (iš localStorage, sinchronizuoti su kitų puslapių pakeitimais) rikiuojami sąrašo viršuje ir pažymėti ★; paieškoje taip pat kyla į viršų.
+- **Patikra:** tsc švaru, lint 0 klaidų. Heavy CI: skipped because UI picker ordering only.
+
 ## [1.23.16] - 2026-08-25
 
 ### 📊 SQE paaiškinimas vartotojui — 4 faktoriai

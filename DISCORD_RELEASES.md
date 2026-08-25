@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.17] - 2026-08-25
+
+- On the Dependency Blockers tool, your favorite servers now appear at the top of the server list — marked with a star — so you can pick yours without typing its name.
+
 ## [1.23.16] - 2026-08-25
 
 - The server ranking explanation now spells out what actually moves you up: active players matter most, then reliable uptime, a shorter required-mods list, and original mod choices instead of the usual setups.
