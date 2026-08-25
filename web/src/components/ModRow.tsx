@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Copy, Check } from 'lucide-react';
 import type { Mod } from '../types';
 import type { GameType } from '../api/client';
 import { ModThumbnail } from './ui/ModThumbnail';
@@ -41,6 +43,7 @@ export function ModRow({
     game,
     mod.workshopStatus !== undefined ? { initialStatus: mod.workshopStatus } : undefined
   );
+  const [copiedGui, setCopiedGui] = useState(false);
 
   return (
     <tr
@@ -77,6 +80,20 @@ export function ModRow({
               {mod.name}
             </Link>
             <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-1" />
+            <div className="mt-1 flex items-center gap-1.5">
+              <code className="px-1.5 py-0.5 bg-zinc-900 border border-white/10 text-[9px] font-mono text-gray-400 tracking-widest select-all">
+                {mod.id}
+              </code>
+              <button
+                type="button"
+                onClick={async () => { try { await navigator.clipboard.writeText(mod.id); setCopiedGui(true); setTimeout(() => setCopiedGui(false), 1200); } catch {} }}
+                className="inline-flex items-center justify-center w-5 h-5 bg-zinc-900 border border-white/10 text-gray-500 hover:text-white hover:border-white/20 transition-colors"
+                aria-label="Copy GUI"
+                title="Copy GUI"
+              >
+                {copiedGui ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </div>
             {isLeaderboard && (
               <>
                 <span className="md:hidden">

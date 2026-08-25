@@ -17,7 +17,7 @@ import {
   ReferenceArea,
 } from 'recharts';
 import { buildModAuditRow, REFORGER_PATCHES, type AuditStatus } from '@audit-config';
-import { TrendingUp, Package, Server as ServerIcon } from 'lucide-react';
+import { TrendingUp, Package, Server as ServerIcon, Copy, Check } from 'lucide-react';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
 import { SITE_ORIGIN, modPageUrl, modPreviewImageUrl } from '../lib/site';
 import { softwareApplicationJsonLd, breadcrumbJsonLd } from '../lib/seoJsonLd';
@@ -86,6 +86,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [retryCount, setRetryCount] = useState(0);
   const [selectedDays, setSelectedDays] = useState(30);
   const [heroGalleryStatus, setHeroGalleryStatus] = useState<'loading' | 'ready' | 'hidden'>('loading');
+  const [copiedGui, setCopiedGui] = useState(false);
   const [serversPage, setServersPage] = useState(1);
   const [serversSortBy, setServersSortBy] = useState<ServerDataTableSortBy>('players');
   const [serversSortDir, setServersSortDir] = useState<ServerDataTableSortDir>('desc');
@@ -311,12 +312,28 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           ]),
         ]}
       />
-      <Link
-        to={`${gp}/`}
-        className="block mb-6 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
-      >
-        ← [ Back to Registry ]
-      </Link>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+        <Link
+          to={`${gp}/`}
+          className="block text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+        >
+          ← [ Back to Registry ]
+        </Link>
+        <div className="sm:ml-auto flex items-center gap-2 w-full sm:w-auto sm:max-w-xs">
+          <input
+            type="search"
+            placeholder="Search mods…"
+            aria-label="Search mods"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const q = (e.currentTarget as HTMLInputElement).value.trim();
+                if (q) window.location.href = `${gp}/?search=${encodeURIComponent(q)}`;
+              }
+            }}
+            className="flex-1 px-3 py-2 bg-black/60 border border-white/10 text-white placeholder-gray-600 text-xs font-medium focus:border-tactical-orange focus:outline-none"
+          />
+        </div>
+      </div>
 
       <ModWorkshopUnavailableBanner
         game={game}
@@ -341,9 +358,23 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             </div>
 
             <div className={`order-2 min-w-0 space-y-5 ${heroGalleryStatus === 'ready' ? 'lg:border-l lg:border-white/5 lg:pl-8' : ''}`}>
-              <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em] block">
-                // MODULE_IDENTIFIER: {mod.id}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-tactical-orange font-black text-[10px] uppercase tracking-[0.5em]">GUI</span>
+                <code className="px-2.5 py-1 bg-zinc-900 border border-white/10 text-tactical-orange font-mono text-xs sm:text-sm font-bold tracking-widest select-all">
+                  {mod.id}
+                </code>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(mod.id); setCopiedGui(true); setTimeout(() => setCopiedGui(false), 1500); } catch {}
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 border border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+                  aria-label="Copy GUI"
+                >
+                  {copiedGui ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedGui ? 'Copied' : 'Copy'}
+                </button>
+              </div>
               <div className="flex items-start gap-4 sm:gap-5">
                 {heroGalleryStatus === 'hidden' && (
                   <ModThumbnail
