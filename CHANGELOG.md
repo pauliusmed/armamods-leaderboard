@@ -2,6 +2,20 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.16] - 2026-08-25
+
+### 📊 SQE paaiškinimas vartotojui — 4 faktoriai
+- **ServerDetail** „Server Rank" glosarijus ir **ServerSearchLanding** FAQ „What is SQE Rank?": aiškiai įvardyti keturi faktoriai svarbos tvarka — žaidėjų aktyvumas (svarbiausias), pastovus uptime, mažesnis modų sąrašas (mažiau modų = aukščiau), unikalūs/nišiniai modai prieš bendrus setup'us.
+- **Patikra:** tsc švaru, lint 0 klaidų. Heavy CI: skipped because UI copy only.
+
+## [1.23.15] - 2026-08-25
+
+### 🔽 Rikiavimo krypties fix — sąrašai rodo atvirkščiai
+- **Problema:** `dir = sortDir === 'asc' ? -1 : 1` buvo apverstas — default `players desc` `/scenarios` faktiškai rikiavo DIDĖJANČIAI (0 žaidėjų scenarijai viršuje). Tas pats šablonas 7 vietose: useScenarios, ScenarioList (deployed servers), OfficialScenariosPage, ModDetail, DependencyBlockersPage, ModDependencyTable, modListFilters (`name`/`rank` stulpeliai). Tik useServers turėjo teisingą ženklą.
+- **Fix:** suvienodinta konvencija `dir = sortDir === 'asc' ? 1 : -1` visur; `modListFilters.ts` skaitiniams stulpeliams apversti ir comparatoriai (`(b-a)` → `(a-b)`), kad flip nesugriautų jų teisingos krypties.
+- **Testai:** +3 regresijos testai `sortServerMods` (name asc, rank asc, players desc) — test/mod-list-filters.test.ts (registruotas package.json). Pilni testai: root 218/218, web vitest 32/32, tsc švaru.
+- **Heavy CI:** required because rikiavimo algoritmo keitimas keliuose sąrašuose.
+
 ## [1.23.14] - 2026-08-24
 
 ### 📋 GUI atskirame stulpelyje (tarp Author ir Personnel)

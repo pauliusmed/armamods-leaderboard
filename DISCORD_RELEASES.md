@@ -3,6 +3,14 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.16] - 2026-08-25
+
+- The server ranking explanation now spells out what actually moves you up: active players matter most, then reliable uptime, a shorter required-mods list, and original mod choices instead of the usual setups.
+
+## [1.23.15] - 2026-08-25
+
+- Sorting fixed across the site — the Scenario Leaderboard now really shows the most popular missions first instead of empty ones, and every "sort by" arrow points the way the list is actually ordered.
+
 ## [1.23.8] - 2026-08-24
 
 - Every page of the site now loads noticeably faster and no longer jumps around while content appears — mod and server pages, charts and galleries open smoothly even on slower mobile connections.
