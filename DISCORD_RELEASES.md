@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.20] - 2026-08-26
+
+- Big stability pass: mod badges, thumbnails and author lookups no longer time out, and cached pages can no longer show outdated or empty search results after sitting idle.
+
 ## [1.23.19] - 2026-08-26
 
 - Mod search now also looks inside mod descriptions and summaries — you can find mods by gameplay phrases like "vietnam" or "milsim", not just exact titles. Rolling out gradually as the index builds up.

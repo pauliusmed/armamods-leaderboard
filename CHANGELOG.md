@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.20] - 2026-08-26
+
+### ⚡ Observability fix'ai: 504 audros + SW API cache'o vaiduokliai
+- **Observability (1h):** 1,032 invokacijos / 24 klaidos, bet ~996 edge 504 (~26% srauto). Kaltininkai — on-demand workshop scrape'as karštame kelyje (`workshop-status`, `author`, `thumbnail/img`) ir lėta `/api/mods` paieška.
+- **SWR endpointams:** `workshop-status`, `author`, `thumbnail/img` dabar į cold-cache atvejį atsako iškart (unknown/null/default) ir šildomi `waitUntil` fone — sinchroninis Workshop scrape'as nebeblokuoja atsakymo, 504 nuo scrape'ų dingsta. Warm'intiems — kaip anksčiau.
+- **Service worker:** pašalintas `/api/*` runtimeCaching (NetworkFirst su 10s timeout duodavo senus/tuščius atsakymus iš 2h API cache'o — „phantom" tuščios paieškos ir seni sąrašai). Šviežumą dabar valdo tik edge Cache-Control + kliento memory cache.
+- **Dėl serverio modų lentelės rikiavimo:** kodas jau teisingas nuo v1.23.15 (`rank asc` = populiariausi pirmi); matytas „atvirkščias" vaizdas buvo senas bundlas/SW cache'as.
+- **Patikra:** tsc ok, lint 0 klaidų, web build + wrangler dry-run ok, web vitest 34/34.
+- **Heavy CI:** required because worker API elgsenos keitimas.
+
 ## [1.23.19] - 2026-08-26
 
 ### 🔍 Modų paieška dabar atsižvelgia ir į aprašymus (Steam praktika)

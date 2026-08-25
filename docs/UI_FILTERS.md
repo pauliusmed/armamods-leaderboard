@@ -21,7 +21,7 @@ Shared option labels live in `web/src/lib/modListFilters.ts` so server detail an
 
 | Page | Route | Controls |
 |------|-------|----------|
-| Mod leaderboard | `/`, `/arma3` | Search (name, id, **author** on Reforger) · Activity · Sort · Reset · **★ Favorites** block (page 1, no search) |
+| Mod leaderboard | `/`, `/arma3` | Search (name, id, author + descriptions on Reforger) · Activity · Sort · Reset · **★ Favorites** block (page 1, no search) |
 | Trending | `/trending` | Rising / Falling / New tables — same filter vocabulary; **★ Favorites** above active category |
 | Server network | `/servers` | Search · Sort · **Status** (online/offline) · Console fit (Reforger) · Reset · **★** column · **Favorites** pin (page 1, default filters) |
 | Scenario leaderboard | `/scenarios` | Search · Sort · Reset |
@@ -89,7 +89,13 @@ Mod detail **gallery**: `ModWorkshopGallery` + `GalleryLightbox` — click scree
 
 ### Mod leaderboard search (Reforger)
 
-`GET /api/mods?search=` matches **name**, **mod id**, and **workshop author** (cached in KV from prior workshop scrapes). Author is not scraped live during list search — mods without a cached author only match on name/id until their workshop page was resolved once.
+`GET /api/mods?search=` matches in tiers — first **name**, **mod id**, and **workshop author** (cached in KV from prior workshop scrapes); author is not scraped live during list search. If nothing matched, a final tier checks the description index (`cache:mods_search_index:reforger`: name + author + summary + first ~400 chars of workshop description, rebuilt by each collector warm pass). Coverage of descriptions grows gradually — mods whose workshop page hasn't been warmed yet only match on name/id/author.
+
+| Tier | Source |
+|------|--------|
+| 1 | name / mod id (leaderboard rows) |
+| 2 | cached workshop author |
+| 3 | description index (summary + description snippet) |
 
 Activity thresholds (shared everywhere):
 

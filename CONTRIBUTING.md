@@ -20,6 +20,7 @@ Thank you for your interest in improving the project! This document provides gui
 | Scenarios | `scenario-ranking.ts` | `test/scenario-ranking.test.ts` |
 | Config copy | `mod-config.ts` | `test/mod-config.test.ts` |
 | History API | `history-query.ts` | `test/history-query.test.ts` |
+| Mod search index | `mods-search-index.ts` | `test/mods-search-index.test.ts` |
 
 Full list: `package.json` → `"test"` script.
 

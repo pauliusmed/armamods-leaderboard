@@ -35,6 +35,7 @@ cache:trending:monthly     — 30d trending pre-calculated
 cache:ranking:servers      — TOP 200 serverių leaderboard
 cache:ranking:scenarios:{game} — Scenario leaderboard (rank, serverCount, totalPlayers, topServer)
 cache:server_sqe:{game}    — Kompaktinis SQE indeksas API enrichment
+cache:mods_search_index:reforger — Description paieškos indeksas (name+author+summary+desc snippet; collector warm)
 cache:server_bm_last_seen:{game} — Paskutinis collector scan, kai serveris buvo online
 cache:server_modset:{game} — Dienos modlist fingerprint (serverId → sorted mod ids)
 cache:og-image:*           — Workshop thumbnail CDN URL (on-demand, 7d)

@@ -129,6 +129,7 @@ suffix, Arma 3 uses `:arma3`):
 | `cache:ranking:servers:{game}` | top-200 SQE leaderboard |
 | `cache:ranking:scenarios:{game}` | scenario leaderboard (rank, servers, players, top server) |
 | `cache:server_sqe:{game}` | compact SQE index for API enrichment |
+| `cache:mods_search_index:{game}` | description search index (name+author+summary+desc snippet; Reforger, built by collector warm) |
 | `cache:stats`, `cache:lastUpdate` | global counts |
 | `cache:trending:{daily\|weekly\|monthly}` | precomputed trending |
 | `cache:mod-size:{game}:{MODID}` | workshop version download size (7d) |

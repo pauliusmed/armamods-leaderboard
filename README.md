@@ -41,7 +41,7 @@ Supplements the official Arma Workshop with engagement telemetry from active mul
 
 ### 5. Workshop metadata supplement (not BattleMetrics)
 * **Problem**: BattleMetrics has no thumbnails/deps; workshop has no live player telemetry.
-* **Solution**: On-demand Reforger workshop scrape in Workers — thumbnail CDN URL + deps in KV (7d). List pages embed cached `author` / `thumbnail` / `workshopStatus`; row images via resized `/thumbnail/img?w=` proxy.
+* **Solution**: Reforger workshop metadata in KV (7d), filled by the collector warm pass and background refreshes — never scraped synchronously on the request path (cold reads answer instantly and warm in the background). List pages embed cached `author` / `thumbnail` / `workshopStatus`; row images via resized `/thumbnail/img?w=` proxy.
 * **Result**: Recognition + install requirements without duplicating the catalog. See [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md).
 
 ### 6. Scenario leaderboard
