@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.11] - 2026-08-24
+
+### 🔗 GUI akcentas — kopijuojamas mod detalėje ir sąraše + paieška
+- **Mod puslapis** `DEADC0DE00000006`: `// MODULE_IDENTIFIER` pakeistas į `GUI` kodą su `Copy` mygtuku (Check/Copy, `navigator.clipboard`), viršuje pridėta paieška į kitus modus (`Enter` → `/?search=`).
+- **Pagrindinis sąrašas** `01 WCS_Armaments`: po modo pavadinimu pridėtas `code` su `mod.id` + `Copy` mygtukas (šalia `Workshop ↗`).
+- **Patikra:** `tsc` švaru, 206/206 + 32/32, `web build` + `wrangler deploy` (`51b95d39`).
+- **Heavy CI:** skipped because UI copy/search only (no API/data).
+
 ## [1.23.10] - 2026-08-24
 
 ### 🏆 Server reitingavimas — H=10d + tikimybinė hysteresė (auksinis viduriukas)
