@@ -2,6 +2,11 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.13] - 2026-08-24
+
+### ↩️ Mod puslapis: paieška pašalinta
+- Paieškos laukas mod detalėje pašalintas vartotojo prašymu — paliktas tik `Back to Registry`.
+
 ## [1.23.12] - 2026-08-24
 
 ### 🔍 Mod puslapis: paieška centre + scroll fix
