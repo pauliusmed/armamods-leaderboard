@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.10] - 2026-08-24
+
+### 🏆 Server reitingavimas — H=10d + tikimybinė hysteresė (auksinis viduriukas)
+- **Problema:** H=0.55d (α 0.10/run) → 72% dienos svorio keičiasi, 13.2h pusamžis rezonuoja su paros ciklu (33→61→2 per dieną).
+- **Fix:** `HALF_LIFE_DAYS=10` → `α_run≈0.0058` (laiku kalibruotas, ne magija) + top-200 hysteresė `P(better)>τ`, `τ=0.80`, `σ=50/√age` (Thurstone). Pakeičia ad-hoc `ELITE_INERTIA_TIERS` (8/4/2% top-3).
+- **Backtest Pareto (31d):** H=10 τ0.8 noise **11.6%** response 17.5d (buvo 48.9%/1.6d); H=14 τ0.8 10.6%/18d — knee zona. Kasdienis EMA α0.05 jau duoda ρ 0.985 vs 0.979.
+- **Testai:** 206/206 + 9 nauji (`gainForHalfLife`, `normalCdf`, `hysteresis`), `test/sqe-framework.test.ts`.
+- **Kolektorius:** kitas run'as per ~2h jau naudos `H=10 τ0.8`.
+
 ## [Unreleased] — Backtest framework (SQE v2) — no deploy
 
 ### 🔬 Server reitingavimas — akademinės formulės + backtest (auksinis viduriukas)
@@ -10,7 +19,6 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Teorija:** Thurstone latent strength + Kalman (H dienomis, ne α/run) + TF-IDF uniqueness + tikimybinė hysteresė `P(θⱼ>θᵢ)=Φ((μⱼ−μᵢ)/√(σᵢ²+σⱼ²))>τ`. Svoriai `WEIGHTS` konfige.
 - **Backtest (31d, 7474 serveriai, daily shards, `players×5`):** `scripts/backtest/sqe-framework.ts` — Pareto sweep H×τ; metrikos: noiseRate (stabilūs top-50 >5 pozicijų), responseDays (mid→top-20 improver). Frontier + knee. Rezultatas: EB-Kalman su gryna daily peak imtimi **nepralenkė** dabartinio EMA α=0.10/day duotojo ρ (0.98 vs 0.69) — įrodymas, kad be hourly diurnal kreivės EK modelis nebeatperka kompleksiškumo. Rekomendacija: **hourly tinklo sumų kaupimas** kelias savaites, tada v2 su tikra diurnal normalizacija; kol kas **α 0.10→0.05** ant daily duoda +20% ρ ir −5% maxJump su minimaliu churn padidėjimu (0.307→0.367) — įrodytas mažas žingsnis, ne 5-tas lopas.
 - **Testai:** `test/sqe-framework.test.ts` 9 atvejai (gainForHalfLife, normalCdf, knee, hysteresis: breakthrough vs stability).
-- **Kolektorius nepakeistas šiame PR — ataskaita prieš deploy;** kita iteracija naudos `H=10d τ=0.8` zoną (`α_run≈0.0058`, noise 11.6% response 17.5d) arba `H=14d τ=0.8` (10.6%/18d).
 
 ## [1.23.9] - 2026-08-24
 
