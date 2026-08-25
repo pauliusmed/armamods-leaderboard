@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.19] - 2026-08-26
+
+### 🔍 Modų paieška dabar atsižvelgia ir į aprašymus (Steam praktika)
+- **Kontekstas:** Steam Workshop paieška oficialiai matchina title + description (`ISteamUGC::SetSearchText`); mūsų paieška apsiribodavo pavadinimu/id/autoriumi.
+- **Kaip:** naujas kompaktiškas `cache:mods_search_index:reforger` indeksas (name+author+summary+pirmi 400 simb. description, lowercase), kurį kiekvieno run'o metu pildomi iš workshop warm rezultatų (`persistModsSearchIndexFromWarm` — merge + prune pagal dabartinį leaderboard). `/api/mods` paieškos grandinės PASKUTINĖ pakopa (kai name/id/author nieko nerado) perskaito VIENĄ KV raktą ir grąžina atitinkančius modus; aliased modai neatsiranda; arma3 nepaliestas.
+- **Sąnaudos:** 1 papildomas KV read tik fallback atveju; indeksas auga palaipsniui (coverage konverguoja per run'us, kol kas tik warm'inti modai turi description dalį).
+- **Testai:** naujas `test/mods-search-index.test.ts` (10 atvejų: haystack lowercasing/truncation, merge insert/overwrite/prune/no-op, AND token matching, cache key) — REGISTRUOTAS package.json. Root 228/228, web build + wrangler dry-run ok.
+- **Heavy CI:** required because collector + duomenų modelis (naujas KV blob).
+
 ## [1.23.18] - 2026-08-26
 
 ### 🐛 Paieškos sąveikos fixai sąrašuose (pagination + stale atsakymai)

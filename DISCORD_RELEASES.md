@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.19] - 2026-08-26
+
+- Mod search now also looks inside mod descriptions and summaries — you can find mods by gameplay phrases like "vietnam" or "milsim", not just exact titles. Rolling out gradually as the index builds up.
+
 ## [1.23.18] - 2026-08-26
 
 - Fixed two search quirks on the mod, server and scenario lists: the "next page" button no longer bounces you back to page one, and results no longer randomly vanish to "No matches found" moments after loading.
