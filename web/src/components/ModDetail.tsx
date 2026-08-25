@@ -312,30 +312,12 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
           ]),
         ]}
       />
-      <div className="mb-6 flex flex-col gap-4">
-        <div className="flex justify-center w-full">
-          <div className="flex items-center gap-2 w-full max-w-md">
-            <input
-              type="search"
-              placeholder="Search mods…"
-              aria-label="Search mods"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const q = (e.currentTarget as HTMLInputElement).value.trim();
-                  if (q) window.location.href = `${gp}/?search=${encodeURIComponent(q)}`;
-                }
-              }}
-              className="flex-1 px-4 py-2.5 bg-black/60 border border-white/10 text-white placeholder-gray-600 text-sm font-medium focus:border-tactical-orange focus:outline-none text-center"
-            />
-          </div>
-        </div>
-        <Link
-          to={`${gp}/`}
-          className="block text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
-        >
-          ← [ Back to Registry ]
-        </Link>
-      </div>
+      <Link
+        to={`${gp}/`}
+        className="block mb-6 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+      >
+        ← [ Back to Registry ]
+      </Link>
 
       <ModWorkshopUnavailableBanner
         game={game}
