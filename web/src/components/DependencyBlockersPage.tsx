@@ -7,6 +7,7 @@ import { StatsHero } from './ui/StatsHero';
 import { StatusState } from './ui/StatusState';
 import { SortableTh } from './ui/SortableTh';
 import { workshopPageUrl } from '../lib/workshop';
+import { loadFavoriteServerIds, subscribeServerFavoritesChanged } from '../lib/serverFavorites';
 
 const pickerInputClass =
   'w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange placeholder:text-gray-700';
@@ -28,6 +29,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
   const [serverId, setServerId] = useState(searchParams.get('server') ?? '');
   const [targetModId, setTargetModId] = useState(searchParams.get('mod') ?? '');
   const [modSearch, setModSearch] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => loadFavoriteServerIds(game));
 
   const [serverDetail, setServerDetail] = useState<Server | null>(null);
   const [loadingServer, setLoadingServer] = useState(false);
@@ -83,13 +85,22 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
     };
   }, [serverId, game]);
 
+  useEffect(() => {
+    // Favorites live in localStorage — re-read on game switch and when toggled elsewhere.
+    setFavoriteIds(loadFavoriteServerIds(game));
+    return subscribeServerFavoritesChanged(game, () => setFavoriteIds(loadFavoriteServerIds(game)));
+  }, [game]);
+
   const filteredServers = useMemo(() => {
     const q = serverSearch.trim().toLowerCase();
-    const list = q
+    const favSet = new Set(favoriteIds);
+    const matched = q
       ? servers.filter((s) => s.name.toLowerCase().includes(q) || s.id.includes(q))
       : servers;
-    return list.slice(0, 100);
-  }, [servers, serverSearch]);
+    return [...matched]
+      .sort((a, b) => Number(favSet.has(b.id)) - Number(favSet.has(a.id)))
+      .slice(0, 100);
+  }, [servers, serverSearch, favoriteIds]);
 
   const filteredMods = useMemo(() => {
     const mods = serverDetail?.mods ?? [];
@@ -211,6 +222,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
                       : 'text-gray-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
+                  {favoriteIds.includes(server.id) && <span className="text-tactical-orange mr-1">★</span>}
                   {server.name}
                   <span className="block text-[8px] text-gray-600 font-mono">
                     {server.mods?.length ?? 0} mods · {server.id}
