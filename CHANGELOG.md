@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.18] - 2026-08-26
+
+### 🐛 Paieškos sąveikos fixai sąrašuose (pagination + stale atsakymai)
+- **Pagination su paieška:** react-router 7 `setSearchParams` identitetas keičiasi kaskart pasikeitus URL query → `useUrlListState` `set`/`writeUrl` nebebuvo stabilūs → list puslapių reset efektai (`[searchInput, sortBy, setCurrentPage]`) persileisdavo po kiekvieno URL pakeitimo ir grąžindavo puslapį į 1 iškart po „Next Sector" paspaudimo (matydavosi tik scroll į viršų). Fix: `setSearchParams` laikomas ref'e — setteriai dabar tikrai referentially stable.
+- **Stale atsakymų sargas:** `/api/mods?q=…` su paieška krauna visus KV chunkus server-side (kelios sekundės), o `useMods`/`useServers`/`useScenarios` apdorodavo KIEKVIENĄ atsakymą iš eilės — pavėluotas senesnės užklausos atsakymas (pvz., `offset=24` su <25 rezultatų) perrašydavo gerus duomenis tuščiu masyvu → „No matches found" vietoj sąrašo be jokio veiksmo. Fix: monotoniškas `loadSeqRef` — stale atsakymas/failure/loading nulinamas tik jei jis naujausias.
+- **Testai:** +2 regresijos useUrlListState (setter stabilumas; pagination+search interakcija) — patikrinta red-green. Web vitest 34/34, tsc švaru, lint 0 klaidų.
+- **Heavy CI:** required because URL state / duomenų rankinimo sąveikos keitimas sąrašuose.
+
 ## [1.23.17] - 2026-08-25
 
 ### ⭐ Dependency Blockers: favoritai pickerio viršuje

@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.18] - 2026-08-26
+
+- Fixed two search quirks on the mod, server and scenario lists: the "next page" button no longer bounces you back to page one, and results no longer randomly vanish to "No matches found" moments after loading.
+
 ## [1.23.17] - 2026-08-25
 
 - On the Dependency Blockers tool, your favorite servers now appear at the top of the server list — marked with a star — so you can pick yours without typing its name.
