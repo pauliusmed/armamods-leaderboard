@@ -2,6 +2,12 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.12] - 2026-08-24
+
+### 🔍 Mod puslapis: paieška centre + scroll fix
+- **Paieška:** perkelta iš dešinio kampo (`sm:ml-auto`) į centrą (`flex justify-center`, `max-w-md`, `text-center`), vis dar `Enter` → `/?search=`.
+- **Scroll:** `web/src/index.css` `html`/`body`/`#root` `overflow-x: hidden` blokavo vertikalų scroll mod puslapyje — pakeista į `overflow-y: auto` + `scrollbar-gutter: stable` / `overflow-x: clip`.
+
 ## [1.23.11] - 2026-08-24
 
 ### 🔗 GUI akcentas — kopijuojamas mod detalėje ir sąraše + paieška
