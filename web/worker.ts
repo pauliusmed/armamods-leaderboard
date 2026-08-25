@@ -34,9 +34,11 @@ import {
   authorCacheKey,
   ogImageCacheKey,
   statusCacheKey,
+  ensureReforgerWorkshopMetadata,
   resolveModDependencies,
   resolveModAuthor,
   resolveModWorkshopCopy,
+  readWorkshopStatusFromKv,
   resolveModGallery,
   resolveModThumbnailUrl,
   resolveModWorkshopDates,
@@ -823,17 +825,45 @@ app.get('/mods/:modId/workshop-status', async (c) => {
     return response;
   }
 
-  const workshopStatus = await resolveModWorkshopStatus(c.env.TRENDING_KV, game, modId);
+  const workshopStatus = await readWorkshopStatusFromKv(c.env.TRENDING_KV, game, modId);
+  if (workshopStatus) {
+    const response = c.json({
+      data: { status: workshopStatus.status, checkedAt: workshopStatus.checkedAt },
+      meta: { modId, game, supported: true },
+    });
+    const edgeMaxAge = workshopStatus.status === 'unavailable' ? 43200 : 86400;
+    response.headers.set(
+      'Cache-Control',
+      `public, max-age=${edgeMaxAge}, stale-while-revalidate=604800`
+    );
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  }
+
+  // Cold KV: answer fast instead of scraping synchronously (live workshop fetches
+  // were timing out at the edge → 504 storms). Populate in background; the short
+  // max-age makes the next hit re-check against the warmed cache.
+  const populate = resolveModWorkshopStatus(c.env.TRENDING_KV, game, modId)
+    .then((fresh) => {
+      const warmed = c.json({
+        data: { status: fresh.status, checkedAt: fresh.checkedAt },
+        meta: { modId, game, supported: true },
+      });
+      const edgeMaxAge = fresh.status === 'unavailable' ? 43200 : 86400;
+      warmed.headers.set(
+        'Cache-Control',
+        `public, max-age=${edgeMaxAge}, stale-while-revalidate=604800`
+      );
+      return cache.put(c.req.raw, warmed);
+    })
+    .catch(() => {});
+  c.executionCtx.waitUntil(populate);
+
   const response = c.json({
-    data: { status: workshopStatus.status, checkedAt: workshopStatus.checkedAt },
+    data: { status: 'unknown', checkedAt: null },
     meta: { modId, game, supported: true },
   });
-  const edgeMaxAge = workshopStatus.status === 'unavailable' ? 43200 : 86400;
-  response.headers.set(
-    'Cache-Control',
-    `public, max-age=${edgeMaxAge}, stale-while-revalidate=604800`
-  );
-  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  response.headers.set('Cache-Control', 'public, max-age=60');
   return response;
 });
 
@@ -855,13 +885,32 @@ app.get('/mods/:modId/author', async (c) => {
     return response;
   }
 
-  const author = await resolveModAuthor(c.env.TRENDING_KV, game, modId);
+  const cachedAuthor = await c.env.TRENDING_KV.get(authorCacheKey(game, modId), 'text');
+  if (cachedAuthor) {
+    const response = c.json({
+      data: { author: cachedAuthor },
+      meta: { modId, game },
+    });
+    response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  }
+
+  // Cold KV: fast placeholder + background warm (same rationale as workshop-status).
+  const populate = resolveModAuthor(c.env.TRENDING_KV, game, modId)
+    .then((fresh) => {
+      const warmed = c.json({ data: { author: fresh }, meta: { modId, game } });
+      warmed.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      return cache.put(c.req.raw, warmed);
+    })
+    .catch(() => {});
+  c.executionCtx.waitUntil(populate);
+
   const response = c.json({
-    data: { author },
+    data: { author: null },
     meta: { modId, game },
   });
-  response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
-  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  response.headers.set('Cache-Control', 'public, max-age=60');
   return response;
 });
 
@@ -873,9 +922,15 @@ app.get('/mods/:modId/thumbnail/img', async (c) => {
   const game = getGameFromQuery(c) as ShareGame;
   const modId = c.req.param('modId');
   const width = Math.min(128, Math.max(32, parseInt(c.req.query('w') || '64', 10) || 64));
-  const url = await resolveModThumbnailUrl(c.env.TRENDING_KV, game, modId);
+  const url = await c.env.TRENDING_KV.get(ogImageCacheKey(game, modId), 'text');
 
   if (!url || url.includes('og-image')) {
+    // Cold KV: redirect to the default immediately and warm workshop metadata in
+    // the background (synchronous scraping here caused edge 504 storms).
+    if (game !== 'arma3' && !url) {
+      const warm = ensureReforgerWorkshopMetadata(c.env.TRENDING_KV, game, modId).catch(() => {});
+      c.executionCtx.waitUntil(warm);
+    }
     return c.redirect(defaultOgImage(), 302);
   }
 

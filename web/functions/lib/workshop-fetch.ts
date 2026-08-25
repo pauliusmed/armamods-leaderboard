@@ -392,7 +392,7 @@ export function isReforgerWorkshopPageAvailable(html: string): boolean {
   return Boolean(id && name);
 }
 
-async function readWorkshopStatusFromKv(
+export async function readWorkshopStatusFromKv(
   kv: KVNamespace,
   game: ShareGame,
   modId: string

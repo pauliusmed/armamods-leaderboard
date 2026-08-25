@@ -32,20 +32,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         globIgnores: ['**/og-*.png', 'brand/**/*'],
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url, request }) => request.mode !== 'navigate' && url.pathname.startsWith('/api/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 2,
-              },
-              networkTimeoutSeconds: 10,
-            },
-          },
-        ],
+        // No runtimeCaching for /api/* on purpose: a live leaderboard must never be
+        // answered from the SW cache (10s network timeout used to serve stale/empty
+        // payloads for slow endpoints — phantom "No matches found" states). Freshness
+        // is handled by edge Cache-Control + the client's in-memory cache.
       },
       manifest: {
         name: 'Arma Mods Intelligence',
