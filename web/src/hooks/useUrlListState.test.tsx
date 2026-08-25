@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useEffect } from 'react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render, screen, act, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -64,6 +65,43 @@ function renderSearchHarness(initialEntry = '/') {
   );
   render(<RouterProvider router={router} />);
   return router;
+}
+
+/**
+ * Mirrors the list pages: a debounced search param plus a page param whose value
+ * resets to 1 via an effect that lists `setPage` in its deps (see useScenarios/
+ * useMods/useServers). If the hook's setter identity is unstable, every URL write
+ * re-fires the reset and pagination snaps back to page 1.
+ */
+function SearchAndPageHarness() {
+  const [q, setQ] = useUrlListState<string>({
+    param: 'q',
+    fallback: '',
+    parse: (raw) => raw ?? '',
+    serialize: (v) => v.trim() || null,
+    delayMs: 300,
+  });
+  const [page, setPage] = useUrlListState<number>({
+    param: 'page',
+    fallback: 1,
+    parse: (raw) => parsePositiveInt(raw, 1),
+    serialize: (v) => (v <= 1 ? null : String(v)),
+    mode: 'push',
+  });
+  useEffect(() => {
+    setPage(1);
+  }, [q, setPage]);
+  const [searchParams] = useSearchParams();
+  return (
+    <div>
+      <input aria-label="search" value={q} onChange={(e) => setQ(e.target.value)} />
+      <span data-testid="page">{page}</span>
+      <span data-testid="url">{searchParams.toString()}</span>
+      <button type="button" onClick={() => setPage(page + 1)}>
+        next
+      </button>
+    </div>
+  );
 }
 
 afterEach(() => {
@@ -159,6 +197,59 @@ describe('useUrlListState debounced search input', () => {
     });
     expect(screen.getByTestId('url').textContent).toContain('q=restored');
     expect(screen.getByTestId('url').textContent).not.toContain('q=abc');
+  });
+});
+
+describe('useUrlListState setter stability', () => {
+  it('keeps the setter referentially stable across URL updates', async () => {
+    const identities: Array<unknown> = [];
+    function StabilityHarness() {
+      const [page, setPage] = useUrlListState<number>({
+        param: 'page',
+        fallback: 1,
+        parse: (raw) => parsePositiveInt(raw, 1),
+        serialize: (v) => (v <= 1 ? null : String(v)),
+        mode: 'push',
+      });
+      identities.push(setPage);
+      return (
+        <div>
+          <span data-testid="page">{page}</span>
+          <button type="button" onClick={() => setPage(2)}>
+            go2
+          </button>
+        </div>
+      );
+    }
+    const router = createMemoryRouter([{ path: '*', element: <StabilityHarness /> }], {
+      initialEntries: ['/'],
+    });
+    render(<RouterProvider router={router} />);
+    await userEvent.click(screen.getByText('go2'));
+    expect(identities.length).toBeGreaterThan(1);
+    expect(new Set(identities).size).toBe(1);
+  });
+
+  it('pagination survives a search-driven page reset effect (list pages pattern)', () => {
+    vi.useFakeTimers();
+    const router = createMemoryRouter([{ path: '*', element: <SearchAndPageHarness /> }], {
+      initialEntries: ['/'],
+    });
+    render(<RouterProvider router={router} />);
+    fireEvent.change(screen.getByLabelText('search'), { target: { value: 'abc' } });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.getByTestId('url').textContent).toContain('q=abc');
+    fireEvent.click(screen.getByText('next'));
+    expect(screen.getByTestId('page').textContent).toBe('2');
+    expect(screen.getByTestId('url').textContent).toContain('page=2');
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    // The bug: reset effect re-ran after the URL write and snapped back to page 1.
+    expect(screen.getByTestId('page').textContent).toBe('2');
+    expect(screen.getByTestId('url').textContent).toContain('page=2');
   });
 });
 

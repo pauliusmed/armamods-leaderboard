@@ -47,8 +47,11 @@ export function useScenarios(options: UseScenariosOptions = {}) {
     mode: 'push',
   });
   const itemsPerPage = 24;
+  // Monotonic request seq — ignore out-of-order responses (game switches, retries).
+  const loadSeqRef = useRef(0);
 
   const loadScenarios = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
     try {
       setLoading(true);
       const [scenarioData, statsData] = await fetchWithRetry(
@@ -60,14 +63,16 @@ export function useScenarios(options: UseScenariosOptions = {}) {
         (attempt) => setRetryCount(attempt),
       );
       setRetryCount(0);
+      if (seq !== loadSeqRef.current) return; // stale — a newer load already won
       setRanking(scenarioData.data || []);
       setTotalServers(statsData?.totalServers || 0);
       setTotalPlayers(statsData?.totalPlayers || 0);
       setError(null);
     } catch (err) {
+      if (seq !== loadSeqRef.current) return; // stale failure — ignore
       setError(err instanceof Error ? err.message : 'Failed to load scenarios');
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [game]);
 

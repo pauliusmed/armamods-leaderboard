@@ -71,8 +71,12 @@ export function useMods(options: UseModsOptions = {}) {
     mode: 'push',
   });
   const itemsPerPage = 24;
+  // Monotonic request seq — a slow response (search loads all KV chunks server-side,
+  // so /api/mods?q=… can take seconds) must never overwrite the result of a newer one.
+  const loadSeqRef = useRef(0);
 
   const loadMods = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
     try {
       setLoading(true);
       const offset = (currentPage - 1) * itemsPerPage;
@@ -87,11 +91,13 @@ export function useMods(options: UseModsOptions = {}) {
       );
 
       setRetryCount(0);
+      if (seq !== loadSeqRef.current) return; // stale — a newer load already won
       setMods(Array.isArray(listData?.data) ? listData.data : []);
       setTotalMods(listData?.meta?.total || 0);
       setGlobalStats(statsData || { totalPlayers: 0, totalServers: 0, totalMods: 0 });
       setError(null);
     } catch (err) {
+      if (seq !== loadSeqRef.current) return; // stale failure — ignore
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { message?: string; error?: string } } };
         const body = axiosErr.response?.data;
@@ -100,7 +106,7 @@ export function useMods(options: UseModsOptions = {}) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       }
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [currentPage, searchQuery, sortBy, sortDir, game, playerFilter]);
 

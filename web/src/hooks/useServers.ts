@@ -88,8 +88,12 @@ export function useServers(options: UseServersOptions = {}) {
     mode: 'push',
   });
   const itemsPerPage = 24;
+  // Monotonic request seq — search responses load up to 5000 rows and can resolve
+  // out of order; a slow stale response must never overwrite a newer one.
+  const loadSeqRef = useRef(0);
 
   const loadServers = useCallback(async (search?: string) => {
+    const seq = ++loadSeqRef.current;
     try {
       setLoading(true);
       const query = search?.trim() || '';
@@ -102,6 +106,7 @@ export function useServers(options: UseServersOptions = {}) {
         (attempt) => setRetryCount(attempt),
       );
       setRetryCount(0);
+      if (seq !== loadSeqRef.current) return; // stale — a newer load already won
       const fetchedServers = serversData?.data || [];
       setServers(fetchedServers);
       setTotalServers(serversData?.meta?.total || fetchedServers.length);
@@ -122,6 +127,7 @@ export function useServers(options: UseServersOptions = {}) {
       });
       setError(null);
     } catch (err) {
+      if (seq !== loadSeqRef.current) return; // stale failure — ignore
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { message?: string; error?: string } } };
         const body = axiosErr.response?.data;
@@ -130,7 +136,7 @@ export function useServers(options: UseServersOptions = {}) {
         setError(err instanceof Error ? err.message : 'Failed to load servers');
       }
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [game]);
 

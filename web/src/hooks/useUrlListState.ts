@@ -33,6 +33,15 @@ export function useUrlListState<T>(
   const [searchParams, setSearchParams] = useSearchParams();
   const delayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  // react-router's setSearchParams identity changes on every location.search change
+  // (deps include searchParams). Holding it in a ref keeps writeUrl/set referentially
+  // stable — list hooks legitimately put setCurrentPage in effect deps (reset-on-filter),
+  // and an unstable setter re-ran those effects after every URL write, snapping
+  // pagination back to page 1 right after "Next" was clicked.
+  const setSearchParamsRef = useRef(setSearchParams);
+  useEffect(() => {
+    setSearchParamsRef.current = setSearchParams;
+  });
 
   // Live value mirrors the URL but also reflects in-flight typing immediately.
   // Debouncing the VALUE (as before) made React reset the controlled input to the
@@ -76,7 +85,7 @@ export function useUrlListState<T>(
       if (!mountedRef.current) return;
       const { param: p, serialize: ser, mode: m } = optionsRef.current;
       const serialized = ser(resolved);
-      setSearchParams(
+      setSearchParamsRef.current(
         (prev) => {
           const qp = new URLSearchParams(prev);
           if (serialized == null) {
@@ -89,7 +98,7 @@ export function useUrlListState<T>(
         { replace: m !== 'push' }
       );
     },
-    [setSearchParams]
+    []
   );
 
   const set = useCallback(
