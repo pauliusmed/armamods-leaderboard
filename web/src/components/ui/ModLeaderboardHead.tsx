@@ -36,6 +36,9 @@ export function ModLeaderboardHead({ sortBy, sortDir, onSort }: ModLeaderboardHe
           onSort={(key) => onSort(key as ModSortBy)}
           className="hidden md:table-cell w-[140px] max-w-[140px] px-3"
         />
+        <th className="hidden md:table-cell w-[132px] px-3 py-3 text-center text-[10px] font-black uppercase tracking-widest text-gray-600">
+          GUI
+        </th>
         <SortableTh
           label="Personnel"
           sortKey="players"
@@ -82,4 +85,4 @@ export function ModLeaderboardHead({ sortBy, sortDir, onSort }: ModLeaderboardHe
   );
 }
 
-export const MOD_LEADERBOARD_COL_COUNT = 8;
+export const MOD_LEADERBOARD_COL_COUNT = 9;
