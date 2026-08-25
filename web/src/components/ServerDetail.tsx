@@ -592,7 +592,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               <div>
                 <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Server Rank</h4>
                 <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
-                  Network hierarchy. <span className="text-tactical-orange">Lower # is better</span> – determined by SQE points calculated from personnel activity, module uniqueness, and server uptime.
+                  Network hierarchy. <span className="text-tactical-orange">Lower # is better</span> – SQE points reward live player activity first, then consistent uptime, a lean modpack (fewer required mods ranks better), and distinctive niche mods over generic setups.
                 </p>
               </div>
             </div>

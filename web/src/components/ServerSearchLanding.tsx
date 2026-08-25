@@ -12,7 +12,7 @@ const FAQ = [
   },
   {
     q: 'What is SQE Rank?',
-    a: 'Server Quality & Efficiency Index — a score that combines player count, mod uniqueness, and uptime history. Servers must sustain quality over ~14 days to reach top tiers (S/A/B/C). A single good snapshot is not enough to rank #1.',
+    a: 'Server Quality & Efficiency Index — a score that rewards what matters most: live player activity (the biggest factor), consistent uptime history, a lean modlist (fewer required mods ranks better), and mod uniqueness — rare, original setups beat common ones. Servers must sustain quality over ~14 days to reach top tiers (S/A/B/C). A single good snapshot is not enough to rank #1.',
   },
   {
     q: 'Can I see which mods a server uses?',
