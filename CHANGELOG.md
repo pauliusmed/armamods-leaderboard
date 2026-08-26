@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.21] - 2026-08-26
+
+### 🐛 Workshop aprašymai atsinaujina per ~2 dienas, ne per savaitę
+- **Problema:** „Workshop Intel" blokas modų puslapiuose galėdavo rodyti iki savaitės seną summary/description — autorius pakeitęs aprašymą Workshope svetainėje matydavo seną tekstą (pastebėta su FORTEX - RU Weapon Core `690AC3895BAAFAE1`, kuris Workshop'e redaguotas 2026-08-21).
+- **Priežastis:** collector warm kelias (`cacheReforgerFieldsFromWorkshopHtml`) aprašymo KV įrašą rašė su bendru 7 d. TTL (`WORKSHOP_KV_TTL`), nors on-demand kelias nuo seno naudoja 48 h (`WORKSHOP_COPY_KV_TTL`). Dabar abu keliai rašo su 48 h.
+- **Operatyviai:** šio modo prod KV raktas (`cache:mod-copy:reforger:690AC3895BAAFAE1`) ištrintas per API — kitas puslapio apsilankymas refetch'ina aktualų tekstą nelaukiant deploy.
+- **Patikra:** root 228/228, tsc švaru, lint 0 klaidų.
+- **Heavy CI:** required because collector cache rašymo logikos keitimas.
+
 ## [1.23.20] - 2026-08-26
 
 ### ⚡ Observability fix'ai: 504 audros + SW API cache'o vaiduokliai

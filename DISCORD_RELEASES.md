@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.21] - 2026-08-26
+
+- Mod pages now pick up Workshop description edits within about two days instead of up to a week, so what you read here stays in sync with what authors write there.
+
 ## [1.23.20] - 2026-08-26
 
 - Big stability pass: mod badges, thumbnails and author lookups no longer time out, and cached pages can no longer show outdated or empty search results after sitting idle.

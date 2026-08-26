@@ -241,7 +241,11 @@ export async function cacheReforgerFieldsFromWorkshopHtml(
     await kv.put(authorCacheKey('reforger', modId), author, ttl);
   }
   if (copy.summary || copy.description) {
-    await kv.put(workshopCopyCacheKey('reforger', modId), JSON.stringify(copy), ttl);
+    // Copy keičiasi dažniau už kitus metadata (autorių redagavimai) – trumpas TTL,
+    // kad collector warm'as neužrakintų seno aprašymo 7 dienoms.
+    await kv.put(workshopCopyCacheKey('reforger', modId), JSON.stringify(copy), {
+      expirationTtl: WORKSHOP_COPY_KV_TTL,
+    });
   }
 
   return {
