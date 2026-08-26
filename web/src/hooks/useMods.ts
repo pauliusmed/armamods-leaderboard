@@ -92,8 +92,29 @@ export function useMods(options: UseModsOptions = {}) {
 
       setRetryCount(0);
       if (seq !== loadSeqRef.current) return; // stale — a newer load already won
-      setMods(Array.isArray(listData?.data) ? listData.data : []);
-      setTotalMods(listData?.meta?.total || 0);
+      const incoming = Array.isArray(listData?.data) ? listData.data : [];
+      const incomingTotal = listData?.meta?.total ?? 0;
+      // Apsauga nuo tuščio perrašymo: default view be filtrų neturi grąžinti tuščio
+      // puslapio kai total>0 — tai persidengusios užklausos ar tuščias precompute shard'as.
+      if (
+        incoming.length === 0 &&
+        incomingTotal > 0 &&
+        mods.length > 0 &&
+        searchQuery.trim() === '' &&
+        playerFilter === 'all' &&
+        sortBy === 'overall' &&
+        sortDir === 'asc'
+      ) {
+        console.warn('[MODS] ignoring empty page for non-empty total (stale/race)', {
+          incomingTotal,
+          offset,
+          page: currentPage,
+        });
+        setError(null);
+        return;
+      }
+      setMods(incoming);
+      setTotalMods(incomingTotal);
       setGlobalStats(statsData || { totalPlayers: 0, totalServers: 0, totalMods: 0 });
       setError(null);
     } catch (err) {
