@@ -99,7 +99,8 @@ export const modsApi = {
     game: GameType = 'reforger',
     playerFilter: string = 'all'
   ) => {
-    const key = `mods:${game}:${limit}:${offset}:${search}:${sortBy}:${sortDir}:${playerFilter}`;
+    // v2 — busts bad cached empty page from 80a681a race (2026-08-27)
+    const key = `mods:v2:${game}:${limit}:${offset}:${search}:${sortBy}:${sortDir}:${playerFilter}`;
     return getCached(key, async () => {
       const response = await api.get<ApiResponse<Mod>>('mods', {
         params: { limit, offset, search, sortBy, sortDir, game, playerFilter },
