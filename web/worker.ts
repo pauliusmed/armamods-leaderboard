@@ -83,6 +83,8 @@ type Bindings = {
   ASSETS: Fetcher;
   CLOUDFLARE_API_TOKEN?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
+  /** Workers ratelimit binding (wrangler [[ratelimits]]). Optional so tests/local tooling can omit it. */
+  PAGE_RATE_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
 };
 
 type GameType = 'reforger' | 'arma3';
@@ -2335,9 +2337,42 @@ async function buildSitemapPart(kv: KVNamespace, part: string): Promise<string |
 // Unified Worker fetch — replaces Pages Functions routing
 // Handles: /api/* (Hono), /sitemap*, prerender for crawlers, SPA assets
 // ──────────────────────────────────────────────
+
+/** Page/API routes guarded by the per-IP rate limiter (bot bursts, not static assets). */
+const RATE_LIMITED_PREFIXES = ['/api/', '/mod/', '/server/', '/arma3/'];
+const RATE_LIMIT_RETRY_AFTER = '10';
+
+function rateLimit429(): Response {
+  return new Response('Too Many Requests', {
+    status: 429,
+    headers: { 'Retry-After': RATE_LIMIT_RETRY_AFTER, 'Cache-Control': 'no-store' },
+  });
+}
+
+async function enforceRateLimit(request: Request, env: Bindings, pathname: string): Promise<Response | null> {
+  if (!RATE_LIMITED_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+  const limiter = env.PAGE_RATE_LIMITER;
+  if (!limiter) return null;
+  try {
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    // Per-location counter; docs warn it is eventually consistent — a burst may overshoot briefly.
+    const { success } = await limiter.limit({ key: ip });
+    if (success) return null;
+    console.warn(`[RATELIMIT] 429 for ${ip} on ${pathname}`);
+    return rateLimit429();
+  } catch (err) {
+    // Fail open: a limiter outage must not take the site down.
+    console.warn('[RATELIMIT] limit() failed', err);
+    return null;
+  }
+}
+
 export default {
   async fetch(request: Request, env: Bindings, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    const limited = await enforceRateLimit(request, env, url.pathname);
+    if (limited) return limited;
 
     // API — delegate to Hono (includes /api/sitemap* if needed, but root sitemap handled below)
     if (url.pathname.startsWith('/api/')) {

@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.22] - 2026-08-26
+
+- Added abuse protection: addresses that flood mod pages or the API (like last night's crawler with thousands of requests per hour) are now throttled automatically, so pages and rankings stay fast and available for everyone.
+
 ## [1.23.21] - 2026-08-26
 
 - Mod pages now pick up Workshop description edits within about two days instead of up to a week, so what you read here stays in sync with what authors write there.

@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.22] - 2026-08-26
+
+### 🛡️ Per-IP rate limiter botų burst'ams (Workers ratelimit binding)
+- **Kontekstas:** vakar vienas OVH datacenter bot'as per 1 val. sukosi `/mod/633B2D60573AF803` 5,904 kartus (~11.5 % paros srauto) ir kartu su dar nesutvarkytais sinchroniniais scrape'ais sukėlė 504 audrą (pikas 1,040/h).
+- **Kaip:** Workers `ratelimit` binding (GA) `PAGE_RATE_LIMITER` — **30 req / 10 s vienam IP** (skaitikliai per CF lokaciją), key = `cf-connecting-ip`, taikoma `/api/`, `/mod/`, `/server/`, `/arma3/` keliams. Viršijus — 429 + `Retry-After`; `limit()` klaida → fail-open (limiterio outage'as nenustato svetainės). Statiniams asset'ams ribojimo nėra (jie neina per Worker'į). Stebėjimas: `[RATELIMIT]` žinutės Workers Logs.
+- **Kodėl ne WAF rule'ė:** free planui tik 1 rule'ė su fiksuotu 10 s langu ir IP-only — paliekam ją rezervui; binding'as lankstesnis ir neeikvoja kvotos.
+- **Patikra:** `wrangler types` patvirtina bindingą (deploy binding lentelė ratelimit nerodo); root 228/228, web vitest 34/34, tsc švaru, lint 0 klaidų, `wrangler deploy --dry-run` ok.
+- **Heavy CI:** required because request rankinimo keitimas (guardrail'as prieš handler'į).
+
 ## [1.23.21] - 2026-08-26
 
 ### 🐛 Workshop aprašymai atsinaujina per ~2 dienas, ne per savaitę

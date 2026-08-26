@@ -15,6 +15,16 @@ run_worker_first = ["/api/*", "/sitemap.xml", "/sitemap/*", "/mod/*", "/server/*
 binding = "TRENDING_KV"
 id = "a8f21c595e39452e95e7e41e3d812013"
 
+# Per-IP request limiter for page/API routes (bot bursts like 5.9k req/h on one mod page).
+# Period must be 10 or 60 s (platform constraint); counters are per Cloudflare location.
+[[ratelimits]]
+name = "PAGE_RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 10
+
 [vars]
 ENVIRONMENT = "production"
 
