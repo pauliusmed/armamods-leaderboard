@@ -25,7 +25,11 @@ export function ModConfigPanel({
 }: ModConfigPanelProps) {
   const [snippetOpen, setSnippetOpen] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
-  const copySnippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
+  // Leading comma — matches the visible preview and appends cleanly after an existing entry.
+  const copySnippet = useMemo(
+    () => formatModConfigSnippet(modId, modName, { leadingComma: true }),
+    [modId, modName]
+  );
   const previewSnippet = useMemo(() => formatModConfigPreview(modId, modName), [modId, modName]);
   const isReforger = game === 'reforger';
   const { isUnavailable: workshopUnavailable } = useWorkshopStatus(modId, game, {

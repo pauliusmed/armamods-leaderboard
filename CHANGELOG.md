@@ -2,6 +2,14 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.23] - 2026-08-26
+
+### 📋 Copy mygtukas: jokio „sulipusio" JSON config'e
+- **Problema:** mod puslapio „Copy" kopijavo bloką **be** priekinio kablelio, nors puslapyje matomas preview jį rodė — įkliavus prie seno įrašo gaudavosi `}        {` be kablelio ir naujos eilutės (nevalidus JSON).
+- **Fix:** `CopyModConfigButton` ir `ModConfigPanel` Copy dabar naudoja `leadingComma: true` — kopijuojama `,\n{…}`; įkliavus po `}` gaunasi `}\n,{` (validus JSON, nieko nelimpa). Pirmam įrašui į tuščią `mods[]` reikia nukirpti vieną kablelį — taip pat elgiasi ir anksčiau rodytas preview.
+- **Testai:** naujas `web/src/lib/modConfig.test.ts` (6 atvejai: leading comma append-ready, preview ≡ copy, name fallback į modId, server list join formatas) — vitest automatiškai renka `src/**/*.test.ts`, registracija nereikalinga. Web vitest 40/40, tsc švaru, lint 0 klaidų.
+- **Heavy CI:** skipped because client-side copy formatavimas (be API / duomenų modelio pokyčių).
+
 ## [1.23.22] - 2026-08-26
 
 ### 🛡️ Per-IP rate limiter botų burst'ams (Workers ratelimit binding)

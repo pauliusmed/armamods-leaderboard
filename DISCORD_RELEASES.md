@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.23] - 2026-08-26
+
+- Fixed the config "Copy" button: copied mod blocks now start with the comma and line break they show in the preview, so adding mods to your server config one by one no longer produces glued-together, invalid JSON.
+
 ## [1.23.22] - 2026-08-26
 
 - Added abuse protection: addresses that flood mod pages or the API (like last night's crawler with thousands of requests per hour) are now throttled automatically, so pages and rankings stay fast and available for everyone.

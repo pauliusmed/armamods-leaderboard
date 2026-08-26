@@ -39,7 +39,7 @@ export interface ServerModConfigEntry {
   name: string;
 }
 
-/** Full game.mods[] body — indented blocks joined with comma on its own line. */
+/** Full game.mods[] body — indented blocks joined with `,` at the end of each closing brace line. */
 export function formatServerModsConfigSnippet(
   mods: ReadonlyArray<ServerModConfigEntry>
 ): string {

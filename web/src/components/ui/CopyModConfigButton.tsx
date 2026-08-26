@@ -11,7 +11,11 @@ interface CopyModConfigButtonProps {
 
 export function CopyModConfigButton({ modId, modName, className = '' }: CopyModConfigButtonProps) {
   const [hint, setHint] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const snippet = useMemo(() => formatModConfigSnippet(modId, modName), [modId, modName]);
+  const snippet = useMemo(
+    // Leading comma — copied block is appended after an existing entry in game.mods[].
+    () => formatModConfigSnippet(modId, modName, { leadingComma: true }),
+    [modId, modName]
+  );
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(snippet);
