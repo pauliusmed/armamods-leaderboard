@@ -1,0 +1,40 @@
+name: 🚀 Deploy Worker
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy.yml'
+
+# Vienas deploy'as vienu metu — eilė, ne atšaukimai (paskutinis kodas turi nugalėti).
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy (Cloudflare Workers)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📦 Install Dependencies (web)
+        run: npm ci --prefix web
+
+      - name: 🏗️ Build SPA + Worker bundle
+        run: npm run build --prefix web
+
+      - name: 🚀 Deploy via Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: web

@@ -84,7 +84,7 @@ PR aprašyme: `Heavy CI: required because <priežastis>` arba `Heavy CI: skipped
 | Test (web) | `npm --prefix web test` | Vitest |
 | Lint / type | `npm --prefix web run lint` (eslint web/), `npx tsc --noEmit` (visas repo), `npx --cwd web wrangler deploy --dry-run` (Worker bundling) | |
 | Build | `npm --prefix web run build` | Vite → `web/dist` (Workers assets) |
-| Deploy | push į `main` | Cloudflare Workers Builds (GitHub-connected, Root `web`, Build `npm run build`, Deploy `wrangler deploy`); Discord release žinutė per `.github/workflows/discord-release.yml` (kai keičiasi `DISCORD_RELEASES.md`; webhook `DISCORD_WEBHOOK_URL` secret) |
+| Deploy | push į `main` (kai keičiasi `web/**`) | GitHub Actions `.github/workflows/deploy.yml`: `npm ci --prefix web` → build (`npm run build`) → `cloudflare/wrangler-action@v3` (secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`). Rankinis fallback: `npx wrangler deploy --cwd web` su `.env` token'u; Discord release žinutė per `.github/workflows/discord-release.yml` (kai keičiasi `DISCORD_RELEASES.md`; webhook `DISCORD_WEBHOOK_URL` secret) |
 
 Spąstai:
 
