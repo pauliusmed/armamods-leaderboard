@@ -795,6 +795,109 @@ interface ServerMod {
 
     console.log(`✅ KV write completed successfully`);
 
+    // 6. Precomputed pages — „bendras šildymas“ (compute-at-write).
+    // Karšti default view puslapiai (24/page) ir serverių sąrašas kolektoriaus
+    // run metu tampa paruoštais KV raktais visiems vartotojams.
+    if (game === 'reforger') {
+      const {
+        PRECOMPUTED_MODS_PAGE_SIZE,
+        PRECOMPUTED_MODS_SIZE,
+        PRECOMPUTED_SERVERS_SIZE,
+        PRECOMPUTED_TTL_SECONDS,
+        precomputedModsCacheKey,
+        precomputedServersCacheKey,
+        precomputedStatsCacheKey,
+      } = await import('../web/functions/lib/precomputed-pages.ts');
+
+      // Aliased-cleanup ta pati, kaip ir workerio isDefaultView filtravimas.
+      const aliasedIds = await import('../web/functions/lib/mod-alias.ts')
+        .then((m) => m.loadAliasedModIdSet(kv as any, 'reforger'));
+      const filteredForPage = modList.filter(
+        (m: { id: string }) => !aliasedIds.has(String(m.id).toUpperCase())
+      );
+
+      const attachCachedFieldsForPage = async (rows: Array<Record<string, unknown>>) => {
+        await Promise.all(
+          rows.map(async (mod) => {
+            const id = String((mod as { id: string }).id);
+            const needsAuthor = (mod as { author?: string }).author === undefined;
+            const needsThumb = (mod as { thumbnail?: string }).thumbnail === undefined;
+            const needsStatus = (mod as { workshopStatus?: string }).workshopStatus === undefined;
+            const { authorCacheKey, ogImageCacheKey, statusCacheKey } =
+              await import('../web/functions/lib/workshop-fetch.ts');
+            const [author, thumb, statusRaw] = await Promise.all([
+              needsAuthor ? kv.get(authorCacheKey('reforger', id), 'text') : null,
+              needsThumb ? kv.get(ogImageCacheKey('reforger', id), 'text') : null,
+              needsStatus ? kv.get(statusCacheKey('reforger', id), 'text') : null,
+            ]);
+            if (needsAuthor) (mod as Record<string, unknown>).author = author ?? null;
+            if (needsThumb) (mod as Record<string, unknown>).thumbnail = thumb ?? null;
+            if (needsStatus) {
+              if (statusRaw) {
+                try {
+                  const p = JSON.parse(statusRaw) as { status?: string; checkedAt?: string | null };
+                  if (p.status === 'available' || p.status === 'unavailable') {
+                    (mod as Record<string, unknown>).workshopStatus = p.status;
+                    (mod as Record<string, unknown>).workshopStatusCheckedAt = p.checkedAt ?? null;
+                  } else (mod as Record<string, unknown>).workshopStatus = 'unknown';
+                } catch { (mod as Record<string, unknown>).workshopStatus = 'unknown'; }
+              } else (mod as Record<string, unknown>).workshopStatus = 'unknown';
+            }
+          })
+        );
+      };
+
+      // Modų puslapiai: pirma [PRECOMPUTED_MODS_SIZE] įrašų (4×24) su įlietu workshop cache.
+      const modsSlice = filteredForPage.slice(0, PRECOMPUTED_MODS_SIZE);
+      await attachCachedFieldsForPage(modsSlice as Array<Record<string, unknown>>);
+      const modsPayload = {
+        header: {
+          generatedAt: new Date().toISOString(),
+          pages: Math.ceil(modsSlice.length / PRECOMPUTED_MODS_PAGE_SIZE),
+          pageSize: PRECOMPUTED_MODS_PAGE_SIZE,
+          total: filteredForPage.length,
+        },
+        mods: modsSlice,
+      };
+      await kv.put(precomputedModsCacheKey('reforger'), JSON.stringify(modsPayload), {
+        expirationTtl: PRECOMPUTED_TTL_SECONDS,
+      });
+      console.log(`  - precomputed mods pages: ${modsSlice.length} row'ų į ${precomputedModsCacheKey('reforger')}`);
+
+      // Serverių sąrašas — pilna 200 (serversApi.getList default), enriched su SQE.
+      const serversSlice = [...serverList]
+        .sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+          const ra = Number((a.sqeRank as number | undefined) ?? Number.MAX_SAFE_INTEGER);
+          const rb = Number((b.sqeRank as number | undefined) ?? Number.MAX_SAFE_INTEGER);
+          if (ra !== rb) return ra - rb;
+          return (((b.players as number) | 0) - ((a.players as number) | 0));
+        })
+        .slice(0, PRECOMPUTED_SERVERS_SIZE) as Array<Record<string, unknown>>;
+      const serversPayload = {
+        header: {
+          generatedAt: new Date().toISOString(),
+          pages: 1,
+          pageSize: PRECOMPUTED_SERVERS_SIZE,
+          total: serverList.length,
+        },
+        servers: serversSlice,
+      };
+      await kv.put(precomputedServersCacheKey('reforger'), JSON.stringify(serversPayload), {
+        expirationTtl: PRECOMPUTED_TTL_SECONDS,
+      });
+      console.log(`  - precomputed servers: ${serversSlice.length} row'ų į ${precomputedServersCacheKey('reforger')}`);
+
+      const statsPayload = {
+        generatedAt: new Date().toISOString(),
+        totalMods: modList.length,
+        totalPlayers: currentPlayers,
+        totalServers: serverList.length,
+      };
+      await kv.put(precomputedStatsCacheKey('reforger'), JSON.stringify(statsPayload), {
+        expirationTtl: PRECOMPUTED_TTL_SECONDS,
+      });
+    }
+
     // 6. Update Stats and Last Update time
     await kv.put(KV_KEYS.STATS, JSON.stringify({
       totalMods: modList.length,

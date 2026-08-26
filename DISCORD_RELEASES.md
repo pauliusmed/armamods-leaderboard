@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.24] - 2026-08-27
+
+- Main mod and server leaderboards now load from a shared, precomputed page — faster for everyone on the first visit, not just repeat visitors.
+
 ## [1.23.23] - 2026-08-26
 
 - Fixed the config "Copy" button: copied mod blocks now start with the comma and line break they show in the preview, so adding mods to your server config one by one no longer produces glued-together, invalid JSON.

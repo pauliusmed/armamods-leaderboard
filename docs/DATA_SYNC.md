@@ -10,8 +10,8 @@ See also: [walkthrough.md](../walkthrough.md) §4–7 · [PERFORMANCE.md](./PERF
 
 ```
 BattleMetrics API  →  scripts/collector.ts (GitHub Actions cron ~2h)
-                   →  Cloudflare KV (TRENDING_KV)
-                   →  Pages Functions /api/*
+                   →  Cloudflare KV (TRENDING_KV: shards + precomputed pages)
+                   →  Cloudflare Worker /api/* (web/worker.ts)
                    →  React UI
 ```
 
@@ -22,6 +22,7 @@ The browser **never** calls BattleMetrics. Lists, trending, and charts are KV sn
 | Cron workflow | `.github/workflows/collector.yml` |
 | Ingestion | `scripts/collector.ts` |
 | BM client | `src/services/battlemetrics.ts` |
+| Precomputed hot pages | `web/functions/lib/precomputed-pages.ts` — default views materialized at write time (`cache:page:*:default`, `PRECOMPUTED_TTL_SECONDS = 7200`) |
 | Last sync timestamp | KV `cache:lastUpdate` / `cache:lastUpdate:arma3` |
 | Health | `GET /api/health` → `checks[game].lastUpdate`, `staleHours`, `isStale` (>3h) |
 

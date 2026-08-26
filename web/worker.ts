@@ -363,6 +363,32 @@ app.get('/mods', async (c) => {
     playerFilter === 'all' &&
     (sortBy === 'overall' || !sortBy) &&
     sortDir === 'asc';
+  // Precomputed hot pages (compute-at-write): kolektorius paruošia pirmus puslapius
+  // į atskirą KV raktą — worker'is skaito 1 raktą vietoj chunk'ų + 75 read'ų.
+  // Arma 3 ir non-default kelias → šio puslapio nėra.
+  if (isDefaultView && game === 'reforger') {
+    const { precomputedModsCacheKey, precomputedModsSliceParams } =
+      await import('./functions/lib/precomputed-pages');
+    const params = precomputedModsSliceParams({
+      game: String(game), sortBy, sortDir, search, playerFilter, limit, offset,
+    });
+    if (params) {
+      const raw = await c.env.TRENDING_KV.get(precomputedModsCacheKey('reforger'), 'json') as
+        import('./functions/lib/precomputed-pages').PrecomputedModsPayload | null;
+      if (raw && Array.isArray(raw.mods)) {
+        const page = raw.mods.slice(offset, offset + limit);
+        const response = c.json({
+          data: page,
+          meta: { total: raw.header?.total ?? raw.mods.length, limit, offset },
+        });
+        response.headers.set('Cache-Control', 'public, max-age=900');
+        response.headers.set('X-Precomputed', '1');
+        c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+        return response;
+      }
+      console.warn(`[PRECOMPUTE] miss for /api/mods ${JSON.stringify({ limit, offset })} — fallback`);
+    }
+  }
   const mods = await getChunkedData(c.env.TRENDING_KV, keys.MODS, isDefaultView ? 1 : undefined);
   let filtered = [...mods];
 
@@ -1134,6 +1160,26 @@ app.get('/servers', async (c) => {
     ? Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 5000)
     : Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 500);
   const offset = parseInt(c.req.query('offset') || '0', 10);
+
+  // Precomputed default 200 — serversApi.getList(200, 0) (reforger, be paieškos/full).
+  if (!full && !search && offset === 0 && limit === 200 && game === 'reforger') {
+    const { precomputedServersCacheKey } =
+      await import('./functions/lib/precomputed-pages');
+    const raw = await c.env.TRENDING_KV.get(precomputedServersCacheKey('reforger'), 'json') as
+      import('./functions/lib/precomputed-pages').PrecomputedServersPayload | null;
+    if (raw && Array.isArray(raw.servers)) {
+      const response = c.json({
+        data: raw.servers,
+        meta: { total: raw.header?.total ?? raw.servers.length, limit: 200, offset: 0 },
+      });
+      response.headers.set('Cache-Control', 'public, max-age=300');
+      response.headers.set('X-Precomputed', '1');
+      c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+      console.log(`[SERVERS] served precomputed ${raw.servers.length} rows`);
+      return response;
+    }
+    console.warn('[PRECOMPUTE] miss for /api/servers reforger default — fallback');
+  }
 
   console.log(`[SERVERS] Fetching data for ${game}...`);
   const servers = await getChunkedData(

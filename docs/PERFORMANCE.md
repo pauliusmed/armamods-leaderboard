@@ -24,9 +24,9 @@ Baseline (pre v1.21): desktop Performance **70** (TBT 970 ms), mobile **84**. De
 
 | Layer | Role |
 |-------|------|
-| **Collector** (`scripts/collector.ts`) | BattleMetrics → KV shards `cache:mods:*`, `cache:servers:*` |
-| **Edge API** (`web/functions/api/[[path]].ts`) | Reads KV + optional workshop scrape → JSON |
-| **Client** (`web/src/api/client.ts`) | In-memory cache (1–5 min) + in-flight dedupe |
+| **Collector** (`scripts/collector.ts`) | BattleMetrics → KV shards `cache:mods:*`, `cache:servers:*` + **precomputed hot pages** (`cache:page:*:reforger:default`, `cache:mods_search_index:reforger`) |
+| **Edge API** (`web/worker.ts`) | Reads KV → JSON. Default views (`/api/mods?sort=overall&dir=asc`, `/api/servers?limit=200`) hit **1 shared precomputed key** (compute-at-write); non-default (search/sort/filter) uses Cache API + sharded read |
+| **Client** (`web/src/api/client.ts`) | In-memory cache (1–5 min) + IndexedDB (`persistentCache`, stale-while-revalidate) + in-flight dedupe |
 
 UI never talks to BattleMetrics directly.
 
@@ -43,7 +43,7 @@ Documented in [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md):
 - **List metadata** — `author`, `thumbnail`, `workshopStatus` embedded in `GET /api/mods` page slice (KV only); rows skip per-item API when present.
 - **Lazy thumbnail bytes** — list rows load `/api/mods/:id/thumbnail/img?w=` on viewport (`IntersectionObserver`), not full CDN originals.
 - **On-demand author** — `cache:mod-author:*` filled on scrape/detail; list uses embedded author when cached.
-- **Default mod list** — only **chunk 0** of `cache:mods` (rank view).
+- **Default mod list** — **precomputed** kolektoriaus run metu (`cache:page:mods:reforger:default`, `web/functions/lib/precomputed-pages.ts`; 1 KV read, globalus visiems PoP). Fallback — chunk 0 + 75 workshop field read'ų.
 - **Full mod shards** — loaded when search, activity filter, or non-default sort is active ([ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) § Lazy Chunk Loading).
 
 ---
@@ -78,10 +78,20 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 
 ### Mod list — embedded metadata (v1.21+)
 
-`attachCachedListFields()` in `web/functions/api/[[path]].ts`:
+`attachCachedListFields()` in `web/worker.ts`:
 
 - For each mod in the **current page slice**, reads KV for `cache:mod-author`, `cache:og-image`, `cache:workshop-status` (parallel).
 - Response includes `author`, `thumbnail`, `workshopStatus` — **one** `GET /api/mods` replaces ~72 row-level JSON calls (24 rows × 3).
+
+### Mod list — precomputed pages (v1.24, bendras šildymas)
+
+`web/functions/lib/precomputed-pages.ts` — `cache:page:*:*`.
+
+- `GET /api/mods` default view (`sort=overall&dir=asc`) — kolektoriaus precompute (pirmi 4×24 su `author/thumbnail/workshopStatus`; 1 KV read, global). Fallback — dabartinis surinkimas + `[PRECOMPUTE] miss` logas.
+- `GET /api/servers` default view (`limit=200`) — vienas raktas.
+- `PRECOMPUTED_TTL_SECONDS = 7200`; Cache API liko ne-default keliui.
+
+---
 
 ### Thumbnail resize proxy
 

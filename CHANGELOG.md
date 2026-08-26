@@ -2,6 +2,16 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.24] - 2026-08-27
+
+### 🚀 Bendras šildymas (compute-at-write) — karšti puslapiai paruošti visiems
+- **Problema:** „ESTABLISHING UPLINK“ suksis 3–5 s daugiausia dėl **per-vartotoją surinkimo**: kolektorius rašė žalius chunk'us, o kiekviena užklausa surinkdavo puslapį iš naujo (`cache:mods:0` + `cache:mod-aliases:reforger` + ~75 `cache:mod-author/og-image/workshop-status` read'ai `web/worker.ts:291`). Kitiems default view vartotojams net ir toje pačioje lokacijoje reikėdavo to paties darbo — KV globalus, bet darbas lokalus.
+- **Sprendimas:** `web/functions/lib/precomputed-pages.ts` — kolektorius valandinio cron metu (`scripts/collector.ts:798`) materializuoja karštus default view puslapius į **3 bendrus KV raktus** (`cache:page:mods:reforger:default` 96 įrašai 4×24, `cache:page:servers:reforger:default` 200, `cache:page:stats:reforger`; `PRECOMPUTED_TTL_SECONDS = 7200`). Worker'is `web/worker.ts:346` default užklausai (`sort=overall&dir=asc`, be `search`/`playerFilter`, limit=24 24-aligned pirmi 96; servers limit=200/offset=0) skaito **1 raktą**; miss → dokumentuotasis `console.warn('[PRECOMPUTE] miss …')` fallback į dabartinį surinkimą (be tylaus spėjimo; Cloudflare KV — eventually consistent, 1/val rašoma, 2-val TTL toleruoja praleistą run).
+- **Kai veikia:** `GET /api/mods` karšti p1..p4 + `GET /api/servers` default 200 + `GET /api/stats` ant **Reforger**; `Arma 3` bei search/sort/filter kelias nepaliestas. Cache API (`max-age=900`) liko ne-default keliui; kliento IndexedDB SWR liko atskiru sluoksniu.
+- **Testai:** nauji `web/src/lib/precomputed-pages.test.ts` (5 atvejai: raktai nesikerta su `cache:mods:`, 24-aligned geometrija, non-default fallback) + `test/precomputed-pages.test.ts` (registruotas `package.json`) — `Heavy CI: required because collector + KV schema + rankinimas`. Patikra: root 231/231, web vitest 45/45, tsc švaru, lint 0 klaidų, `wrangler deploy --dry-run` ok.
+- **Dokumentacija:** `docs/PERFORMANCE.md` (Data flow + Optimizations — precomputed pages), `docs/DATA_SYNC.md` (Pipeline su `cache:page:*`), `walkthrough.md` §4.2/§4.3 (KV + Serving; `web/functions/api/[[path]].ts` → `web/worker.ts`).
+- **Grill:** atliktas (Reforger tik, 4×24 mods + 200 servers + stats, 1 h senumo priimtina, Arma 3/firehose neatitinka — fallback).
+
 ## [1.23.23] - 2026-08-26
 
 ### 📋 Copy mygtukas: jokio „sulipusio" JSON config'e

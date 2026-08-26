@@ -126,6 +126,9 @@ suffix, Arma 3 uses `:arma3`):
 |---|---|
 | `cache:mods:{i}` + `:meta` | sharded mod list (rank, players, coDeployed) |
 | `cache:servers:{i}` + `:meta` | sharded server list (with SQE fields + `scenarioName`) |
+| `cache:page:mods:reforger:default` | **precomputed** Reforger mod leaderboard default pages (4×24) with embedded fields (global, compute-at-write; TTL 7200) |
+| `cache:page:servers:reforger:default` | **precomputed** Reforger server list default 200 (TTL 7200) |
+| `cache:page:stats:reforger` | **precomputed** Reforger stats snapshot (TTL 7200) |
 | `cache:ranking:servers:{game}` | top-200 SQE leaderboard |
 | `cache:ranking:scenarios:{game}` | scenario leaderboard (rank, servers, players, top server) |
 | `cache:server_sqe:{game}` | compact SQE index for API enrichment |
@@ -139,16 +142,13 @@ suffix, Arma 3 uses `:arma3`):
 Sharding exists because KV values are capped at 25 MB; 5 MB chunks keep individual
 reads well within Worker CPU/memory limits.
 
-### 4.3 Serving — `web/functions/api/[[path]].ts`
-Hono app exported as a Pages Function. Read paths follow a common pattern:
+### 4.3 Serving — `web/worker.ts` (unified Worker — SPA + API)
+Hono app exported as a Worker (`worker.ts`). Read paths:
 
-1. Check the Cloudflare **Cache API** first (`caches.open(...)`); return on hit.
-2. Read the relevant KV keys, **shards in parallel** via `Promise.all`.
-3. For single-record lookups (mod/server by id), avoid `JSON.parse`-ing the whole
-   shard: scan the raw text for the id, then slice the object out with
-   `findMatchingBrace` / `splitJsonArray` / `extractModFromChunks` (mod-lookup).
-   Only the target object is parsed.
-4. Set `Cache-Control` and store the response with `waitUntil(cache.put(...))`.
+- **Default views = precomputed (compute-at-write):** `GET /api/mods` (`sort=overall&dir=asc`, 4×24) and `GET /api/servers` (`limit=200` default) on Reforger hit `cache:page:*:default` — 1 KV read, global. Miss → documented fallback `console.warn('[PRECOMPUTE] miss …')` į dabartinį surinkimą (be tylaus spėjimo).
+- **Non-default API:** Cache API → KV shards `Promise.all` → `Cache-Control` + `waitUntil(cache.put(...))`.
+- **Single-record lookups** (mod/server by id) scan shard text (`findMatchingBrace` / `splitJsonArray` / `extractModFromChunks`) — tik tikslinis objektas parse'inamas.
+- `GET /api/stats` → collector-written `cache:stats` (su `cache:page:stats:reforger` precompute).
 
 ### 4.4 Presentation — `web/src`
 React 19 SPA. `src/api/client.ts` wraps axios with a 2-minute in-memory cache and
