@@ -33,25 +33,25 @@ export function usePinnedFavoriteMods(
       .filter((mod): mod is Mod => Boolean(mod));
   }, [active, game, favoriteIds, pageById, fetchedById]);
 
-  // Reset loading when the set of missing ids changes (React "derived state" pattern).
-  const missingKey = active
-    ? favoriteIds.filter((id) => !pageById.has(modIdKey(game, id))).join(',')
-    : '';
-  const [prevMissingKey, setPrevMissingKey] = useState('');
-  if (prevMissingKey !== missingKey) {
-    setPrevMissingKey(missingKey);
-    setLoading(missingKey !== '');
-  }
-
   useEffect(() => {
-    if (!active) return;
-
-    let cancelled = false;
+    if (!active) {
+      setLoading(false);
+      return;
+    }
     const missingIds = favoriteIds.filter((id) => !pageById.has(modIdKey(game, id)));
-    if (missingIds.length === 0) return;
-
+    if (missingIds.length === 0) {
+      setLoading(false);
+      return;
+    }
+    // Jau turim šiuos fetch'intus — nereikia krauti iš naujo (getCached vis tiek greit, bet vengiame mirgėjimo).
+    const toFetch = missingIds.filter((id) => !fetchedById.has(modIdKey(game, id)));
+    if (toFetch.length === 0) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     Promise.all(
-      missingIds.map(async (id) => {
+      toFetch.map(async (id) => {
         try {
           const res = await modsApi.getById(id, game);
           const data = res?.data;
@@ -73,7 +73,6 @@ export function usePinnedFavoriteMods(
       })
     )
       .then((fetched) => {
-        if (cancelled) return;
         setFetchedById((prev) => {
           const next = new Map(prev);
           for (const mod of fetched) {
@@ -83,12 +82,8 @@ export function usePinnedFavoriteMods(
         });
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [active, game, favoriteIds, pageById]);
 
   return { pinnedMods, loadingPinned: active ? loading : false };

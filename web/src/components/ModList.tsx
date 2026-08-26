@@ -52,8 +52,8 @@ export function ModList({ game = 'reforger' }: ModListProps) {
   } = useMods({ game });
 
   const { favoriteIds, toggle, isFavorite } = useModFavorites(game);
-  const showFavoritesPin =
-    currentPage === 1 && !searchQuery.trim() && playerFilter === 'all';
+  // Vartotojas prašo: favorite'ai visada viršuje, nepriklausomai nuo puslapio/filtro.
+  const showFavoritesPin = favoriteIds.length > 0;
   const { pinnedMods, loadingPinned } = usePinnedFavoriteMods(
     game,
     favoriteIds,
