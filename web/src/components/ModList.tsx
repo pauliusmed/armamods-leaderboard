@@ -166,39 +166,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
           <ModListSkeleton />
         </>
       ) : filteredMods.length === 0 && pinnedMods.length === 0 ? (
-        (() => {
-          const isFiltered =
-            searchQuery.trim() !== '' || playerFilter !== 'all' || sortBy !== 'overall' || sortDir !== 'asc';
-          // „No mods“ ant default view (be filtrų) niekada neturėtų rodyti „Clear Filters“ —
-          // tai persidengusios užklausos arba tuščias precompute shard'as, ne vartotojo
-          // filtras. Tokiu atveju siūlom retry, o ne filtrų valymą.
-          if (isFiltered || stats.totalMods === 0) {
-            return (
-              <StatusState
-                type="empty"
-                message="No matches found"
-                details="No mods match your current filter settings. Try resetting them."
-                onAction={resetFilters}
-                actionText="Clear Filters"
-              />
-            );
-          }
-          // Default view, bet duomenys tušti nors total>0 — laikinas KV/edge miss, ne tuščia DB.
-          console.warn('[MODS] empty page for non-empty total', {
-            total: stats.totalMods,
-            page: currentPage,
-            sortBy, sortDir, playerFilter, searchQuery,
-          });
-          return (
-            <StatusState
-              type="error"
-              message="UPLINK SYNCING"
-              details="Leaderboard snapshot temporarily unavailable — retrying."
-              onAction={refresh}
-              actionText="Retry Uplink"
-            />
-          );
-        })()
+        <StatusState type="empty" message="No matches found" details="No mods match your current filter settings. Try resetting them." onAction={resetFilters} actionText="Clear Filters" />
       ) : isMobile ? (
         <div
           className={`border border-white/5 bg-black/40 ${loading ? 'opacity-70' : ''}`}
