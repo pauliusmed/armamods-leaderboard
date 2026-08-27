@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.26] - 2026-08-27
+
+### 🔄 External cron fallback kolektoriui + stale alert (INC-2026-08-27)
+- **Problema:** GitHub Actions scheduler'is praleido 8 valandinius slot'us (11:00–18:00) — jokio `schedule` event'o, ne `failure`. `[ STALE DATA ]` banneris ~7 h (`staleHours=7.5`). Vienas valandinis cron (1.23.25) vis tiek nepatikimas.
+- **Fix 1:** įjungtas `cron-job.org` jobas `7414079` (kas valandą `:30` UTC) → GitHub Actions REST `workflow_dispatch` (POST su `Authorization: Bearer`). Fallback nepriklauso nuo GitHub scheduler'io; praleistam GitHub slot'ui atsiranda pakaitalas per ≤1 h.
+- **Fix 2:** naujas `stale-alert.yml` + `scripts/post-stale-alert.mjs` — kas valandą tikrina `/api/health` ir siunčia Discord `#status` alertą kai `staleHours>3`, kad incidento nebereikėtų pastebėti ranka.
+- **Rizika:** `cron-job.org` token'as laikinas (`gho_...`) — **PAVOJUS** pakeisti į ilgalaikį fine-grained PAT (`Actions: Read/Write`).
+- **Patikra:** `cron-job.org` run'ai 19:30/20:30/21:30 UTC `status=1` (`http=204`); `/api/health` → `isStale:false` po rankinio run.
+
 ## [1.23.25] - 2026-08-27
 
 ### 🐛 Tuščias „No matches“ flash + ★ visada + BM atsparumas (INC-2026-08-26)

@@ -1,0 +1,30 @@
+name: Stale Data Alert
+
+# Posts to Discord #status when /api/health reports isStale (>3h) for any game.
+# GitHub Actions schedule is best-effort (missed 8 slots, INC-2026-08-27) — this
+# is a soft early-warning, not a replacement for the cron-job.org trigger.
+
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check health and alert on stale
+        run: node scripts/post-stale-alert.mjs
+        env:
+          HEALTH_URL: https://reforgermods.com/api/health
+          STALE_THRESHOLD_HOURS: '3'
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

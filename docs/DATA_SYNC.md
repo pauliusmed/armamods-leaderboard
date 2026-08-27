@@ -20,6 +20,7 @@ The browser **never** calls BattleMetrics. Lists, trending, and charts are KV sn
 | Piece | Location |
 |-------|----------|
 | Cron workflow | `.github/workflows/collector.yml` |
+| **External trigger fallback** | `cron-job.org` job `7414079` (hourly `:30` UTC) → GitHub Actions REST `workflow_dispatch` — GitHub scheduler'is best-effort (praleido 8 slot'us, INC-2026-08-27). **Token = fine-grained PAT (`Actions: Read/Write`), ne `gho_...`** — žr. `docs/INCIDENTS.md` |
 | Ingestion | `scripts/collector.ts` |
 | BM client | `src/services/battlemetrics.ts` |
 | Precomputed hot pages | `web/functions/lib/precomputed-pages.ts` — default views materialized at write time (`cache:page:*:default`, `PRECOMPUTED_TTL_SECONDS = 7200`) |
