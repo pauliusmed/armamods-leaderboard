@@ -29,6 +29,7 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.30**).
 | [DISCORD.md](./DISCORD.md) | Discord kanalų šablonas, tikslai, moderavimo taisyklės |
 | [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md) | Mobile standartas (dabartinė kodo realybė + roadmap) |
 | [MOBILE_UX.md](./MOBILE_UX.md) | Mobile auditas ir re-test checklist'as |
+| [INCIDENTS.md](./INCIDENTS.md) | Incidentų registras (data-pipeline, edge, API) |
 
 ## Other
 
