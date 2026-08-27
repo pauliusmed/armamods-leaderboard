@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.25] - 2026-08-27
+
+### 🐛 Tuščias „No matches“ flash + ★ visada + BM atsparumas (INC-2026-08-26)
+- **Tuščias puslapis ant default view:** persidengusios `GET /api/mods` užklausos (`useMods.ts:78` `loadSeqRef` race + `getCached` `mods:v2` stale) galėdavo perrašyti gerus duomenis tuščia. Fix: `web/src/hooks/useMods.ts:113` ignoruoja tuščią puslapį kai `total>0` ir jau turim duomenų + rakto bumpas `web/src/api/client.ts:102` `mods` → `mods:v2` (išvalo blogą IndexedDB 15 min). `web/src/components/ModList.tsx:168` grąžintas prie originalo su sargu.
+- **★ Favorites visada viršuje:** `web/src/components/ModList.tsx:55` `showFavoritesPin` dabar `favoriteIds.length>0` (buvo tik `page===1 && !search && filter==='all'`), `web/src/hooks/usePinnedFavoriteMods.ts:29` be `cancelled` atšaukimo keičiantis `pageById` — nebereikia 2–3 perkrovimų (buvo `setState` render'yje).
+- **Kolektoriaus atsparumas:** `src/services/battlemetrics.ts:50` BM GET transient 5xx (504 code 1106 `collector.yml:19:26` fail) dabar retry ×3 su backoff `2000*attempt` (403/429 palikti kaip buvo, be tylaus fallback). `.github/workflows/collector.yml:12` cron `0 */2` → `0 * * * *` (kas valandą) — praleisto slot'o banga ≤1h, stale 3h riba nebesiekia (INC-2026-08-26 #1, #2).
+- **Patikra:** `docs/INCIDENTS.md` registras; root 231/231, web 45/45, tsc švaru, lint 0 klaidų, `wrangler deploy --dry-run` ok.
+- **Heavy CI:** required because collector + API sargas (nors client guard).
+
 ## [1.23.24] - 2026-08-27
 
 ### 🚀 Bendras šildymas (compute-at-write) — karšti puslapiai paruošti visiems

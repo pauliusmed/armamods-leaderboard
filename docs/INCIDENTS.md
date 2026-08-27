@@ -40,8 +40,8 @@ Formatas: `INC-YYYY-MM-DD-<short-slug>`.
 
 | # | Veiksmas | Statusas |
 |---|---|---|
-| 1 | BM GET retry ×3 su backoff (tik 5xx/timeout, ne 4xx) | TODO |
-| 2 | Cron kas valandą (`0 * * * *`) — praleisto slot'o „banga“ ≤1 h | TODO |
-| 3 | (nebūtina) stale riba 3 h → 4,5 h | TODO |
+| 1 | BM GET retry ×3 su backoff (tik 5xx/timeout, ne 4xx) `src/services/battlemetrics.ts:50` | DONE `4fa2b58→1.23.25` |
+| 2 | Cron kas valandą (`0 * * * *`) `.github/workflows/collector.yml:12` — praleisto slot'o „banga“ ≤1 h | DONE |
+| 3 | (nebūtina) stale riba 3 h → 4,5 h | TODO (paliekam 3h — valandinis cron užtenka) |
 
 Šio registro įrašymo metu atliktas rankinis dispatch (poveikio šalinimas).

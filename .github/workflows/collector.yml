@@ -9,7 +9,7 @@ name: Arma Mods Collector
 
 on:
   schedule:
-    - cron: '0 */2 * * *'  # Every 2 hours
+    - cron: '0 * * * *'  # Every hour — praleisto slot'o banga ≤1h (INC-2026-08-26)
   workflow_dispatch:      # Manual trigger
 
 jobs:

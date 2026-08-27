@@ -64,7 +64,36 @@ export class BattleMetricsService {
         headers['Authorization'] = `Bearer ${this.apiKey}`;
       }
 
-      const response = await fetch(url, { headers });
+      // Transient errors (5xx, network) — retry ×3 su backoff, be tylaus fallback.
+      let response: Response | null = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          response = await fetch(url, { headers });
+          if (response.ok) break;
+          if (response.status === 429) {
+            const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
+            console.log(`⏳ Rate limited (429) attempt ${attempt}/3. Waiting ${retryAfter}s...`);
+            await this.sleep(retryAfter * 1000);
+            continue;
+          }
+          if (response.status >= 500 && response.status < 600) {
+            if (attempt < 3) {
+              console.log(`⚠️ Transient ${response.status} attempt ${attempt}/3 — retrying in ${2 * attempt}s...`);
+              await this.sleep(2000 * attempt);
+              continue;
+            }
+          }
+          break; // 4xx arba paskutinis 5xx — ne-retry
+        } catch (err) {
+          if (attempt < 3) {
+            console.log(`⚠️ Fetch error attempt ${attempt}/3: ${err} — retrying...`);
+            await this.sleep(2000 * attempt);
+            continue;
+          }
+          throw err;
+        }
+      }
+      if (!response) throw new Error('No response after retries');
 
       if (!response.ok) {
         if (response.status === 403) {
@@ -75,10 +104,8 @@ export class BattleMetricsService {
           }
         }
         if (response.status === 429) {
-          const retryAfter = parseInt(response.headers.get('Retry-After') || '60', 10);
-          console.log(`⏳ Rate limited (429). Waiting ${retryAfter}s...`);
-          await this.sleep(retryAfter * 1000);
-          continue;
+          // Po 3 bandymų vis dar 429 — laikom kaip klaidą.
+          throw new Error(`HTTP 429: rate limited after retries`);
         }
         throw new Error(`HTTP ${response.status}: error code: 1106`);
       }
