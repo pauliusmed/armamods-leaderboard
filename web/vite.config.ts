@@ -15,14 +15,6 @@ export default defineConfig({
     },
   },
   plugins: [
-    {
-      name: 'font-display-optional',
-      transform(code, id) {
-        if (id.includes('@fontsource') && id.endsWith('.css')) {
-          return code.replace(/font-display:\s*swap/g, 'font-display: optional');
-        }
-      },
-    },
     react(),
     tailwindcss(),
     VitePWA({
