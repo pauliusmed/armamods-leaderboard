@@ -381,7 +381,7 @@ app.get('/mods', async (c) => {
           data: page,
           meta: { total: raw.header?.total ?? raw.mods.length, limit, offset },
         });
-        response.headers.set('Cache-Control', 'public, max-age=900');
+        response.headers.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600');
         response.headers.set('X-Precomputed', '1');
         c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
         return response;
@@ -462,7 +462,7 @@ app.get('/mods', async (c) => {
   });
 
   // Increased cache time to save Worker calls
-  response.headers.set('Cache-Control', 'public, max-age=900'); // 15 minutes cache
+  response.headers.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600'); // 15 minutes cache
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });

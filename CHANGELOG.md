@@ -4,6 +4,16 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ Workers Cache + stale-while-revalidate (greitesnis /api/mods)
+
+- `web/wrangler.toml`: įjungtas `[cache] enabled = true` — Cloudflare patarnauja HIT
+  **be Worker vykdymo** (0 CPU / 0 KV prie HIT).
+- `/api/mods` (precomputed + non-default): `Cache-Control` papildytas
+  `stale-while-revalidate=3600` — pasenęs cache patarnaujamas iškart, atnaujinimas fone.
+- Cache API (caches.open) lieka kaip nepriklausomas antras sluoksnis — nekenkia.
+- Rizika: `no-store` atsakymai (/health, /admin/*, rate-limited) pridėjo cache-lookup
+  overhead — bet jie nedažni, nauda HIT didesnė.
+
 ### 📊 Duomenų šaltinių tyrimas — BattleMetrics alternatyvos
 - Dokumentuota `docs/DATA_SOURCES_RESEARCH.md`: sujungti du tyrimai (praktinis POC + kolegos analizė).
 - **Radinys:** oficialus Bohemia Workshop API (`api-ar-workshop.bistudio.com`) veikia be auth — katalogas, detail, batch lookup iki 50 modų. Gali pakeisti HTML scrape'ą (P0b).

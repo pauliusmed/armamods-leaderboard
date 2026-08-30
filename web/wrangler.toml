@@ -4,6 +4,13 @@ compatibility_date = "2026-08-24"
 compatibility_flags = ["nodejs_compat"]
 main = "./worker.ts"
 
+# Workers Cache: Cloudflare patarnauja HIT be Worker vykdymo (0 CPU/KV prie HIT).
+# Cache API (caches.open) lieka kaip antras sluoksnis — nepriklausoma, nekenkia.
+# Rizika: atsakymai be cacheable Cache-Control pridėtų cache-lookup overhead —
+# todėl kritiniai API endpointai turi public,max-age (+ stale-while-revalidate).
+[cache]
+enabled = true
+
 [assets]
 directory = "./dist"
 binding = "ASSETS"
