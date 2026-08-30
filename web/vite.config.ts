@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -6,6 +7,49 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
+
+/**
+ * Vite plugin: automatiškai prideda <link rel="preload"> CSS ir fontų failams
+ * po build'o. Išsprendžia render-blocking grandinę: CSS + 6 fontai kraunasi
+ * lygiagrečiai su HTML, vietoj serijinės grandinės (1015ms+ → ~200ms).
+ *
+ * Hash'ai dinamiškai ištraukiami iš dist/assets katalogo kiekvienam build'ui.
+ */
+function preloadCriticalAssets() {
+  return {
+    name: 'preload-critical-assets',
+    closeBundle() {
+      const distDir = path.resolve(rootDir, 'dist')
+      const indexPath = path.join(distDir, 'index.html')
+      let html = readFileSync(indexPath, 'utf8')
+
+      const assets = readdirSync(path.join(distDir, 'assets'))
+
+      // CSS: pirmas index-*.css failas
+      const cssFile = assets.find(f => f.startsWith('index-') && f.endsWith('.css'))
+      // Fontai: visi .woff2
+      const fontFiles = assets.filter(f => f.endsWith('.woff2'))
+
+      if (!cssFile) return
+
+      const preloads = [
+        `<link rel="preload" href="/assets/${cssFile}" as="style" />`,
+        ...fontFiles.map(f =>
+          `<link rel="preload" href="/assets/${f}" as="font" type="font/woff2" crossorigin />`
+        ),
+      ].join('\n    ')
+
+      // Pridėti prieš pirmą <script> tag'ą (prieš JS, kad krautųsi lygiagrečiai)
+      html = html.replace(
+        /(<script type="module")/,
+        `${preloads}\n    $1`
+      )
+
+      writeFileSync(indexPath, html)
+      console.log(`[preload] Pridėti ${1 + fontFiles.length} preload link'ai: ${cssFile}, ${fontFiles.join(', ')}`)
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -45,6 +89,7 @@ export default defineConfig({
         ],
       },
     }),
+    preloadCriticalAssets(),
   ],
   server: {
     proxy: {
