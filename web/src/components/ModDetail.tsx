@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { modsApi, type GameType } from '../api/client';
 import { StatusState } from './ui/StatusState';
@@ -6,16 +6,17 @@ import { SEO } from './ui/SEO';
 import { AffiliateBanner } from './ui/AffiliateBanner';
 import { Card, CardContent } from './ui/Card';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  ReferenceArea,
-} from 'recharts';
+  LazyLineChart as LineChart,
+  LazyResponsiveContainer as ResponsiveContainer,
+  LazyXAxis as XAxis,
+  LazyYAxis as YAxis,
+  LazyCartesianGrid as CartesianGrid,
+  LazyTooltip as Tooltip,
+  LazyReferenceLine as ReferenceLine,
+  LazyReferenceArea as ReferenceArea,
+  LazyLine as Line,
+  ChartSkeleton,
+} from './LazyRecharts';
 import { buildModAuditRow, REFORGER_PATCHES, type AuditStatus } from '@audit-config';
 import { TrendingUp, Package, Server as ServerIcon, Copy, Check } from 'lucide-react';
 import { AUDIT_STATUS_SHORT } from '../lib/auditLabels';
@@ -565,6 +566,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                       )}
                     </div>
                     <div className="w-full h-[300px] sm:h-[340px]">
+                      <Suspense fallback={<ChartSkeleton />}>
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <LineChart
                       data={chartHistory}
@@ -719,7 +721,8 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                         activeDot={{ r: 4, fill: '#3b82f6', stroke: '#18181b', strokeWidth: 2 }}
                       />
                     </LineChart>
-                  </ResponsiveContainer>
+                      </ResponsiveContainer>
+                      </Suspense>
                     </div>
                   </div>
                 )}
