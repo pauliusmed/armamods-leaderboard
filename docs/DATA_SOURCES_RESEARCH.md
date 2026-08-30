@@ -191,17 +191,24 @@ rizikos ar Bohemia leidimo.
 **BM vaidmuo:** fallback + palyginimas + istorija. Nekurti svarbiausių funkcijų
 vien ant BM.
 
-### Prioritetas: snapshot istorija pirmiausia, Workshop API iškart po jos
+### Prioritetas: P0b (Workshop API) padarytas; istorija jau veikia
 
-**BM snapshot kaupimas skubesnis už visa kita** — kiekviena nepaleista diena reiškia
-visam laikui prarastą istoriją (firstSeen, trend, activity). Jos negalima atkurti
-atgaline data.
+**BM snapshot istorija JAU kaupiama** (hourly/daily/weekly per kas-2h ciklą) — tai
+duoda firstSeen, trend, activity. Dažnesnis snapshot neprioritetas (žr. P0a žemiau).
 
-### P0a — DABAR: BM serverių snapshot istorija
+### P0a — BM serverių snapshot istorija (ATIDĖTA — dažnesnis snapshot nereikalingas)
 
-1. Minimalus BM snapshot job (kas minutę / kelias minutes): saugoti
-   `{ observedAt, server, players, maxPlayers, mods, online }` į KV/shard.
-   Pradėti nuo esamo kolektoriaus dažninimo.
+Dabartinė KV istorija (hourly/daily/weekly/monthly/yearly, kolektorius kas-2h) jau
+teikia firstSeen, trend, activity. **Dažnesnis snapshot (kas 5–15 min) NEREIKALINGAS**
+— sprendimas 2026-08-30. R2 tyrimas parodytas kaip ateities pasiūlymas:
+
+**R2 kaip istorijos saugykla (tyrimo išvada, neatlikta):**
+- R2 free: 10 GB, 1M Class A / mėn (rašymas), 10M Class B (skaitymas).
+- **Per-server objektai kas 2h viršija limitą** (60k/day ≈ 1.8M/mėn) — NEdaryti.
+- **Agreguotas objektas per snapshot** (visas momentas ~220KB) — tik 12/day, niekada
+  neviršys; atvertų kas-5-min snapshot'us be limitų.
+- Migracija reiškia Edge skaitymo logikos perrašymą — daryti tik kai atsiras realus
+  poreikis (smulki 24h kreivė / tikslesnis trend).
 
 ### P0b — iškart po (3-7 d.): Workshop duomenų sluoksnis
 
