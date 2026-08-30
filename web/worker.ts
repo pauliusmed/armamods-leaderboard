@@ -246,7 +246,7 @@ app.get('/stats', async (c) => {
   const data = stats || { totalMods: 0, totalPlayers: 0, totalServers: 0, game };
   
   const response = c.json(data);
-  response.headers.set('Cache-Control', 'public, max-age=600'); // 10 minutes cache
+  response.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600'); // 10 minutes cache
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -602,7 +602,7 @@ app.get('/mods/:modId', async (c) => {
   const finalResponse = c.json({ data: { ...mod, stats: { ...mod, totalMods: totalModsCount }, servers: modServers } });
   
   // Cache the response for 5 minutes
-  finalResponse.headers.set('Cache-Control', 'public, max-age=300');
+  finalResponse.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
   
   return finalResponse;
@@ -848,7 +848,7 @@ app.get('/mods/:modId/workshop-status', async (c) => {
       data: { status: 'unknown', checkedAt: null },
       meta: { modId, game, supported: false },
     });
-    response.headers.set('Cache-Control', 'public, max-age=3600');
+    response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200');
     c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
     return response;
   }
@@ -891,7 +891,7 @@ app.get('/mods/:modId/workshop-status', async (c) => {
     data: { status: 'unknown', checkedAt: null },
     meta: { modId, game, supported: true },
   });
-  response.headers.set('Cache-Control', 'public, max-age=60');
+  response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=3600');
   return response;
 });
 
@@ -908,7 +908,7 @@ app.get('/mods/:modId/author', async (c) => {
       data: { author: null },
       meta: { modId, game, supported: false },
     });
-    response.headers.set('Cache-Control', 'public, max-age=3600');
+    response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200');
     c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
     return response;
   }
@@ -938,7 +938,7 @@ app.get('/mods/:modId/author', async (c) => {
     data: { author: null },
     meta: { modId, game },
   });
-  response.headers.set('Cache-Control', 'public, max-age=60');
+  response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=3600');
   return response;
 });
 
@@ -1012,7 +1012,7 @@ app.get('/mods/:modId/gallery', async (c) => {
       data: [],
       meta: { source: 'steam_workshop', supported: false, modId, count: 0 },
     });
-    response.headers.set('Cache-Control', 'public, max-age=3600');
+    response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200');
     c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
     return response;
   }
@@ -1045,7 +1045,7 @@ app.get('/mods/:modId/dependencies', async (c) => {
       data: [],
       meta: { source: 'steam_workshop', supported: false, message: 'Dependency scrape not yet supported for Arma 3' },
     });
-    response.headers.set('Cache-Control', 'public, max-age=3600');
+    response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200');
     c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
     return response;
   }
@@ -1136,7 +1136,7 @@ app.get('/mods/:modId/history', async (c) => {
   const finalResponse = c.json({ data: finalHistory });
   
   // Cache the response for 5 minutes
-  finalResponse.headers.set('Cache-Control', 'public, max-age=300');
+  finalResponse.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
   
   return finalResponse;
@@ -1172,7 +1172,7 @@ app.get('/servers', async (c) => {
         data: raw.servers,
         meta: { total: raw.header?.total ?? raw.servers.length, limit: 200, offset: 0 },
       });
-      response.headers.set('Cache-Control', 'public, max-age=300');
+      response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
       response.headers.set('X-Precomputed', '1');
       c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
       console.log(`[SERVERS] served precomputed ${raw.servers.length} rows`);
@@ -1217,7 +1217,7 @@ app.get('/servers', async (c) => {
   });
 
   // Cache for 5 minutes to ensure fresh SQE data after collector runs
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
 
   const finished = Date.now() - start;
@@ -1250,7 +1250,7 @@ app.get('/scenarios', async (c) => {
     data: ranking,
     meta: { total: ranking.length, source },
   });
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -1284,7 +1284,7 @@ app.get('/scenarios/servers', async (c) => {
     data: matched,
     meta: { total: matched.length, scenario: scenarioName },
   });
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -1300,7 +1300,7 @@ app.get('/servers/ranking', async (c) => {
   if (!ranking) return c.json({ data: [] });
 
   const response = c.json({ data: ranking });
-  response.headers.set('Cache-Control', 'public, max-age=3600');
+  response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -1341,7 +1341,7 @@ app.get('/servers/:serverId/reverse-deps/:targetModId', async (c) => {
           'Workshop-declared dependencies only — not co-deploy stats. Uncached mods may appear after first workshop scrape.',
       },
     });
-    response.headers.set('Cache-Control', 'public, max-age=900');
+    response.headers.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600');
     return response;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Analysis failed';
@@ -1379,7 +1379,7 @@ app.get('/servers/:serverId/storage', async (c) => {
         'Sizes from Reforger Workshop (version download). Partial coverage when sizes are not cached yet — refresh to load more.',
     },
   });
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   return response;
 });
 
@@ -1404,7 +1404,7 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
       data: [],
       meta: { days, retention: MODPACK_DIFF_RETENTION_DAYS, tracking: false },
     });
-    empty.headers.set('Cache-Control', 'public, max-age=120');
+    empty.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=3600');
     c.executionCtx.waitUntil(cache.put(c.req.raw, empty.clone()));
     return empty;
   }
@@ -1432,7 +1432,7 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
       lastSnapshotDate: history.length > 0 ? history[history.length - 1]?.time ?? null : null,
     },
   });
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -1489,7 +1489,7 @@ app.get('/servers/:serverId', async (c) => {
   const response = c.json({ data: server });
   
   // Cache for 5 minutes to ensure fresh SQE data
-  response.headers.set('Cache-Control', 'public, max-age=300');
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   
   return response;
@@ -1639,7 +1639,7 @@ app.get('/trending/:period?', async (c) => {
     }
 
     const response = c.json(trendingData);
-    response.headers.set('Cache-Control', 'public, max-age=3600'); // 1 hour cache
+    response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=7200'); // 1 hour cache
     c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
     return response;
 });
@@ -1864,7 +1864,7 @@ app.get('/servers/:serverId/history', async (c) => {
 
   const finalHistory = smoothServerHistory(rawHistory);
   const finalResponse = c.json({ data: finalHistory });
-  finalResponse.headers.set('Cache-Control', 'public, max-age=300');
+  finalResponse.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
   return finalResponse;
 });

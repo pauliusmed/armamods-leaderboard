@@ -4,13 +4,16 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
-### ⚡ Workers Cache + stale-while-revalidate (greitesnis /api/mods)
+### ⚡ Workers Cache + stale-while-revalidate (visi dažni API endpointai)
 
 - `web/wrangler.toml`: įjungtas `[cache] enabled = true` — Cloudflare patarnauja HIT
   **be Worker vykdymo** (0 CPU / 0 KV prie HIT).
-- `/api/mods` (precomputed + non-default): `Cache-Control` papildytas
-  `stale-while-revalidate=3600` — pasenęs cache patarnaujamas iškart, atnaujinimas fone.
-- Cache API (caches.open) lieka kaip nepriklausomas antras sluoksnis — nekenkia.
+- `stale-while-revalidate` pridėtas prie **30 API atsakymų** (servers, scenarios,
+  trending, mod detail, mods, modpack ir kt.) — pasenęs cache patarnaujamas iškart,
+  atnaujinimas fone.
+- SWR vertės: 300s→3600s, 600s→3600s, 900s→3600s, 3600s→7200s, 60s→3600s, 120s→3600s.
+- Redirectai (Location) ir OG HTML palikti be SWR (nereikia).
+- Piloto matavimas: /api/mods HIT 382ms ≈ statikos tinklo riba (463ms) — HIT be Worker.
 - Rizika: `no-store` atsakymai (/health, /admin/*, rate-limited) pridėjo cache-lookup
   overhead — bet jie nedažni, nauda HIT didesnė.
 
