@@ -4,6 +4,17 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🛠️ Fix: web build (KVNamespace tipai + dead code) — atkurtas deploy
+
+- **Problema:** `npm run build --prefix web` (tsc -b) lūžo nuo "Pages → Workers migracijos"
+  — `KVNamespace` tipai nerasti (trūko `@cloudflare/workers-types` web) + 3 dead funkcijos
+  share-meta.ts (`noUnusedLocals`). Todėl **deploy neveikė** (0 sėkmingų per 100 run).
+- **Fix 1:** pridėtas `@cloudflare/workers-types` prie web devDeps + `tsconfig.app.json` types.
+- **Fix 2:** pašalinti 3 dead, neeksportuoti dublikatai share-meta.ts
+  (`extractOgImageFromHtml`, `workshopPageUrl`, `ogImageCacheKey` — jau gyvena workshop-fetch.ts).
+- **Patikra:** web build ✅, wrangler dry-run ✅, root 241 ✅, web 45 ✅, tsc švarus.
+- **Pasekmė:** šio pakeitimo ir ankstesnių (Workers Cache) deploy'as dabar gali veikti.
+
 ### ⚡ Workers Cache + stale-while-revalidate (visi dažni API endpointai)
 
 - `web/wrangler.toml`: įjungtas `[cache] enabled = true` — Cloudflare patarnauja HIT

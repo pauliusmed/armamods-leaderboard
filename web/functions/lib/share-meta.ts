@@ -206,30 +206,6 @@ async function lookupServer(kv: KVNamespace, game: ShareGame, serverId: string):
   return null;
 }
 
-function extractOgImageFromHtml(html: string): string | null {
-  const patterns = [
-    /property=["']og:image(?::url)?["']\s+content=["']([^"']+)["']/i,
-    /content=["']([^"']+)["']\s+property=["']og:image(?::url)?["']/i,
-    /name=["']twitter:image(?::src)?["']\s+content=["']([^"']+)["']/i,
-  ];
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match?.[1]) return match[1].replace(/&amp;/g, '&');
-  }
-  return null;
-}
-
-function workshopPageUrl(modId: string, game: ShareGame): string {
-  if (game === 'arma3') {
-    return `https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(modId)}`;
-  }
-  return `https://reforger.armaplatform.com/workshop/${encodeURIComponent(modId)}`;
-}
-
-function ogImageCacheKey(game: ShareGame, modId: string): string {
-  return `cache:og-image:${game}:${modId.toUpperCase()}`;
-}
-
 import { resolveModThumbnailUrl } from './workshop-fetch';
 
 /** Workshop OG thumbnail with KV cache (7d). Discord follows 302 to this URL. */

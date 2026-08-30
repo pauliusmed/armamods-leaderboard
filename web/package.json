@@ -25,6 +25,7 @@
     "recharts": "^3.8.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^7.0.0",
