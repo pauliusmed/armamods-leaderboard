@@ -35,3 +35,7 @@ scratch/
 # Backtest data (large, regenerated)
 scripts/backtest/data/
 scripts/backtest/debug-syn.ts
+
+# Confidential research (not for public repo)
+docs-private/
+

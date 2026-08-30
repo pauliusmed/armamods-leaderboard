@@ -2,6 +2,15 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## Research (unreleased) - 2026-08-30
+
+### 📊 Duomenų šaltinių tyrimas — BattleMetrics alternatyvos
+- Dokumentuota `docs/DATA_SOURCES_RESEARCH.md`: sujungti du tyrimai (praktinis POC + kolegos analizė).
+- **Radinys:** oficialus Bohemia Workshop API (`api-ar-workshop.bistudio.com`) veikia be auth — katalogas, detail, batch lookup iki 50 modų. Gali pakeisti HTML scrape'ą (P0b).
+- **Išvada:** serverių telemetrijai BM lieka fallback; Bohemia lobby/nikai reikalauja runtime auth arba leidimo (neatkuriama).
+- **KV biudžetas patvirtintas:** collector ~44 put/run → kas-2h yra max free plane (528/1000 day). Dažnesni snapshot'ai reikalautų R2/paid.
+- Privati techninė analizė (endpoint'ai, auth flow) — `docs-private/` (nekomitinama).
+
 ## [1.23.26] - 2026-08-27
 
 ### 🔄 External cron fallback kolektoriui + stale alert (INC-2026-08-27)

@@ -22,6 +22,7 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.22.30**).
 | [MODPACK_DIFF.md](./MODPACK_DIFF.md) | Daily server modlist added/removed |
 | [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) | Console modpack sizes, planner API |
 | [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) | Thumbnails, deps scrape, list metadata |
+| [DATA_SOURCES_RESEARCH.md](./DATA_SOURCES_RESEARCH.md) | BM alternatyvų tyrimas; oficialus Bohemia Workshop API |
 | [UI_FILTERS.md](./UI_FILTERS.md) | ListFilterBar, favorites, table layout |
 | [PERFORMANCE.md](./PERFORMANCE.md) | KV/cache trade-offs, hot paths |
 | [LIGHTHOUSE.md](./LIGHTHOUSE.md) | PageSpeed / Lighthouse scores (before & after v1.21) |

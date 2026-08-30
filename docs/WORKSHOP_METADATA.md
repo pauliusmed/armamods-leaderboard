@@ -13,6 +13,11 @@ How the platform supplements BattleMetrics telemetry with **Reforger Workshop** 
 
 Workshop metadata is **not** written by the collector. It is resolved by the Edge API when a user (or OG bot) requests a mod.
 
+> **Research (2026-08-30):** official Bohemia Workshop API exists and works without
+> auth — `api-ar-workshop.bistudio.com/workshop-api/api/v3.0/` (catalog + detail +
+> batch by ids). It could replace the HTML scrape below. See
+> [DATA_SOURCES_RESEARCH.md](./DATA_SOURCES_RESEARCH.md). No code change yet.
+
 > **Ops:** BattleMetrics API requires a paid subscription key since ~2026-07-20.
 > If the collector is gated off, leaderboard numbers freeze on the last KV write —
 > [DATA_SYNC.md](./DATA_SYNC.md).
