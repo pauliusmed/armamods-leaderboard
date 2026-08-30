@@ -78,7 +78,7 @@ export function statusCacheKey(game: ShareGame, modId: string): string {
   return `cache:workshop-status:${game}:${modId.toUpperCase()}`;
 }
 
-const WORKSHOP_KV_TTL = 604800; // 7 days
+export const WORKSHOP_KV_TTL = 604800; // 7 days
 // Summary/description keičiasi dažniau už kitus metadata (autorių redagavimai,
 // release'ai) – 48 h, kad puslapis atspindėtų pakeitimus per porą dienų, ne per savaitę.
 const WORKSHOP_COPY_KV_TTL = 172800; // 48 hours

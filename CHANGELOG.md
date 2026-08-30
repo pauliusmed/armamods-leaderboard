@@ -11,6 +11,13 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **KV biudžetas patvirtintas:** collector ~44 put/run → kas-2h yra max free plane (528/1000 day). Dažnesni snapshot'ai reikalautų R2/paid.
 - Privati techninė analizė (endpoint'ai, auth flow) — `docs-private/` (nekomitinama).
 
+### ⚙️ P0b: Workshop API kolektoriuje (batch lookup vietoj HTML scrape)
+- Naujas `web/functions/lib/workshop-api.ts` — oficialaus Bohemia Workshop API klientas (batch lookup iki 50 modų/request, detail, exists).
+- `warmTopModSizesFromWorkshop` + `warmServerModpackModSizes` (collector.ts) pakeistos iš vieno-HTML-fetch-per-mod į **API batch** — ~50× mažiau HTTP requestų per run.
+- Autorius + dydis + summary rašomi į KV kaip anksčiau; `WORKSHOP_KV_TTL` eksportuotas.
+- Testai: `test/workshop-api.test.ts` (10 testų, mock'uotas fetch, jokio tinklo).
+- Edge API (workshop-fetch.ts) HTML scrape lieka kaip fallback per-request metadata.
+
 ## [1.23.26] - 2026-08-27
 
 ### 🔄 External cron fallback kolektoriui + stale alert (INC-2026-08-27)

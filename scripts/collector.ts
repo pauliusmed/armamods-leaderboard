@@ -22,10 +22,14 @@ import {
   mergeServerHistorySnapshot,
 } from '../web/functions/lib/server-uptime-history.js';
 import {
-  fetchReforgerWorkshopPage,
-  isReforgerWorkshopPageAvailable,
-  cacheReforgerFieldsFromWorkshopHtml,
+  sizeCacheKey,
+  authorCacheKey,
+  WORKSHOP_KV_TTL,
 } from '../web/functions/lib/workshop-fetch.ts';
+import {
+  workshopListByIds,
+  sizeAuthorFromApiRow,
+} from '../web/functions/lib/workshop-api.ts';
 import { persistModsSearchIndexFromWarm } from '../web/functions/lib/mods-search-index.ts';
 import {
   findModAliasTarget,
@@ -279,16 +283,6 @@ async function attachModSizesFromKvCache(
 }
 
 /**
- * 404 arba „dead shell" puslapis = itemas ištrintas/paslėptas.
- * Tinklo klaida (html null, status != 404) NELAIKOMA neprieinamu – apsauga
- * nuo masinių klaidingų alias'ų, kai workshop laikinai neveikia.
- */
-function isUnavailableWorkshopResult(page: { html: string | null; httpStatus: number | null }): boolean {
-  if (page.httpStatus === 404) return true;
-  return Boolean(page.html) && !isReforgerWorkshopPageAvailable(page.html);
-}
-
-/**
  * Re-upload aptikimas: senas itemas nepasiekiamas + LYGIAGAI VIENAS kandidatas
  * su ta pačia pavadinimo + autoriaus pora → rašom alias į KV. Dviprasmybė =
  * nesujungiam (žr. mod-alias.ts). Aliass vėliau naudoja edge 301 redirectui
@@ -342,7 +336,6 @@ async function detectModAliases(
   }
   if (created) console.log(`  - mod aliases created: ${created}/${unavailableIds.length}`);
 }
-
 /** Fetch workshop version size for top-ranked mods missing KV cache (populates cache:mod-size). */
 async function warmTopModSizesFromWorkshop(
   kv: CloudflareKVClient,
@@ -361,34 +354,43 @@ async function warmTopModSizesFromWorkshop(
     return;
   }
 
-  let warmed = 0;
-  const concurrency = 6;
-  for (let i = 0; i < missing.length; i += concurrency) {
-    const batch = missing.slice(i, i + concurrency);
-    await Promise.all(
-      batch.map(async (mod) => {
-        try {
-          const page = await fetchReforgerWorkshopPage(mod.id);
-          if (isUnavailableWorkshopResult(page)) {
-            unavailableIds.push(mod.id);
-            return;
-          }
-          if (!page.html) return;
-          const { sizeBytes, author, copy } = await cacheReforgerFieldsFromWorkshopHtml(kv, mod.id, page.html);
-          if ((copy.summary || copy.description) && copiesOut) {
-            copiesOut.set(mod.id.toUpperCase(), copy);
-          }
-          if (sizeBytes) mod.sizeBytes = sizeBytes;
-          if (author) mod.author = author;
-          if (sizeBytes || author) warmed++;
-        } catch {
-          /* skip failed fetch */
-        }
-      })
-    );
-    await sleep(250);
+  // Batch via official Workshop API (up to 50/request) instead of 1 HTML fetch per mod.
+  const ids = missing.map((m) => m.id);
+  const { rows, networkError } = await workshopListByIds(ids);
+  if (networkError) {
+    // API laikinai nepasiekiama — NEŽYMĖTI modų kaip unavailable (apsauga nuo klaidingų alias'ų).
+    console.warn('  - workshop warm: API network error — skipping unavailable marking');
+    return;
   }
-  console.log(`  - workshop warm: ${warmed}/${missing.length} top-mod fetches (cap ${limit})`);
+  const rowById = new Map(rows.map((r) => [r.id.toUpperCase(), r]));
+
+  let warmed = 0;
+  for (const mod of missing) {
+    const row = rowById.get(mod.id.toUpperCase());
+    if (!row) {
+      unavailableIds.push(mod.id);
+      continue;
+    }
+    const { sizeBytes, author, blocked } = sizeAuthorFromApiRow(row);
+    if (blocked) {
+      unavailableIds.push(mod.id);
+      continue;
+    }
+    if (sizeBytes && sizeBytes > 0) {
+      await kv.put(sizeCacheKey('reforger', mod.id), String(sizeBytes), { expirationTtl: WORKSHOP_KV_TTL });
+      mod.sizeBytes = sizeBytes;
+    }
+    if (author) {
+      await kv.put(authorCacheKey('reforger', mod.id), author, { expirationTtl: WORKSHOP_KV_TTL });
+      mod.author = author;
+    }
+    if ((row.summary || undefined) && copiesOut) {
+      copiesOut.set(mod.id.toUpperCase(), { summary: row.summary ?? null, description: null });
+    }
+    if (sizeBytes || author) warmed++;
+  }
+
+  console.log(`  - workshop warm: ${warmed}/${missing.length} top-mod fetches (cap ${limit}, via API batch)`);
 }
 
 /** Warm workshop sizes for mods on active servers (beyond global top-300). */
@@ -436,37 +438,44 @@ async function warmServerModpackModSizes(
     return;
   }
 
-  let warmed = 0;
-  const concurrency = 6;
-  for (let i = 0; i < missingIds.length; i += concurrency) {
-    const batch = missingIds.slice(i, i + concurrency);
-    await Promise.all(
-      batch.map(async (modId) => {
-        try {
-          const page = await fetchReforgerWorkshopPage(modId);
-          if (isUnavailableWorkshopResult(page)) {
-            unavailableIds.push(modId);
-            return;
-          }
-          if (!page.html) return;
-          const { sizeBytes, author, copy } = await cacheReforgerFieldsFromWorkshopHtml(kv, modId, page.html);
-          if ((copy.summary || copy.description) && copiesOut) {
-            copiesOut.set(modId.toUpperCase(), copy);
-          }
-          const row = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
-          if (row) {
-            if (sizeBytes) row.sizeBytes = sizeBytes;
-            if (author) row.author = author;
-          }
-          if (sizeBytes || author) warmed++;
-        } catch {
-          /* skip failed fetch */
-        }
-      })
-    );
-    await sleep(250);
+  // Batch via official Workshop API (up to 50/request) instead of 1 HTML fetch per mod.
+  const { rows, networkError } = await workshopListByIds(missingIds);
+  if (networkError) {
+    // API laikinai nepasiekiama — NEŽYMĖTI modų kaip unavailable (apsauga nuo klaidingų alias'ų).
+    console.warn('  - server modpack warm: API network error — skipping unavailable marking');
+    return;
   }
-  console.log(`  - server modpack warm: ${warmed}/${missingIds.length} fetches (cap ${limit})`);
+  const rowById = new Map(rows.map((r) => [r.id.toUpperCase(), r]));
+
+  let warmed = 0;
+  for (const modId of missingIds) {
+    const row = rowById.get(modId.toUpperCase());
+    if (!row) {
+      unavailableIds.push(modId);
+      continue;
+    }
+    const { sizeBytes, author, blocked } = sizeAuthorFromApiRow(row);
+    if (blocked) {
+      unavailableIds.push(modId);
+      continue;
+    }
+    if (sizeBytes && sizeBytes > 0) {
+      await kv.put(sizeCacheKey('reforger', modId), String(sizeBytes), { expirationTtl: WORKSHOP_KV_TTL });
+    }
+    if (author) {
+      await kv.put(authorCacheKey('reforger', modId), author, { expirationTtl: WORKSHOP_KV_TTL });
+    }
+    if ((row.summary || undefined) && copiesOut) {
+      copiesOut.set(modId.toUpperCase(), { summary: row.summary ?? null, description: null });
+    }
+    const modRow = modList.find((m) => m.id.toUpperCase() === modId.toUpperCase());
+    if (modRow) {
+      if (sizeBytes) modRow.sizeBytes = sizeBytes;
+      if (author) modRow.author = author;
+    }
+    if (sizeBytes || author) warmed++;
+  }
+  console.log(`  - server modpack warm: ${warmed}/${missingIds.length} fetches (cap ${limit}, via API batch)`);
 }
 
 function attachServerModpackSizes(

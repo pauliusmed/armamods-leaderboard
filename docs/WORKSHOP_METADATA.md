@@ -15,8 +15,11 @@ Workshop metadata is **not** written by the collector. It is resolved by the Edg
 
 > **Research (2026-08-30):** official Bohemia Workshop API exists and works without
 > auth — `api-ar-workshop.bistudio.com/workshop-api/api/v3.0/` (catalog + detail +
-> batch by ids). It could replace the HTML scrape below. See
-> [DATA_SOURCES_RESEARCH.md](./DATA_SOURCES_RESEARCH.md). No code change yet.
+> batch by ids). The collector warm passes (`warmTopModSizesFromWorkshop`,
+> `warmServerModpackModSizes`) now use it via `lib/workshop-api.ts` instead of
+> per-mod HTML fetches (~50× fewer requests). The Edge HTML scrape below remains
+> as fallback for per-request metadata. See
+> [DATA_SOURCES_RESEARCH.md](./DATA_SOURCES_RESEARCH.md).
 
 > **Ops:** BattleMetrics API requires a paid subscription key since ~2026-07-20.
 > If the collector is gated off, leaderboard numbers freeze on the last KV write —
