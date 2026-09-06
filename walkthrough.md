@@ -112,7 +112,9 @@ Two phases:
 9. **Server uptime samples** — each history point records per-server `online` (hourly)
    or merged `on`/`n` (daily/weekly) for availability charts; `bmLastSeenAt` on
    server shards for “last seen online” hints. See [docs/SERVER_UPTIME.md](./docs/SERVER_UPTIME.md).
-10. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV.
+10. Everything is sharded into ≤5MB JSON chunks (`buildChunks`) and written to KV, plus a
+    compact `serverId → shard` index (`cache:servers-index:{game}`) so the edge can load
+    one shard for a single-server lookup.
 
 **`trending`** (run after collect):
 Reads the previous history point, computes `trendScore = rankDelta × positionWeight
@@ -126,6 +128,7 @@ suffix, Arma 3 uses `:arma3`):
 |---|---|
 | `cache:mods:{i}` + `:meta` | sharded mod list (rank, players, coDeployed) |
 | `cache:servers:{i}` + `:meta` | sharded server list (with SQE fields + `scenarioName`) |
+| `cache:servers-index:{game}` | `serverId → shard` mapa (~110 KB); edge single-server lookup krauna tik 1 shardą |
 | `cache:page:mods:reforger:default` | **precomputed** Reforger mod leaderboard default pages (4×24) with embedded fields (global, compute-at-write; TTL 7200) |
 | `cache:page:servers:reforger:default` | **precomputed** Reforger server list default 200 (TTL 7200) |
 | `cache:page:stats:reforger` | **precomputed** Reforger stats snapshot (TTL 7200) |
@@ -147,7 +150,12 @@ Hono app exported as a Worker (`worker.ts`). Read paths:
 
 - **Default views = precomputed (compute-at-write):** `GET /api/mods` (`sort=overall&dir=asc`, 4×24) and `GET /api/servers` (`limit=200` default) on Reforger hit `cache:page:*:default` — 1 KV read, global. Miss → documented fallback `console.warn('[PRECOMPUTE] miss …')` į dabartinį surinkimą (be tylaus spėjimo).
 - **Non-default API:** Cache API → KV shards `Promise.all` → `Cache-Control` + `waitUntil(cache.put(...))`.
-- **Single-record lookups** (mod/server by id) scan shard text (`findMatchingBrace` / `splitJsonArray` / `extractModFromChunks`) — tik tikslinis objektas parse'inamas.
+- **Single-record lookups** (server by id) read the collector-written `cache:servers-index:{game}`
+  map and load **one shard** (~5 MB), then `findMatchingBrace` slices the object (`server-lookup.ts`).
+  Unknown id → instant 404. Index key missing (between deploy and the first collector run) →
+  documented batched full-scan fallback (4 shards at a time, `console.warn` +
+  `meta.indexFallback:true`). Mod detail scans server shards in batches of 4 to list servers
+  running the mod (reverse id→shard index doesn't apply there).
 - `GET /api/stats` → collector-written `cache:stats` (su `cache:page:stats:reforger` precompute).
 
 ### 4.4 Presentation — `web/src`
@@ -330,7 +338,10 @@ share-meta, and search matching.
 
 - **String-scan over full parse.** On hot detail endpoints, scanning raw shard text
   for an id and slicing out one object keeps Worker CPU well below the time limit
-  that full `JSON.parse` of multi-MB blobs would hit.
+  that full `JSON.parse` of multi-MB blobs would hit. Since 1.23.25 single-server
+  lookups also read a collector-written id→shard index and touch **one shard**
+  (~5 MB) instead of all (~80 MB) — parallel detail requests previously blew the
+  128 MB Worker memory limit (see `docs/INCIDENTS.md` INC-2026-09-06).
 - **Sharded, parallel reads.** `Promise.all` over shards instead of sequential gets
   removes the latency that previously caused 503s under load.
 - **Compute-on-write.** Trending, SQE, scenario ranking, and co-deployment are all

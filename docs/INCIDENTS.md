@@ -7,6 +7,47 @@ Formatas: `INC-YYYY-MM-DD-<short-slug>`.
 
 ---
 
+## INC-2026-09-06 · edge Worker exceededMemory — serverio detail 503 audros
+
+**Kategorija:** edge · **Poveikis:** didelis (serverio detail puslapiai kraunasi ilgai / sekcijos neveikia; 75 error/val) · **Statusas:** closed (fix `6babe79` → 1.23.25)
+
+### Laiko juosta (EEST)
+
+| Laikas | Įvykis |
+|---|---|
+| (pradžia neaiški) | Duomenų augimas: serverių shard'ai pasiekė 16 (~80 MB pilnas skenas) — peak artėjo prie 128 MB izoliacijos ribos palaipsniui |
+| 09-06 21:33 | Vartotojas pastebi „labai ilgai kraunasi" `/server/40788168`; PSI ataskaita 58/100; Workers Observability: `/servers/40788168/storage`, `/mod-changes`, `/history` → 503, `outcome: exceededMemory` — 3 lygiagrečios užklausos toje pačioje sekundėje (Lighthouse crawler) |
+| 09-06 21:45 | Realus lankytojas (Firefox, Vilnius): `/servers/40026751` ×1 + `/servers/40392800` ×2 per tą pačią sekundę → visos 503 exceededMemory. Iš viso 75 errors / 0 success langelyje |
+| 09-06 ~21:50 | Diagnozė: `ServerLookup`/detail handler'iai krauna visus 16 serverių shard'ų vienu `Promise.all` (~80 MB); ServerDetail šaukia 4 endpoint'us lygiagrečiai → izoliacija >128 MB |
+| 09-06 22:09 | Fix commit `6babe79` → push `main` → automatinis deploy |
+| 09-06 22:14 | Patikra production: `/api/servers/40788168` 200 su `meta.indexFallback:true` (batched fallback); **5 lygiagrečios `/storage` užklausos — visos 200** (anksčiau tas scenarijus = 503 audra) |
+| (laukiama) | Po kito collector cron run'o (≤2 h) atsiras `cache:servers-index:{game}` → 1-shard kelias, `indexFallback` žyma dings |
+
+### Poveikis
+
+- Serverio detail puslapių API (`/servers/:id`, `/storage`, `/history`, `/mod-changes`) grąžino 503 lygiagretumo bangomis — puslapis „kraunasi be galo", dalis sekcijų tuščios.
+- Nekenčia sekamosios užklausos viena po kitos (todėl atskiri curl'ai rodė 200) — gedimas priklausė nuo lygiagretumo izoliacijoje.
+
+### Šakninės priežastys
+
+1. **Pilnas skenas vieno serverio paieškai** — `ServerLookup.loadChunks()` ir inline `/servers/:id` handler'is krauną visus shard'us `Promise.all` (~80 MB teksto) prieš `findMatchingBrace` iškarpymą. Viena užklausa — ribos pakraštyje.
+2. **Lygiagretumas toje pačioje izoliacijoje** — ServerDetail puslapis vienu metu šaukia 4 endpoint'us, visi su tuo pačiu pilno skeno šablonu; kartu peršokama 128 MB.
+3. **Pridedantis:** duomenų augimas (7 636 serverių → 16 shard'ų) — sistema kirto ribą palaipsniui, be kodo pokyčių.
+
+### Veiksmai
+
+| # | Veiksmas | Statusas |
+|---|---|---|
+| 1 | Collector rašo `cache:servers-index{suffix}` (serverId→shard, ~110 KB, +1 put/run) | DONE `6babe79` |
+| 2 | `ServerLookup`: indekso kelias (1 shardas ~5 MB); nežinomas id → greitas 404 be skenų | DONE `6babe79` |
+| 3 | Batched full-scan fallback (po 4 shard'us, `console.warn` + `meta.indexFallback:true`) — nulinis downtime tarp deploy ir pirmo collector run'o | DONE `6babe79` |
+| 4 | `/servers/:id` ant bendro `ServerLookup` (dublis pašalintas); `/mods/:id` batching po 4; `storage/plan` async `findById` su 1-shard cache | DONE `6babe79` |
+| 5 | Patikrinti `indexFallback` žymos dingimą po collector run'o (indeksas veikia) | TODO (≤2 h nuo deploy) |
+| 6 | **Fazė 2:** mod→serverių reverse indeksas `/mods/:id` pilnam efektyvumui (dabar tik batching) | TODO (atskiras darbas, su grill) |
+| 7 | Stebėjimas: Workers Observability — ar `exceededMemory` įvykiai pasibaigė | TODO (pasirinktinai) |
+
+---
+
 ## INC-2026-08-27 · GitHub scheduler 8 slot'ų praleidimas + external cron fallback
 
 **Kategorija:** data-pipeline · **Poveikis:** vidutinis (UI stale banner'is ~7 h) · **Statusas:** closed (external fallback + rankinis run)
