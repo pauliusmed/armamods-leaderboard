@@ -4,6 +4,29 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🛠️ Fix: serverio detail 503 (Worker exceededMemory) — serverId→shard indeksas (v1.23.25)
+
+- **Problema:** `/api/servers/:id`, `/api/servers/:id/storage` ir `/api/mods/:id` krauna
+  visus 16 serverių shard'ų (~80 MB žalio teksto) vienu `Promise.all`. ServerDetail puslapis
+  šaukia 4 endpoint'us lygiagrečiai → toje pačioje izoliacijoje >128 MB →
+  `Worker exceeded memory limit` (503) — serverių puslapiai „ilgai kraunasi" / neatsidaro
+  (loguose 75 error per valandą, pvz. 2026-09-06 21:33–21:45).
+- **Fix 1 (collector):** po server shard'ų rašoma `cache:servers-index{suffix}` —
+  kompaktiška `{ total, shards, map: {serverId: shardIdx} }` mapa (~110 KB, +1 KV put/run).
+- **Fix 2 (edge):** `ServerLookup` skaito indeksą ir krauna **tik 1 shardą** (~5 MB);
+  nežinomas id → greitas 404 be skenų. Indekso nėra (iki pirmo collector run'o po deploy) →
+  dokumentuotas **batched full-scan fallback** (po 4 shard'us, `console.warn` +
+  `meta.indexFallback: true` atsakyme) — nulinis downtime.
+- **Fix 3:** `/servers/:id` perrašytas ant bendro `ServerLookup` (buvo dubliuota logika);
+  `/api/mods/:id` serverių skenas — batching po 4 su early-exit; `storage/plan` pritaikytas
+  async `findById` (1-shard cache ~5 MB cap).
+- **Apimtis:** `/servers/:id/history` nelietas (jau sequential — RAM safe); mod→serverių
+  reverse indeksas — atskiras būsimas darbas (fazė 2).
+- **Grill:** atliktas (2026-09-06) — apimtis ir fallback politika patvirtintos savininko.
+- **Patikra:** tsc švarus, root **250/250** ✅ (iš jų 9 nauji server-lookup testai: indekso
+  kelias, batching, fallback, 1-shard cache), web vitest **45/45** ✅, wrangler dry-run ✅.
+- **Heavy CI: required because** kolektorius + KV schema (naujas raktas) + rankinimo logika.
+
 ### 🛠️ Fix: web build (KVNamespace tipai + dead code) — atkurtas deploy
 
 - **Problema:** `npm run build --prefix web` (tsc -b) lūžo nuo "Pages → Workers migracijos"

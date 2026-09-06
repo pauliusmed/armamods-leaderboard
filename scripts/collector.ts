@@ -16,6 +16,7 @@
 import 'dotenv/config';
 import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
+import { buildServerIndex } from '../web/functions/lib/server-lookup.js';
 import { normalizeBmServerStatus, isBmServerOnline } from '../web/functions/lib/server-status.js';
 import {
   isServerOnlineSample,
@@ -143,6 +144,7 @@ function getKVKeys(game: GameType) {
   return {
     MODS: `cache:mods${suffix}`,
     SERVERS: `cache:servers${suffix}`,
+    SERVERS_INDEX: `cache:servers-index${suffix}`,
     STATS: `cache:stats${suffix}`,
     LAST_UPDATE: `cache:lastUpdate${suffix}`,
     TRENDING: `cache:trending${suffix}`,
@@ -797,6 +799,12 @@ interface ServerMod {
       }
     }
     await kv.put(`${KV_KEYS.SERVERS}:meta`, JSON.stringify({ total: serverList.length, chunks: serverChunks.length }));
+
+    // serverId → shard indeksas: edge vienam serveriui krauna 1 shardą (~5MB) vietoj visų (~80MB).
+    // Rašoma iš tų pačių chunkų iškart po shard'ų, kad indeksas visada dera su duomenimis.
+    const serverIndex = buildServerIndex(serverChunks);
+    await kv.put(KV_KEYS.SERVERS_INDEX, JSON.stringify(serverIndex));
+    console.log(`  - Server index: ${serverIndex.total} ids across ${serverIndex.shards} shards`);
 
     const scenarioRanking = buildScenarioRanking(serverList);
     await kv.put(KV_KEYS.SCENARIO_RANKING, JSON.stringify(scenarioRanking));

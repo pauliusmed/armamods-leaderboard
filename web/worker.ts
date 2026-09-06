@@ -560,33 +560,32 @@ app.get('/mods/:modId', async (c) => {
   try {
     const meta = await c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json') as any;
     if (meta && meta.chunks) {
-        console.log(`[MODS_DETAIL] Scanning server chunks for mod inclusion (max ${MAX_SERVERS_PER_MOD} results)...`);
-        
-        // Parallel retrieval of server chunks
-        const chunkPromises = [];
-        for (let i = 0; i < meta.chunks; i++) {
-            chunkPromises.push(c.env.TRENDING_KV.get(`${keys.SERVERS}:${i}`, 'text'));
-        }
-        const chunksText = await Promise.all(chunkPromises);
-        
-        for (let i = 0; i < chunksText.length; i++) {
-            if (modServers.length >= MAX_SERVERS_PER_MOD) break;
-            
-            const chunkText = chunksText[i];
-            if (chunkText && chunkText.includes(`"${modId}"`)) {
-                // Instead of parsing the entire 2MB JSON, split it into individual servers
-                // and parse only those containing the target modId.
-                const serverStrings = splitJsonArray(chunkText);
-                for (const serverStr of serverStrings) {
-                    if (serverStr.includes(`"${modId}"`)) {
-                        try {
-                            const s = JSON.parse(serverStr);
-                            if (s.mods && s.mods.some((m: any) => String(m.id).toUpperCase() === modId.toUpperCase())) {
-                                modServers.push(s);
-                                if (modServers.length >= MAX_SERVERS_PER_MOD) break;
+        console.log(`[MODS_DETAIL] Scanning server chunks in batches of 4 (max ${MAX_SERVERS_PER_MOD} results)...`);
+        // Batched retrieval: vienoje Promise.all kraunant visus shard'us (~80MB) lygiagrečiai
+        // su kitomis užklausomis peršokdavo Worker 128MB ribą (exceededMemory 503).
+        const BATCH = 4;
+        for (let start = 0; start < meta.chunks && modServers.length < MAX_SERVERS_PER_MOD; start += BATCH) {
+            const end = Math.min(start + BATCH, meta.chunks);
+            const chunksText = await Promise.all(
+                Array.from({ length: end - start }, (_, j) => c.env.TRENDING_KV.get(`${keys.SERVERS}:${start + j}`, 'text'))
+            );
+            for (const chunkText of chunksText) {
+                if (modServers.length >= MAX_SERVERS_PER_MOD) break;
+                if (chunkText && chunkText.includes(`"${modId}"`)) {
+                    // Instead of parsing the entire 2MB JSON, split it into individual servers
+                    // and parse only those containing the target modId.
+                    const serverStrings = splitJsonArray(chunkText);
+                    for (const serverStr of serverStrings) {
+                        if (serverStr.includes(`"${modId}"`)) {
+                            try {
+                                const s = JSON.parse(serverStr);
+                                if (s.mods && s.mods.some((m: any) => String(m.id).toUpperCase() === modId.toUpperCase())) {
+                                    modServers.push(s);
+                                    if (modServers.length >= MAX_SERVERS_PER_MOD) break;
+                                }
+                            } catch (e) {
+                                /* ignore parse errors for individual servers */
                             }
-                        } catch (e) {
-                            /* ignore parse errors for individual servers */
                         }
                     }
                 }
@@ -1363,7 +1362,9 @@ app.get('/servers/:serverId/storage', async (c) => {
     }, 501);
   }
 
-  const server = await findServerById(c.env.TRENDING_KV, game, serverId);
+  const lookup = await ServerLookup.create(c.env.TRENDING_KV, game);
+  if (!lookup) return c.json({ error: 'Server data unavailable' }, 503);
+  const server = await lookup.findById(serverId);
   if (!server) return c.json({ error: 'Server not found' }, 404);
 
   const pack = await buildServerStoragePack(c.env.TRENDING_KV, game, {
@@ -1377,6 +1378,7 @@ app.get('/servers/:serverId/storage', async (c) => {
     meta: {
       disclaimer:
         'Sizes from Reforger Workshop (version download). Partial coverage when sizes are not cached yet — refresh to load more.',
+      ...(lookup.hasIndex ? {} : { indexFallback: true }),
     },
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
@@ -1445,53 +1447,27 @@ app.get('/servers/:serverId', async (c) => {
 
   const serverId = c.req.param('serverId');
   const game = getGameFromQuery(c);
-  const keys = getKVKeys(game);
 
-  console.log(`[SERVERS_DETAIL] Starting optimized fetch for ${serverId}...`);
-  let server = null;
+  console.log(`[SERVERS_DETAIL] Starting indexed fetch for ${serverId}...`);
+  const lookup = await ServerLookup.create(c.env.TRENDING_KV, game);
+  if (!lookup) return c.json({ error: 'Server data unavailable' }, 503);
 
-  try {
-    const meta = await c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json') as any;
-    if (meta && meta.chunks) {
-        // Parallel retrieval of server chunks
-        const chunkPromises = [];
-        for (let i = 0; i < meta.chunks; i++) {
-            chunkPromises.push(c.env.TRENDING_KV.get(`${keys.SERVERS}:${i}`, 'text'));
-        }
-        const chunksText = await Promise.all(chunkPromises);
-        
-        for (let i = 0; i < chunksText.length; i++) {
-            const chunkText = chunksText[i];
-            if (chunkText && chunkText.includes(`"id":"${serverId}"`)) {
-                // Surgical extraction: find object boundaries
-                const searchStr = `"id":"${serverId}"`;
-                const idPos = chunkText.indexOf(searchStr);
-                const startPos = chunkText.lastIndexOf('{', idPos);
-                const endPos = findMatchingBrace(chunkText, startPos);
-                if (startPos !== -1 && endPos !== -1) {
-                    try {
-                        server = JSON.parse(chunkText.slice(startPos, endPos + 1));
-                        if (server) break;
-                    } catch (e) { /* fallback */ }
-                }
-            }
-        }
-    }
-  } catch (err) {
-      console.error('[SERVERS_DETAIL] KV server lookup error:', err);
-  }
-
+  let server = await lookup.findById(serverId);
   if (!server) return c.json({ error: 'Server not found' }, 404);
 
   const sqeIndex = await loadSqeIndex(c.env.TRENDING_KV, game);
   server = enrichServerWithSqe(server, sqeIndex);
 
-  const response = c.json({ data: server });
-  
+  const response = c.json({
+    data: server,
+    // Fallback žyma (kol collector parašo indeksą) — ne tylus: log'e console.warn + čia.
+    ...(lookup.hasIndex ? {} : { meta: { indexFallback: true } }),
+  });
+
   // Cache for 5 minutes to ensure fresh SQE data
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
-  
+
   return response;
 });
 
@@ -2101,12 +2077,12 @@ app.post('/storage/plan', async (c) => {
     const serverLookup = await ServerLookup.create(kv, game);
     if (!serverLookup) return c.json({ error: 'Server data unavailable' }, 503);
 
-    const mainRaw = serverLookup.findById(mainServerId);
+    const mainRaw = await serverLookup.findById(mainServerId);
     if (!mainRaw) return c.json({ error: 'Main server not found' }, 404);
 
     const wantedRawList: Array<Record<string, unknown>> = [];
     for (const id of wantedServerIds) {
-      const server = serverLookup.findById(id);
+      const server = await serverLookup.findById(id);
       if (!server) return c.json({ error: `Server not found: ${id}` }, 404);
       wantedRawList.push(server);
     }

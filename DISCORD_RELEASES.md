@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.25] - 2026-09-06
+
+- Fixed server pages failing to load under load: server details, modpack sizes and related pages now open reliably even when the site is busy.
+
 ## [1.23.24] - 2026-08-27
 
 - Main mod and server leaderboards now load from a shared, precomputed page — faster for everyone on the first visit, not just repeat visitors.
