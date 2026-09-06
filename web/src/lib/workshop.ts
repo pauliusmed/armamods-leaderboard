@@ -44,6 +44,15 @@ export function cdnResizedThumbnailUrl(cdnUrl: string, px: number): string {
   return `/cdn-cgi/image/${opts}/${cdnUrl}`;
 }
 
+/**
+ * Resized/WebP proxy for gallery screenshots — Worker resize'ina (cf.image, format:auto)
+ * ir cache'ina 7d. Žali CDN originalai ~300 KiB JPG be cache TTL; per proxy ~30-80 KiB WebP.
+ * Tik allowlist'intas bistudio CDN (worker'is grąžina 403 kitiems host'ams).
+ */
+export function modScreenshotProxyUrl(cdnUrl: string, width = 960): string {
+  return `/api/img/proxy?u=${encodeURIComponent(cdnUrl)}&w=${width}`;
+}
+
 export function workshopLabel(game: GameType = 'reforger'): string {
   return game === 'arma3' ? 'Steam Workshop' : 'Reforger Workshop';
 }

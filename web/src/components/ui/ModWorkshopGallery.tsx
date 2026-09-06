@@ -3,6 +3,7 @@ import type { GameType } from '../../api/client';
 import { modsApi } from '../../api/client';
 import type { ModGalleryImage } from '../../types';
 import { GalleryLightbox } from './GalleryLightbox';
+import { modScreenshotProxyUrl } from '../../lib/workshop';
 
 function isLandscapeImage(image: ModGalleryImage): boolean {
   return Boolean(image.width && image.height && image.width > image.height);
@@ -142,9 +143,11 @@ export function ModWorkshopGallery({
             aria-label={`View screenshot ${index + 1} of ${images.length}`}
           >
             <img
-              src={image.url}
+              src={modScreenshotProxyUrl(image.url, 960)}
               alt={`${label} screenshot ${index + 1} of ${images.length}`}
               loading={index === 0 ? 'eager' : 'lazy'}
+              // Pirmas (eager) dažniausiai būna LCP — leidžiam naršyklei teikti jam prioritetą
+              fetchPriority={index === 0 ? 'high' : undefined}
               decoding="async"
               draggable={false}
               className={`w-full h-full object-center pointer-events-none ${
@@ -208,7 +211,7 @@ export function ModWorkshopGallery({
               />
             </button>
           ))}
-          <span className="ml-2 text-[9px] text-gray-600 font-black uppercase tracking-[0.2em]">
+          <span className="ml-2 text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">
             {active + 1} / {images.length}
           </span>
         </div>

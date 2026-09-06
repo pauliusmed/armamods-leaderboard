@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   escapeJsonForScript,
   injectEmbeddedData,
+  injectHeadTag,
   buildEmbeddedServerScript,
   EMBEDDED_SERVER_ELEMENT_ID,
 } from '../web/functions/lib/embedded-data.ts';
@@ -32,6 +33,19 @@ describe('injectEmbeddedData', () => {
   it('appends when </body> is missing', () => {
     const out = injectEmbeddedData('<div id="root"></div>', '<script id="x"></script>');
     assert.ok(out.endsWith('<script id="x"></script>'));
+  });
+});
+
+describe('injectHeadTag', () => {
+  it('inserts the tag before </head>', () => {
+    const html = '<html><head><title>T</title></head><body></body></html>';
+    const out = injectHeadTag(html, '<link rel="preconnect" href="https://cdn.example">');
+    assert.ok(out.includes('<link rel="preconnect" href="https://cdn.example"></head>'));
+  });
+
+  it('appends when </head> is missing', () => {
+    const out = injectHeadTag('<div></div>', '<link rel="preconnect">');
+    assert.ok(out.endsWith('<link rel="preconnect">'));
   });
 });
 

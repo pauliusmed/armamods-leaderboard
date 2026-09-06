@@ -18,6 +18,12 @@ export function injectEmbeddedData(html: string, scriptTag: string): string {
   return idx === -1 ? html + scriptTag : html.slice(0, idx) + scriptTag + html.slice(idx);
 }
 
+/** Įterpia tag'ą prieš `</head>` (pvz., preconnect link'ai); jei `</head>` nėra — append'ina. */
+export function injectHeadTag(html: string, tag: string): string {
+  const idx = html.indexOf('</head>');
+  return idx === -1 ? html + tag : html.slice(0, idx) + tag + html.slice(idx);
+}
+
 export function buildEmbeddedServerScript(server: unknown): string {
   const json = escapeJsonForScript(JSON.stringify(server));
   return `<script type="application/json" id="${EMBEDDED_SERVER_ELEMENT_ID}">${json}</script>`;

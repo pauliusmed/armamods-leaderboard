@@ -52,7 +52,7 @@ import {
   searchModsInIndex,
 } from './functions/lib/mods-search-index';
 import { findServerById, ServerLookup } from './functions/lib/server-lookup';
-import { buildEmbeddedServerScript, injectEmbeddedData } from './functions/lib/embedded-data';
+import { buildEmbeddedServerScript, injectEmbeddedData, injectHeadTag } from './functions/lib/embedded-data';
 import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
 import { analyzeStoragePlan } from './functions/lib/storage-calc';
 import { buildServerStoragePack } from './functions/lib/storage-service';
@@ -997,6 +997,46 @@ app.get('/mods/:modId/thumbnail', async (c) => {
   response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
+});
+
+// Galerijos screenshot'ų proxy: resize (WebP/AVIF per format:auto) + 7d edge cache.
+// PSI 2026-09-07: bistudio CDN duoda ~300 KiB JPG be cache TTL — proxy sutaupo ~650 KiB puslapiui.
+const IMG_PROXY_HOST = 'ar-gcp-cdn.bistudio.com';
+
+app.get('/api/img/proxy', async (c) => {
+  const cache = await caches.open('armamods:img_proxy');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(c.req.query('u') || '');
+  } catch {
+    return c.json({ error: 'invalid url' }, 400);
+  }
+  // SSRF allowlist: tik Bohemia workshop CDN
+  if (parsed.protocol !== 'https:' || parsed.hostname !== IMG_PROXY_HOST) {
+    return c.json({ error: 'host not allowed' }, 403);
+  }
+
+  const width = Math.min(1920, Math.max(64, parseInt(c.req.query('w') || '960', 10) || 960));
+  try {
+    const upstream = await fetch(parsed.toString(), {
+      cf: { image: { width, fit: 'scale-down', quality: 75, format: 'auto' } },
+    } as RequestInit);
+    if (!upstream.ok) throw new Error('upstream');
+    const response = new Response(upstream.body, {
+      headers: {
+        'Content-Type': upstream.headers.get('Content-Type') || 'image/webp',
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    });
+    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+    return response;
+  } catch {
+    // Resize neprieinamas — nukreip į originalą (kaip thumbnail/img fallback)
+    return c.redirect(parsed.toString(), 302);
+  }
 });
 
 app.get('/mods/:modId/gallery', async (c) => {
@@ -2498,6 +2538,28 @@ export default {
         ctx.waitUntil(cache.put(request, response.clone()));
         return response;
       }
+    }
+
+    // /mod/:id — preconnect į Bohemia CDN prieš bet kokį JS: galerijos herojus yra LCP,
+    // bet jo URL sužinomas tik iš API. PSI Est savings ~80 ms + greitesnis pirmas screenshot.
+    const modPageMatch = /^\/(arma3\/)?mod\/([^/]+)\/?$/.exec(pathname);
+    if (modPageMatch) {
+      const cache = caches.default as Cache;
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      const htmlRes = await env.ASSETS.fetch(request);
+      const body = injectHeadTag(
+        await htmlRes.text(),
+        '<link rel="preconnect" href="https://ar-gcp-cdn.bistudio.com"><link rel="dns-prefetch" href="https://ar-gcp-cdn.bistudio.com">'
+      );
+      const response = new Response(body, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+        },
+      });
+      ctx.waitUntil(cache.put(request, response.clone()));
+      return response;
     }
 
     // Fallback to static assets (SPA). With not_found_handling = single-page-application,
