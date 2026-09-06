@@ -1003,7 +1003,8 @@ app.get('/mods/:modId/thumbnail', async (c) => {
 // PSI 2026-09-07: bistudio CDN duoda ~300 KiB JPG be cache TTL — proxy sutaupo ~650 KiB puslapiui.
 const IMG_PROXY_HOST = 'ar-gcp-cdn.bistudio.com';
 
-app.get('/api/img/proxy', async (c) => {
+// basePath('/api') — realus kelias /api/img/proxy
+app.get('/img/proxy', async (c) => {
   const cache = await caches.open('armamods:img_proxy');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
