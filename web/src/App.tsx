@@ -1,17 +1,14 @@
 import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ModList } from './components/ModList';
-import { ServerList } from './components/ServerList';
-import { TrendingPage } from './components/TrendingPage';
-import { SupportPage } from './components/SupportPage';
-import { ReforgerHosting } from './components/ReforgerHosting';
-import { Arma3Hosting } from './components/Arma3Hosting';
-import { StatusPage } from './components/StatusPage';
-import { ScenarioList } from './components/ScenarioList';
-import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
 import { Layout } from './components/Layout';
 import { StatusState } from './components/ui/StatusState';
 
+// Visi puslapiai — atskiri chunk'ai (route-level split): index bundle neša tik shell'ą,
+// kitaip kiekvienas puslapis parsisiunčia ir vykdo visų kitų puslapių kodą (PSI unused JS).
+const ModList = lazy(() => import('./components/ModList').then((m) => ({ default: m.ModList })));
+const ServerList = lazy(() =>
+  import('./components/ServerList').then((m) => ({ default: m.ServerList }))
+);
 const ServerDetail = lazy(() =>
   import('./components/ServerDetail').then((m) => ({ default: m.ServerDetail }))
 );
@@ -23,6 +20,27 @@ const AdminPage = lazy(() =>
 );
 const ModDetail = lazy(() =>
   import('./components/ModDetail').then((m) => ({ default: m.ModDetail }))
+);
+const TrendingPage = lazy(() =>
+  import('./components/TrendingPage').then((m) => ({ default: m.TrendingPage }))
+);
+const SupportPage = lazy(() =>
+  import('./components/SupportPage').then((m) => ({ default: m.SupportPage }))
+);
+const ReforgerHosting = lazy(() =>
+  import('./components/ReforgerHosting').then((m) => ({ default: m.ReforgerHosting }))
+);
+const Arma3Hosting = lazy(() =>
+  import('./components/Arma3Hosting').then((m) => ({ default: m.Arma3Hosting }))
+);
+const StatusPage = lazy(() =>
+  import('./components/StatusPage').then((m) => ({ default: m.StatusPage }))
+);
+const ScenarioList = lazy(() =>
+  import('./components/ScenarioList').then((m) => ({ default: m.ScenarioList }))
+);
+const PrivacyPolicyPage = lazy(() =>
+  import('./components/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage }))
 );
 const ConfigAuditPage = lazy(() =>
   import('./components/ConfigAuditPage').then((m) => ({ default: m.ConfigAuditPage }))

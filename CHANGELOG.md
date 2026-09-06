@@ -4,6 +4,27 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ Frontend TBT: pilnas route-level code splitting + below-fold atidėjimas (v1.23.26)
+
+- **Problema (PSI 2026-09-06 22:59, /server/33028908):** Performance 60 — TBT 1 730 ms,
+  kurio kaltininkas pagrindinis `index` bundle (2 110 ms CPU): 9 puslapiai (ModList,
+  ServerList, TrendingPage, hosting'ai, StatusPage, ScenarioList, SupportPage, Privacy)
+  buvo tiesioginiais importais — kiekvienas puslapis parsisiunčia ir vykdo visų kitų kodą
+  (PSI „Reduce unused JavaScript 99 KiB").
+- **Fix 1:** visi 21 puslapis — `React.lazy` atskirais chunk'ais (tik `Layout` + `StatusState`
+  lieka index). Build: ModList 17,4 / ServerList 14,3 / Trending 12,2 / ServerDetail 27 kB
+  atsiskyrė nuo index.
+- **Fix 2:** `DeferredSection` (naujas, IntersectionObserver rootMargin 400px + `minHeight`
+  CLS apsauga) — `ServerDetail` below-fold sekcijos (Similar Servers, Mod Changes, Installed
+  Mod Stack lentelė) mount'inamos tik artėjant prie viewport; boot metu nekuria DOM.
+- **Neliesta:** `ModDetail` Recharts tiesioginis importas (AGENTS spąstai — lazy ant kritinių
+  grafikų = tuščias grafikas po deploy); `ServerHistoryChart` lieka lazy (veikia).
+- **Žinoma riba:** lint error `usePinnedFavoriteMods.ts:38` — pre-existing, šis darbas neliečia.
+- **Patikra:** tsc švarus, web vitest 45/45 ✅, root 250/250 ✅, build ✅ (64 chunk'ai),
+  lint — 0 naujų problemų (1 pre-existing error).
+- **Heavy CI: skipped because** UI pakrovimo strategija — API, kolektorius, duomenų modelis
+  ir algoritmai nesikeitė; pilni root testai vis tiek paleisti (250/250).
+
 ### 🛠️ Fix: serverio detail 503 (Worker exceededMemory) — serverId→shard indeksas (v1.23.25)
 
 - **Problema:** `/api/servers/:id`, `/api/servers/:id/storage` ir `/api/mods/:id` krauna

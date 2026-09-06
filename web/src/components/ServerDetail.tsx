@@ -42,6 +42,7 @@ import {
 import { ListFilterBar } from './ui/ListFilterBar';
 import { CopyServerModsButton } from './ui/CopyServerModsButton';
 import { ModRow } from './ModRow';
+import { DeferredSection } from './ui/DeferredSection';
 import { toModRow } from '../lib/modRow';
 
 interface ServerDetailProps {
@@ -617,9 +618,9 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
         </section>
 
-      {/* Similar Servers Section */}
+      {/* Similar Servers Section — below-fold, mount'as tik artėjant prie viewport */}
       {similarServers.length > 0 && (
-        <section className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
+        <DeferredSection className="space-y-6 sm:space-y-8">
           <div className="border-b border-white/5 pb-6">
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
               <ServerIcon className="w-6 h-6 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
@@ -656,10 +657,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               </Link>
             ))}
           </div>
-        </section>
+        </DeferredSection>
       )}
 
-      <section className="space-y-6 sm:space-y-8">
+      {/* Mod Changes — below-fold, mount'as tik artėjant prie viewport */}
+      <DeferredSection className="space-y-6 sm:space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/5 pb-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
@@ -780,9 +782,10 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             })}
           </div>
         )}
-      </section>
+      </DeferredSection>
 
-      <section className="space-y-8">
+      {/* Installed Mod Stack — didžiausia below-fold sekcija (visa modų lentelė) */}
+      <DeferredSection className="space-y-8">
         <div className="border-b border-white/5 pb-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
@@ -964,7 +967,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             </div>
           </div>
         )}
-      </section>
+      </DeferredSection>
     </div>
   );
 }
