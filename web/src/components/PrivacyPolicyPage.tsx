@@ -107,7 +107,7 @@ export function PrivacyPolicyPage() {
       </div>
 
       <footer className="border-t border-white/10 pt-8">
-        <p className="text-gray-500 text-xs leading-relaxed">
+        <p className="text-gray-400 text-xs leading-relaxed">
           Want to know how this site processes game data? See{' '}
           <Link to="/support" className="text-tactical-orange hover:underline">
             Community Sync Fund

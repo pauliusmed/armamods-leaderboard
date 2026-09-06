@@ -51,7 +51,7 @@ const PATCH_STATUS_STYLE: Record<AuditStatus, string> = {
   risky: 'border-orange-500/50 bg-orange-950/25 text-orange-200',
   ok: 'border-emerald-600/40 bg-emerald-950/20 text-emerald-200',
   niche: 'border-gray-600/40 bg-gray-900/40 text-gray-400',
-  unknown: 'border-gray-700/40 bg-black/40 text-gray-500',
+  unknown: 'border-gray-700/40 bg-black/40 text-gray-400',
 };
 
 interface ModDetailData extends Mod {
@@ -315,7 +315,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
       />
       <Link
         to={`${gp}/`}
-        className="block mb-6 text-gray-500 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
+        className="block mb-6 text-gray-400 hover:text-tactical-orange hover:bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] transition-colors"
       >
         ← [ Back to Registry ]
       </Link>
@@ -391,7 +391,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     </p>
                   )}
                   {(mod.workshopCreated || mod.workshopModified) && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">
                       {mod.workshopCreated && (
                         <span>
                           Created · <span className="text-gray-300 font-mono tabular-nums">{mod.workshopCreated}</span>
@@ -411,31 +411,31 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   {mod.workshopSummary}
                 </p>
               ) : (
-                <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-relaxed">
                   {MOD_DETAIL_LIVE_FALLBACK}
                 </p>
               )}
 
               <div className="space-y-2">
-                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em]">Live stats</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em]">Live stats</p>
                 <div className="grid grid-cols-3 gap-2 w-full">
                   <div className="px-3 py-3 bg-zinc-900/70 border border-white/10 min-w-0">
                     <p className="font-mono text-lg sm:text-xl font-black text-white tabular-nums truncate">
                       {(mod.stats?.totalPlayers || mod.totalPlayers || 0).toLocaleString()}
                     </p>
-                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.12em] mt-1">Personnel</p>
+                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.12em] mt-1">Personnel</p>
                   </div>
                   <div className="px-3 py-3 bg-zinc-900/70 border border-white/10 min-w-0">
                     <p className="font-mono text-lg sm:text-xl font-black text-white tabular-nums truncate">
                       {(mod.stats?.serverCount || mod.serverCount || 0).toLocaleString()}
                     </p>
-                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.12em] mt-1">Servers</p>
+                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.12em] mt-1">Servers</p>
                   </div>
                   <div className="px-3 py-3 bg-zinc-900/70 border border-white/10 min-w-0">
                     <p className="font-mono text-lg sm:text-xl font-black text-tactical-orange tabular-nums truncate">
                       {(mod.stats?.marketShare || 0).toFixed(1)}%
                     </p>
-                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-[0.12em] mt-1">Share</p>
+                    <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.12em] mt-1">Share</p>
                   </div>
                 </div>
               </div>
@@ -443,15 +443,15 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
               <div className="grid grid-cols-2 gap-3 w-full">
                 {game === 'reforger' && (
                   <div className="px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px]">
-                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Download</p>
+                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em] mb-1">Download</p>
                     <p className="text-lg sm:text-xl font-black font-mono text-tactical-orange tabular-nums leading-none">
                       {formatBytes(mod.sizeBytes)}
                     </p>
-                    <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest mt-1.5">Workshop ver.</p>
+                    <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-1.5">Workshop ver.</p>
                   </div>
                 )}
                 <div className={`px-4 py-4 bg-zinc-900 border border-white/10 text-center flex flex-col justify-center min-h-[88px] ${game !== 'reforger' ? 'col-span-2' : ''}`}>
-                  <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
                   <p className="text-3xl font-black text-white">#{mod.stats?.overallRank ?? mod.overallRank ?? '—'}</p>
                 </div>
               </div>
@@ -495,7 +495,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                     className={`min-h-11 px-4 py-2 sm:py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
                       selectedDays === opt.value
                         ? 'bg-tactical-orange text-black'
-                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     {opt.label}
@@ -531,7 +531,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
             <Card>
               <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
                 {!chartHistory || chartHistory.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2 px-4 text-center">
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 font-bold uppercase tracking-widest text-[10px] space-y-2 px-4 text-center">
                     <span>{CHART_NO_DATA_TITLE}</span>
                     <span className="text-[8px] opacity-70 font-medium normal-case tracking-normal">
                       {freshness.isStale ? CHART_NO_DATA_SYNC_PAUSED : CHART_NO_DATA_INACTIVE}
@@ -539,7 +539,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   </div>
                 ) : (
                   <div className="flex flex-col h-full gap-3 min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[9px] font-bold uppercase tracking-widest text-gray-500 shrink-0">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[9px] font-bold uppercase tracking-widest text-gray-400 shrink-0">
                       <span className="inline-flex items-center gap-2">
                         <span className="w-4 h-0.5 bg-[#f97316] rounded" aria-hidden />
                         Personnel
@@ -735,7 +735,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 <div className="w-1 h-full bg-[#f97316]" />
                 <div>
                   <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Deployed Personnel</h4>
-                  <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                  <p className="text-[9px] text-gray-400 font-bold leading-relaxed uppercase">
                     Total player count. <span className="text-tactical-orange">Higher is better</span> – indicates a larger active player base.
                   </p>
                 </div>
@@ -744,7 +744,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 <div className="w-1 h-full bg-[#db2777]" />
                 <div>
                   <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Active Servers</h4>
-                  <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                  <p className="text-[9px] text-gray-400 font-bold leading-relaxed uppercase">
                     Network presence. <span className="text-pink-500">Higher is better</span> – indicates wider deployment across server nodes.
                   </p>
                 </div>
@@ -753,7 +753,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 <div className="w-1 h-full bg-[#3b82f6]" />
                 <div>
                   <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Overall Rank</h4>
-                  <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                  <p className="text-[9px] text-gray-400 font-bold leading-relaxed uppercase">
                     Global standing. <span className="text-blue-500">Higher visual position is better</span> – Rank #1 is at the top of the axis.
                   </p>
                 </div>
@@ -769,17 +769,17 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                   <Package className="w-6 h-6 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
                   Required Dependencies
                 </h2>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 max-w-2xl">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 max-w-2xl">
                   Author-declared on Reforger Workshop — technical install requirements, not popularity stats
                 </p>
               </div>
 
               {depsLoading ? (
-                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                   Resolving workshop dependency tree…
                 </p>
               ) : dependencies.length === 0 ? (
-                <p className="text-sm text-gray-600 font-medium">
+                <p className="text-sm text-gray-400 font-medium">
                   No declared dependencies for this mod (standalone module).
                 </p>
               ) : (
@@ -794,7 +794,7 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
                 <ServerIcon className="w-5 h-5 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
                 Active Deployed Servers
               </h2>
-              <span className="text-[10px] sm:text-[10px] font-black text-gray-500 uppercase tracking-wide sm:tracking-widest shrink-0">
+              <span className="text-[10px] sm:text-[10px] font-black text-gray-400 uppercase tracking-wide sm:tracking-widest shrink-0">
                 {deployedServersLabel}
               </span>
             </div>

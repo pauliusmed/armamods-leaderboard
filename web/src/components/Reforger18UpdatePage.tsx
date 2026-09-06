@@ -136,7 +136,7 @@ export function Reforger18UpdatePage() {
           <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
             Patch Highlights
           </h2>
-          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
             Summary of the official 1.8 notes — full details in the official changelog
           </p>
         </div>
@@ -181,7 +181,7 @@ export function Reforger18UpdatePage() {
               to={tool.to}
               className="group border border-white/5 bg-black/40 p-5 hover:border-tactical-orange/40 transition-colors"
             >
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600 group-hover:text-tactical-orange transition-colors">
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover:text-tactical-orange transition-colors">
                 {tool.label}
               </p>
               <h3 className="text-base font-black text-white mt-1.5">{tool.title}</h3>

@@ -34,10 +34,10 @@ export function ModWorkshopCopy({
     <section className="space-y-4 border border-white/5 bg-[#172635] p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-white/5 pb-4">
         <div>
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">
             Workshop Intel
           </h2>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-600 mt-1">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">
             {WORKSHOP_NOT_NETWORK_STATS(workshopLabel(game))}
           </p>
         </div>
@@ -53,14 +53,14 @@ export function ModWorkshopCopy({
 
       {summary && (
         <div className="space-y-1">
-          <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-600">Summary</h3>
+          <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-400">Summary</h3>
           <p className="text-sm sm:text-base text-gray-200 leading-relaxed">{summary}</p>
         </div>
       )}
 
       {description && (
         <div className="space-y-2">
-          <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-600">Description</h3>
+          <h3 className="text-[9px] font-black uppercase tracking-[0.25em] text-gray-400">Description</h3>
           <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{visibleDescription}</div>
           {needsCollapse && (
             <button

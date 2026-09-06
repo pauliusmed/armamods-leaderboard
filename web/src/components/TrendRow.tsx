@@ -55,7 +55,7 @@ export function TrendRow({
       <td className="py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
-            isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
+            isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-400'
           }`}
         >
           {rank != null ? String(rank).padStart(2, '0') : '–'}

@@ -34,7 +34,7 @@ export function BrandLogo({ compact = false }: BrandLogoProps) {
           <span className="block text-base sm:text-xl font-black text-white tracking-[0.1em] uppercase leading-none truncate">
             Arma <span className="text-brand-copper">Mods</span>
           </span>
-          <span className="hidden sm:block text-[7px] sm:text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em] truncate">
+          <span className="hidden sm:block text-[7px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-[0.3em] truncate">
             Mission Intelligence Center
           </span>
         </span>

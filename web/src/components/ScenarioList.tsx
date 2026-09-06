@@ -55,7 +55,7 @@ function ScenarioNameCell({
         </span>
       )}
       {scenario.name !== label && (
-        <span className="block text-[10px] text-gray-600 font-mono truncate">{scenario.name}</span>
+        <span className="block text-[10px] text-gray-400 font-mono truncate">{scenario.name}</span>
       )}
       {scenario.kind !== 'unknown' && (
         <span
@@ -64,7 +64,7 @@ function ScenarioNameCell({
           {scenarioKindLabel(scenario.kind)}
         </span>
       )}
-      <div className="md:hidden flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-mono text-gray-500">
+      <div className="md:hidden flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-mono text-gray-400">
         <span>{Math.round(scenario.avgFillPercent)}% fill</span>
         {scenario.topServer && (
           <Link
@@ -204,7 +204,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
         ]}
       />
 
-      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest -mt-6">
+      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest -mt-6">
         Workshop scenarios link to their mod page ·{' '}
         <Link to={`${gp}/scenarios/official`} className="text-tactical-orange hover:underline">
           Official scenarios reference
@@ -220,7 +220,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
           ariaLabel: 'Search scenarios',
           hint:
             searchInput && totalItems === 0 ? (
-              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
+              <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">
                 No scenarios match &quot;{searchInput}&quot;
               </p>
             ) : undefined,
@@ -277,7 +277,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   align="right"
                   className="px-4"
                 />
-                <th className="hidden md:table-cell px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                <th className="hidden md:table-cell px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                   Type
                 </th>
                 <SortableTh
@@ -289,7 +289,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                   align="right"
                   className="hidden md:table-cell px-4"
                 />
-                <th className="hidden lg:table-cell pl-4 pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                <th className="hidden lg:table-cell pl-4 pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                   Top Server
                 </th>
               </tr>
@@ -312,7 +312,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                     <td className="py-3 pl-4 pr-2 align-middle">
                       <span
                         className={`font-mono text-sm tabular-nums ${
-                          isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
+                          isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-400'
                         }`}
                       >
                         {String(displayRank).padStart(2, '0')}
@@ -352,7 +352,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                         <Link
                           to={`${gp}/server/${scenario.topServer.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-[11px] font-bold text-gray-500 hover:text-tactical-orange transition-colors line-clamp-1"
+                          className="text-[11px] font-bold text-gray-400 hover:text-tactical-orange transition-colors line-clamp-1"
                         >
                           {scenario.topServer.name}
                         </Link>
@@ -374,16 +374,16 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
         <section className="space-y-6 animate-in fade-in duration-500">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 mb-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">
                 // SCENARIO_DEPLOYMENTS
               </p>
               <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
                 {selectedScenario.displayName ?? selectedScenario.name}
               </h2>
               {selectedScenario.displayName && selectedScenario.displayName !== selectedScenario.name && (
-                <p className="text-[10px] font-mono text-gray-600 mt-1">{selectedScenario.name}</p>
+                <p className="text-[10px] font-mono text-gray-400 mt-1">{selectedScenario.name}</p>
               )}
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
                 {selectedScenario.serverCount} servers · {selectedScenario.totalPlayers.toLocaleString()} players
               </p>
               {scenarioDetailHref(selectedScenario, gp) && (
@@ -402,7 +402,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
                 next.delete('s');
                 setSearchParams(next, { replace: true });
               }}
-              className="self-start sm:self-auto min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
+              className="self-start sm:self-auto min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
               >
               Close
             </button>
@@ -410,7 +410,7 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
 
           <div className="border border-white/5 bg-black/40">
             {serversLoading ? (
-              <div className="p-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <div className="p-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
                 Loading deployments…
               </div>
             ) : (

@@ -59,7 +59,7 @@ export function ServerRow({
         <div className="flex items-center gap-2">
           <span
             className={`font-mono text-sm tabular-nums ${
-              isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
+              isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-400'
             }`}
           >
             {rank != null ? String(rank).padStart(2, '0') : '–'}
@@ -91,7 +91,7 @@ export function ServerRow({
               className="hidden sm:inline max-w-[14rem] truncate"
             />
             {server.scenarioName && (
-              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-600 line-clamp-1 min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400 line-clamp-1 min-w-0">
                 {server.scenarioName}
               </span>
             )}
@@ -109,13 +109,13 @@ export function ServerRow({
       {/* Players = current / capacity (each value shown once) */}
       <td className="py-3 md:py-2.5 px-3 sm:px-4 text-right align-middle whitespace-nowrap">
         <span className="font-mono text-sm tabular-nums text-white">{players}</span>
-        <span className="font-mono text-xs tabular-nums text-gray-600"> / {max}</span>
+        <span className="font-mono text-xs tabular-nums text-gray-400"> / {max}</span>
       </td>
 
       {/* Mod count + mobile modpack size */}
       <td className="py-3 md:py-2.5 pl-2 pr-4 text-right align-middle whitespace-nowrap">
         {isVanilla ? (
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vanilla</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Vanilla</span>
         ) : (
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function ServerRow({
       {/* Modpack download size (desktop) */}
       <td className="hidden lg:table-cell py-3 md:py-2.5 pl-4 pr-4 text-right align-middle">
         {isVanilla ? (
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">—</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">—</span>
         ) : (
           <>
             <span
@@ -155,7 +155,7 @@ export function ServerRow({
               {formatBytes(modpackBytes)}
             </span>
             {server.modpackCoverage != null && server.modpackCoverage > 0 && server.modpackCoverage < 1 && (
-              <span className="block text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+              <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest">
                 ~{Math.round(server.modpackCoverage * 100)}% sized
               </span>
             )}

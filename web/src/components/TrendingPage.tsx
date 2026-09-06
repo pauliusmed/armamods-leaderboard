@@ -177,7 +177,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
             <h1 className="text-2xl font-black text-white uppercase tracking-tighter">
               Trending
             </h1>
-            <p className="text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
               vs {comparisonDate ? new Date(comparisonDate).toLocaleDateString() : 'Baseline'}
             </p>
             {freshness.isStale ? (
@@ -185,7 +185,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
                 {DATA_STALE_HERO_NOTE(formatSyncAge(freshness.staleHours))}
               </p>
             ) : lastUpdated ? (
-              <p className="text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]">
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
                 Synced {new Date(lastUpdated).toLocaleString()}
               </p>
             ) : null}
@@ -209,15 +209,15 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
 
         {/* Row 2: Inline stats */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[11px]">
-          <span className="text-gray-500 font-bold">
+          <span className="text-gray-400 font-bold">
             <span className="text-white font-black">{trending?.rising?.length || 0}</span> Rising
           </span>
           <span className="text-white/10">|</span>
-          <span className="text-gray-500 font-bold">
+          <span className="text-gray-400 font-bold">
             <span className="text-white font-black">{trending?.falling?.length || 0}</span> Falling
           </span>
           <span className="text-white/10">|</span>
-          <span className="text-gray-500 font-bold">
+          <span className="text-gray-400 font-bold">
             <span className="text-white font-black">{trending?.new?.length || 0}</span> New
           </span>
         </div>
@@ -231,7 +231,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
               className={`min-h-11 px-3 sm:px-4 py-2 font-black uppercase tracking-widest text-[11px] transition-all border ${
                 activeCategory === category
                   ? 'bg-tactical-orange text-black border-tactical-orange'
-                  : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'
+                  : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
               }`}
             >
               {(() => {
@@ -252,7 +252,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
       {/* Results */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-gray-500 font-bold uppercase tracking-[0.15em] text-[10px]">
+          <p className="text-gray-400 font-bold uppercase tracking-[0.15em] text-[10px]">
             {getCategoryDescription(activeCategory)}
           </p>
         </div>
@@ -262,7 +262,7 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
             <p className="text-xl font-black text-gray-700 uppercase tracking-widest">
               No data available for this category
             </p>
-            <p className="text-gray-600 mt-2">Trending data will be available after the first daily snapshot</p>
+            <p className="text-gray-400 mt-2">Trending data will be available after the first daily snapshot</p>
           </div>
         ) : isMobile ? (
           <div className="border border-white/5 bg-black/40">
@@ -283,12 +283,12 @@ export function TrendingPage({ game = 'reforger' }: TrendingPageProps) {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Rank</th>
-                    <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Module</th>
-                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Change</th>
-                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Personnel</th>
-                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">Deploy</th>
-                    <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                    <th className="pl-4 pr-2 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">Rank</th>
+                    <th className="pr-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">Module</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">Change</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">Personnel</th>
+                    <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">Deploy</th>
+                    <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                       Actions
                     </th>
                   </tr>

@@ -36,7 +36,7 @@ export function ModLeaderboardHead({ sortBy, sortDir, onSort }: ModLeaderboardHe
           onSort={(key) => onSort(key as ModSortBy)}
           className="hidden md:table-cell w-[140px] max-w-[140px] px-3"
         />
-        <th className="hidden md:table-cell w-[132px] px-3 py-3 text-center text-[10px] font-black uppercase tracking-widest text-gray-600">
+        <th className="hidden md:table-cell w-[132px] px-3 py-3 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
           GUI
         </th>
         <SortableTh
@@ -76,7 +76,7 @@ export function ModLeaderboardHead({ sortBy, sortDir, onSort }: ModLeaderboardHe
           mirrorBar
           className="hidden md:table-cell w-[7.5rem] pl-4 pr-4"
         />
-        <th className="w-[6.5rem] sm:w-[9rem] md:w-[13.5rem] pl-1 sm:pl-2 pr-2 sm:pr-4 py-3 text-right text-[11px] font-black uppercase tracking-widest text-gray-600">
+        <th className="w-[6.5rem] sm:w-[9rem] md:w-[13.5rem] pl-1 sm:pl-2 pr-2 sm:pr-4 py-3 text-right text-[11px] font-black uppercase tracking-widest text-gray-400">
           <span className="hidden sm:inline">Actions</span>
           <span className="sm:hidden" aria-hidden>· · ·</span>
         </th>

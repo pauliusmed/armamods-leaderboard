@@ -138,7 +138,7 @@ export function GalleryLightbox({
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-400 truncate">
             {label}
             {hasMultiple && (
-              <span className="text-gray-600 ml-2 tabular-nums">
+              <span className="text-gray-400 ml-2 tabular-nums">
                 {active + 1} / {images.length}
               </span>
             )}
@@ -148,7 +148,7 @@ export function GalleryLightbox({
               href={image.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange transition-colors px-2 py-1 border border-white/10 hover:border-tactical-orange/40"
+              className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-tactical-orange transition-colors px-2 py-1 border border-white/10 hover:border-tactical-orange/40"
             >
               Full size ↗
             </a>

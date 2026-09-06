@@ -13,7 +13,7 @@ export function BmLastSeenHint({ status, lastSeenAt, className = '' }: BmLastSee
   if (!text) return null;
 
   return (
-    <span className={`text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500 ${className}`}>
+    <span className={`text-[10px] font-bold uppercase tracking-[0.12em] text-gray-400 ${className}`}>
       {text}
     </span>
   );

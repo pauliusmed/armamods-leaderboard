@@ -27,7 +27,7 @@ export function FeaturedServers({ game, servers, isMobile = false }: FeaturedSer
         <p className="text-[10px] font-black uppercase tracking-[0.25em] text-tactical-orange">
           Featured
         </p>
-        <p className="mt-0.5 text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+        <p className="mt-0.5 text-[8px] font-bold text-gray-400 uppercase tracking-widest">
           Sponsored placement — never affects rankings
         </p>
       </div>

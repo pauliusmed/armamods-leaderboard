@@ -23,19 +23,19 @@ export function FeaturedSlotInfo() {
 
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="border border-white/5 bg-white/[0.02] p-4 space-y-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.3em]">Price</p>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em]">Price</p>
             <p className="text-2xl font-black text-tactical-orange">{FEATURED_PRICE}</p>
             <p className="text-xs text-gray-400">Per server, one month of placement.</p>
           </div>
           <div className="border border-white/5 bg-white/[0.02] p-4 space-y-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.3em]">You get</p>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em]">You get</p>
             <ul className="text-xs text-gray-400 space-y-1">
               <li>FEATURED strip at the top of the server list</li>
               <li>FEATURED badge on your server inside mod pages</li>
             </ul>
           </div>
           <div className="border border-white/5 bg-white/[0.02] p-4 space-y-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.3em]">Fairness</p>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em]">Fairness</p>
             <p className="text-xs text-gray-400">
               Never affects rankings, player counts, or data. The strip is clearly marked as
               sponsored.
@@ -44,7 +44,7 @@ export function FeaturedSlotInfo() {
         </div>
 
         <div className="border-t border-white/5 pt-8 space-y-4">
-          <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.3em]">
+          <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em]">
             How to activate
           </p>
           <ol className="space-y-2 text-sm text-gray-400">

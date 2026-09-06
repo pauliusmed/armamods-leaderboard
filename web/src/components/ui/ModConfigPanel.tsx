@@ -48,7 +48,7 @@ export function ModConfigPanel({
         <div className="flex items-start gap-3 min-w-0">
           <ModThumbnail modId={modId} modName={modName} game={game} size="sm" className="shrink-0" />
           <div className="min-w-0 pt-0.5">
-            <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.2em]">
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">
               Server config
             </p>
             <p className="text-[11px] font-bold text-white leading-snug line-clamp-3 mt-1" title={modName}>
@@ -91,7 +91,7 @@ export function ModConfigPanel({
               type="button"
               onClick={() => setSnippetOpen((open) => !open)}
               aria-expanded={snippetOpen}
-              className="w-full text-[9px] font-black uppercase tracking-[0.15em] text-gray-500 hover:text-tactical-orange transition-colors text-left"
+              className="w-full text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 hover:text-tactical-orange transition-colors text-left"
             >
               {snippetOpen ? '− Hide config snippet' : '+ Show config snippet'}
             </button>

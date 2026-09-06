@@ -42,7 +42,7 @@ export function SupportPage() {
         <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none italic">
           Built By The Community
         </h1>
-        <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-sm max-w-2xl mx-auto">
+        <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-sm max-w-2xl mx-auto">
           Free for every player. No ads. No tracking. Shared intel for the Arma network.
         </p>
       </div>
@@ -63,7 +63,7 @@ export function SupportPage() {
 
           <div className="pt-6 border-t border-white/5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em]">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em]">
                 {DONATION_PROGRESS_LABEL}
               </span>
               <span className="text-lg font-black text-tactical-orange">
@@ -83,7 +83,7 @@ export function SupportPage() {
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="text-gray-500 text-xs">
+            <p className="text-gray-400 text-xs">
               {DONATION_GOAL_MET
                 ? `Raised ${DONATION_RAISED_LABEL} against the ${DONATION_GOAL_LABEL} goal — enough to keep live sync running for the community.`
                 : `${DONATION_GOAL_LABEL} shared goal keeps live sync and rankings available for everyone.`}
@@ -112,7 +112,7 @@ export function SupportPage() {
           {DONATION_CTA_LABEL} — {DONATION_GOAL_LABEL} pool
         </a>
 
-        <p className="text-gray-600 text-[9px] font-medium uppercase tracking-[0.3em]">
+        <p className="text-gray-400 text-[9px] font-medium uppercase tracking-[0.3em]">
           {DONATION_FOOTNOTE}
         </p>
 
@@ -123,13 +123,13 @@ export function SupportPage() {
         <div className="flex items-center justify-center gap-8 pt-12 border-t border-white/5">
           <Link
             to="/"
-            className="text-gray-600 hover:text-white text-[9px] font-black uppercase tracking-[0.3em] transition-colors"
+            className="text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-[0.3em] transition-colors"
           >
             ← Back to Mods
           </Link>
           <Link
             to="/servers"
-            className="text-gray-600 hover:text-white text-[9px] font-black uppercase tracking-[0.3em] transition-colors"
+            className="text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-[0.3em] transition-colors"
           >
             View Servers →
           </Link>

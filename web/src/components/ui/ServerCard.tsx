@@ -32,7 +32,7 @@ export function ServerCard({
       title={server.scenarioName ? `${server.name} · ${server.scenarioName}` : server.name}
     >
       <div className="flex items-start gap-3">
-        <span className={`font-mono text-sm tabular-nums mt-1 shrink-0 w-7 ${isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'}`}>
+        <span className={`font-mono text-sm tabular-nums mt-1 shrink-0 w-7 ${isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-400'}`}>
           {rank != null ? String(rank).padStart(2, '0') : '–'}
         </span>
         <div className="min-w-0 flex-1">
@@ -44,10 +44,10 @@ export function ServerCard({
               </span>
             ) : null}
           </p>
-          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
+          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-400">
             <span>{players} / {max} players</span>
             {isVanilla ? (
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vanilla</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Vanilla</span>
             ) : (
               <>
                 <span>{modCount} mods</span>

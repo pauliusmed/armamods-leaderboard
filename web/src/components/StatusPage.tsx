@@ -95,7 +95,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
               {data?.version || 'v1.4.0'}
             </div>
           </div>
-          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
             Real-time Edge node telemetry and ingestion network intelligence
           </p>
         </div>
@@ -107,7 +107,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-signal-ok"></span>
           </div>
           <div className="space-y-0.5">
-            <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Main Engine</p>
+            <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Main Engine</p>
             <p className="text-[11px] text-white font-black uppercase tracking-wider">
               {data?.status === 'HEALTHY' ? 'SYSTEM_STABLE_100' : 'SYSTEM_WARNING'}
             </p>
@@ -120,27 +120,27 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
         {/* Metric 1 */}
         <Card>
           <CardContent className="p-6 space-y-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Global Registries</p>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Global Registries</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalMods.toLocaleString()}</p>
-            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">Tracked Modifications</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tracked Modifications</p>
           </CardContent>
         </Card>
 
         {/* Metric 2 */}
         <Card>
           <CardContent className="p-6 space-y-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Active Deployments</p>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Active Deployments</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalServers.toLocaleString()}</p>
-            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">Monitored Game Servers</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Monitored Game Servers</p>
           </CardContent>
         </Card>
 
         {/* Metric 3 */}
         <Card>
           <CardContent className="p-6 space-y-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Combat Personnel</p>
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">Combat Personnel</p>
             <p className="text-4xl font-black text-white tracking-tight font-mono">{stats.totalPlayers.toLocaleString()}</p>
-            <p className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">Active Players Telemetry</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active Players Telemetry</p>
           </CardContent>
         </Card>
       </div>
@@ -159,7 +159,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             {/* Collector Status Row */}
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div className="space-y-1">
-                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Collector Status</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Collector Status</p>
                 <p className="text-xs font-bold text-white uppercase tracking-wider">
                   {isCollectorDelayed() ? 'Refresh Delayed' : 'Synchronized'}
                 </p>
@@ -176,18 +176,18 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             {/* Time Stamp Row */}
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div className="space-y-1">
-                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Last Database Sync</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Last Database Sync</p>
                 <p className="text-xs font-bold text-white uppercase font-mono">
                   {lastUpdate ? new Date(lastUpdate).toLocaleString() : 'Never'}
                 </p>
               </div>
-              <p className="text-[9px] text-gray-600 font-bold uppercase tracking-wider">Every 2 Hours</p>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Every 2 Hours</p>
             </div>
 
             {/* History Range Row */}
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div className="space-y-1">
-                <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">History Span</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">History Span</p>
                 <p className="text-xs font-bold text-white uppercase font-mono">
                   {historyRange.start && historyRange.end 
                     ? `${new Date(historyRange.start).toLocaleDateString()} - ${new Date(historyRange.end).toLocaleDateString()}`
@@ -203,7 +203,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
             {/* Latency Performance Meter */}
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between text-[9px]">
-                <span className="text-gray-500 font-black uppercase tracking-widest">Client-to-Edge Latency</span>
+                <span className="text-gray-400 font-black uppercase tracking-widest">Client-to-Edge Latency</span>
                 <span className="text-tactical-orange font-black uppercase tracking-widest font-mono">{latency}ms (RTT)</span>
               </div>
               
@@ -216,7 +216,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                   style={{ width: `${Math.min(100, Math.max(10, 100 - (latency / 3)))}%` }}
                 ></div>
               </div>
-              <p className="text-[8px] text-gray-600 font-bold uppercase tracking-[0.15em]">
+              <p className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.15em]">
                 {latency < 60 
                   ? 'Edge node responded instantaneously. Cache HIT active.' 
                   : 'Slight network routing overhead. Edge cache miss.'
@@ -234,14 +234,14 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
           </h3>
           
           <div className="bg-[#172635] border border-white/5 p-6 rounded-lg space-y-4">
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
               Cloudflare KV restricts values to 25MB. In order to scale, the system splits large datasets into size-optimized 5MB memory chunks.
             </p>
 
             {/* KV Tables */}
             <div className="space-y-3 pt-2">
               {/* Table header */}
-              <div className="grid grid-cols-4 text-[8px] text-gray-600 font-black uppercase tracking-widest border-b border-white/10 pb-2">
+              <div className="grid grid-cols-4 text-[8px] text-gray-400 font-black uppercase tracking-widest border-b border-white/10 pb-2">
                 <span>Namespace Key</span>
                 <span className="text-center">Shards</span>
                 <span className="text-center">Total Entries</span>
@@ -281,7 +281,7 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
 
             {/* Sharding visualization bars */}
             <div className="space-y-3 pt-4">
-              <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Visual Chunk Grid Mapping</p>
+              <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Visual Chunk Grid Mapping</p>
               <div className="flex gap-2">
                 {Array.from({ length: kv.mods?.chunks || 1 }).map((_, idx) => (
                   <div 
@@ -344,21 +344,21 @@ export function StatusPage({ game = 'reforger' }: StatusPageProps) {
                     <span className={`w-2 h-2 rounded-full ${kvStatus === 'ok' ? 'bg-signal-ok' : 'bg-signal-critical'}`}></span>
                     <span className="text-[11px] font-black uppercase tracking-wider text-white">{g}</span>
                     {chk.isStale as boolean && <span className="text-[8px] text-signal-warning font-bold">STALE</span>}
-                    <span className="text-[8px] text-gray-600 font-mono ml-auto">{chk.timingMs as number}ms</span>
+                    <span className="text-[8px] text-gray-400 font-mono ml-auto">{chk.timingMs as number}ms</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px]">
                     <div>
-                      <span className="text-gray-600">Mods: </span>
+                      <span className="text-gray-400">Mods: </span>
                       <span className="text-white font-bold">{(mods?.total as number) ?? '?'}</span>
-                      <span className="text-gray-600"> ({(mods?.chunks as number) ?? 0} chunks)</span>
+                      <span className="text-gray-400"> ({(mods?.chunks as number) ?? 0} chunks)</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Servers: </span>
+                      <span className="text-gray-400">Servers: </span>
                       <span className="text-white font-bold">{(servers?.total as number) ?? '?'}</span>
-                      <span className="text-gray-600"> ({(servers?.chunks as number) ?? 0} chunks)</span>
+                      <span className="text-gray-400"> ({(servers?.chunks as number) ?? 0} chunks)</span>
                     </div>
                     {lastUpdate && (
-                      <p className="text-gray-500 font-mono truncate col-span-2" title={lastUpdate}>
+                      <p className="text-gray-400 font-mono truncate col-span-2" title={lastUpdate}>
                         Last: {new Date(lastUpdate).toLocaleString()}
                       </p>
                     )}

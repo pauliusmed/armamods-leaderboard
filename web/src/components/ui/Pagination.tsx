@@ -45,7 +45,7 @@ export function Pagination({
                   min-w-[44px] h-11 px-3 text-xs font-black uppercase tracking-widest transition-all
                   ${isCurrentPage
                     ? 'bg-tactical-orange text-black border border-tactical-orange'
-                    : 'bg-black/40 text-gray-500 border border-white/5 hover:border-tactical-orange/50 hover:text-white'
+                    : 'bg-black/40 text-gray-400 border border-white/5 hover:border-tactical-orange/50 hover:text-white'
                   }
                 `}
               >
@@ -64,7 +64,7 @@ export function Pagination({
         </button>
       </div>
 
-      <p className="px-8 py-3 bg-black/40 border border-white/5 text-xs font-mono text-gray-500 uppercase tracking-widest">
+      <p className="px-8 py-3 bg-black/40 border border-white/5 text-xs font-mono text-gray-400 uppercase tracking-widest">
         {sliceLabel} <span className="text-white font-black">{currentPage}</span> / {totalPages}
       </p>
     </div>

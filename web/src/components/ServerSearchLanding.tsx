@@ -93,7 +93,7 @@ export function ServerSearchLanding() {
             <Card key={item.title} className="border-l-4 border-l-tactical-orange/60">
               <CardContent className="p-5 space-y-2">
                 <h3 className="text-[10px] font-black text-white uppercase tracking-widest">{item.title}</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-relaxed">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed">
                   {item.body}
                 </p>
               </CardContent>
@@ -141,7 +141,7 @@ export function ServerSearchLanding() {
               <summary className="cursor-pointer list-none px-5 py-4 text-[11px] font-black text-white uppercase tracking-wide hover:text-tactical-orange transition-colors">
                 {item.q}
               </summary>
-              <p className="px-5 pb-4 text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-relaxed border-t border-white/5 pt-3">
+              <p className="px-5 pb-4 text-[10px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed border-t border-white/5 pt-3">
                 {item.a}
               </p>
             </details>
@@ -153,7 +153,7 @@ export function ServerSearchLanding() {
         <h2 className="text-xl font-black text-white uppercase tracking-tight">
           Ready to explore the network?
         </h2>
-        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
           Server and player stats aggregated from public network sources · synced every ~2 hours
         </p>
         <Link
@@ -162,7 +162,7 @@ export function ServerSearchLanding() {
         >
           Open Server Browser
         </Link>
-        <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest pt-2">
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest pt-2">
           Also explore{' '}
           <Link to="/" className="text-tactical-orange hover:underline">
             mod rankings

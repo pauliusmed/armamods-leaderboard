@@ -70,20 +70,20 @@ export function HowToModpackSizePage() {
       </ol>
 
       <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-6 text-[9px] font-black uppercase tracking-widest" aria-label="Related tools">
-        <span className="text-gray-600">Related tools</span>
-        <Link to="/arma-reforger-console-mod-storage" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+        <span className="text-gray-400">Related tools</span>
+        <Link to="/arma-reforger-console-mod-storage" className="min-h-11 inline-flex items-center text-gray-400 transition-colors hover:text-tactical-orange">
           Console storage
         </Link>
         <span className="text-gray-700" aria-hidden="true">·</span>
-        <Link to="/storage-planner" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+        <Link to="/storage-planner" className="min-h-11 inline-flex items-center text-gray-400 transition-colors hover:text-tactical-orange">
           Open planner
         </Link>
         <span className="text-gray-700" aria-hidden="true">·</span>
-        <Link to="/servers" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+        <Link to="/servers" className="min-h-11 inline-flex items-center text-gray-400 transition-colors hover:text-tactical-orange">
           Browse servers
         </Link>
         <span className="text-gray-700" aria-hidden="true">·</span>
-        <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 inline-flex items-center text-gray-500 transition-colors hover:text-tactical-orange">
+        <Link to="/how-to-find-popular-arma-reforger-mods" className="min-h-11 inline-flex items-center text-gray-400 transition-colors hover:text-tactical-orange">
           Find popular mods
         </Link>
       </nav>

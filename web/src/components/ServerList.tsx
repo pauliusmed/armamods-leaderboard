@@ -139,7 +139,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                 </p>
               )}
               {!initialLoading && searchQuery && totalItems === 0 && (
-                <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
+                <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">
                   No servers match &quot;{searchQuery}&quot;
                 </p>
               )}
@@ -184,11 +184,11 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
           game === 'reforger' ? (
             <>
               {consoleFilter !== 'all' && (
-                <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">
+                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
                   {totalItems} match · unknown sizes excluded from fit filter
                 </p>
               )}
-              <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+              <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
                 Modpack = estimated download size ·{' '}
                 <Link to="/storage-planner" className="text-tactical-orange hover:underline">
                   Storage Planner
@@ -215,7 +215,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
             {isMobile ? (
               <div>
                 {loadingPinned && pinnedServers.length === 0 ? (
-                  <div className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                  <div className="py-4 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                     Loading favorites…
                   </div>
                 ) : (
@@ -235,7 +235,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                 <tbody>
                   {loadingPinned && pinnedServers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                      <td colSpan={6} className="py-4 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                         Loading favorites…
                       </td>
                     </tr>
@@ -332,7 +332,7 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
                   align="right"
                   className="hidden lg:table-cell pl-4 pr-4"
                 />
-                <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                   ★
                 </th>
               </tr>

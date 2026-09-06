@@ -20,7 +20,7 @@ export function OfficialScenariosPage({ game = 'reforger' }: OfficialScenariosPa
 
   if (slug && !detail) {
     return (
-      <div className="p-12 text-center text-gray-500">
+      <div className="p-12 text-center text-gray-400">
         <p className="text-[10px] font-black uppercase tracking-widest mb-4">Scenario not found</p>
         <Link to={`${gp}/scenarios/official`} className="text-tactical-orange hover:underline text-sm">
           Back to official list
@@ -40,21 +40,21 @@ export function OfficialScenariosPage({ game = 'reforger' }: OfficialScenariosPa
         <div className="border-b border-white/10 pb-8">
           <Link
             to={`${gp}/scenarios/official`}
-            className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-tactical-orange transition-colors"
+            className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-tactical-orange transition-colors"
           >
             ← Official Scenarios
           </Link>
           <h1 className="mt-4 text-4xl font-black text-white uppercase tracking-tighter">
             {detail.title}
           </h1>
-          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
             Built-in · No Workshop mod required
           </p>
         </div>
 
         <div className="bg-zinc-900/50 border border-white/5 p-8 space-y-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600 mb-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-2">
               scenarioId
             </p>
             <code className="text-sm font-mono text-tactical-orange break-all">{detail.scenarioId}</code>
@@ -85,14 +85,14 @@ export function OfficialScenariosPage({ game = 'reforger' }: OfficialScenariosPa
       <div className="border-b border-white/10 pb-8">
         <Link
           to={`${gp}/scenarios`}
-          className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 hover:text-tactical-orange transition-colors"
+          className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-tactical-orange transition-colors"
         >
           ← Scenario Leaderboard
         </Link>
         <h1 className="mt-4 text-4xl font-black text-white uppercase tracking-tighter">
           Official Scenarios
         </h1>
-        <p className="mt-2 text-sm text-gray-500 max-w-2xl">
+        <p className="mt-2 text-sm text-gray-400 max-w-2xl">
           {OFFICIAL_SCENARIOS.length} {OFFICIAL_SCENARIOS_BM_NOTE}{' '}
           <code className="text-gray-400">#AR-</code> prefix — they are not Workshop mods.
         </p>
@@ -157,7 +157,7 @@ function OfficialScenariosTable({ gamePrefix }: { gamePrefix: string }) {
                   </Link>
                 </td>
                 <td className="hidden lg:table-cell py-3 px-4 align-middle">
-                  <code className="text-[11px] font-mono text-gray-500">{scenario.scenarioId}</code>
+                  <code className="text-[11px] font-mono text-gray-400">{scenario.scenarioId}</code>
                 </td>
               </tr>
             ))}

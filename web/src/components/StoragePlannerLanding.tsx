@@ -93,7 +93,7 @@ export function StoragePlannerLanding() {
             <Card key={item.title} className="border-l-4 border-l-red-500/60">
               <CardContent className="p-5 space-y-2">
                 <h3 className="text-[10px] font-black text-white uppercase tracking-widest">{item.title}</h3>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-relaxed">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed">
                   {item.body}
                 </p>
               </CardContent>
@@ -140,7 +140,7 @@ export function StoragePlannerLanding() {
               <summary className="cursor-pointer list-none px-5 py-4 text-[11px] font-black text-white uppercase tracking-wide hover:text-tactical-orange transition-colors">
                 {item.q}
               </summary>
-              <p className="px-5 pb-4 text-[10px] text-gray-500 font-bold uppercase tracking-wide leading-relaxed border-t border-white/5 pt-3">
+              <p className="px-5 pb-4 text-[10px] text-gray-400 font-bold uppercase tracking-wide leading-relaxed border-t border-white/5 pt-3">
                 {item.a}
               </p>
             </details>
@@ -152,7 +152,7 @@ export function StoragePlannerLanding() {
         <h2 className="text-xl font-black text-white uppercase tracking-tight">
           Ready to compare your servers?
         </h2>
-        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
           {STORAGE_LANDING_SOURCES}
         </p>
         <Link
@@ -161,7 +161,7 @@ export function StoragePlannerLanding() {
         >
           Open Storage Planner
         </Link>
-        <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest pt-2">
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest pt-2">
           Also browse{' '}
           <Link to="/servers" className="text-tactical-orange hover:underline">
             active servers

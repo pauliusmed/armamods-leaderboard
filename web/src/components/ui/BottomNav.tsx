@@ -43,7 +43,7 @@ export function BottomNav({ game }: { game?: string }) {
               className={`block px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${
                 location.pathname === (gp + tool.path)
                   ? 'text-tactical-orange bg-white/5'
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {tool.label}
@@ -59,7 +59,7 @@ export function BottomNav({ game }: { game?: string }) {
             className={`flex-1 flex flex-col items-center justify-center py-2 min-h-[56px] transition-colors relative ${
               isActive(path, matchExact)
                 ? 'text-tactical-orange'
-                : 'text-gray-600 hover:text-gray-400'
+                : 'text-gray-400 hover:text-gray-400'
             }`}
           >
             <Icon size={20} strokeWidth={1.5} />
@@ -73,7 +73,7 @@ export function BottomNav({ game }: { game?: string }) {
           type="button"
           onClick={() => setToolsOpen(!toolsOpen)}
           className={`flex-1 flex flex-col items-center justify-center py-2 min-h-[56px] transition-colors relative ${
-            isToolsActive || toolsOpen ? 'text-tactical-orange' : 'text-gray-600 hover:text-gray-400'
+            isToolsActive || toolsOpen ? 'text-tactical-orange' : 'text-gray-400 hover:text-gray-400'
           }`}
         >
           <Wrench size={20} strokeWidth={1.5} />

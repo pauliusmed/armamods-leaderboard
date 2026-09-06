@@ -71,7 +71,7 @@ export function GraphicHero({
         </div>
       </div>
 
-      <div className="absolute bottom-4 right-14 hidden items-center gap-3 text-[8px] font-black uppercase tracking-[0.3em] text-gray-500 sm:flex" aria-hidden="true">
+      <div className="absolute bottom-4 right-14 hidden items-center gap-3 text-[8px] font-black uppercase tracking-[0.3em] text-gray-400 sm:flex" aria-hidden="true">
         <span className="h-px w-12 bg-white/20" />
         Modern operations visual
       </div>

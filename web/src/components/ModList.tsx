@@ -179,7 +179,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                   ★ Favorites · pinned to top
                 </div>
                 {loadingPinned && pinnedMods.length === 0 ? (
-                  <div className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse">
+                  <div className="py-4 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                     Loading favorites…
                   </div>
                 ) : (
@@ -239,7 +239,7 @@ export function ModList({ game = 'reforger' }: ModListProps) {
                       <tr>
                         <td
                           colSpan={MOD_LEADERBOARD_COL_COUNT}
-                          className="py-4 text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest animate-pulse"
+                          className="py-4 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest animate-pulse"
                         >
                           Loading favorites…
                         </td>

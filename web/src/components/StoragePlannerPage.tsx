@@ -133,13 +133,13 @@ function ServerSetFeedbackPanel({
           {feedback.clusters.map((cluster) => (
             <div key={cluster.id} className="border border-white/10 bg-black/30 px-3 py-3 space-y-2">
               <p className="text-[9px] font-black text-white uppercase tracking-widest">{cluster.label}</p>
-              <p className="text-[8px] text-gray-500 font-mono uppercase">
+              <p className="text-[8px] text-gray-400 font-mono uppercase">
                 ~{formatBytes(cluster.estimatedUnionBytes)} · {cluster.modCount} mods
                 {cluster.serverIds.length > 1 ? ` · ${cluster.internalOverlapPercent}% similar` : ''}
               </p>
               <ul className="space-y-1 max-h-24 overflow-y-auto">
                 {cluster.serverNames.map((name, i) => (
-                  <li key={cluster.serverIds[i]} className="text-[8px] text-gray-600 truncate uppercase">
+                  <li key={cluster.serverIds[i]} className="text-[8px] text-gray-400 truncate uppercase">
                     {truncateServerName(name)}
                   </li>
                 ))}
@@ -165,7 +165,7 @@ function ServerSetFeedbackPanel({
                     {set.serverIds.length === 1 ? '1 server' : `${set.serverIds.length} servers`} · ~
                     {formatBytes(set.estimatedUnionBytes)}
                   </p>
-                  <p className="text-[8px] text-gray-600 truncate uppercase">
+                  <p className="text-[8px] text-gray-400 truncate uppercase">
                     {set.serverNames.map((n) => truncateServerName(n, 36)).join(' + ')}
                   </p>
                 </div>
@@ -217,7 +217,7 @@ function ModSizeList({
   const totals = sectionTotals(sorted);
 
   if (!sorted.length) {
-    return <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">{emptyLabel}</p>;
+    return <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{emptyLabel}</p>;
   }
 
   return (
@@ -226,7 +226,7 @@ function ModSizeList({
         <span className="text-[9px] font-black text-tactical-orange uppercase tracking-widest">{title}</span>
         <span className="text-[10px] font-mono font-black text-white">
           {formatBytes(totals.knownBytes)}
-          <span className="text-gray-500 font-bold text-[8px] ml-2">
+          <span className="text-gray-400 font-bold text-[8px] ml-2">
             ({totals.knownCount}/{totals.modCount} sized)
           </span>
         </span>
@@ -302,7 +302,7 @@ function StoragePlanLoading({ modEstimate }: { modEstimate: number }) {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1 min-w-0">
           <p className="text-[10px] font-black text-tactical-orange uppercase tracking-widest">{stage}</p>
-          <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
             Analyzing {modLabel} — reading cached sizes, not downloading mods
           </p>
         </div>
@@ -314,7 +314,7 @@ function StoragePlanLoading({ modEstimate }: { modEstimate: number }) {
           style={{ width: `${barPercent}%` }}
         />
       </div>
-      <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+      <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
         Large modpacks can take 15–45s on first load — progress bar moves while the server works
       </p>
     </div>
@@ -747,7 +747,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
       <header className="space-y-4 border-b border-white/10 pb-10">
         <Link
           to="/arma-reforger-console-mod-storage"
-          className="inline-flex text-[9px] font-black uppercase tracking-[0.2em] text-gray-600 hover:text-tactical-orange transition-colors"
+          className="inline-flex text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-tactical-orange transition-colors"
         >
           ← About console mod storage
         </Link>
@@ -757,7 +757,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
         <h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter">
           Storage Planner
         </h1>
-        <p className="text-sm text-gray-500 font-bold uppercase tracking-widest max-w-3xl leading-relaxed">
+        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest max-w-3xl leading-relaxed">
           See if your servers fit in console mod space, what the game auto-downloads when you join,
           and which mods you can delete manually — plus similar servers that need less downloading.
         </p>
@@ -776,7 +776,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                   className={`min-h-11 px-3 py-3 text-[9px] font-black uppercase tracking-widest border transition-all ${
                     profile.consolePreset === preset.id
                       ? 'border-tactical-orange bg-tactical-orange/10 text-tactical-orange'
-                      : 'border-white/10 text-gray-500 hover:border-white/30'
+                      : 'border-white/10 text-gray-400 hover:border-white/30'
                   }`}
                 >
                   {preset.label}
@@ -784,7 +784,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               ))}
             </div>
             <label className="block space-y-2">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
                 Available space for mods (GB)
               </span>
               <input
@@ -803,7 +803,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
         <Card className="border-l-4 border-l-zinc-700">
           <CardContent className="p-6 space-y-6">
             <h2 className="text-lg font-black text-white uppercase tracking-tight">2 · Installed library (proxy)</h2>
-            <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
               Server you are on now — used to estimate auto-downloads when joining others.
             </p>
             <input
@@ -841,7 +841,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-1 border border-white/5">
                 {filteredMainServers.length === 0 ? (
-                  <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">
+                  <p className="p-4 text-[10px] text-gray-400 font-bold uppercase">
                     {servers.length === 0
                       ? 'Server list empty — check API / collector'
                       : 'No servers match search'}
@@ -859,7 +859,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                       }`}
                     >
                       {server.name}
-                      <span className="block text-[8px] text-gray-600 font-mono">{server.mods?.length ?? 0} mods</span>
+                      <span className="block text-[8px] text-gray-400 font-mono">{server.mods?.length ?? 0} mods</span>
                     </button>
                   ))
                 )}
@@ -872,7 +872,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
       <Card className="border-l-4 border-l-emerald-600">
         <CardContent className="p-6 space-y-6">
           <h2 className="text-lg font-black text-white uppercase tracking-tight">3 · My servers</h2>
-          <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
             All servers you want to play — shared mods (RHS, WCS…) count once in the combined total.
           </p>
           <input
@@ -915,7 +915,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                           className={`text-[8px] font-mono ${
                             serverResolveState[serverId] === 'failed'
                               ? 'text-red-400'
-                              : 'text-gray-600'
+                              : 'text-gray-400'
                           }`}
                         >
                           {label.sub}
@@ -926,7 +926,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                 })}
               </div>
               {!analysis && profile.wantedServerIds.length >= 2 && (
-                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">
+                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
                   Run Analyze for combined size and fit
                 </p>
               )}
@@ -937,7 +937,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-72 overflow-y-auto">
               {browseWantedServers.length === 0 ? (
-                <p className="col-span-full p-4 text-[10px] text-gray-600 font-bold uppercase">
+                <p className="col-span-full p-4 text-[10px] text-gray-400 font-bold uppercase">
                   {wantedSearch.trim()
                     ? 'No more servers match'
                     : profile.wantedServerIds.length
@@ -960,7 +960,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                       <span className="block text-[10px] font-black text-white uppercase truncate">
                         {server.name}
                       </span>
-                      <span className="text-[8px] text-gray-600 font-mono">
+                      <span className="text-[8px] text-gray-400 font-mono">
                         {server.mods?.length ?? 0} mods
                       </span>
                     </span>
@@ -1030,11 +1030,11 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               },
             ].map((item) => (
               <div key={item.label} className="bg-zinc-900 border border-white/10 p-5 space-y-1">
-                <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">{item.label}</p>
+                <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.3em]">{item.label}</p>
                 <p className={`text-2xl font-black font-mono ${analysis.fits || item.label !== 'Status' ? 'text-white' : 'text-red-400'}`}>
                   {item.value}
                 </p>
-                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">{item.sub}</p>
+                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{item.sub}</p>
               </div>
             ))}
           </div>
@@ -1046,7 +1046,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               Missing sizes backfill after collector runs or when a mod page is opened.
             </p>
           )}
-          <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{result.meta.disclaimer}</p>
 
           {setFeedback && profile.wantedServerIds.length >= 2 && (
             <ServerSetFeedbackPanel
@@ -1061,7 +1061,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
               <CardContent className="p-5 space-y-4">
                 <div className="space-y-1">
                   <h3 className="text-sm font-black text-white uppercase">Less download / delete hassle</h3>
-                  <p className="text-[8px] text-gray-600 uppercase tracking-widest">
+                  <p className="text-[8px] text-gray-400 uppercase tracking-widest">
                     Similar modpacks from the network — auto-downloads when you join; deleting is manual.
                     Check scenario and rules before switching.
                   </p>
@@ -1082,7 +1082,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
                           <p className="text-[11px] font-black text-white uppercase truncate">
                             → {alt.alternativeServerName}
                           </p>
-                          <p className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">
+                          <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
                             {alt.overlapPercent}% mod overlap · +{formatBytes(alt.alternativeExtraBytes)} to stack ·{' '}
                             saves ~{formatBytes(alt.bytesSaved)} · {alt.players} players
                             {alt.scenarioName ? ` · ${alt.scenarioName}` : ''}
@@ -1116,7 +1116,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h3 className="text-sm font-black text-white uppercase">Safe to remove</h3>
-                <p className="text-[8px] text-gray-600 uppercase tracking-widest">
+                <p className="text-[8px] text-gray-400 uppercase tracking-widest">
                   {!analysis.fits && analysis.bytesOver > 0
                     ? analysis.suggestedFreeBytes > 0
                       ? `Over limit by ${formatBytes(analysis.bytesOver)} — delete manually (~${formatBytes(analysis.suggestedFreeBytes)} from top items)`
@@ -1133,7 +1133,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
             <Card>
               <CardContent className="p-5 space-y-3">
                 <h3 className="text-sm font-black text-white uppercase">Need to download</h3>
-                <p className="text-[8px] text-gray-600 uppercase tracking-widest">
+                <p className="text-[8px] text-gray-400 uppercase tracking-widest">
                   Auto-downloaded when you join — game fetches these; you do not pick them manually
                 </p>
                 <ModSizeList
@@ -1146,7 +1146,7 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
           </div>
 
           {profile.mainServerId && (
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
               Main server proxy:{' '}
               <Link to={`${gp}/server/${profile.mainServerId}`} className="text-tactical-orange hover:underline">
                 View server detail

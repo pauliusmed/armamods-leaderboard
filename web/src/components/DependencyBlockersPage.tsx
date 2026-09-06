@@ -13,7 +13,7 @@ const pickerInputClass =
   'w-full px-4 py-3 bg-black/40 border border-white/10 text-[10px] font-black text-white uppercase tracking-widest outline-none focus:border-tactical-orange placeholder:text-gray-700';
 
 const pickerLabelClass =
-  'block text-[10px] font-black uppercase tracking-[0.15em] text-gray-600 mb-2 italic';
+  'block text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 mb-2 italic';
 
 interface DependencyBlockersPageProps {
   game?: GameType;
@@ -194,7 +194,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
               {selectedServer?.name ?? serverId}
             </p>
             {loadingServer && (
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1 animate-pulse">
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1 animate-pulse">
                 Loading mod list…
               </p>
             )}
@@ -205,7 +205,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
         ) : (
           <div className="max-h-48 overflow-y-auto space-y-1 border border-white/5">
             {filteredServers.length === 0 ? (
-              <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">No servers match search</p>
+              <p className="p-4 text-[10px] text-gray-400 font-bold uppercase">No servers match search</p>
             ) : (
               filteredServers.map((server) => (
                 <button
@@ -224,7 +224,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
                 >
                   {favoriteIds.includes(server.id) && <span className="text-tactical-orange mr-1">★</span>}
                   {server.name}
-                  <span className="block text-[8px] text-gray-600 font-mono">
+                  <span className="block text-[8px] text-gray-400 font-mono">
                     {server.mods?.length ?? 0} mods · {server.id}
                   </span>
                 </button>
@@ -260,7 +260,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
           )}
           <div className="max-h-56 overflow-y-auto space-y-1 border border-white/5">
             {filteredMods.length === 0 ? (
-              <p className="p-4 text-[10px] text-gray-600 font-bold uppercase">No mods match search</p>
+              <p className="p-4 text-[10px] text-gray-400 font-bold uppercase">No mods match search</p>
             ) : (
               filteredMods.map((mod) => (
                 <button
@@ -274,7 +274,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
                   }`}
                 >
                   {mod.name}
-                  <span className="block text-[8px] text-gray-600 font-mono">{mod.id}</span>
+                  <span className="block text-[8px] text-gray-400 font-mono">{mod.id}</span>
                 </button>
               ))
             )}
@@ -300,7 +300,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
             <h2 className="text-lg font-black text-white uppercase tracking-tight">
               Remove <span className="text-tactical-orange">{result.target.name}</span>
             </h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
               {result.dependents.length === 0
                 ? 'No other mods on this server declare a workshop dependency on this mod.'
                 : `Remove these ${result.dependents.length} mod(s) first — or keep the target.`}
@@ -311,7 +311,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
               </p>
             )}
             {metaDisclaimer && (
-              <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-2">{metaDisclaimer}</p>
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-2">{metaDisclaimer}</p>
             )}
           </div>
 
@@ -319,7 +319,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-600">
+                  <tr className="border-b border-white/10 text-[10px] font-black uppercase tracking-widest text-gray-400">
                     <SortableTh
                       label="Blocker mod"
                       sortKey="blocker"
@@ -341,7 +341,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
                         >
                           {hit.name}
                         </Link>
-                        <p className="text-[9px] font-mono text-gray-600 mt-1">{hit.id}</p>
+                        <p className="text-[9px] font-mono text-gray-400 mt-1">{hit.id}</p>
                       </td>
                       <td className="py-3 pr-2 text-gray-400 text-xs leading-relaxed">
                         {hit.dependencies.map((d) => (
@@ -376,7 +376,7 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
           <div className="flex flex-wrap gap-4 pt-2 border-t border-white/5">
             <Link
               to={`${gp}/server/${serverId}`}
-              className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange"
+              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-tactical-orange"
             >
               ← Server detail
             </Link>
@@ -384,13 +384,13 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
               href={workshopPageUrl(result.target.id, game)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange"
+              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-tactical-orange"
             >
               Workshop page ↗
             </a>
             <Link
               to={`/storage-planner?main=${encodeURIComponent(serverId)}`}
-              className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange"
+              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-tactical-orange"
             >
               Storage Planner →
             </Link>

@@ -54,7 +54,7 @@ export function DependencyRow({ dep, game = 'reforger' }: DependencyRowProps) {
 
       <td className="hidden md:table-cell py-3 md:py-2.5 px-4 align-middle">
         {hasLive ? (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
             {(dep.totalPlayers ?? 0).toLocaleString()} players · {dep.serverCount ?? 0} servers
           </span>
         ) : (
@@ -123,14 +123,14 @@ export function ModDependencyTable({
     <div className="border border-white/5 bg-black/40">
       {total != null && total.totalBytes != null && total.totalSizeCount > 0 && (
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 border-b border-white/10 bg-white/[0.03]">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
             Total modpack size
           </span>
           <span className="font-mono text-sm sm:text-base font-black text-tactical-orange tabular-nums">
             {allSizesKnown ? formatBytes(total.totalBytes) : `~${formatBytes(total.totalBytes)}`}
           </span>
           {!allSizesKnown && (
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
               sizes known {total.knownSizeCount}/{total.totalSizeCount}
             </span>
           )}
@@ -148,7 +148,7 @@ export function ModDependencyTable({
                 onSort={(key) => toggleSort(key as DepSortBy)}
                 className="pl-4 pr-4"
               />
-              <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+              <th className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                 Version
               </th>
               <SortableTh
@@ -168,7 +168,7 @@ export function ModDependencyTable({
                 align="right"
                 className="hidden sm:table-cell px-4"
               />
-              <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+              <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                 Actions
               </th>
             </tr>

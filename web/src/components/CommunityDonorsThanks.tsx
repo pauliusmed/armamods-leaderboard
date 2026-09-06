@@ -36,7 +36,7 @@ export function CommunityDonorsThanks({ compact = false }: { compact?: boolean }
               <p className="text-sm font-black text-white tracking-wide">
                 {donor.name}
                 {donor.tag ? (
-                  <span className="ml-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                  <span className="ml-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                     {donor.tag}
                   </span>
                 ) : null}
@@ -47,7 +47,7 @@ export function CommunityDonorsThanks({ compact = false }: { compact?: boolean }
                     First
                   </span>
                 ) : null}
-                <span className="text-[9px] font-bold text-gray-600 uppercase tracking-wider">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
                   {formatDonorDate(donor.date)}
                 </span>
               </div>

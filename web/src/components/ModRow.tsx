@@ -54,7 +54,7 @@ export function ModRow({
       <td className="w-14 py-3 md:py-2.5 pl-4 pr-2 align-middle">
         <span
           className={`font-mono text-sm tabular-nums ${
-            isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-600'
+            isTop3 ? 'text-tactical-orange font-bold' : 'text-gray-400'
           }`}
         >
           {rank != null ? String(rank).padStart(2, '0') : '–'}
@@ -81,7 +81,7 @@ export function ModRow({
             </Link>
             <ModWorkshopStatusBadge status={workshopStatus} game={game} className="mt-1" />
             <div className="mt-1 flex items-center gap-1 md:hidden">
-              <code className="px-1 py-0.5 bg-zinc-900 border border-white/10 text-[8px] font-mono text-gray-500 tracking-widest select-all max-w-[110px] truncate" title={mod.id}>
+              <code className="px-1 py-0.5 bg-zinc-900 border border-white/10 text-[8px] font-mono text-gray-400 tracking-widest select-all max-w-[110px] truncate" title={mod.id}>
                 {mod.id}
               </code>
               <button
@@ -93,7 +93,7 @@ export function ModRow({
                     setTimeout(() => setCopiedGui(false), 1200);
                   } catch {}
                 }}
-                className="inline-flex items-center justify-center w-4 h-4 bg-zinc-900 border border-white/10 text-gray-500 hover:text-white transition-colors"
+                className="inline-flex items-center justify-center w-4 h-4 bg-zinc-900 border border-white/10 text-gray-400 hover:text-white transition-colors"
                 aria-label="Copy GUI"
               >
                 {copiedGui ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5" />}
@@ -104,7 +104,7 @@ export function ModRow({
                 <span className="md:hidden">
                   <ModAuthorCell modId={mod.id} game={game} author={mod.author} className="mt-0.5" />
                 </span>
-                <p className="md:hidden mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-500">
+                <p className="md:hidden mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] font-mono tabular-nums text-gray-400">
                   <span>{mod.serverCount} deploy</span>
                   <span>{share.toFixed(1)}% share</span>
                   {game === 'reforger' && mod.sizeBytes != null && (
@@ -138,7 +138,7 @@ export function ModRow({
                   setTimeout(() => setCopiedGui(false), 1200);
                 } catch {}
               }}
-              className="inline-flex items-center justify-center w-5 h-5 bg-zinc-900 border border-white/10 text-gray-500 hover:text-white hover:border-white/20 transition-colors shrink-0"
+              className="inline-flex items-center justify-center w-5 h-5 bg-zinc-900 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors shrink-0"
               aria-label="Copy GUI"
               title="Copy GUI"
             >

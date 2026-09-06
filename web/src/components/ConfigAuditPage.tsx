@@ -78,7 +78,7 @@ const BUCKET_STYLE: Record<Exclude<AuditFilter, 'all'>, string> = {
   remove: 'border-red-500/60 bg-red-950/30 text-red-300',
   review: 'border-orange-500/50 bg-orange-950/20 text-orange-200',
   keep: 'border-emerald-600/40 bg-emerald-950/15 text-emerald-200',
-  other: 'border-gray-700/40 bg-black/40 text-gray-500',
+  other: 'border-gray-700/40 bg-black/40 text-gray-400',
 };
 
 const BUCKET_ORDER: Exclude<AuditFilter, 'all'>[] = ['remove', 'review', 'keep', 'other'];
@@ -89,7 +89,7 @@ const STATUS_STYLE: Record<AuditStatus, string> = {
   warning: 'border-yellow-600/40 bg-yellow-950/15 text-yellow-100',
   ok: 'border-emerald-600/40 bg-emerald-950/15 text-emerald-200',
   niche: 'border-gray-600/40 bg-gray-900/40 text-gray-400',
-  unknown: 'border-gray-700/40 bg-black/40 text-gray-500',
+  unknown: 'border-gray-700/40 bg-black/40 text-gray-400',
 };
 
 const TREND_STYLE: Record<TrendPhase, string> = {
@@ -97,7 +97,7 @@ const TREND_STYLE: Record<TrendPhase, string> = {
   recovering: 'bg-sky-500/20 text-sky-300 border-sky-600/50',
   declining: 'bg-red-500/15 text-red-300 border-red-700/40',
   stable: 'bg-gray-700/30 text-gray-400 border-gray-600/40',
-  unknown: 'bg-gray-800/30 text-gray-500 border-gray-700/40',
+  unknown: 'bg-gray-800/30 text-gray-400 border-gray-700/40',
 };
 
 interface ConfigAuditPageProps {
@@ -339,7 +339,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             type="button"
             onClick={() => setInputMode('paste')}
             className={`min-h-11 px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
-              inputMode === 'paste' ? 'text-tactical-orange border-b-2 border-tactical-orange' : 'text-gray-500'
+              inputMode === 'paste' ? 'text-tactical-orange border-b-2 border-tactical-orange' : 'text-gray-400'
             }`}
           >
             Paste
@@ -348,7 +348,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             type="button"
             onClick={() => setInputMode('file')}
             className={`min-h-11 px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
-              inputMode === 'file' ? 'text-tactical-orange border-b-2 border-tactical-orange' : 'text-gray-500'
+              inputMode === 'file' ? 'text-tactical-orange border-b-2 border-tactical-orange' : 'text-gray-400'
             }`}
           >
             Upload file
@@ -357,7 +357,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
 
         {inputMode === 'paste' ? (
           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
               config.json content (Ctrl+V)
             </label>
             <textarea
@@ -416,7 +416,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
               </p>
             )}
             {configText && fileName && (
-              <p className="mt-2 text-[10px] text-gray-500">
+              <p className="mt-2 text-[10px] text-gray-400">
                 File content ready (view in Paste tab)
               </p>
             )}
@@ -436,12 +436,12 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             type="button"
             onClick={clearInput}
             disabled={loading || (!configText && !fileName)}
-            className="min-h-11 px-6 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white disabled:opacity-30"
+            className="min-h-11 px-6 py-3 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white disabled:opacity-30"
           >
             Clear
           </button>
           {parsedCount != null && configText.trim() && (
-            <span className="text-[10px] text-gray-500 font-mono">Ready: {parsedCount} mods</span>
+            <span className="text-[10px] text-gray-400 font-mono">Ready: {parsedCount} mods</span>
           )}
         </div>
 
@@ -462,7 +462,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
       {result && (
         <>
           <div className="flex flex-wrap items-center gap-2 border border-white/10 rounded-lg p-3 bg-black/40">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 w-full sm:w-auto">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 w-full sm:w-auto">
               Export report
             </span>
             <button
@@ -479,7 +479,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             >
               Copy JSON report
             </button>
-            <span className="text-[10px] text-gray-600 sm:ml-auto">
+            <span className="text-[10px] text-gray-400 sm:ml-auto">
               Each line: <code className="text-tactical-orange">modId | name | …</code> — not config.json
             </span>
           </div>
@@ -506,7 +506,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           <button
             type="button"
             onClick={() => setFilter('all')}
-            className={`text-[10px] uppercase tracking-widest ${filter === 'all' ? 'text-tactical-orange' : 'text-gray-500'}`}
+            className={`text-[10px] uppercase tracking-widest ${filter === 'all' ? 'text-tactical-orange' : 'text-gray-400'}`}
           >
             Show all ({result.meta.modCount}) · {result.meta.durationMs}ms
           </button>
@@ -516,7 +516,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
             </p>
           )}
 
-          <div className="text-[11px] text-gray-500 border border-white/5 p-4 rounded bg-white/2 space-y-2">
+          <div className="text-[11px] text-gray-400 border border-white/5 p-4 rounded bg-white/2 space-y-2">
             {result.meta.mode === 'client-fallback' && (
               <p className="text-signal-warning/90 font-bold uppercase text-[10px] tracking-widest">
                 Fallback mode (per mod)
@@ -564,7 +564,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                       <button
                         type="button"
                         onClick={() => void copyModId(row.modId)}
-                        className="text-[9px] font-bold uppercase tracking-widest text-gray-500 hover:text-white border border-white/10 px-2 py-0.5"
+                        className="text-[9px] font-bold uppercase tracking-widest text-gray-400 hover:text-white border border-white/10 px-2 py-0.5"
                       >
                         Copy modId
                       </button>
@@ -593,7 +593,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                         >
                           −{row.dropPct}%
                           {row.rankBefore != null && row.rankRecent != null && (
-                            <span className="align-super text-[8px] font-bold uppercase tracking-wider text-gray-500 ml-0.5">
+                            <span className="align-super text-[8px] font-bold uppercase tracking-wider text-gray-400 ml-0.5">
                               rank
                             </span>
                           )}
@@ -603,17 +603,17 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                     </div>
                     <div>
                       After update: <strong>{row.earlyAfterAvg ?? '—'}</strong>/day
-                      <span className="text-gray-600 ml-1">(first ~4d)</span>
+                      <span className="text-gray-400 ml-1">(first ~4d)</span>
                     </div>
                     <div>
                       Last 7 days: <strong>{row.recentAvg ?? '—'}</strong>/day
-                      <span className="text-gray-600 ml-1">· trend</span>
+                      <span className="text-gray-400 ml-1">· trend</span>
                     </div>
                     {(row.rankBefore != null || row.rankRecent != null) && (
                       <div>
                         BM rank: <strong>#{row.rankBefore ?? '—'}</strong> →{' '}
                         <strong>#{row.rankRecent ?? '—'}</strong>
-                        <span className="text-gray-600 ml-1">(lower = more popular)</span>
+                        <span className="text-gray-400 ml-1">(lower = more popular)</span>
                       </div>
                     )}
                     <div>
@@ -654,7 +654,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
                             <Link to={`/mod/${alt.modId}`} className="text-white font-bold hover:text-tactical-orange">
                               {alt.name}
                             </Link>
-                            <span className="text-gray-500 ml-2">{alt.modId}</span>
+                            <span className="text-gray-400 ml-2">{alt.modId}</span>
                             <span
                               className={`ml-2 text-[9px] px-1 border rounded ${TREND_STYLE[alt.trendPhase]}`}
                             >
@@ -679,7 +679,7 @@ export function ConfigAuditPage({ game = 'reforger' }: ConfigAuditPageProps) {
           </div>
 
           {filter !== 'all' && buckets && buckets[filter].length === 0 && (
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-400 text-sm">
               {filter === 'remove'
                 ? 'No broken or failing mods detected – your config looks clean after the update.'
                 : `No mods in “${AUDIT_BUCKET_SHORT[filter]}”.`}

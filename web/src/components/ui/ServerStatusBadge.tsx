@@ -6,9 +6,9 @@ const STATUS_STYLE: Record<BmServerStatus, string> = {
   online: 'border-emerald-600/50 bg-emerald-950/30 text-emerald-300',
   offline: 'border-gray-600/50 bg-zinc-900/60 text-gray-400',
   dead: 'border-red-900/50 bg-red-950/25 text-red-400/80',
-  removed: 'border-gray-700/40 bg-black/40 text-gray-600',
+  removed: 'border-gray-700/40 bg-black/40 text-gray-400',
   invalid: 'border-amber-700/40 bg-amber-950/20 text-amber-300/80',
-  unknown: 'border-gray-800/40 bg-black/30 text-gray-600',
+  unknown: 'border-gray-800/40 bg-black/30 text-gray-400',
 };
 
 interface ServerStatusBadgeProps {

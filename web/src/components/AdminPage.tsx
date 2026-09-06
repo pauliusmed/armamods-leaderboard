@@ -32,7 +32,7 @@ export function AdminPage() {
 
       <div className="border-b border-white/5 pb-6">
         <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Admin</h1>
-        <p className="text-[9px] text-gray-600 font-mono mt-2">
+        <p className="text-[9px] text-gray-400 font-mono mt-2">
           Internal ops links and live counters — not a secured control plane.
         </p>
       </div>
@@ -46,7 +46,7 @@ export function AdminPage() {
             className={`min-h-11 px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all border ${
               tab === t
                 ? 'bg-tactical-orange text-black border-tactical-orange'
-                : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30 hover:text-white'
+                : 'bg-transparent text-gray-400 border-white/10 hover:border-white/30 hover:text-white'
             }`}
           >
             {TAB_LABELS[t]}
@@ -72,7 +72,7 @@ export function AdminPage() {
           </div>
 
           <div className="border border-white/5 p-5 space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">API</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">API</p>
             <div className="text-[9px] font-mono text-gray-400 space-y-1">
               <p>Status: <span className="text-signal-ok">{health.status}</span></p>
               <p>Response time: {health.durationMs}ms</p>
@@ -83,7 +83,7 @@ export function AdminPage() {
       )}
 
       {tab === 'health' && !health && (
-        <p className="text-gray-600 text-[10px] font-mono">Loading health data...</p>
+        <p className="text-gray-400 text-[10px] font-mono">Loading health data...</p>
       )}
 
       {tab === 'analytics' && analytics && (
@@ -91,22 +91,22 @@ export function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{analytics.summary?.totalRequests?.toLocaleString() ?? '—'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Requests (since deploy)</p>
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Requests (since deploy)</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{analytics.summary?.totalErrors?.toLocaleString() ?? '—'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Errors (4xx/5xx)</p>
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Errors (4xx/5xx)</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 text-center space-y-1">
               <p className="text-3xl font-black text-white font-mono">{analytics.summary?.overallErrorRate ?? '—'}%</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">Error rate</p>
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">Error rate</p>
             </div>
           </div>
 
           <div className="border border-white/5 bg-[#172635] overflow-hidden">
             <table className="w-full text-[9px] font-mono">
               <thead>
-                <tr className="border-b border-white/5 text-gray-500 uppercase tracking-widest">
+                <tr className="border-b border-white/5 text-gray-400 uppercase tracking-widest">
                   <th className="text-left px-4 py-3 font-black">Route</th>
                   <th className="text-right px-4 py-3 font-black">Total</th>
                   <th className="text-right px-4 py-3 font-black">Errors</th>
@@ -130,27 +130,27 @@ export function AdminPage() {
             </table>
           </div>
 
-          <p className="text-[9px] text-gray-600 font-mono">{analytics.note}</p>
+          <p className="text-[9px] text-gray-400 font-mono">{analytics.note}</p>
         </div>
       )}
 
       {tab === 'analytics' && !analytics && (
-        <p className="text-gray-600 text-[10px] font-mono">Loading analytics...</p>
+        <p className="text-gray-400 text-[10px] font-mono">Loading analytics...</p>
       )}
 
       {tab === 'dashboards' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <a href="https://dash.cloudflare.com/945c61dd7d467620343f43685dce370c/web-analytics/armamods-leaderboard.pages.dev" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Cloudflare Analytics</h3>
-            <p className="text-[9px] text-gray-500 font-mono">Visits, page views, Core Web Vitals, top pages</p>
+            <p className="text-[9px] text-gray-400 font-mono">Visits, page views, Core Web Vitals, top pages</p>
           </a>
           <a href="https://billing.empowerservers.com/affiliates" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">Empower Affiliates</h3>
-            <p className="text-[9px] text-gray-500 font-mono">External partner dashboard</p>
+            <p className="text-[9px] text-gray-400 font-mono">External partner dashboard</p>
           </a>
           <a href="https://github.com/pauliusmed/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="group border border-white/5 bg-[#172635] p-5 space-y-2 hover:border-tactical-orange/40 transition-all">
             <h3 className="text-[11px] font-black text-white uppercase tracking-widest group-hover:text-tactical-orange">GitHub Repo</h3>
-            <p className="text-[9px] text-gray-500 font-mono">Commits, deployments, CI status</p>
+            <p className="text-[9px] text-gray-400 font-mono">Commits, deployments, CI status</p>
           </a>
         </div>
       )}
@@ -161,8 +161,8 @@ export function AdminPage() {
             <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
               <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Empower Servers</h3>
               <p className="text-3xl font-black text-white font-mono">{clicks?.empower?.total ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">total clicks</p>
-              <div className="text-[8px] font-mono text-gray-500 space-y-0.5">
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">total clicks</p>
+              <div className="text-[8px] font-mono text-gray-400 space-y-0.5">
                 <p>Ref: {clicks?.empower?.reforger ?? '…'} | A3: {clicks?.empower?.arma3 ?? '…'}</p>
                 <p className="text-white/60">{/* /api/click/empower?game=reforger|arma3 */}</p>
               </div>
@@ -170,17 +170,17 @@ export function AdminPage() {
             <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
               <h3 className="text-[11px] font-black text-white uppercase tracking-widest">GTXGaming</h3>
               <p className="text-3xl font-black text-white font-mono">{clicks?.gtxgaming ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">clicks</p>
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">clicks</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
               <h3 className="text-[11px] font-black text-white uppercase tracking-widest">PingPerfect</h3>
               <p className="text-3xl font-black text-white font-mono">{clicks?.pingperfect ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">clicks</p>
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">clicks</p>
             </div>
             <div className="border border-white/5 bg-[#172635] p-5 space-y-3">
               <h3 className="text-[11px] font-black text-white uppercase tracking-widest">Nitrado</h3>
               <p className="text-3xl font-black text-white font-mono">{clicks?.nitrado ?? '…'}</p>
-              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">clicks</p>
+              <p className="text-[9px] text-gray-400 font-mono uppercase tracking-widest">clicks</p>
             </div>
           </div>
 
@@ -229,7 +229,7 @@ export function AdminPage() {
         </div>
       )}
 
-      <div className="border-t border-white/5 pt-6 text-[9px] text-gray-600 font-mono">
+      <div className="border-t border-white/5 pt-6 text-[9px] text-gray-400 font-mono">
         <Link to="/" className="text-tactical-orange hover:underline">← Back to site</Link>
       </div>
     </div>

@@ -14,7 +14,7 @@ export function ConsoleFitBadge({ server, limitGb, limitBytes }: ConsoleFitBadge
   const label = consoleFitLabel(status, limitGb);
   const className =
     status === 'vanilla'
-      ? 'border-gray-600/50 text-gray-500 bg-gray-950/40'
+      ? 'border-gray-600/50 text-gray-400 bg-gray-950/40'
       : status === 'fits'
         ? 'border-emerald-500/40 text-emerald-400 bg-emerald-950/30'
         : 'border-amber-500/40 text-amber-400/90 bg-amber-950/20';

@@ -38,7 +38,7 @@ export function DonationCard() {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">
+            <span className="text-[8px] text-gray-400 font-black uppercase tracking-[0.3em]">
               {DONATION_PROGRESS_LABEL}
             </span>
             <span className="text-xl font-black text-tactical-orange">
@@ -63,7 +63,7 @@ export function DonationCard() {
           <CommunityDonorsThanks compact />
 
           <div className="space-y-2 pt-2">
-            <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider">
+            <p className="text-[9px] text-gray-400 font-black uppercase tracking-wider">
               {DONATION_COVERS_HEADING}
             </p>
             <ul className="text-xs text-gray-400 space-y-1">
@@ -75,7 +75,7 @@ export function DonationCard() {
         </div>
 
         <div className="space-y-2 pt-2">
-          <p className="text-[9px] text-gray-500 font-black uppercase tracking-wider">
+          <p className="text-[9px] text-gray-400 font-black uppercase tracking-wider">
             Quick amounts
           </p>
           <DonationAmountButtons />
@@ -90,7 +90,7 @@ export function DonationCard() {
           {DONATION_CTA_LABEL}
         </a>
 
-        <p className="text-[8px] text-gray-600 text-center">{DONATION_FOOTNOTE}</p>
+        <p className="text-[8px] text-gray-400 text-center">{DONATION_FOOTNOTE}</p>
       </CardContent>
     </Card>
   );

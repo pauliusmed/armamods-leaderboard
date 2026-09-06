@@ -245,7 +245,7 @@ export function Arma3Hosting() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-zinc-900 border border-white/5 p-5 rounded-sm text-center space-y-2">
-                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Recommended RAM</div>
+                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Recommended RAM</div>
                 <div className="text-2xl font-black text-tactical-orange italic">{recRAM}GB</div>
                 <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-white uppercase tracking-tighter">
                   <Cpu className="w-2.5 h-2.5 text-tactical-orange" />
@@ -253,7 +253,7 @@ export function Arma3Hosting() {
                 </div>
               </div>
               <div className="bg-zinc-900 border border-white/5 p-5 rounded-sm text-center space-y-2">
-                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">NVMe Storage</div>
+                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">NVMe Storage</div>
                 <div className="text-2xl font-black text-tactical-orange italic">{recStorage}</div>
                 <div className="flex items-center justify-center gap-1 text-[8px] font-bold text-white uppercase tracking-tighter">
                   <HardDrive className="w-2.5 h-2.5 text-tactical-orange" />
@@ -274,7 +274,7 @@ export function Arma3Hosting() {
         </Card>
       </section>
 
-      <p className="max-w-7xl mx-auto px-4 mb-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center">
+      <p className="max-w-7xl mx-auto px-4 mb-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center">
         Transparency: all provider links below are affiliate — we may earn a commission at no extra cost to you. Sorted by estimated total cost for your setup.
       </p>
 
@@ -295,7 +295,7 @@ export function Arma3Hosting() {
                     </div>
                   ) : (
                     <div className="shrink-0 bg-white/5 p-1.5 rounded-sm">
-                      <Globe className="w-4 h-4 text-gray-600" />
+                      <Globe className="w-4 h-4 text-gray-400" />
                     </div>
                   )}
                   <div className="min-w-0">
@@ -305,7 +305,7 @@ export function Arma3Hosting() {
                 </div>
                 <div className={`shrink-0 text-right text-xl font-black italic ${p.isWinner ? 'text-tactical-orange' : 'text-white'}`}>
                   ${total}
-                  <span className="text-[10px] not-italic text-gray-500">/mo</span>
+                  <span className="text-[10px] not-italic text-gray-400">/mo</span>
                 </div>
               </div>
               {details && (
@@ -319,24 +319,24 @@ export function Arma3Hosting() {
               )}
               <dl className="grid grid-cols-1 gap-2 text-[10px]">
                 <div>
-                  <dt className="text-gray-500 font-black uppercase tracking-widest">Pricing</dt>
+                  <dt className="text-gray-400 font-black uppercase tracking-widest">Pricing</dt>
                   <dd className="text-white font-bold uppercase tracking-widest text-[9px]">
                     {p.name === "EmpowerServers" ? (
                       <span className="text-emerald-500">Resource Based (Best for Milsim)</span>
                     ) : (
                       'Slot-Locked Pricing'
                     )}
-                    <span className="block text-gray-600 italic mt-0.5">Target: {playerCount} Slots</span>
+                    <span className="block text-gray-400 italic mt-0.5">Target: {playerCount} Slots</span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-gray-500 font-black uppercase tracking-widest">Hardware</dt>
+                  <dt className="text-gray-400 font-black uppercase tracking-widest">Hardware</dt>
                   <dd className="text-white font-bold uppercase tracking-widest text-xs">{p.cpu}</dd>
                 </div>
                 <div>
-                  <dt className="text-gray-500 font-black uppercase tracking-widest">DDoS</dt>
+                  <dt className="text-gray-400 font-black uppercase tracking-widest">DDoS</dt>
                   <dd className="flex items-center gap-2 text-white font-bold uppercase tracking-widest">
-                    <Shield className={`w-3 h-3 shrink-0 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-500'}`} />
+                    <Shield className={`w-3 h-3 shrink-0 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-400'}`} />
                     {p.ddos}
                   </dd>
                 </div>
@@ -363,12 +363,12 @@ export function Arma3Hosting() {
         <table className="w-full border-collapse bg-[#172635] border border-white/5 min-w-[900px]">
           <thead>
             <tr className="border-b border-white/10 bg-white/[0.02]">
-              <th className="p-6 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest">Provider</th>
-              <th className="p-6 text-center text-[10px] font-black text-gray-500 uppercase tracking-widest">Total Monthly Cost</th>
-              <th className="p-6 text-center text-[10px] font-black text-gray-500 uppercase tracking-widest">Pricing Model</th>
-              <th className="p-6 text-center text-[10px] font-black text-gray-500 uppercase tracking-widest">Hardware Node</th>
-              <th className="p-6 text-center text-[10px] font-black text-gray-500 uppercase tracking-widest">DDoS Security</th>
-              <th className="p-6 text-right text-[10px] font-black text-gray-500 uppercase tracking-widest">Action</th>
+              <th className="p-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Provider</th>
+              <th className="p-6 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Monthly Cost</th>
+              <th className="p-6 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Pricing Model</th>
+              <th className="p-6 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Hardware Node</th>
+              <th className="p-6 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">DDoS Security</th>
+              <th className="p-6 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -384,7 +384,7 @@ export function Arma3Hosting() {
                         </div>
                       ) : (
                         <div className="bg-white/5 p-1.5 rounded-sm">
-                          <Globe className="w-4 h-4 text-gray-600" />
+                          <Globe className="w-4 h-4 text-gray-400" />
                         </div>
                       )}
                       <div className="flex flex-col">
@@ -396,7 +396,7 @@ export function Arma3Hosting() {
                   <td className="p-6 text-center">
                     <div className={`text-xl font-black italic ${p.isWinner ? 'text-tactical-orange' : 'text-white'}`}>
                       ${total}
-                      <span className="text-[10px] not-italic text-gray-500">/mo</span>
+                      <span className="text-[10px] not-italic text-gray-400">/mo</span>
                     </div>
                     {details && (
                       <div className="flex flex-col items-center justify-center gap-0.5 mt-1">
@@ -424,17 +424,17 @@ export function Arma3Hosting() {
                         `Slot-Locked Pricing`
                       )}
                     </div>
-                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest italic leading-none mt-1">
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic leading-none mt-1">
                       Target: {playerCount} Slots
                     </div>
                   </td>
                   <td className="p-6 text-center">
                     <div className="text-white font-black uppercase tracking-widest text-xs">{p.cpu}</div>
-                    <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-none mt-1">NVMe Storage</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">NVMe Storage</div>
                   </td>
                   <td className="p-6 text-center">
                     <div className="flex items-center justify-center gap-2 text-white font-black uppercase tracking-widest text-[10px]">
-                      <Shield className={`w-3 h-3 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-500'}`} />
+                      <Shield className={`w-3 h-3 ${p.isWinner ? 'text-tactical-orange' : 'text-gray-400'}`} />
                       {p.ddos}
                     </div>
                   </td>
