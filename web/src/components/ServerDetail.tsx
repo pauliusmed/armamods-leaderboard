@@ -43,6 +43,7 @@ import { ListFilterBar } from './ui/ListFilterBar';
 import { CopyServerModsButton } from './ui/CopyServerModsButton';
 import { ModRow } from './ModRow';
 import { DeferredSection } from './ui/DeferredSection';
+import { readEmbeddedServer } from '../lib/embeddedServerData';
 import { toModRow } from '../lib/modRow';
 
 interface ServerDetailProps {
@@ -84,10 +85,14 @@ function escapeMarkdownAlt(value: string): string {
 
 export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
   const { serverId } = useParams<{ serverId: string }>();
-  const [server, setServer] = useState<Server | null>(null);
+  // /server/:id HTML'e worker'is įdeda serverio JSON — LCP: h1 render'inasi iškart po boot,
+  // be API round-trip. id nesutampa (klientinė navigacija iš kito serverio) → null → fetch.
+  const embeddedServer = useMemo(() => readEmbeddedServer(serverId), [serverId]);
+  const [server, setServer] = useState<Server | null>(embeddedServer);
   const [history, setHistory] = useState<ServerHistoryPoint[]>([]);
   const [totalServers, setTotalServers] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!embeddedServer);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [selectedDays, setSelectedDays] = useState(30);
@@ -144,10 +149,14 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
       setLoading(true);
       setRetryCount(0);
       // Same transient retry as mod/server lists — detail routes hit KV shards and often 503 under cold load.
+      // Su embedded duomenimis (worker įdeda į HTML) getById praleidžiam — API round-trip nereikalingas.
+      const serverDataPromise = embeddedServer
+        ? Promise.resolve({ data: embeddedServer })
+        : serversApi.getById(serverId, game);
       const [serverData, historyData, statsData, allServersData, storageData] = await fetchWithRetry(
         () =>
           Promise.all([
-            serversApi.getById(serverId, game),
+            serverDataPromise,
             serversApi.getHistory(serverId, days, game),
             modsApi.getGlobalStats(game),
             serversApi.getList(500, 0, game).catch(() => ({ data: [] })),
@@ -195,13 +204,15 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
     } finally {
       if (!signal?.aborted) {
         setLoading(false);
+        setHistoryLoading(false);
       }
     }
-  }, [serverId, game]);
+  }, [serverId, game, embeddedServer]);
 
   useEffect(() => {
     const controller = new AbortController();
     setHistory([]);
+    setHistoryLoading(true);
     loadServer(selectedDays, controller.signal);
     return () => controller.abort();
   }, [serverId, selectedDays, loadServer]);
@@ -380,7 +391,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
         ])}
       />
       <header className="space-y-6">
-        <Link to={`${gp}/servers`} className="inline-flex items-center gap-4 text-gray-500 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
+        <Link to={`${gp}/servers`} className="inline-flex items-center gap-4 text-gray-400 hover:text-tactical-orange font-black uppercase tracking-[0.3em] text-[10px] transition-all hover:-translate-x-2">
           ← [ Back to Network ]
         </Link>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/10 pb-12">
@@ -401,7 +412,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               <ServerStatusBadge status={server.bmStatus} size="md" />
               <BmLastSeenHint status={server.bmStatus} lastSeenAt={server.bmLastSeenAt} />
             </div>
-            <p className="text-xl font-mono text-gray-500 font-bold uppercase tracking-widest">
+            <p className="text-xl font-mono text-gray-400 font-bold uppercase tracking-widest">
               {server.ip}:{server.port}
             </p>
             {server.scenarioName && (
@@ -419,7 +430,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           <div className="flex flex-col gap-3">
             <div className="flex gap-4">
               <div className="px-10 py-6 bg-zinc-900 border border-white/10 text-center">
-                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-[0.3em] mb-1">Overall Rank</p>
                 <p className="text-3xl font-black text-tactical-orange tracking-tighter italic">#{server.sqeRank || '-'}</p>
                 {server.sqeTier && (
                   <div className="mt-2 flex justify-center">
@@ -431,17 +442,17 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <button
               type="button"
               onClick={() => setEmbedOpen((o) => !o)}
-              className="self-end min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
+              className="self-end min-h-11 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-tactical-orange border border-white/5 hover:border-tactical-orange/40 px-4 py-2 bg-zinc-900 transition-colors"
             >
               {embedOpen ? 'Close Embed' : 'Embed Badge'}
             </button>
             {embedOpen && (
               <div className="self-end w-full max-w-md bg-zinc-900 border border-white/5 p-5 space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Badge Preview</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Badge Preview</p>
                 <div className="bg-black/40 border border-white/5 p-3 flex justify-center">
                   <img src={badgeUrl} alt={`${server.name} rank badge`} className="max-w-full h-auto" />
                 </div>
-                <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
                   Updates automatically — shows your live tier and rank.
                 </p>
                 {import.meta.env.DEV && (
@@ -456,11 +467,11 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 ] as const).map(({ key, label, value }) => (
                   <div key={key} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-600">{label}</span>
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">{label}</span>
                       <button
                         type="button"
                         onClick={() => void handleCopy(key, value)}
-                        className="min-h-11 px-3 text-[9px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange transition-colors"
+                        className="min-h-11 px-3 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-tactical-orange transition-colors"
                       >
                         {copiedKey === key ? 'Copied' : 'Copy'}
                       </button>
@@ -495,7 +506,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
 
       {game === 'reforger' && (
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-4 px-1">
-          <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest max-w-2xl">
+          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest max-w-2xl">
             Console player? Use Storage Planner to compare this server with others and see what fits your free space.
           </p>
           <div className="flex flex-wrap gap-3 shrink-0">
@@ -536,7 +547,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                     className={`min-h-11 px-4 py-2 sm:py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
                       selectedDays === opt.value
                         ? 'bg-tactical-orange text-black'
-                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     {opt.label}
@@ -547,16 +558,20 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
           </div>
           <Card>
             <CardContent className="p-4 sm:p-6 lg:p-8 h-[340px] sm:h-[400px]">
-              {!chartHistory || chartHistory.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500 font-bold uppercase tracking-widest text-[10px] space-y-2 px-4 text-center">
-                  <span>{CHART_NO_DATA_TITLE}</span>
-                  <span className="text-[8px] opacity-70 font-medium normal-case tracking-normal">
-                    {freshness.isStale ? CHART_NO_DATA_SYNC_PAUSED : CHART_NO_DATA_SERVER}
-                  </span>
-                </div>
+              {historyLoading || !chartHistory || chartHistory.length === 0 ? (
+                historyLoading ? (
+                  <div className="w-full h-full bg-black/20 animate-pulse rounded" aria-label="Loading chart" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 font-bold uppercase tracking-widest text-[10px] space-y-2 px-4 text-center">
+                    <span>{CHART_NO_DATA_TITLE}</span>
+                    <span className="text-[8px] opacity-70 font-medium normal-case tracking-normal">
+                      {freshness.isStale ? CHART_NO_DATA_SYNC_PAUSED : CHART_NO_DATA_SERVER}
+                    </span>
+                  </div>
+                )
               ) : (
                 <div className="flex flex-col h-full gap-3">
-                  <div className="flex flex-wrap items-center gap-4 text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                  <div className="flex flex-wrap items-center gap-4 text-[9px] font-bold uppercase tracking-widest text-gray-400">
                     <span className="inline-flex items-center gap-2">
                       <span className="w-4 h-0.5 bg-[#f97316] rounded" aria-hidden />
                       Server rank
@@ -591,8 +606,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
               <div className="w-1 h-full bg-[#f97316]" />
               <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Server Rank</h4>
-                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Server Rank</h3>
+                <p className="text-[9px] text-gray-400 font-bold leading-relaxed uppercase">
                   Network hierarchy. <span className="text-tactical-orange">Lower # is better</span> – SQE points reward live player activity first, then consistent uptime, a lean modpack (fewer required mods ranks better), and distinctive niche mods over generic setups.
                 </p>
               </div>
@@ -600,8 +615,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
               <div className="w-1 h-full bg-[#22c55e]" />
               <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Active Player Load</h4>
-                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Active Player Load</h3>
+                <p className="text-[9px] text-gray-400 font-bold leading-relaxed uppercase">
                   Raw personnel count over time. <span className="text-[#22c55e]">Higher is better</span> – direct indicator of server popularity.
                 </p>
               </div>
@@ -609,8 +624,8 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <div className="flex gap-4 p-4 bg-zinc-900/30 border border-white/5 rounded-sm">
               <div className="w-1 h-full bg-rose-500/70" />
               <div>
-                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Offline periods</h4>
-                <p className="text-[9px] text-gray-500 font-bold leading-relaxed uppercase">
+                <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-1">Offline periods</h3>
+                <p className="text-[9px] text-gray-400 font-bold leading-relaxed uppercase">
                   Rose shading when a day or week was <span className="text-rose-400">mostly offline</span> (&lt;50% of network scans saw the server up). Brief restarts do not mark the whole period offline.
                 </p>
               </div>
@@ -626,7 +641,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               <ServerIcon className="w-6 h-6 sm:w-7 sm:h-7 text-tactical-orange shrink-0" aria-hidden="true" />
               Similar Deployed Servers
             </h2>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
               Alternative nodes running similar mod configurations and player activity
             </p>
           </div>
@@ -640,16 +655,16 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               >
                 <div className="space-y-2.5">
                   <span className="inline-block text-[7px] text-tactical-orange/70 uppercase tracking-widest">{reason}</span>
-                  <span className="inline-block text-[8px] font-mono text-gray-500 uppercase tracking-widest ml-1">{overlapPercent}% overlap</span>
+                  <span className="inline-block text-[8px] font-mono text-gray-400 uppercase tracking-widest ml-1">{overlapPercent}% overlap</span>
                   <h3 className="text-sm font-black text-white uppercase truncate group-hover:text-tactical-orange transition-colors">
                     {other.name}
                   </h3>
                   <div className="pt-1 flex items-end justify-between border-t border-white/5">
                     <div className="space-y-0.5">
-                      <span className="text-[7px] text-gray-600 font-black uppercase tracking-wider">Active load</span>
+                      <span className="text-[7px] text-gray-400 font-black uppercase tracking-wider">Active load</span>
                       <p className="text-lg font-black text-white font-mono">{other.players}/{other.maxPlayers}</p>
                     </div>
-                    <span className="text-[8px] text-gray-500 font-bold uppercase group-hover:text-white transition-colors">
+                    <span className="text-[8px] text-gray-400 font-bold uppercase group-hover:text-white transition-colors">
                       Inspect →
                     </span>
                   </div>
@@ -667,10 +682,10 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
               Mod Changes
             </h2>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
               Daily added / removed vs previous snapshot
             </p>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-gray-600">
+            <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">
               Updates once daily (~00:00 UTC)
               {modChangesMeta?.lastSnapshotDate ? ` · data as of ${modChangesMeta.lastSnapshotDate}` : ''}
             </p>
@@ -684,7 +699,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 className={`min-h-11 px-4 py-2 sm:py-1 text-[10px] font-bold uppercase tracking-widest transition-all ${
                   modChangeDays === value
                     ? 'bg-tactical-orange text-black'
-                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 {value}D
@@ -716,7 +731,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                         {day.date}
                       </span>
                       {day.added.length === 0 && day.removed.length === 0 ? (
-                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">—</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">—</span>
                       ) : (
                         <>
                           {day.added.length > 0 ? (
@@ -725,7 +740,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                               onClick={() => toggle(addedKey)}
                               className="text-[9px] font-black uppercase tracking-widest text-emerald-400 cursor-pointer hover:opacity-80"
                             >
-                              Added ({day.added.length}) <span className="text-gray-500 text-[8px]">{addedExpanded ? '▲' : '▼'}</span>
+                              Added ({day.added.length}) <span className="text-gray-400 text-[8px]">{addedExpanded ? '▲' : '▼'}</span>
                             </button>
                           ) : (
                             <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400/40">Added (0)</span>
@@ -736,7 +751,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                               onClick={() => toggle(removedKey)}
                               className="text-[9px] font-black uppercase tracking-widest text-rose-400 cursor-pointer hover:opacity-80"
                             >
-                              Removed ({day.removed.length}) <span className="text-gray-500 text-[8px]">{removedExpanded ? '▲' : '▼'}</span>
+                              Removed ({day.removed.length}) <span className="text-gray-400 text-[8px]">{removedExpanded ? '▲' : '▼'}</span>
                             </button>
                           ) : (
                             <span className="text-[9px] font-black uppercase tracking-widest text-rose-400/40">Removed (0)</span>
@@ -808,7 +823,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                 ariaLabel: 'Search mods on this server',
                 hint:
                   sortedAndFilteredMods.length !== (server.mods?.length ?? 0) ? (
-                    <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">
+                    <p className="mt-2 text-[9px] font-black uppercase tracking-[0.3em] text-gray-400">
                       Showing {sortedAndFilteredMods.length} of {server.mods?.length ?? 0} mods
                     </p>
                   ) : undefined,
@@ -853,7 +868,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
               ]}
             />
           ) : (
-            <p className="text-gray-600 text-xs uppercase tracking-widest">
+            <p className="text-gray-400 text-xs uppercase tracking-widest">
               Vanilla server — no mods installed
             </p>
           )}
@@ -865,7 +880,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
             <button
               type="button"
               onClick={resetModFilters}
-              className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-tactical-orange"
+              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-tactical-orange"
             >
               Reset filters
             </button>
@@ -892,7 +907,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       onSort={(key) => toggleModSort(key as EmbeddedModSort)}
                       className="pr-4"
                     />
-                    <th className="hidden md:table-cell px-3 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                    <th className="hidden md:table-cell px-3 py-3 text-left text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                       Author
                     </th>
                     <SortableTh
@@ -931,7 +946,7 @@ export function ServerDetail({ game = 'reforger' }: ServerDetailProps) {
                       align="right"
                       className="hidden md:table-cell pl-4 pr-4"
                     />
-                    <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-600">
+                    <th className="pl-2 pr-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.1em] text-gray-400">
                       Actions
                     </th>
                   </tr>

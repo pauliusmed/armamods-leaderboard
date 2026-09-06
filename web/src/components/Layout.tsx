@@ -31,7 +31,7 @@ export function Layout({ children }: LayoutProps) {
     px-4 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 relative group
     ${isActive(path)
       ? 'text-tactical-orange bg-white/5 border-l-2 border-r-2 border-tactical-orange'
-      : 'text-gray-500 hover:text-white hover:bg-white/5'
+      : 'text-gray-400 hover:text-white hover:bg-white/5'
     }
   `;
 
@@ -46,7 +46,7 @@ export function Layout({ children }: LayoutProps) {
     px-4 py-4 font-bold uppercase tracking-[0.2em] text-[10px] transition-all duration-300 relative group/tools
     ${toolsActive
       ? 'text-tactical-orange bg-white/5 border-l-2 border-r-2 border-tactical-orange'
-      : 'text-gray-500 hover:text-white hover:bg-white/5'
+      : 'text-gray-400 hover:text-white hover:bg-white/5'
     }
   `;
 
@@ -86,7 +86,7 @@ export function Layout({ children }: LayoutProps) {
               </button>
               <div className="absolute top-full left-0 w-56 bg-[#1C2E3F] border border-white/10 opacity-0 invisible group-hover/tools:opacity-100 group-hover/tools:visible transition-all duration-200 py-2 z-50">
                 <div className="px-4 py-2 border-b border-white/5 mb-2">
-                  <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Utilities</span>
+                  <span className="text-[8px] text-gray-400 font-black uppercase tracking-[0.3em]">Utilities</span>
                 </div>
                 {!isArma3 && (
                   <Link
@@ -133,7 +133,7 @@ export function Layout({ children }: LayoutProps) {
               title="System Status"
               aria-label="System Status"
               className={`flex items-center justify-center w-12 sm:w-14 border-l border-white/5 transition-colors ${
-                isActive(`${gp}/status`) ? 'text-tactical-orange bg-white/5' : 'text-gray-500 hover:text-tactical-orange hover:bg-white/5'
+                isActive(`${gp}/status`) ? 'text-tactical-orange bg-white/5' : 'text-gray-400 hover:text-tactical-orange hover:bg-white/5'
               }`}
             >
               <span className="text-sm" aria-hidden="true">
@@ -147,7 +147,7 @@ export function Layout({ children }: LayoutProps) {
                 ? location.pathname.replace(/^\/arma3/, '') || '/'
                 : `/arma3${location.pathname === '/' ? '' : location.pathname}`
               }
-              className="lg:hidden flex items-center justify-center w-14 sm:w-16 border-l border-white/5 text-gray-500 hover:text-tactical-orange hover:bg-white/5 transition-colors"
+              className="lg:hidden flex items-center justify-center w-14 sm:w-16 border-l border-white/5 text-gray-400 hover:text-tactical-orange hover:bg-white/5 transition-colors"
               aria-label={`Switch to ${isArma3 ? 'Reforger' : 'Arma 3'}`}
             >
               <span className="text-[9px] font-black uppercase tracking-widest">
@@ -159,7 +159,7 @@ export function Layout({ children }: LayoutProps) {
             <button className="flex items-center gap-3 py-6 group">
               <span className="w-2 h-2 bg-tactical-orange animate-pulse"></span>
               <div className="text-left">
-                <span className="text-[7px] text-gray-500 font-bold tracking-[0.2em] uppercase block">Current Deployment</span>
+                <span className="text-[7px] text-gray-400 font-bold tracking-[0.2em] uppercase block">Current Deployment</span>
                 <span className="text-[10px] text-white font-black tracking-[0.2em] uppercase flex items-center gap-2">
                   {isArma3 ? 'Arma 3 Network' : 'Reforger Network'}
                   <svg className="w-2 h-2 text-tactical-orange group-hover:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -172,7 +172,7 @@ export function Layout({ children }: LayoutProps) {
             {/* Tactical Dropdown Menu */}
             <div className="absolute top-full right-0 w-64 bg-[#1C2E3F] border border-white/10 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all duration-200 py-2">
               <div className="px-4 py-2 border-b border-white/5 mb-2">
-                <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em]">Switch Theater</span>
+                <span className="text-[8px] text-gray-400 font-black uppercase tracking-[0.3em]">Switch Theater</span>
               </div>
               <Link 
                 to={location.pathname.replace('/arma3', '') || '/'} 
@@ -224,7 +224,7 @@ export function Layout({ children }: LayoutProps) {
                   Operation: <span className="text-tactical-orange">Mods Analysis</span>
                 </h2>
               </div>
-              <p className="text-gray-500 text-xs sm:text-sm font-medium leading-[2] max-w-lg uppercase tracking-wider">
+              <p className="text-gray-400 text-xs sm:text-sm font-medium leading-[2] max-w-lg uppercase tracking-wider">
                 This platform provides strategic overview of the Arma Reforger ecosystem. We track
                 server telemetry and player deployment across various custom modules.
                 {freshness.isStale
@@ -242,26 +242,26 @@ export function Layout({ children }: LayoutProps) {
             <div className="space-y-4 sm:space-y-6">
               <h3 className="font-black text-white uppercase tracking-[0.3em] text-[10px] border-b border-white/10 pb-4">Telecommunication</h3>
               <div className="space-y-3 sm:space-y-4">
-                <a href="https://github.com/GrybasTV/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">External GitHub</a>
+                <a href="https://github.com/GrybasTV/armamods-leaderboard" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">External GitHub</a>
                 <DiscordButton label="Join Discord" className="mt-2 px-4 py-2" />
                 <ul className="space-y-4">
-                  <li><Link to={isArma3 ? "/arma3" : "/"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Mod Database</Link></li>
-                  <li><Link to={isArma3 ? "/arma3/servers" : "/servers"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Active Servers</Link></li>
-                  <li><Link to={isArma3 ? "/arma3/scenarios" : "/scenarios"} className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Scenario Leaderboard</Link></li>
+                  <li><Link to={isArma3 ? "/arma3" : "/"} className="text-gray-400 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Mod Database</Link></li>
+                  <li><Link to={isArma3 ? "/arma3/servers" : "/servers"} className="text-gray-400 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Active Servers</Link></li>
+                  <li><Link to={isArma3 ? "/arma3/scenarios" : "/scenarios"} className="text-gray-400 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Scenario Leaderboard</Link></li>
                   <li><Link to={isArma3 ? "/best-arma-3-hosting" : "/best-arma-reforger-hosting"} className="text-tactical-orange hover:underline transition-colors font-black uppercase tracking-widest text-[10px]">Best Hosting 2026</Link></li>
                   {!isArma3 && (<>
-                    <li><Link to="/arma-reforger-console-mod-storage" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Console Mod Storage</Link></li>
-                    <li><Link to="/how-to-find-popular-arma-reforger-mods" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Find Mods</Link></li>
-                    <li><Link to="/how-to-check-arma-reforger-modpack-size" className="text-gray-500 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Check Modpack Size</Link></li>
+                    <li><Link to="/arma-reforger-console-mod-storage" className="text-gray-400 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">Console Mod Storage</Link></li>
+                    <li><Link to="/how-to-find-popular-arma-reforger-mods" className="text-gray-400 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Find Mods</Link></li>
+                    <li><Link to="/how-to-check-arma-reforger-modpack-size" className="text-gray-400 hover:text-tactical-orange transition-colors font-bold uppercase tracking-widest text-[10px]">How to Check Modpack Size</Link></li>
                   </>)}
                 </ul>
-                <Link to="/support" className="block text-gray-500 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">Community Fund</Link>
+                <Link to="/support" className="block text-gray-400 hover:text-tactical-orange font-bold text-xs uppercase tracking-widest transition-colors tracking-[0.2em]">Community Fund</Link>
               </div>
             </div>
 
             <div className="space-y-4 sm:space-y-6">
               <h3 className="font-black text-white uppercase tracking-[0.3em] text-[10px] border-b border-white/10 pb-4">Infrastructure</h3>
-              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em] leading-loose">
+              <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] leading-loose">
                 Registry: <span className="text-gray-300">reforgermods</span><br/>
                 Sync:{' '}
                 <span className={freshness.isStale ? 'text-amber-400' : 'text-gray-300'}>
@@ -273,23 +273,23 @@ export function Layout({ children }: LayoutProps) {
                 Compute: <span className="text-gray-300">Edge Workers</span><br/>
                 Hosting: <a href={isArma3 ? "/api/click/empower?game=arma3" : "/api/click/empower?game=reforger"} target="_blank" rel="noopener noreferrer" className="text-tactical-orange hover:underline">High-Performance Nodes</a>
               </p>
-              <p className="text-gray-600 text-[9px] font-medium normal-case tracking-normal leading-relaxed">
+              <p className="text-gray-400 text-[9px] font-medium normal-case tracking-normal leading-relaxed">
                 {freshness.isStale ? DATA_STALE_FOOTER : DATA_SYNC_NOTE}. {DATA_SOURCE_ATTRIBUTION}.
               </p>
             </div>
           </div>
 
           <div className="mt-12 sm:mt-20 pt-8 sm:pt-10 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6">
-            <p className="text-gray-600 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em] text-center sm:text-left">
+            <p className="text-gray-400 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em] text-center sm:text-left">
               © 2026 COMMUNITY INTELLIGENCE PROJECT. NOT PART OF BOHEMIA INTERACTIVE.
             </p>
             <Link
               to="/privacy"
-              className="text-gray-600 hover:text-tactical-orange font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em] transition-colors"
+              className="text-gray-400 hover:text-tactical-orange font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em] transition-colors"
             >
               Privacy Policy
             </Link>
-            <p className="text-gray-600 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em]">
+            <p className="text-gray-400 font-bold text-[8px] sm:text-[9px] uppercase tracking-[0.4em]">
               EST: ALPHA-0.3
             </p>
           </div>

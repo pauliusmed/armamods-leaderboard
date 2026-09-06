@@ -52,6 +52,7 @@ import {
   searchModsInIndex,
 } from './functions/lib/mods-search-index';
 import { findServerById, ServerLookup } from './functions/lib/server-lookup';
+import { buildEmbeddedServerScript, injectEmbeddedData } from './functions/lib/embedded-data';
 import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
 import { analyzeStoragePlan } from './functions/lib/storage-calc';
 import { buildServerStoragePack } from './functions/lib/storage-service';
@@ -2463,6 +2464,39 @@ export default {
             headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
           });
         }
+      }
+    }
+
+    // /server/:id — embedded serverio duomenys HTML'e paprastiems lankytojams (LCP fix):
+    // h1 + sekcijos render'inasi iškart po React boot, be API round-trip critical path'e.
+    // Botams share prerender'is jau grąžintas aukščiau; serverio neradus — plain SPA shell.
+    const serverPageMatch = /^\/(arma3\/)?server\/([^/]+)\/?$/.exec(pathname);
+    if (serverPageMatch) {
+      const cache = caches.default as Cache;
+      const cached = await cache.match(request);
+      if (cached) return cached;
+
+      const embeddedGame = serverPageMatch[1] ? 'arma3' : 'reforger';
+      const embeddedServerId = decodeURIComponent(serverPageMatch[2]);
+      const [htmlRes, lookup] = await Promise.all([
+        env.ASSETS.fetch(request),
+        ServerLookup.create(env.TRENDING_KV as KVNamespace, embeddedGame as GameType),
+      ]);
+      const rawServer = lookup ? await lookup.findById(embeddedServerId) : null;
+      if (rawServer) {
+        const sqeIndex = await loadSqeIndex(env.TRENDING_KV as KVNamespace, embeddedGame as GameType);
+        const server = enrichServerWithSqe(rawServer, sqeIndex);
+        const html = await htmlRes.text();
+        const body = injectEmbeddedData(html, buildEmbeddedServerScript(server));
+        const response = new Response(body, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            // Tas pats freshness kaip /api/servers/:id — duomenys keičiasi kas ~2h collectorio run metu
+            'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+          },
+        });
+        ctx.waitUntil(cache.put(request, response.clone()));
+        return response;
       }
     }
 
