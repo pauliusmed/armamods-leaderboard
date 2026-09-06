@@ -4,6 +4,28 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ ModDetail: galerija per resized proxy + preconnect CDN + globalus kontrastas (v1.23.28)
+
+- **Problema (PSI 2026-09-07 01:03, /mod/61ECB5EFAA346151 desktop 81):** galerijos
+  screenshot'ai kraunami žaliais Bohemia CDN URL — ~300 KiB JPG vienetas, be cache TTL
+  (PSI: 654 KiB taupymas, 986 KiB necache'inama); LCP paveikslėlio „resource load delay"
+  2 170 ms be preconnect; a11y 95 (kontrastas likučiai).
+- **Fix 1:** naujas `GET /api/img/proxy?u=&w=` — Bohemia CDN allowlist (SSRF apsauga),
+  `cf.image` resize (WebP/AVIF, fit scale-down, q75), Cache API 7 d. + SWR, fallback 302
+  į originalą. **Produkcijoje: 441 KB → 46 KB (~9,5×)**.
+- **Fix 2:** `ModWorkshopGallery` img per `modScreenshotProxyUrl(w=960)` + `fetchPriority=high`
+  pirmam (eager) screenshot'ui (LCP). Lightbox paliktas pilnu dydžiu.
+- **Fix 3:** `/mod/:id` HTML'ė worker'is inject'ina `preconnect` + `dns-prefetch` į bistudio
+  CDN (v1.23.4 pašalintas globaliai — mod detail vienintelis, kuris jo reikia; Est ~80 ms).
+- **Fix 4:** globalus teksto kontrastas — `text-gray-500/600 → text-gray-400` ×302 vietose
+  45 failuose (uždengia visus puslapius; v1.23.27 padengė tik ServerDetail/Layout/Banner).
+- **Spąstai (įsitikinta praktikoje):** Hono `basePath('/api')` — nauji /api route'ai registruojami
+  BE `/api` prefixo (kitip `/api/api/...` → 404).
+- **Patikra:** tsc ✅, root 257/257, vitest 45/45, build + dry-run ✅; production: proxy 200
+  (441→46 KB), SSRF 403, preconnect HTML'e ✅.
+- **Heavy CI: skipped because** image delivery + UI klasės; API JSON kontraktai ir algoritmai
+  nesikeitė (pilni root testai paleisti).
+
 ### ⚡ LCP duomenų inline'as /server/:id + a11y kontrastas (v1.23.27)
 
 - **Problema (PSI 2026-09-06):** mobile LCP **6,3 s** (score 9/100) — h1 su serverio

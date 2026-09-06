@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.28] - 2026-09-07
+
+- Mod pages with screenshot galleries now load optimized, cached images instead of full-size originals — noticeably less waiting, especially on slower connections and repeat visits.
+
 ## [1.23.27] - 2026-09-06
 
 - Server pages now show their title, rank and player numbers as soon as the page opens, instead of waiting for extra data requests — noticeably faster on slower connections.
