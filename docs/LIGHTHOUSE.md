@@ -6,6 +6,34 @@ See also: [PERFORMANCE.md](./PERFORMANCE.md) (what we optimized), [INCIDENTS.md]
 
 ---
 
+## 2026-09-07 — Server detail PO v1.23.25–27 (desktop permatuotas)
+
+PSI desktop `/server/40538887` (2026-09-07 00:00) po visų trijų etapų (edge indeksas, route split, LCP inline'as + a11y):
+
+| Category | Desktop |
+|----------|---------|
+| **Performance** | **89** (buvo 58–60) |
+| **Accessibility** | **98** (buvo 94 — liko tik heading order) |
+| Best Practices / SEO | 100 / 100 |
+
+| Metric | Desktop (09-06 prieš) | Desktop (09-07 po) |
+|--------|----------------------|--------------------|
+| FCP | 0.5 s | **0.4 s** |
+| LCP | 1.6 s | **1.2 s** |
+| **TBT** | 2 380 ms (18 long tasks, max 819 ms) | **220 ms** (4 long tasks, max 137 ms) |
+| CLS | 0.009 | 0.017 |
+| Speed Index | 2.5 s | **1.3 s** |
+| HTML | 1.5 KiB (SPA shell) | 7.1 KiB (embedded serverio JSON) |
+
+**Kas veikia:** inline'as pašalino API round-trip iš critical path → React render'as vienas ir ankstesnis (nebe 5 lygiagrečių fetch'ų state bangos) — TBT nukrito ~11×, ilgiausia long task 819→137 ms. A11y kontrastas išgydytas.
+
+**Liko:**
+1. **A11y 98→100** — vienas auditas: „heading elements not in sequentially-descending order" (h4→h3 ServerDetail glossary uždengė ne visur — surasti likusias vietas).
+2. **Mobile matavimas** — laukia savininko PSI paleidimo (desktop 89 rodo, kad mobile tikėtinai >90; mobile LCP buvo didžiausias pralaimėjimas).
+3. Smulkmenos ne balui: unused JS 74 KiB (es6 Recharts vendor + index), CLS 0.017 (footer shift), forced reflow ~140 ms (Recharts matavimas).
+
+---
+
 ## 2026-09-06 — Server detail pages (`/server/:id`)
 
 Measured after INC-2026-09-06 (edge `exceededMemory` 503) and the v1.23.25–26 fixes (serverId→shard index, full route-level code splitting, `DeferredSection` below-fold mounting). The same URL measured in **both** PSI tabs the same minute (`/server/39348345`):
