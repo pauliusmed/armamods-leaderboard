@@ -4,6 +4,28 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ LCP duomenų inline'as /server/:id + a11y kontrastas (v1.23.27)
+
+- **Problema (PSI 2026-09-06):** mobile LCP **6,3 s** (score 9/100) — h1 su serverio
+  pavadinimu neegzistuoja kol JS parsiunčiamas + React boot + API round-trip
+  („element render delay ~3,5 s"). A11y 94 — kontrastas + heading tvarka.
+- **Fix 1 (LCP):** worker'is `/server/:id` (+ `/arma3/server/:id`) vartotojų HTML'e
+  deda `<script type="application/json" id="embedded-server">` su pilnu
+  SQE-praturtintu serveriu (`ServerLookup` — 1 shardas pagal indeksą; `<` escape'inamas
+  `\u003c` — XSS apsauga). Cache API 300 s + SWR. Botų share prerender'is nepakitęs.
+  Client: `readEmbeddedServer()` skaito JSON pagal id (SPA navigacija į kitą serverį →
+  null → normalus fetch); `getById` praleidžiamas kai embedded yra; charto skeleton
+  per `historyLoading` (nebe „NO DATA" blyksė kol istorija atsiranda).
+- **Fix 2 (a11y):** glossary `h4→h3` (heading tvarka po h2); `text-gray-500/600 →
+  text-gray-400` ×55 ServerDetail + Layout + AffiliateBanner (kontrastas ant `#101923`).
+- **Naujas lib:** `functions/lib/embedded-data.ts` (`escapeJsonForScript`,
+  `injectEmbeddedData`, `buildEmbeddedServerScript`) — pure, testuojami.
+- **Patikra:** tsc ✅, root **255/255** (5 nauji embedded-data testai), web vitest 45/45 ✅,
+  wrangler dry-run ✅.
+- **Heavy CI: skipped because** HTML delivery + UI klasės; API JSON kontraktas ir
+  duomenų modelis nesikeitė (pilni root testai vis tiek paleisti).
+- **Laukiama patikros:** PSI mobile/desktop po deploy — LCP tikimasi ~3–4 s (iš 6,3).
+
 ### ⚡ Frontend TBT: pilnas route-level code splitting + below-fold atidėjimas (v1.23.26)
 
 - **Problema (PSI 2026-09-06 22:59, /server/33028908):** Performance 60 — TBT 1 730 ms,

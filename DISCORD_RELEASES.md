@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.27] - 2026-09-06
+
+- Server pages now show their title, rank and player numbers as soon as the page opens, instead of waiting for extra data requests — noticeably faster on slower connections.
+
 ## [1.23.26] - 2026-09-06
 
 - Pages now load snappier: each page downloads only its own code, and long server pages build their lower sections as you scroll instead of all at once.
