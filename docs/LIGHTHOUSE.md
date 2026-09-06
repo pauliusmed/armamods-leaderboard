@@ -1,16 +1,48 @@
 # Lighthouse / PageSpeed Insights
 
-Production scores for the **Mod Popularity Leaderboard** (`https://reforgermods.com/`, Arma Reforger default game). Measured with [PageSpeed Insights](https://pagespeed.web.dev/) (Lighthouse **13.4.0**, lab data — no CrUX field data yet).
+Production scores for the **Mod Popularity Leaderboard** (`https://reforgermods.com/`, Arma Reforger default game). Measured with [PageSpeed Insights](https://pagespeed.web.dev/) (Lighthouse **13.4.1**, lab data — no CrUX field data yet).
 
-See also: [PERFORMANCE.md](./PERFORMANCE.md) (what we optimized), [CHANGELOG.md](../CHANGELOG.md) (v1.21.0 PageSpeed work, v1.22.0 a11y).
+See also: [PERFORMANCE.md](./PERFORMANCE.md) (what we optimized), [INCIDENTS.md](./INCIDENTS.md) (edge incidents), [CHANGELOG.md](../CHANGELOG.md) (v1.21.0 PageSpeed work, v1.23.4–9 CLS work, v1.23.25–26 server detail work).
 
 ---
 
-## Current scores (post v1.21 deploy)
+## 2026-09-06 — Server detail pages (`/server/:id`)
+
+Measured after INC-2026-09-06 (edge `exceededMemory` 503) and the v1.23.25–26 fixes (serverId→shard index, full route-level code splitting, `DeferredSection` below-fold mounting). The same URL measured in **both** PSI tabs the same minute (`/server/39348345`):
+
+| Metric | Desktop (beveik be CPU slowdown) | Mobile (Moto G Power, Slow 4G) |
+|--------|----------------------------------|-------------------------------|
+| **Performance** | **59–60** | **71** |
+| FCP | 0.5 s | 1.7 s |
+| **LCP** | 1.6 s (render delay 3 450–3 880 ms) | **6.3 s** (render delay 3 450 ms — score 9/100) |
+| **TBT** | **2 380 ms** (18 long tasks) | **250 ms** (3 long tasks — buvo 1 730–1 850) |
+| CLS | 0.009 | 0.035 |
+| Speed Index | 2.5 s | 3.2 s |
+| JS execution | 3.9 s (index chunk ~2.7 s eval) | 1.3 s |
+
+**Kas išgydyta šiandien (v1.23.25–26):**
+- Edge 503 audros (`Worker exceededMemory` — 75 err/h) — serverId→shard indeksas, 1 shardas (~5 MB) vietoj visų 16 (~80 MB). Žr. INC-2026-09-06.
+- Mobile TBT 1 730→**250 ms**: visi 21 puslapis `React.lazy` (index −~44 kB raw), below-fold sekcijos mount'inamos per `DeferredSection` (IntersectionObserver 400px + `minHeight` CLS apsaugai).
+
+**Kas liko (prioritetinė tvarka):**
+1. **LCP — didžiausias pralaimėjimas (mobile score 9/100).** h1 su serverio pavadinimu neegzistuoja kol JS boot + API round-trip nesuveikia (SPA esmė). Planuotas sprendimas: serverio duomenų inline'as į `/server/:id` HTML atsakymą (`<script>` + JSON) — **niekada anksčiau nebandyta** (prerender'is egzistuoja tik botams/SEO). Vidutinis darbas, ~0,5–1,5 s LCP laimėjimas abiejose plokštumose.
+2. **Desktop TBT (2 380 ms)** — vienas 819 ms React render commit'as + Recharts (303 ms + reflow 207 ms). Desktop PSI naudoja beveik be CPU slowdown, tad atspindi sinchroninio render kiekį, ne atsiuntimą. Sprendimai (jei reikės): sekcijų mount'as dalimis per `requestIdleCallback` arba lengvesnė chart biblioteka — abu vidutini/dideli.
+3. **A11y 94→100** — kontrastas (`text-gray-500/600` ant `#101923`) + heading tvarka. Mechaniška.
+
+**Proceso pamoka (regresijos kilmė):** 2026-08-24 (v1.23.4–9) `/server/*` mobile pasiekė **97** (font CLS, Recharts atsiskyrimas, skeleton'ai). Per kitas 3 dienas (v1.23.10–26) į puslapį prisidėjo Similar Deployed Servers, Storage pack, Mod Changes, BmLastSeenHint — balas sugrižo į 62–71 zoną be vieno „klaidingo" commit'o. **Taisyklė: kiekviena nauja above-fold sekcija — su PSI patikra prieš merge** (žr. § Re-run).
+
+### Audit ribos (Lighthouse)
+
+- **Reduce JavaScript execution time** — įspėjimas kai JS vykdymas > **2 s**, fail kai > **3,5 s**. Lighthouse rodo eval/parse/execute laikus pagal fail'us.
+- **TTI pašalintas iš Lighthouse 10** (per daug jautrus outlier'iams) — vietoj jo **LCP, TBT, INP**. Naudoti TTI kaip target'ą nebereikia.
+
+---
+
+## Current scores — homepage leaderboard (istorinis, 2026-07-09)
 
 Captured **2026-07-09** after `attachCachedListFields`, thumbnail resize proxy, route code-splitting, and lazy row images shipped.
 
-> **Pending re-measure (2026-07-31):** v1.22.23 self-hosted the fonts via `@fontsource` (removed Google Fonts). Scores below predate that change — re-run PageSpeed Insights after deploy to confirm no CLS/FOIT regression and the removed third-party connection setup.
+> **Re-measured 2026-08-24:** v1.22.23 self-hosted fonts (`@fontsource`), v1.23.4–6 pašalino latin-ext + `font-display: optional` (CLS 0.17→0.008) — homepage mobile **98**, desktop 99. Žr. CHANGELOG v1.23.4–6.
 
 | Category | Desktop | Mobile (Moto G Power, Slow 4G) |
 |----------|---------|--------------------------------|

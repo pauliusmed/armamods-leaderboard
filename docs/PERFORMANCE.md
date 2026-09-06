@@ -8,7 +8,9 @@ See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (KV sharding), 
 
 ## PageSpeed summary (production)
 
-`https://reforgermods.com/` mod leaderboard — lab scores **2026-07-09** after v1.21 optimizations:
+**2026-09-06 — server detail puslapiai** (`/server/:id`, po INC-2026-09-06 + v1.23.25–26): mobile **71** (TBT 250 ms, LCP 6.3 s — SPA + API round-trip), desktop **59–60** (TBT ~2,4 s). LCP duomenų inline'as — planuojamas. Details: [LIGHTHOUSE.md](./LIGHTHOUSE.md) (2026-09-06 sekcija).
+
+**Istorinis** — `https://reforgermods.com/` mod leaderboard, lab scores **2026-07-09** after v1.21:
 
 | | Desktop | Mobile |
 |--|---------|--------|
@@ -101,9 +103,15 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 - Falls back to **302** to CDN if resizing is unavailable.
 - Edge-cached 7 days; `modListThumbnailUrl()` builds client URLs.
 
-### Route code-splitting
+### Route code-splitting (v1.23.26 — visi puslapiai)
 
-Heavy routes (`ModDetail`, `ServerDetail`, Storage Planner, Audit, Dependency Blockers) are `React.lazy()` in `App.tsx` — smaller initial JS bundle for list pages.
+**Visi 21 puslapis** yra `React.lazy()` atskirais chunk'ais `App.tsx` (tik `Layout` + `StatusState` lieka index bundle). Iki v1.23.26 dideli sąrašų puslapiai (`ModList`, `ServerList`, `TrendingPage`, hosting'ai, `StatusPage`, `ScenarioList`, `SupportPage`, `PrivacyPolicyPage`) buvo tiesioginiais importais — kiekvienas puslapis parsisiunčia ir vykdo visų kitų puslapių kodą (PSI „Reduce unused JavaScript" ~99 KiB).
+
+### Below-fold mounting (`DeferredSection`, v1.23.26)
+
+`ui/DeferredSection.tsx` — `IntersectionObserver` (rootMargin 400px) + `minHeight` placeholder (CLS apsauga). `ServerDetail` below-fold sekcijos (Similar Deployed Servers, Mod Changes, Installed Mod Stack lentelė) mount'inamos tik artėjant prie viewport — boot metu nekuria tūkstančio DOM elementų. Naudojimas: sąlyginį turinį spręsti prieš kvietimą (`length > 0 ? <DeferredSection> : null`), kitaip placeholder'is lieka tuščias.
+
+**Žinoma riba:** desktop PSI (beveik be CPU slowdown) vis dar rodo ~2,4 s TBT — didžiausias likęs React render commit'as (~820 ms) + Recharts piešimas above-fold. LCP sprendimas — serverio duomenų inline'as HTML'e (planuojama, žr. [LIGHTHOUSE.md](./LIGHTHOUSE.md) 2026-09-06 sekciją).
 
 ### Charts (Recharts) — direct import for critical path
 
