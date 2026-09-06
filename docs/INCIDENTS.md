@@ -21,7 +21,8 @@ Formatas: `INC-YYYY-MM-DD-<short-slug>`.
 | 09-06 ~21:50 | Diagnozė: `ServerLookup`/detail handler'iai krauna visus 16 serverių shard'ų vienu `Promise.all` (~80 MB); ServerDetail šaukia 4 endpoint'us lygiagrečiai → izoliacija >128 MB |
 | 09-06 22:09 | Fix commit `6babe79` → push `main` → automatinis deploy |
 | 09-06 22:14 | Patikra production: `/api/servers/40788168` 200 su `meta.indexFallback:true` (batched fallback); **5 lygiagrečios `/storage` užklausos — visos 200** (anksčiau tas scenarijus = 503 audra) |
-| (laukiama) | Po kito collector cron run'o (≤2 h) atsiras `cache:servers-index:{game}` → 1-shard kelias, `indexFallback` žyma dings |
+| 09-06 22:30 | Backup collector (`cron-job.org` :30 UTC, run `34055115068`) su nauju kodu — success 12m34s; parašė `cache:servers-index` |
+| 09-06 22:55 | Patikra: `meta.indexFallback` dingo (indekso kelias aktyvus); dublinis rankinis run atšauktas; **audra 12 lygiagrečių užklausų (4 endpointai × 5 serveriai) — visos 200** (anksčiau toks burstas = 503); nežinomas id → 404 per 0,26 s be skenų |
 
 ### Poveikis
 
@@ -42,7 +43,7 @@ Formatas: `INC-YYYY-MM-DD-<short-slug>`.
 | 2 | `ServerLookup`: indekso kelias (1 shardas ~5 MB); nežinomas id → greitas 404 be skenų | DONE `6babe79` |
 | 3 | Batched full-scan fallback (po 4 shard'us, `console.warn` + `meta.indexFallback:true`) — nulinis downtime tarp deploy ir pirmo collector run'o | DONE `6babe79` |
 | 4 | `/servers/:id` ant bendro `ServerLookup` (dublis pašalintas); `/mods/:id` batching po 4; `storage/plan` async `findById` su 1-shard cache | DONE `6babe79` |
-| 5 | Patikrinti `indexFallback` žymos dingimą po collector run'o (indeksas veikia) | TODO (≤2 h nuo deploy) |
+| 5 | Patikrinti `indexFallback` žymos dingimą po collector run'o (indeksas veikia) | DONE 09-06 22:55 — žyma dingo, audra 12×200 |
 | 6 | **Fazė 2:** mod→serverių reverse indeksas `/mods/:id` pilnam efektyvumui (dabar tik batching) | TODO (atskiras darbas, su grill) |
 | 7 | Stebėjimas: Workers Observability — ar `exceededMemory` įvykiai pasibaigė | TODO (pasirinktinai) |
 
