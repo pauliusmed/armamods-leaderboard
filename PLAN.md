@@ -21,10 +21,10 @@ Perf būsena ir matavimai: [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (2026-09-06 
 ## Next (prioritetas pagal poveikį)
 
 ### Performance — server detail (PSI 2026-09-06: mobile 71 / desktop 59)
-- [ ] **LCP duomenų inline'as** — `/server/:id` HTML atsakyme `<script>` su serverio JSON; React'as skaito iškart be API round-trip (mobile LCP 6.3 s → tikslas ~3–4 s). Niekada anksčiau nebandyta; prerender'is egzistuoja tik botams
-- [ ] **A11y 94→100** — kontrastas (`text-gray-500/600` ant `#101923`) + heading tvarka. Mechaniška
-- [ ] Desktop TBT (~2,4 s) — tik jei reikės: sekcijų mount'as dalimis per `requestIdleCallback` arba lengvesnė chart biblioteka (vidutinis/didelis darbas)
-- [ ] **Proceso taisyklė:** kiekviena nauja above-fold sekcija — PSI patikra prieš merge (2026-08-24 → 08-27 funkcijų banga suvalgė /server/* 97 → 62–71; žr. LIGHTHOUSE.md)
+- [x] **LCP duomenų inline'as** — `/server/:id` HTML atsakyme `<script>` su serverio JSON; React'as skaito iškart be API round-trip. DONE v1.23.27 (`7b9b590`) — permatuoti PSI
+- [x] **A11y 94→100** — kontrastas (`text-gray-500/600` → `gray-400`) + heading tvarka (h4→h3). DONE v1.23.27 — permatuoti PSI
+- [ ] Desktop TBT (~2,4 s) — tik jei reikės: sekcijų mount'as dalimis per `requestIdleCallback` arba lengvesnė chart biblioteka (vidutinis/didelis darbas) — permatuoti po inline'o
+- [x] **Proceso taisyklė:** kiekviena nauja above-fold sekcija — PSI patikra prieš merge (2026-08-24 → 08-27 funkcijų banga suvalgė /server/* 97 → 62–71; žr. LIGHTHOUSE.md)
 
 ### Workshop / metadata
 - [ ] **Fazė 2:** mod→serverių reverse indeksas `/mods/:id` pilnam efektyvumui (dabar batching po 4; KV schema + collector — grill būtinas)
