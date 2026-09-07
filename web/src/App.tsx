@@ -1,5 +1,5 @@
-import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Component, lazy, Suspense, useEffect, type ErrorInfo, type ReactNode } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigationType } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { StatusState } from './components/ui/StatusState';
 
@@ -69,6 +69,19 @@ const Reforger18UpdatePage = lazy(() =>
 
 function RouteFallback() {
   return <StatusState type="loading" />;
+}
+
+// SPA navigacija nejudina scroll'o savaime: įėjus per nuorodą (PUSH/REPLACE)
+// puslapis startuoja nuo viršaus. POP (naršyklės back/forward) neliečiam —
+// sąrašų poziciją atkuria useListScrollRestoration.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navigationType = useNavigationType();
+  useEffect(() => {
+    if (navigationType === 'POP') return;
+    window.scrollTo(0, 0);
+  }, [pathname, navigationType]);
+  return null;
 }
 
 interface Props {
@@ -145,6 +158,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <ScrollToTop />
         <Layout>
           <Suspense fallback={<RouteFallback />}>
             <Routes>

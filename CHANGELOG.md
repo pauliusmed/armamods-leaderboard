@@ -4,6 +4,20 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⬆️ ScrollToTop: navigacija per nuorodą startuoja nuo viršaus (v1.23.31)
+
+- **Problema:** SPA navigacija nejudino scroll'o — įėjus į detail puslapį iš nuslinkusio
+  sąrašo vaizdas atsidarydavo per vidurį (pvz. ties Server History). Sąrašai turėjo
+  dalinį valdymą (puslapiavimas + POP restoration), detail puslapiai — jokio.
+- **Fix:** globalus `ScrollToTop` (`App.tsx`, Router viduje) — PUSH/REPLACE navigacija
+  `window.scrollTo(0, 0)`; POP (naršyklės back/forward) neliečiamas, kad
+  `useListScrollRestoration` atkurtų sąrašo poziciją.
+- **Patikra:** tsc ✅, vitest 45/45, build ✅, eslint App.tsx švarus (1 error —
+  pre-existing `usePinnedFavoriteMods.ts`, netaisyta). Atskiras unit testas praleistas
+  (naujam failui nėra švaraus kūrimo būdo šioje aplinkoje); logika triviali.
+- **Heavy CI: skipped because** vienas UI efektas; API kontraktai, kolektorius ir
+  algoritmai nesikeitė.
+
 ### ⚡ CLS fix arma3/mod + 6.4 MB tinklas → top-200 (v1.23.30)
 
 - **Problema (lokalus Lighthouse desktop, 29 puslapiai po v1.23.29):** `/arma3/mod/:id`
