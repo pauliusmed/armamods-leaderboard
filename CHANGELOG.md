@@ -4,6 +4,24 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ Eager thumbnails per proxy + lightbox WebP (v1.23.29)
+
+- **Problema (PSI 2026-09-07, / desktop):** pirmos 8 ModList eilutės (`priority=eager`,
+  `ModList.tsx:281`) ir ModDetail hero krauna žalius Bohemia CDN originalus
+  (~90–230 KiB/vnt., be cache TTL; PSI „Improve image delivery" 587 KiB, „cache" 592 KiB);
+  lightbox — pilni originalai be proxy.
+- **Fix 1:** `ModThumbnail` — eager keičia tik krovimo prioritetą, URL visada
+  `cdnSrc ?? proxySrc` (64–128 px, ~1–2 KiB, 7 d cache). Pirmos 8 eilutės: ~590 KiB → ~15 KiB.
+- **Fix 2:** `GalleryLightbox` img per `modScreenshotProxyUrl(w=1600)` (WebP, 7 d cache;
+  1600 px pakanka net 2× DPI); „Full size ↗" nuoroda palikta į originalą.
+- **Neapimta (sąmoningai):** forced reflow `[unattributed]` — šaltinio iš Lighthouse
+  ataskaitos nustatyti negalima (homepage'e Recharts nėra); reikia DevTools Performance
+  trace. Render-blocking CSS / unused-JS likutis — route-split ir preload jau padaryti,
+  tolesnis svertas mažas. Kritinė grandinė ~200 ms, preconnect kandidatų nėra — sveika.
+- **Patikra:** tsc ✅, vitest 45/45, build ✅.
+- **Heavy CI: skipped because** frontend img URL parinkimas; API kontraktai, kolektorius
+  ir algoritmai nesikeitė.
+
 ### ⚡ ModDetail: galerija per resized proxy + preconnect CDN + globalus kontrastas (v1.23.28)
 
 - **Problema (PSI 2026-09-07 01:03, /mod/61ECB5EFAA346151 desktop 81):** galerijos

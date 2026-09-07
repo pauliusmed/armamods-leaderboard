@@ -70,13 +70,15 @@ export function ModThumbnail({
   const sizeClass = SIZE_CLASS[size];
   const sizePx = SIZE_PX[size];
 
-  const eagerSrc = thumbnailUrl && priority === 'eager' ? thumbnailUrl : null;
   const cdnSrc =
     ENABLE_CDN_TRANSFORMS && thumbnailUrl && !thumbnailUrl.includes('og-image')
       ? cdnResizedThumbnailUrl(thumbnailUrl, sizePx)
       : null;
   const proxySrc = modListThumbnailUrl(modId, game, sizePx);
-  const [src, setSrc] = useState<string>(eagerSrc ?? cdnSrc ?? proxySrc);
+  // Eager keičia tik krovimo prioritetą (be IntersectionObserver), ne URL: žalias
+  // CDN originalas (keli šimtai KiB, be cache TTL) į 32–96 px thumbnailą krautų
+  // ~590 KiB pirmoms 8 eilutėms — visada per 64–128 px proxy (~1–2 KiB, 7 d cache).
+  const [src, setSrc] = useState<string>(cdnSrc ?? proxySrc);
 
   // Adjust state during render when the source changes (React "derived state" pattern).
   const [prevKey, setPrevKey] = useState<string | undefined>(undefined);
@@ -85,7 +87,7 @@ export function ModThumbnail({
     setPrevKey(resetKey);
     setFailed(false);
     setVisible(priority === 'eager');
-    setSrc(eagerSrc ?? cdnSrc ?? proxySrc);
+    setSrc(cdnSrc ?? proxySrc);
   }
 
   // If the edge-transform URL fails (transformations not enabled), fall back to the

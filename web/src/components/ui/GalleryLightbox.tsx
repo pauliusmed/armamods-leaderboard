@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { modScreenshotProxyUrl } from '../../lib/workshop';
 import { BottomSheet } from './BottomSheet';
 import type { ModGalleryImage } from '../../types';
 
@@ -90,7 +91,9 @@ export function GalleryLightbox({
       )}
 
       <img
-        src={image.url}
+        // Žalias originalas (keli MB, be cache TTL) — per proxy (WebP, 7 d cache).
+        // 1600 px pakanka net 2× DPI lightbox'e (max-w-6xl); pilnas dydis — „Full size" nuoroda.
+        src={modScreenshotProxyUrl(image.url, 1600)}
         alt={`${label} screenshot ${active + 1} of ${images.length}`}
         className="max-w-full max-h-[calc(100vh-8rem)] w-auto h-auto object-contain select-none"
         draggable={false}
