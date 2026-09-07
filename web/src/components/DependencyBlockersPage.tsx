@@ -49,7 +49,10 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
     (async () => {
       try {
         setLoadingServers(true);
-        const res = await serversApi.getList(5000, 0, game, { full: true });
+        // Pilnas 5000 tinklas (6.4 MB JSON → TBT ~250 ms) picker'iui nereikalingas:
+        // pradinis top-200 (~200 KiB), o ieškomas serveris atkeliauja per API
+        // paiešką (search effect žemiau) arba getById (?server= parametras).
+        const res = await serversApi.getList(200, 0, game);
         if (!cancelled) setServers(res.data ?? []);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load servers');
@@ -61,6 +64,30 @@ export function DependencyBlockersPage({ game = 'reforger' }: DependencyBlockers
       cancelled = true;
     };
   }, [game]);
+
+  // Server-side paieška (debounce): papildo pradinį top-200, kad pickeris rastų
+  // ir retesnius serverius be 6.4 MB išankstinio tinklo.
+  useEffect(() => {
+    const q = serverSearch.trim();
+    if (q.length < 2) return;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await serversApi.getList(100, 0, game, { full: true, search: q });
+          const found = res.data ?? [];
+          if (!found.length) return;
+          setServers((prev) => {
+            const map = new Map(prev.map((s) => [s.id, s]));
+            for (const s of found) map.set(s.id, s);
+            return [...map.values()];
+          });
+        } catch {
+          /* keep cached list */
+        }
+      })();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [serverSearch, game]);
 
   useEffect(() => {
     if (!serverId) {

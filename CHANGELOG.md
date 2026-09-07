@@ -4,6 +4,27 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ CLS fix arma3/mod + 6.4 MB tinklas → top-200 (v1.23.30)
+
+- **Problema (lokalus Lighthouse desktop, 29 puslapiai po v1.23.29):** `/arma3/mod/:id`
+  0.78 (CLS 0.39 — hero galerijos skeletonas subyra į 1-col + atsiranda thumbnailas,
+  nors arma3 galerijos neturi); `/dependency-blockers` 0.86 ir `/storage-planner` 0.88
+  (TBT ~250 — `getList(5000, full)` = 6.4 MB JSON parse main thread'e).
+- **Fix 1:** `ModDetail` — `heroGalleryStatus` init pagal game (arma3 iškart `hidden`,
+  be tarpinio `loading`; SPA navigacijai — `useEffect [modId, game]`).
+- **Fix 2/3:** abu puslapiai — pradinis `getList(200)` (~200 KiB vietoj 6.4 MB);
+  DependencyBlockers gavo server-side paiešką su debounce (kaip StoragePlanner turėjo),
+  Storage rėmėsi esamais getById/search fallback'ais. Semantika nesikeičia.
+- **Neapimta (sąmoningai):** `/servers` 0.96, `/mod` 0.97 (LCP — galerijos screenshot
+  per proxy, teisėtas turinys; `requestDiscoverable: false` taisytų tik inline'inimas
+  į HTML), `/server` 0.97 (LCP — H1 tekstas, SPA render delay be SSR). Architektūrinės
+  ribos, matavimo paklaidos ribose — SSR dėl jų neproporcinga.
+- **Pataisymas:** ankstesnė pastaba apie „bistudio likutį 51 KiB" /mod — klaidinga,
+  tai galerija per `/api/img/proxy` (teisėta, WebP + cache).
+- **Patikra:** tsc ✅, vitest 45/45, build ✅. Pakartotinis Lighthouse — po deploy.
+- **Heavy CI: skipped because** frontend duomenų gavimo limitai + state init; API
+  kontraktai, kolektorius ir algoritmai nesikeitė.
+
 ### ⚡ Eager thumbnails per proxy + lightbox WebP (v1.23.29)
 
 - **Problema (PSI 2026-09-07, / desktop):** pirmos 8 ModList eilutės (`priority=eager`,

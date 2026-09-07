@@ -374,7 +374,10 @@ export function StoragePlannerPage({ game = 'reforger' }: StoragePlannerPageProp
     (async () => {
       try {
         setLoadingServers(true);
-        const res = await serversApi.getList(5000, 0, game, { full: true });
+        // 5000 pilnas tinklas (6.4 MB JSON → TBT ~250 ms) čia tik vardų atmintinei:
+        // trūkstamus profilio serverius išsprendžia getById fallback'as, o paieška
+        // eina per API (debounce effect'ai žemiau). Pradinis top-200 (~200 KiB).
+        const res = await serversApi.getList(200, 0, game);
         if (!cancelled) {
           const list = res.data ?? [];
           setServers(list);

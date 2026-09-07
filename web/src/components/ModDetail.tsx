@@ -86,7 +86,12 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [selectedDays, setSelectedDays] = useState(30);
-  const [heroGalleryStatus, setHeroGalleryStatus] = useState<'loading' | 'ready' | 'hidden'>('loading');
+  // Arma3 galerijos neturi (ModWorkshopGallery visada hidden) — pradedam iškart
+  // 'hidden', kitaip pirmas paint piešia galerijos skeletoną, kuris po fetch
+  // subyra į 1-col layoutą + atsiranda thumbnailas (CLS ~0.38 arma3 mod puslapyje).
+  const [heroGalleryStatus, setHeroGalleryStatus] = useState<'loading' | 'ready' | 'hidden'>(
+    game === 'reforger' ? 'loading' : 'hidden'
+  );
   const [copiedGui, setCopiedGui] = useState(false);
   const [serversPage, setServersPage] = useState(1);
   const [serversSortBy, setServersSortBy] = useState<ServerDataTableSortBy>('players');
@@ -115,9 +120,10 @@ export function ModDetail({ game = 'reforger' }: ModDetailProps) {
   );
 
   useEffect(() => {
-    setHeroGalleryStatus('loading');
+    // Žr. state init komentarą: arma3 neturi galerijos — be tarpinio 'loading'.
+    setHeroGalleryStatus(game === 'reforger' ? 'loading' : 'hidden');
     setServersPage(1);
-  }, [modId]);
+  }, [modId, game]);
 
   const loadMod = useCallback(async (days: number, signal?: AbortSignal) => {
     if (!modId) return;
