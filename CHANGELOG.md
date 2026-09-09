@@ -4,6 +4,29 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 💰 KV read amplification: mod fields bundle — 1 raktas vietoj ~50–200 per requestą (v1.23.32)
+
+- **Problema (CF usage auditas 09-09):** `trending_snapshots` namespace generuoja
+  ~1.45M KV reads/dieną (~140 reads vienam Worker requestui — beveik visos
+  paskyros KV overage ~$15/mėn). Didžiausias generatorius: `/api/mods`
+  non-default kelias (paieška/filtras/sort) ir author-fallback skaitė po
+  2–3 raktus KIEKVIENAM sąrašo modui (`attachCachedListFields` 24 modams =
+  ~50 reads, limit 100 = ~200 reads) iš ~22k per-mod raktų
+  (`cache:mod-author/og-image/workshop-status:reforger:*`).
+- **Fix:** naujas agreguotas `cache:bundle:modfields:reforger` raktas
+  (`web/functions/lib/mod-fields-bundle.ts`): kolektorius kas run'ą surenka
+  visų modų author/thumbnail/workshopStatus į vieną JSON (~1.2 MB, merge su
+  esamu bundle be papildomų read'ų; vienkartinis bootstrap perima egzistuojančius
+  thumb/status raktus top-3000). Worker'is skaita 1 raktą (5 min izoliato
+  cache'as) ir pritaiko in-memory; iki pirmo kolektoriaus run'o po deploy —
+  fallback į senus per-mod raktus (be downtime). Non-default `/api/mods`
+  kelias: ~52 reads → 4–5.
+- **Patikra:** root 266/266 (9 nauji mod-fields-bundle testai), web vitest
+  45/45, tsc ✅, wrangler dry-run ✅ (1 lint error — pre-existing
+  `usePinnedFavoriteMods.ts`, netaisyta).
+- **Heavy CI: required because** keičiama KV cache schema + kolektorius;
+  pilni testai paleisti lokaliai. Po deploy — 24h KV reads/day palyginimas.
+
 ### ⬆️ ScrollToTop: navigacija per nuorodą startuoja nuo viršaus (v1.23.31)
 
 - **Problema:** SPA navigacija nejudino scroll'o — įėjus į detail puslapį iš nuslinkusio

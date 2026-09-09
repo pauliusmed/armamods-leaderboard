@@ -913,6 +913,72 @@ interface ServerMod {
       await kv.put(precomputedStatsCacheKey('reforger'), JSON.stringify(statsPayload), {
         expirationTtl: PRECOMPUTED_TTL_SECONDS,
       });
+
+      // ── Mod fields bundle ─────────────────────────────────────────────
+      // Vienas agreguotas raktas visų modų author/thumbnail/workshopStatus
+      // laukams: /api/mods non-default kelias (paieška/filtras/sort) ir author
+      // fallback skaito 1 raktą vietoj 2–3 reads per eilutę (~50–200 → 1).
+      try {
+        const {
+          modFieldsBundleCacheKey,
+          buildModFieldsBundle,
+          MOD_FIELDS_BUNDLE_TTL_SECONDS,
+        } = await import('../web/functions/lib/mod-fields-bundle.ts');
+        const existingBundle = await kv.get(modFieldsBundleCacheKey('reforger'), 'json');
+
+        // Šio run'o žinios: author visiems (leaderboard eilutės po warm),
+        // thumb/status — precomputed slice'ui (pririšta aukščiau).
+        const sources = filteredForPage.map((m: Record<string, unknown>) => ({
+          id: String(m.id),
+          author: (m.author as string | null | undefined) ?? null,
+          thumbnail: m.thumbnail as string | null | undefined,
+          workshopStatus: m.workshopStatus as string | null | undefined,
+          workshopStatusCheckedAt: m.workshopStatusCheckedAt as string | null | undefined,
+        }));
+
+        // Bootstrap (tik kai bundle dar nėra): perimti egzistuojančius
+        // thumb/status raktus top modams, kad pirmas bundle neprarastų
+        // thumbnail coverage (atskiri raktai po 7d TTL išsivalys patys).
+        if (!existingBundle) {
+          const { ogImageCacheKey, statusCacheKey } =
+            await import('../web/functions/lib/workshop-fetch.ts');
+          const bootstrapIds = filteredForPage.slice(0, 3000).map((m: Record<string, unknown>) => String(m.id));
+          for (let i = 0; i < bootstrapIds.length; i += 250) {
+            const rows = await Promise.all(
+              bootstrapIds.slice(i, i + 250).map(async (id: string) => {
+                const [thumb, statusRaw] = await Promise.all([
+                  kv.get(ogImageCacheKey('reforger', id), 'text'),
+                  kv.get(statusCacheKey('reforger', id), 'text'),
+                ]);
+                const row: Record<string, unknown> = { id, thumbnail: thumb ?? null };
+                if (statusRaw) {
+                  try {
+                    const p = JSON.parse(statusRaw) as { status?: string; checkedAt?: string | null };
+                    row.workshopStatus =
+                      p.status === 'available' || p.status === 'unavailable' ? p.status : 'unknown';
+                    row.workshopStatusCheckedAt = p.checkedAt ?? null;
+                  } catch {
+                    row.workshopStatus = 'unknown';
+                  }
+                }
+                return row;
+              })
+            );
+            sources.push(...(rows as unknown[]));
+          }
+          console.log(`  - bundle bootstrap: perskaityti thumb/status raktai top-${bootstrapIds.length} (vienkartinis)`);
+        }
+
+        const bundle = buildModFieldsBundle(sources as Parameters<typeof buildModFieldsBundle>[0], existingBundle);
+        await kv.put(modFieldsBundleCacheKey('reforger'), JSON.stringify(bundle), {
+          expirationTtl: MOD_FIELDS_BUNDLE_TTL_SECONDS,
+        });
+        console.log(`  - mod fields bundle: ${Object.keys(bundle.mods).length} modų → ${modFieldsBundleCacheKey('reforger')}`);
+      } catch (bundleErr) {
+        // Bundle — optimizacija, ne duomenų šaltinis: worker turi fallback į
+        // senus raktus, todėl klaida čia stabdo tik šį sluoksnį, ne run'ą.
+        console.warn('  ⚠️ Mod fields bundle nesukurtas:', bundleErr);
+      }
     }
 
     // 6. Update Stats and Last Update time

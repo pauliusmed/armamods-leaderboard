@@ -51,6 +51,7 @@ import {
   modsSearchIndexCacheKey,
   searchModsInIndex,
 } from './functions/lib/mods-search-index';
+import { applyModFieldsToRows, loadModFieldsBundle } from './functions/lib/mod-fields-bundle';
 import { findServerById, ServerLookup } from './functions/lib/server-lookup';
 import { buildEmbeddedServerScript, injectEmbeddedData, injectHeadTag } from './functions/lib/embedded-data';
 import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
@@ -267,9 +268,20 @@ async function attachCachedAuthors(
 ): Promise<void> {
   if (game === 'arma3') return;
 
+  const missing = mods.filter((m) => !m.author);
+  if (missing.length === 0) return;
+
+  // Agreguotas bundle: 1 KV read vietoj po vieną read'ą kiekvienam modui be author.
+  const bundle = await loadModFieldsBundle(kv);
+  if (bundle) {
+    applyModFieldsToRows(bundle, missing);
+    return;
+  }
+
+  // Fallback (iki pirmo kolektoriaus run'o po deploy): seni per-mod raktai.
   const batchSize = 100;
-  for (let i = 0; i < mods.length; i += batchSize) {
-    const slice = mods.slice(i, i + batchSize);
+  for (let i = 0; i < missing.length; i += batchSize) {
+    const slice = missing.slice(i, i + batchSize);
     await Promise.all(
       slice.map(async (mod) => {
         if (mod.author) return;
@@ -296,6 +308,14 @@ async function attachCachedListFields(
 ): Promise<void> {
   if (game === 'arma3' || mods.length === 0) return;
 
+  // Agreguotas bundle: 1 KV read (su 5 min izoliato cache'u) vietoj 3 reads per modą.
+  const bundle = await loadModFieldsBundle(kv);
+  if (bundle) {
+    applyModFieldsToRows(bundle, mods);
+    return;
+  }
+
+  // Fallback (iki pirmo kolektoriaus run'o po deploy): seni per-mod raktai.
   await Promise.all(
     mods.map(async (mod) => {
       const needsAuthor = mod.author === undefined;
