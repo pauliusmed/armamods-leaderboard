@@ -30,6 +30,9 @@ Taisyklės:
 - Senasis Pages projektas `armamods-leaderboard.pages.dev` **sunaikintas
   2026-09-09** — jis aptarnavo seną kodą ir generavo ~20k transformacijų/periodą.
   Neprikabinti prie jo atgal.
+- **`workers_dev = false`** (`web/wrangler.toml`, 2026-09-09) — workers.dev
+  subdomainas išjungtas. Vienintelis viešas puslapis yra **reforgermods.com**
+  (zonos DNS); jokie dublikatai (pages.dev / workers.dev) nebeatkuriami.
 
 ## KV (trending_snapshots)
 
