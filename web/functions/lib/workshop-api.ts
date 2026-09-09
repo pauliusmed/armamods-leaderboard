@@ -8,7 +8,9 @@
  */
 
 const WORKSHOP_API_BASE = 'https://api-ar-workshop.bistudio.com/workshop-api/api/v3.0';
+// Nedokumentuotas viešo kliento identifikatorius — stebėti 400/401/403, fail closed be rotacijos spėliojimo.
 const WORKSHOP_API_CLIENT_ID = '$5d81ca9bbdd80f837dfe6380f436013';
+// Workshop UA — reali priežiūros rizika, bet neįrodyta kaip auth; laikyti konfigūracijoje, keisti atskirai nuo lobby clientVersion.
 const WORKSHOP_API_USER_AGENT = 'Arma Reforger/1.1.0.42 (Client; Windows)';
 
 export const WORKSHOP_BATCH_MAX = 50;
@@ -112,16 +114,22 @@ export async function workshopListByIds(ids: string[]): Promise<WorkshopListResu
   let networkError = false;
   for (let i = 0; i < ids.length; i += WORKSHOP_BATCH_MAX) {
     const batch = ids.slice(i, i + WORKSHOP_BATCH_MAX);
+    // Minimalus payload su ids[] — orderBy/search/tags nereikalingi ir pašalinti (mažiau prielaidų).
     const { status, data, error } = await postJson<WorkshopApiListResponse>(
       `${WORKSHOP_API_BASE}/assets/list`,
-      { limit: batch.length, offset: 0, orderBy: 'popularity', search: '', tags: {}, ids: batch }
+      { limit: batch.length, offset: 0, ids: batch }
     );
     if (status === 200 && data?.rows) {
       all.push(...data.rows);
     } else {
       // Tinklo klaida (status null) arba 5xx — skiriama nuo "mod nerastas" (200 su tuščiu rows).
+      // 400/401/403 → prielaida pasikeitė (UA/client-id) — fail closed, alert ir rankinis patvirtinimas.
       if (status === null || status >= 500) networkError = true;
-      console.warn('[WORKSHOP_API] batch lookup failed', status, error);
+      if (status === 400 || status === 401 || status === 403) {
+        console.warn('[WORKSHOP_API] client rejected — check UA/client-id', status, error);
+      } else {
+        console.warn('[WORKSHOP_API] batch lookup failed', status, error);
+      }
     }
   }
   return { rows: all, networkError };
