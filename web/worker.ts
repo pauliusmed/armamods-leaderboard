@@ -963,13 +963,16 @@ app.get('/mods/:modId/author', async (c) => {
 });
 
 app.get('/mods/:modId/thumbnail/img', async (c) => {
+  const widthOk = allowedWidthOrDefault(c.req.query('w'), THUMBNAIL_WIDTHS, 64);
+  if (widthOk === null) return redirectToCanonicalWidth(c, 64);
+
   const cache = await caches.open('armamods:mod_thumb_img');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
   const game = getGameFromQuery(c) as ShareGame;
   const modId = c.req.param('modId');
-  const width = Math.min(128, Math.max(32, parseInt(c.req.query('w') || '64', 10) || 64));
+  const width = widthOk;
   const url = await c.env.TRENDING_KV.get(ogImageCacheKey(game, modId), 'text');
 
   if (!url || url.includes('og-image')) {
@@ -1023,8 +1026,29 @@ app.get('/mods/:modId/thumbnail', async (c) => {
 // PSI 2026-09-07: bistudio CDN duoda ~300 KiB JPG be cache TTL — proxy sutaupo ~650 KiB puslapiui.
 const IMG_PROXY_HOST = 'ar-gcp-cdn.bistudio.com';
 
+// Images transformations billingas skaičiuoja UNIKALIUS (paveikslėlis, parinktys)
+// derinius — laisvas 5k/mėn lygis laikomas tik fiksuotu pločių rinkiniu.
+// Neleistinas w iš URL (bot w=33) kurtų naujus unikalius derinius, todėl
+// neteisingas w visada 302 į kanoninį (dedup'inasi ir cache, ir transformacijos).
+const THUMBNAIL_WIDTHS = [64, 96, 128];
+const GALLERY_WIDTHS = [384, 768, 960, 1200, 1600, 1920];
+
+function allowedWidthOrDefault(raw: string | undefined, allowed: number[], fallback: number): number | null {
+  const w = parseInt(raw || '', 10);
+  return Number.isFinite(w) && allowed.includes(w) ? w : null;
+}
+
+function redirectToCanonicalWidth(c: any, canonical: number): Response {
+  const url = new URL(c.req.url);
+  url.searchParams.set('w', String(canonical));
+  return c.redirect(url.toString(), 302);
+}
+
 // basePath('/api') — realus kelias /api/img/proxy
 app.get('/img/proxy', async (c) => {
+  const widthOk = allowedWidthOrDefault(c.req.query('w'), GALLERY_WIDTHS, 960);
+  if (widthOk === null) return redirectToCanonicalWidth(c, 960);
+
   const cache = await caches.open('armamods:img_proxy');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
@@ -1040,7 +1064,7 @@ app.get('/img/proxy', async (c) => {
     return c.json({ error: 'host not allowed' }, 403);
   }
 
-  const width = Math.min(1920, Math.max(64, parseInt(c.req.query('w') || '960', 10) || 960));
+  const width = widthOk;
   try {
     const upstream = await fetch(parsed.toString(), {
       cf: { image: { width, fit: 'scale-down', quality: 75, format: 'auto' } },

@@ -4,6 +4,29 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🖼️ Images transformations < 5k/mėn: Pages sunaikintas + pločių allowlist (v1.23.33)
+
+- **Problema (CF usage auditas 09-09):** Images transformed 9.12k/periodą
+  (~$2/mėn). Trys šaltiniai: (1) senasis **Pages projektas
+  `armamods-leaderboard.pages.dev`** (paskutinis deploy 08-23, prieš Workers
+  migraciją) vis dar aptarnavo API + thumbnailus su transformacijomis —
+  ~20.4k requestų/periodą iš indeksuotų senų URL; (2) Worker
+  `/api/mods/:id/thumbnail/img` (~673 req/d) ir (3) `/api/img/proxy`
+  (galerija, ~144 req/d).
+- **Fix 1:** Pages projektas **sunaikintas** (381 deploymentas + projektas;
+  REST API). Šaltinis #1 dingsta fiziškai — neprikabinti atgal.
+- **Fix 2:** abiejuose proxy endpointuose fiksuotas pločių **allowlist**
+  (thumbnail 64/96/128; galerija 384/768/960/1200/1600/1920). Neleistinas
+  `w` (pvz. bot `w=33`) → **302 į kanoninį URL** — botas nebegali sukurti
+  naujų unikalių transformacijų derinių, edge cache dedup'inasi.
+- **Rezultatas:** unikalios transformacijos konverguoja žemiau 5k/mėn free
+  ribos → **$0/mėn**, išlaikant 1–2 KB thumbnailus (be mobiliosios ~2.4 MB
+  regresijos, kurią duotų pilnas cf.image pašalinimas).
+- **Taisyklės:** naujas `docs/COST_GUARDRAILS.md` + AGENTS.md spąstai —
+  nauji `cf.image` taškai tik savininkui patvirtinus.
+- **Heavy CI: skipped because** API URL kontraktas nesikeitė (tik w clamp
+  + 302); pilni testai paleisti profilaktiškai.
+
 ### 💰 KV read amplification: mod fields bundle — 1 raktas vietoj ~50–200 per requestą (v1.23.32)
 
 - **Problema (CF usage auditas 09-09):** `trending_snapshots` namespace generuoja
