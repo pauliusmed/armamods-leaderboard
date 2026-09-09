@@ -4,6 +4,26 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ Sąrašų perf: scroll-to-top tik puslapiavime + sinchroninis useMediaQuery (v1.23.37)
+
+- **Kas:** ModList/ScenarioList/ServerList scroll'uoja į viršų tik keičiant
+  puslapį (ne ant mount — nekonkuruoja su scroll restoration ir neperdėlioja
+  layout LCP metu) ir instant, ne smooth (smooth animacija laiko main thread).
+  `useMediaQuery` pradinę reikšmę skaito sinchroniškai — pirmas render atitinka
+  viewport be dvigubo render + layout thrash.
+- **Heavy CI: skipped because** vietiniai komponentų/hook pakeitimai be logikos
+  kaitos; pilni testai paleisti lokaliai (root 266/266, web 45/45).
+
+### 🔒 Workshop API: minimalus payload + 400/401/403 fail-closed signalas (v1.23.36)
+
+- **Kas (P0 auth darbo dalis, žr. `docs/P0_GATES.md`):** `assets/list` užklausa
+  supaprastinta iki minimalaus `{limit, offset, ids[]}` — `orderBy/search/tags`
+  pašalinti (mažiau nepatvirtintų prielaidų apie serverio sutikimą).
+  400/401/403 atskirti nuo kitų klaidų su aiškiu „client rejected — check
+  UA/client-id" warn — fail closed be rotacijos spėliojimo.
+- **Heavy CI: required because** keičiasi išorinės API integracijos užklausos
+  forma; pilni testai paleisti lokaliai (266/266, įskaitant workshop-api).
+
 ### 🏷️ Audito verdiktas „Broken" → „Likely broken" (v1.23.35)
 
 - **Problema (vartotojo atsiliepimas 09-09):** modų audito žyma „Broken" /

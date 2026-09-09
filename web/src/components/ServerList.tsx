@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useServers, type ConsoleFitFilter, type BmStatusFilter } from '../hooks/useServers';
 import { useServerFavorites } from '../hooks/useServerFavorites';
@@ -82,9 +82,14 @@ export function ServerList({ game = 'reforger' }: ServerListProps) {
   // Restore scroll position when coming back (POP) — URL state is restored by useServers.
   useListScrollRestoration(`servers:${game}:${currentPage}`);
 
-  // Scroll to top when page changes
+  // Scroll į viršų tik keičiant puslapį (ne ant mount — žr. ModList komentarą).
+  const isFirstPageRef = useRef(true);
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (isFirstPageRef.current) {
+      isFirstPageRef.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
   }, [currentPage]);
 
   if (initialLoading) return <StatusState type="loading" retryCount={retryCount} />;

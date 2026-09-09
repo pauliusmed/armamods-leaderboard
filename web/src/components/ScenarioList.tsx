@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useScenarios } from '../hooks/useScenarios';
 import { ServerRow } from './ServerRow';
@@ -138,8 +138,14 @@ export function ScenarioList({ game = 'reforger' }: ScenarioListProps) {
   // Restore scroll position when coming back (POP) — URL state is restored by useScenarios.
   useListScrollRestoration(`scenarios:${game}:${currentPage}`);
 
+  // Scroll į viršų tik keičiant puslapį (ne ant mount — žr. ModList komentarą).
+  const isFirstPageRef = useRef(true);
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (isFirstPageRef.current) {
+      isFirstPageRef.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
   }, [currentPage]);
 
   const toggleScenario = (name: string) => {

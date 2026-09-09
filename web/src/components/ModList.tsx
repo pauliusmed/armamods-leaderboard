@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useMods } from '../hooks/useMods';
 import { useModFavorites } from '../hooks/useModFavorites';
@@ -70,8 +70,17 @@ export function ModList({ game = 'reforger' }: ModListProps) {
   // Restore scroll position when coming back (POP) — URL state is restored by useMods.
   useListScrollRestoration(`mods:${game}:${currentPage}`);
 
+  // Scroll į viršų tik keičiant puslapį (ne ant mount — mount metu tai
+  // verstų naršyklę perdėlioti layout LCP metu + konkuruotų su scroll restoration).
+  // Instant, ne smooth: puslapiavimas turi būti greitas, smooth animacija laiko
+  // main thread užimtą ir matuojasi kaip forced reflow.
+  const isFirstPageRef = useRef(true);
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (isFirstPageRef.current) {
+      isFirstPageRef.current = false;
+      return;
+    }
+    window.scrollTo(0, 0);
   }, [currentPage]);
 
   if (error && initialLoading) {
