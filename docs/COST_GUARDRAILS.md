@@ -2,17 +2,21 @@
 
 Projektas turi būti efektyvus naudodamas resursus. Šis lapas fiksuoja mokamų
 Cloudflare produktų naudojimo ribas ir vienintinius leidžiamus taškus kode.
-Nauji mokamų operacijų taškai kuriami tik savininkui patvirtinus.
+Nauji mokamų operacijų taškai kuriami tik savininkui patvirtinus
+(**išimtis: Images transformations — visiškai atsakotos, žr. žemiau**).
 
 ## Images transformations
 
-**Politika: unikalios transformacijos turi likti žemiau 5k/mėn (free lygis).**
+**Politika (savininko sprendimas 2026-09-09): CF Images transformations
+šiame projekte ATSAKOMOS. Naujų `cf.image` naudojimo taškų NEKURIAMA —
+ankstesnis „savininkui patvirtinus" kelias panaikintas, išimčių nėra.**
 
-Billingas skaičiuoja UNIKALIAS (paveikslėlis, parinktys) poras — ne requestus.
-Po 5k unikalių/mėn taikoma $5/100k. Esama architektūra konverguoja žemiau
-free ribos, nes deriniai pasikartoja ir yra dedup'inami.
+Istorinė riba buvo < 5k unikalių (paveikslėlis, parinktys) porų/mėn (free
+lygis, po to $5/100k). Billingas skaičiuoja UNIKALIAS (paveikslėlis,
+parinktys) poras — ne requestus.
 
-Vienintiniai leidžiami transformacijos taškai (abu su fiksuotu pločių allowlist):
+**Legacy taškai — tik du, jų NEPLĖSTI** (allowlist ir 302 fallback lieka,
+kol taškai gyvi; naujų pločių ar derinių nedėti):
 
 | Endpointas | Leidžiami `w` | Fallback |
 | ---------- | ------------- | -------- |
@@ -23,8 +27,14 @@ Taisyklės:
 
 - Neleistinas `w` (pvz. bot `w=33`) visada gauna **302 į kanoninį URL** —
   tai dedup'ina ir edge cache, ir unikalių transformacijų derinius.
-- Nauji `cf.image` naudojimo taškai kode — **draudžiami** be savininko
-  leidimo (`fetch(url, { cf: { image: … } })`).
+- Nauji `cf.image` naudojimo taškai kode — **draudžiami visada**
+  (`fetch(url, { cf: { image: … } })`).
+- **Legacy taškų šalinimas — tik atskiru savininko sprendimu ir su
+  pakaitalu.** Pilnas išjungimas be pakaitalo duotų ~2.4 MB mobilųjį
+  atsisiuntimų regresiją (v1.23.33 analizė). Įmanomos kryptys: iš anksto
+  paruošti dydžiai (R2/edge cache, generuojama kolektoriaus pusėje) arba
+  originalų tiekimas tik dideliems ekranams. Cloudflare Images „variants"
+  **netinka** — originalai saugomi Workshop CDN, ne CF Images saugojime.
 - Frontendas pločius ima tik iš `SIZE_PX` (ModThumbnail) ir fiksuotų
   `modScreenshotProxyUrl` kvietimų (960 galerija, 1600 lightbox).
 - Senasis Pages projektas `armamods-leaderboard.pages.dev` **sunaikintas
