@@ -4,6 +4,11 @@ compatibility_date = "2026-08-24"
 compatibility_flags = ["nodejs_compat"]
 main = "./worker.ts"
 
+# Vienintelis viešas puslapis — reforgermods.com (zonos DNS).
+# workers.dev subdomainas išjungtas 2026-09-09: dublikatas generavo atskirą
+# srautą/kešą (taip pat Images transformacijas) be kanoninių tagų SEO naudai.
+workers_dev = false
+
 # Workers Cache: Cloudflare patarnauja HIT be Worker vykdymo (0 CPU/KV prie HIT).
 # Cache API (caches.open) lieka kaip antras sluoksnis — nepriklausoma, nekenkia.
 # Rizika: atsakymai be cacheable Cache-Control pridėtų cache-lookup overhead —
