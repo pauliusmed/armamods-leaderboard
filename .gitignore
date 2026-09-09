@@ -39,3 +39,7 @@ scripts/backtest/debug-syn.ts
 # Confidential research (not for public repo)
 docs-private/
 
+
+# C# build artifacts (steam-auth-probe)
+scripts/steam-auth-probe/bin/
+scripts/steam-auth-probe/obj/
