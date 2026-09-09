@@ -623,7 +623,7 @@ export function classifyModAudit(params: {
           status: 'warning',
           title: `Too early to judge after ${patchLabel}`,
           detail:
-            `Only ~${daysSincePatch}d of post-${patchLabel} BattleMetrics data – not enough to call this Broken. ` +
+            `Only ~${daysSincePatch}d of post-${patchLabel} BattleMetrics data – not enough to call this broken. ` +
             `Still on ~${serverCount} BM server configs with ${currentPlayers} players now. ` +
             `Verify Workshop ${patchLabel}, restart, RPT before removing.`,
           dropPct,
@@ -641,7 +641,7 @@ export function classifyModAudit(params: {
 
       return {
         status: 'dead',
-        title: `Broken after ${patchLabel}`,
+        title: `Likely broken after ${patchLabel}`,
         detail,
         dropPct,
       };

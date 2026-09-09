@@ -2,7 +2,8 @@ import type { AuditStatus } from '@audit-config';
 
 /** Short chip labels – scannable at a glance (internal status codes unchanged). */
 export const AUDIT_STATUS_SHORT: Record<AuditStatus, string> = {
-  dead: 'Broken',
+  // „Likely" — verdiktas yra inferencija iš BM naudojimo duomenų, ne patikrinta diagnozė (vartotojo atsiliepimas 09-09)
+  dead: 'Likely broken',
   warning: 'Monitor',
   risky: 'Monitor',
   ok: 'Keep',
@@ -13,7 +14,7 @@ export const AUDIT_STATUS_SHORT: Record<AuditStatus, string> = {
 /** One-line explanation for tooltips / report sections. */
 export const AUDIT_STATUS_HINT: Record<AuditStatus, string> = {
   dead: 'Likely broken after the update – 0–1 players on BM now (remove from config)',
-  warning: 'Was popular before the update, empty-ish after – drop not yet severe enough for Broken',
+  warning: 'Was popular before the update, empty-ish after – drop not yet severe enough to flag',
   risky: 'Big drop since the update but still on some BattleMetrics servers',
   ok: 'Still used on BM (or normal post-update network dip)',
   niche: 'Too few players before the update – drop may be noise',

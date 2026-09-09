@@ -4,6 +4,20 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🏷️ Audito verdiktas „Broken" → „Likely broken" (v1.23.35)
+
+- **Problema (vartotojo atsiliepimas 09-09):** modų audito žyma „Broken" /
+  „Broken after 1.8" formuojama iš BattleMetrics žaidėjų duomenų (populiarus
+  prieš patch → ~0 žaidėjų po), bet skamba kaip patikrinta diagnozė.
+  Žaidėjams klaidina — modas gali veikti, tiesiog serveriai jį išėmino.
+- **Fix:** vartotojo matomos etiketės sušvelnintos į **„Likely broken"**
+  (chip `auditLabels.ts` + title „Likely broken after 1.8" `classifyModAudit`).
+  Statuso kodas (`dead`) ir klasifikavimo logika nesikeitė — tik tekstai.
+- **Patikra:** root 266/266 (assertai atnaujinti į /Likely broken after/i),
+  web vitest 45/45, tsc ✅.
+- **Heavy CI: skipped because** keičiasi tik vartotojo matomi string'ai —
+  jokios logikos, duomenų modelio ar API kontrakto struktūros kaitos.
+
 ### 🖼️ Images transformations < 5k/mėn: Pages sunaikintas + pločių allowlist (v1.23.33)
 
 - **Problema (CF usage auditas 09-09):** Images transformed 9.12k/periodą

@@ -102,7 +102,7 @@ describe('classifyModAudit', () => {
     const trend = { phase: 'declining' as const, label: '', detail: '', recentAvg: 0, earlyAfterAvg: 0 };
     const r = classifyModAudit({ beforeAvg: 200, afterAvg: 2, currentPlayers: 0, trend });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after/i);
+    assert.match(r.title, /Likely broken after/i);
   });
 
   it('marks recovering ecosystem trend as ok even after a big drop', () => {
@@ -171,7 +171,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after/i);
+    assert.match(r.title, /Likely broken after/i);
     assert.ok((r.dropPct ?? 0) < 70);
   });
 
@@ -191,7 +191,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after/i);
+    assert.match(r.title, /Likely broken after/i);
     assert.ok((r.dropPct ?? 0) >= 70);
   });
 
@@ -213,7 +213,7 @@ describe('classifyModAudit', () => {
       trend,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after/i);
+    assert.match(r.title, /Likely broken after/i);
     assert.match(r.detail, /12/);
   });
 
@@ -239,7 +239,7 @@ describe('classifyModAudit', () => {
     };
     const r = classifyModAudit({ beforeAvg: 100, afterAvg: 8, currentPlayers: 3, trend });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after/i);
+    assert.match(r.title, /Likely broken after/i);
   });
 
   it('current zero but high recent post-patch usage is ok not warning', () => {
@@ -301,7 +301,7 @@ describe('classifyModAudit', () => {
       daysSincePatch: 4,
     });
     assert.equal(r.status, 'dead');
-    assert.match(r.title, /Broken after/i);
+    assert.match(r.title, /Likely broken after/i);
   });
 });
 
