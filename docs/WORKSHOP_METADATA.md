@@ -61,6 +61,8 @@ ModThumbnail (list)
 
 **Detail / OG** still use full URL or `/api/og/preview/mod/:id` (302) where quality matters.
 
+**Resize taškų politika (2026-09-09):** CF Images transformacijos šiam projektui atsakotos — naujų `cf.image` taškų nekuriama. Dvi legacy vietos (`thumbnail/img` w ∈ {64,96,128}; `/api/img/proxy` w ∈ {384,768,960,1200,1600,1920}) lieka su fiksuotu allowlist — neleistinas `w` → 302 į kanoninį plotį. Detaliai — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md).
+
 **We store the CDN URL in KV, not the image bytes.** This avoids R2 storage, copyright re-hosting, and extra bandwidth on our origin.
 
 ### Cache stack

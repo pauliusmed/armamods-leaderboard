@@ -78,12 +78,14 @@ Author-only queries still cost O(mods) KV reads; name/id queries avoid that path
 
 See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 servers bulk, `localStorage` name cache, failed ID handling.
 
-### Mod list — embedded metadata (v1.21+)
+### Mod list — embedded metadata (v1.21+, bundle nuo v1.23.32)
 
 `attachCachedListFields()` in `web/worker.ts`:
 
-- For each mod in the **current page slice**, reads KV for `cache:mod-author`, `cache:og-image`, `cache:workshop-status` (parallel).
+- Nuo **v1.23.32** laukai skaitomi iš **vieno agreguoto rakto** `cache:bundle:modfields:reforger` (~1 KV read/requestą, kolektorius perrašo kas run'ą) — anksčiau buvo 2–3 per-mod raktai modui (`cache:mod-author`, `cache:og-image`, `cache:workshop-status`), kas duodavo ~50–200 reads/requestą ne-default kelyje.
+- Per-mod raktai liko tik kaip **fallback** (cold bundle / prieš pirmą kolektoriaus run'ą po deploy).
 - Response includes `author`, `thumbnail`, `workshopStatus` — **one** `GET /api/mods` replaces ~72 row-level JSON calls (24 rows × 3).
+- Politika ir ribos — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md): naujos per-mod `kv.get` „ventiliacijos" sąrašuose draudžiamos.
 
 ### Mod list — precomputed pages (v1.24, bendras šildymas)
 
