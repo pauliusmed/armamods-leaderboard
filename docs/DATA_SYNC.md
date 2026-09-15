@@ -19,13 +19,18 @@ The browser **never** calls BattleMetrics. Lists, trending, and charts are KV sn
 
 | Piece | Location |
 |-------|----------|
-| Cron workflow | `.github/workflows/collector.yml` |
+| Cron workflow | `.github/workflows/collector.yml` — hourly trigger, but `collector-gate` skips the run when both snapshots are newer than 75 minutes |
 | **External trigger fallback** | `cron-job.org` job `7414079` (hourly `:30` UTC) → GitHub Actions REST `workflow_dispatch` — GitHub scheduler'is best-effort (praleido 8 slot'us, INC-2026-08-27). **Token = fine-grained PAT (`Actions: Read/Write`), ne `gho_...`** — žr. `docs/INCIDENTS.md` |
 | Ingestion | `scripts/collector.ts` |
 | BM client | `src/services/battlemetrics.ts` |
 | Precomputed hot pages | `web/functions/lib/precomputed-pages.ts` — default views materialized at write time (`cache:page:*:default`, `PRECOMPUTED_TTL_SECONDS = 7200`) |
 | Last sync timestamp | KV `cache:lastUpdate` / `cache:lastUpdate:arma3` |
 | Health | `GET /api/health` → `checks[game].lastUpdate`, `staleHours`, `isStale` (>3h) |
+
+The GitHub schedule and external fallback may both dispatch the workflow. The gate
+uses `/api/health` to avoid a duplicate full collector run while preserving the
+fallback when either game's snapshot is stale. Collector KV writes retry transient
+`429`, `5xx`, and network errors up to three attempts with backoff.
 
 ---
 

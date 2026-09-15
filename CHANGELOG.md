@@ -4,6 +4,15 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🛡️ Collectoriaus atsparumas ir KV biudžeto gate (v1.23.38) - 2026-09-15
+- `collector-gate` praleidžia dubliuotą pilną run'ą, kai Reforger ir Arma 3
+  snapshot'ai jaunesni nei 75 min.; fallback triggeris lieka aktyvus.
+- Cloudflare KV `PUT` dabar kartoja transient `429`, `5xx` ir tinklo klaidas iki
+  3 kartų su backoff; Reforger timeout padidintas nuo 15 iki 25 min.
+- **Heavy CI: required because** keičiamas collector/KV retry kelias; lokaliai
+  root testai `267/267`, web testai `45/45`, tsc ir Wrangler dry-run praėjo.
+  Web lint turi vieną pre-existing klaidą `usePinnedFavoriteMods.ts:38`.
+
 ### ⚡ Sąrašų perf: scroll-to-top tik puslapiavime + sinchroninis useMediaQuery (v1.23.37)
 
 - **Kas:** ModList/ScenarioList/ServerList scroll'uoja į viršų tik keičiant

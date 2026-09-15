@@ -9,7 +9,7 @@ name: Arma Mods Collector
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour — praleisto slot'o banga ≤1h (INC-2026-08-26)
+    - cron: '0 * * * *'  # Hourly; collector-gate skips duplicate fresh runs
   workflow_dispatch:      # Manual trigger — also fired hourly by cron-job.org job 7414079 (:30 UTC, INC-2026-08-27)
 
 jobs:
@@ -19,16 +19,39 @@ jobs:
       enabled: ${{ steps.switch.outputs.enabled }}
     steps:
       - id: switch
-        name: Collector enabled switch
-        # >>> SWITCH: change false → true when BM API key is funded <<<
-        run: echo "enabled=true" >> "$GITHUB_OUTPUT"
+        name: Check collector switch and snapshot freshness
+        env:
+          HEALTH_URL: https://reforgermods.com/api/health
+        run: |
+          set -euo pipefail
+          health="$(curl --fail --silent --show-error "$HEALTH_URL")"
+          node --input-type=module - "$health" <<'NODE'
+          import { appendFileSync } from 'node:fs';
+
+          // >>> SWITCH: change false -> true when BM API key is funded <<<
+          const collectorEnabled = true;
+          const health = JSON.parse(process.argv[2]);
+          const checks = [health.checks?.reforger, health.checks?.arma3];
+          if (checks.some((check) => !check?.lastUpdate)) {
+            throw new Error('Health response is missing a game lastUpdate');
+          }
+
+          const cutoff = Date.now() - 75 * 60 * 1000;
+          const timestamps = checks.map((check) => Date.parse(check.lastUpdate));
+          if (timestamps.some(Number.isNaN)) {
+            throw new Error('Health response contains an invalid game lastUpdate');
+          }
+          const allFresh = timestamps.every((timestamp) => timestamp >= cutoff);
+          console.log(`Snapshot freshness: ${allFresh ? 'fresh, skipping duplicate run' : 'stale, running collector'}`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `enabled=${collectorEnabled && !allFresh}\n`);
+          NODE
 
   # Reforger collection (priority - runs first)
   collect-reforger:
     needs: collector-gate
     if: needs.collector-gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

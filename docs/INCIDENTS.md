@@ -7,6 +7,30 @@ Formatas: `INC-YYYY-MM-DD-<short-slug>`.
 
 ---
 
+## INC-2026-09-15 · collector timeout + KV 504
+
+**Kategorija:** data-pipeline · **Poveikis:** vidutinis (abu snapshot'ai buvo
+stale; kolektorius nebaigė Reforger grandinės) · **Statusas:** mitigated
+
+### Šakninės priežastys
+
+1. Reforger kolektorius augant duomenų kiekiui viršijo `timeout-minutes: 15`;
+   priklausomi Arma 3 ir trending job'ai buvo praleisti.
+2. Cloudflare KV `PUT 504` buvo laikoma galutine klaida; retry dengė tik `429`.
+3. GitHub scheduleris ir išorinis fallbackas galėjo sukurti dubliuotą pilną run'ą,
+   didindami KV write operacijų skaičių.
+
+### Veiksmai
+
+| # | Veiksmas | Statusas |
+|---|---|---|
+| 1 | `collector-gate` snapshot freshness dedup (<75 min.) | DONE |
+| 2 | KV retry `429`/`5xx`/network ×3 + backoff | DONE |
+| 3 | Reforger timeout 15 → 25 min. | DONE |
+| 4 | PAT ekspozicija patikrinta su savininku — rotacija nereikalinga | DONE (savininko sprendimas) |
+
+---
+
 ## INC-2026-09-06 · edge Worker exceededMemory — serverio detail 503 audros
 
 **Kategorija:** edge · **Poveikis:** didelis (serverio detail puslapiai kraunasi ilgai / sekcijos neveikia; 75 error/val) · **Statusas:** closed (fix `6babe79` → 1.23.25)

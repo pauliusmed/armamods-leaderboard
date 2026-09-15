@@ -86,18 +86,27 @@ export class CloudflareKVClient {
         : this.baseUrl(`/values/${key}`);
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'text/plain',
-        },
-        body: value,
-      });
-      
-      if (response.status === 429 && i < maxRetries - 1) {
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'text/plain',
+          },
+          body: value,
+        });
+      } catch (error) {
+        if (i === maxRetries - 1) throw error;
         const delay = 2000 * (i + 1);
-        console.log(`  ⚠️ Rate limited (429). Retrying in ${delay/1000}s... (Bandymas ${i+1}/${maxRetries})`);
+        console.log(`  ⚠️ KV network error. Retrying in ${delay / 1000}s... (Attempt ${i + 1}/${maxRetries})`);
+        await sleep(delay);
+        continue;
+      }
+
+      if ((response.status === 429 || response.status >= 500) && i < maxRetries - 1) {
+        const delay = 2000 * (i + 1);
+        console.log(`  ⚠️ KV ${response.status}. Retrying in ${delay / 1000}s... (Attempt ${i + 1}/${maxRetries})`);
         await sleep(delay);
         continue;
       }

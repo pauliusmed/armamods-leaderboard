@@ -46,4 +46,18 @@ describe('CloudflareKVClient.put', () => {
 
     assert.ok(!calledUrl.includes('expiration_ttl'));
   });
+
+  it('retries transient 5xx responses', async () => {
+    let attempts = 0;
+    globalThis.fetch = (async () => {
+      attempts++;
+      if (attempts < 3) return { ok: false, status: 504 };
+      return { ok: true, status: 200 };
+    }) as any;
+
+    const kv = new CloudflareKVClient();
+    await kv.put('cache:test', 'value');
+
+    assert.equal(attempts, 3);
+  });
 });
