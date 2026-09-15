@@ -4,6 +4,16 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🔔 Stale alert į privatų kanalą su diagnostika (v1.23.39) - 2026-09-15
+- `stale-alert.yml` naudoja atskirą `DISCORD_ALERT_WEBHOOK_URL` (privatus admin
+  kanalas); `#announcements` lieka tik release'ams (alert'as ten pateko, nes abu
+  naudojo tą patį webhook'ą).
+- Alert embed'as papildytas: per-game mods/servers/KV totals, nuorodos į
+  collector run'us ir `/api/health`; logika išskirta į testuojamas funkcijas
+  (`collectStale`, `buildEmbed`) + `post-stale-alert.test.ts`.
+- **Heavy CI: required because** workflow/env + naujas testas; root testai
+  paleisti pilnai.
+
 ### 🛡️ Collectoriaus atsparumas ir KV biudžeto gate (v1.23.38) - 2026-09-15
 - `collector-gate` praleidžia dubliuotą pilną run'ą, kai Reforger ir Arma 3
   snapshot'ai jaunesni nei 75 min.; fallback triggeris lieka aktyvus.

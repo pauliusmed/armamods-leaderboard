@@ -51,7 +51,7 @@ pranešimams (pav. serverio perkėlimas, reitingų politikos pakeitimai).
 | `#welcome` | Pasisveikinimas, taisyklės, nuorodos (GitHub, svetainė, šis dokumentas) |
 | `#rules` | Trumpa taisyklių santrauka: pagarba, jokio spam'o, jokio reitingų manipuliavimo |
 | `#announcements` | Tik admin postina: release notes, statuso pokyčiai, donacijų etapai |
-| `#status` | Robotas/rankiniu būdu skelbia duomenų sinchronizacijos būseną (stale/ok) |
+| `#status` (privatus) | Mato tik adminai: automatiniai stale/system alertai su diagnostika (webhook `DISCORD_ALERT_WEBHOOK_URL`) |
 
 ### Bendruomenė
 
@@ -106,3 +106,11 @@ angliškas. Automatika siunčia tik pastarąjį.
 
 Be `DISCORD_RELEASES.md` pakeitimo pranešimas nesiunčiamas — taip išvengiama spam'o
 kiekvienam push'ui. CHANGELOG.md pakeitimai pranešimo nebeišsiunčia.
+
+## Automatiniai system alertai (privatus kanalas)
+
+`stale-alert.yml` kas valandą tikrina `/api/health`; kai duomenys pasenę (>3h),
+alert'as siunčiamas į privatų admin kanalą su diagnostika (per-game
+mods/servers/KV totals, nuorodos į Actions run'us ir health). Tam naudojamas
+atskiras webhook `DISCORD_ALERT_WEBHOOK_URL` — `#announcements` lieka tik
+release'ams.
