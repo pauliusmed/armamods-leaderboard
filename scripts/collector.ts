@@ -28,6 +28,18 @@ import {
   WORKSHOP_KV_TTL,
 } from '../web/functions/lib/workshop-fetch.ts';
 import {
+  applySizesFromBundle,
+  buildModSizesBundle,
+  modSizesBundleCacheKey,
+  MOD_SIZES_BUNDLE_TTL_SECONDS,
+  type ModSizesBundle,
+} from '../web/functions/lib/mod-sizes-bundle.ts';
+import {
+  applyModFieldsToRows,
+  loadModFieldsBundle,
+  type ModFieldsBundle,
+} from '../web/functions/lib/mod-fields-bundle.ts';
+import {
   workshopListByIds,
   sizeAuthorFromApiRow,
 } from '../web/functions/lib/workshop-api.ts';
@@ -227,70 +239,87 @@ async function attachBmLastSeenTimestamps(
   }
 }
 
-/** Copy cached workshop authors into leaderboard mod rows (no live scrape). */
-async function attachModAuthorsFromKvCache(
-  kv: CloudflareKVClient,
-  game: GameType,
-  modList: Array<{ id: string; author?: string | null }>
-): Promise<void> {
-  if (game !== 'reforger') return;
-
-  const concurrency = 25;
-  let attached = 0;
-
-  for (let i = 0; i < modList.length; i += concurrency) {
-    const batch = modList.slice(i, i + concurrency);
-    await Promise.all(
-      batch.map(async (mod) => {
-        if (mod.author) return;
-        const key = `cache:mod-author:reforger:${mod.id.toUpperCase()}`;
-        try {
-          const raw = await kv.get(key, 'text');
-          const author = typeof raw === 'string' ? raw.trim() : null;
-          if (author) {
-            mod.author = author;
-            attached++;
-          }
-        } catch {
-          /* cache miss */
-        }
-      })
-    );
+/**
+ * Kolektoriaus mod fields bundle'io įkėlimas (1 read/run). Tas pats objektas
+ * vėliau naudojamas bundle merge — antram read'ui nereikia. Jei read'as
+ * žlunga — grąžinam null su garsiu warn: autoriams šį run'ą pridengs
+ * workshop warm, o chunk'ai liks be bundle laukų (t.y. senasis elgesys).
+ */
+async function loadFieldsBundleForCollector(kv: CloudflareKVClient): Promise<ModFieldsBundle | null> {
+  try {
+    return await loadModFieldsBundle(kv as unknown as KVNamespace);
+  } catch (err) {
+    console.warn('  ⚠️ Mod fields bundle neperskaitytas — autorius/thumb/status šį runą praleidžiam:', err);
+    return null;
   }
-
-  console.log(`  - author attached: ${attached}/${modList.length} from workshop KV cache`);
 }
 
-/** Copy workshop download sizes from KV into leaderboard mod rows (no live scrape). */
-async function attachModSizesFromKvCache(
+/**
+ * Attach mod download sizes iš agreguoto bundle'o (1 read/run vietoj ~22k
+ * per-mod read'ų — anksčiau tai buvo didžiausias KV reads generatorius).
+ * Jei bundle dar nesukurtas (pirmas run'as po deploy) — vienkartinis
+ * bootstrap perskaito per-mod size raktus dabartinei modList ir jį sukuria.
+ * Grąžina kontekstą: persistModSizesBundle po warm į jį mergins šviežius dydžius.
+ */
+async function attachModSizesFromBundle(
   kv: CloudflareKVClient,
   game: GameType,
   modList: Array<{ id: string; sizeBytes?: number | null }>
-): Promise<void> {
+): Promise<{ bundle: ModSizesBundle }> {
   const gameKey = game === 'arma3' ? 'arma3' : 'reforger';
-  const concurrency = 25;
-  let attached = 0;
-
-  for (let i = 0; i < modList.length; i += concurrency) {
-    const batch = modList.slice(i, i + concurrency);
-    await Promise.all(
-      batch.map(async (mod) => {
-        const key = `cache:mod-size:${gameKey}:${mod.id.toUpperCase()}`;
-        try {
-          const raw = await kv.get(key, 'json');
-          const n = typeof raw === 'number' ? raw : parseInt(String(raw ?? ''), 10);
-          if (Number.isFinite(n) && n > 0) {
-            mod.sizeBytes = n;
-            attached++;
-          }
-        } catch {
-          /* cache miss */
-        }
-      })
-    );
+  let bundle: ModSizesBundle | null = null;
+  try {
+    bundle = (await kv.get(modSizesBundleCacheKey(gameKey), 'json')) as ModSizesBundle | null;
+  } catch (err) {
+    console.warn(`  ⚠️ Sizes bundle read klaida — einam į per-mod bootstrap:`, err);
   }
 
-  console.log(`  - sizeBytes attached: ${attached}/${modList.length} from workshop KV cache`);
+  let bootstrapped = false;
+  if (!bundle || !bundle.sizes || typeof bundle.sizes !== 'object') {
+    bootstrapped = true;
+    const seeded: Record<string, number> = {};
+    const concurrency = 25;
+    for (let i = 0; i < modList.length; i += concurrency) {
+      const batch = modList.slice(i, i + concurrency);
+      await Promise.all(
+        batch.map(async (mod) => {
+          try {
+            const raw = await kv.get(sizeCacheKey(gameKey, mod.id), 'text');
+            const n = typeof raw === 'number' ? raw : parseInt(String(raw ?? ''), 10);
+            if (Number.isFinite(n) && n > 0) seeded[mod.id.toUpperCase()] = n;
+          } catch {
+            /* cache miss — dydis atsiras per workshop warm */
+          }
+        })
+      );
+    }
+    bundle = { generatedAt: new Date().toISOString(), sizes: seeded };
+    console.log(`  - sizes bundle bootstrap: perskaityti per-mod raktai ${modList.length} modams (vienkartinis)`);
+  }
+
+  const attached = applySizesFromBundle(bundle, modList);
+  console.log(`  - sizeBytes attached: ${attached}/${modList.length} from sizes bundle${bootstrapped ? ' (bootstrap)' : ''}`);
+  return { bundle };
+}
+
+/**
+ * Po workshop warm: šio run'o žinomi dydžiai (BM eilutės + šviežias scrape)
+ * mergerinami į bundle ir rašomi atgal (1 write/run). Per-mod raktai rašomi
+ * toliau warm funkcijose — jų reikia worker'io resolveModSizeBytes fallback'ui.
+ */
+async function persistModSizesBundle(
+  kv: CloudflareKVClient,
+  game: GameType,
+  ctx: { bundle: ModSizesBundle },
+  modList: Array<{ id: string; sizeBytes?: number | null }>
+): Promise<void> {
+  const gameKey = game === 'arma3' ? 'arma3' : 'reforger';
+  const updates = modList.map((m) => ({ id: m.id, sizeBytes: m.sizeBytes ?? null }));
+  const bundle = buildModSizesBundle(updates, ctx.bundle);
+  await kv.put(modSizesBundleCacheKey(gameKey), JSON.stringify(bundle), {
+    expirationTtl: MOD_SIZES_BUNDLE_TTL_SECONDS,
+  });
+  console.log(`  - sizes bundle: ${Object.keys(bundle.sizes).length} dydžių → ${modSizesBundleCacheKey(gameKey)}`);
 }
 
 /**
@@ -725,10 +754,22 @@ interface ServerMod {
   // Attach workshop download sizes from KV cache (filled by mod detail / metadata fetch).
   const unavailableWorkshopIds: string[] = [];
   const warmedCopies = new Map<string, { summary?: string | null; description?: string | null }>();
-  await attachModSizesFromKvCache(kv, game, modList);
-  await attachModAuthorsFromKvCache(kv, game, modList);
+  // Bundle'as įkeliamas VIENĄ kartą: autoriams (žemiau) ir modfields merge'ui
+  // precomputed sekcijoje. Autoriai — iš bundle'o, ne iš ~22k per-mod raktų.
+  const modFieldsBundle = game === 'reforger' ? await loadFieldsBundleForCollector(kv) : null;
+  if (modFieldsBundle) {
+    const applied = applyModFieldsToRows(
+      modFieldsBundle,
+      modList as Parameters<typeof applyModFieldsToRows>[1]
+    );
+    console.log(`  - author attached: ${applied}/${modList.length} from mod fields bundle`);
+  }
+  const sizesBundleCtx = await attachModSizesFromBundle(kv, game, modList);
   await warmTopModSizesFromWorkshop(kv, game, modList, 300, unavailableWorkshopIds, warmedCopies);
   await warmServerModpackModSizes(kv, game, serverList, modList, 500, unavailableWorkshopIds, warmedCopies);
+  // Šviežiai sušildyti (scrape) dydžiai patenka į bundle tik čia — todėl
+  // rašymas po warm, ne po attach.
+  await persistModSizesBundle(kv, game, sizesBundleCtx, modList);
   const searchIndexSize = await persistModsSearchIndexFromWarm(kv, game, modList, warmedCopies);
   if (searchIndexSize > 0) {
     console.log(`  - mods search index: ${searchIndexSize} entries (${warmedCopies.size} warmed this run)`);
@@ -933,7 +974,7 @@ interface ServerMod {
           buildModFieldsBundle,
           MOD_FIELDS_BUNDLE_TTL_SECONDS,
         } = await import('../web/functions/lib/mod-fields-bundle.ts');
-        const existingBundle = await kv.get(modFieldsBundleCacheKey('reforger'), 'json');
+        const existingBundle = modFieldsBundle;
 
         // Šio run'o žinios: author visiems (leaderboard eilutės po warm),
         // thumb/status — precomputed slice'ui (pririšta aukščiau).

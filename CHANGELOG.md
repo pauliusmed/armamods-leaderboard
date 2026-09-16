@@ -4,6 +4,29 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 💰 Kolektoriaus KV reads: sizes bundle — 1 raktas vietoj ~22k (v1.23.40) - 2026-09-16
+
+- **Problema (GraphQL auditas 09-16):** pilnas kolektoriaus run'as vartodavo
+  ~45–50K KV reads (`attachModSizes` ~22k per-mod read'ai + author fallback
+  ilgojai uodegai); account'o reads trajektorija ~33M/mėn (~$12,5/mėn overage),
+  3× virš `COST_GUARDRAILS` < 10M politikos. ~90% read'ų buvo kolektoriaus
+  (REST API), ne worker'io — worker'io dalis tik ~3–5 reads/request.
+- **Fix:** naujas agreguotas `cache:bundle:modsizes:<game>` raktas
+  (`web/functions/lib/mod-sizes-bundle.ts`): attach skaito 1 raktą, po
+  workshop warm šviežiai nuskaityti dydžiai mergerinami atgal (1 write/run).
+  Autoriams — jau esantis modfields bundle (jis dabar įkeliamas vieną kartą
+  per run'ą ir panaudojamas ir merge'ui — vienas read'as mažiau). Per-mod
+  size/author raktai rašomi toliau (worker'io `resolveModSizeBytes` fallback'ui
+  ir author fallback'ui), pats worker'is nepaliestas. Vienkartinis bootstrap
+  pirmame run'e po deploy perskaito per-mod raktus (kaip modfields darė).
+- **Prognozė:** ~33M → ~2–3M reads/mėn, $0 overage. Patikra po deploy:
+  24h GraphQL `kvOperationsAdaptiveGroups` palyginimas + collector log'e
+  „sizeBytes attached … from sizes bundle".
+- **Heavy CI: required because** keičiama KV cache schema + kolektorius;
+  pilni testai paleisti lokaliai: root 280/280 (10 naujų mod-sizes-bundle
+  testų, registruoti package.json sąraše), web vitest 45/45, tsc ✅,
+  wrangler dry-run ✅ (lint: 1 pre-existing error `usePinnedFavoriteMods.ts:38`).
+
 ### 🔔 Stale alert į privatų kanalą su diagnostika (v1.23.39) - 2026-09-15
 - `stale-alert.yml` naudoja atskirą `DISCORD_ALERT_WEBHOOK_URL` (privatus admin
   kanalas); `#announcements` lieka tik release'ams (alert'as ten pateko, nes abu
