@@ -23,8 +23,8 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
   24h GraphQL `kvOperationsAdaptiveGroups` palyginimas + collector log'e
   „sizeBytes attached … from sizes bundle".
 - **Heavy CI: required because** keičiama KV cache schema + kolektorius;
-  pilni testai paleisti lokaliai: root 280/280 (10 naujų mod-sizes-bundle
-  testų, registruoti package.json sąraše), web vitest 45/45, tsc ✅,
+  pilni testai paleisti lokaliai: root 280/280 (9 nauji mod-sizes-bundle
+  testai, registruoti package.json sąraše), web vitest 45/45, tsc ✅,
   wrangler dry-run ✅ (lint: 1 pre-existing error `usePinnedFavoriteMods.ts:38`).
 
 ### 🔔 Stale alert į privatų kanalą su diagnostika (v1.23.39) - 2026-09-15
