@@ -762,7 +762,7 @@ interface ServerMod {
       modFieldsBundle,
       modList as Parameters<typeof applyModFieldsToRows>[1]
     );
-    console.log(`  - author attached: ${applied}/${modList.length} from mod fields bundle`);
+    console.log(`  - mod fields attached: ${applied} applications across ${modList.length} mods (author+thumb+status) from mod fields bundle`);
   }
   const sizesBundleCtx = await attachModSizesFromBundle(kv, game, modList);
   await warmTopModSizesFromWorkshop(kv, game, modList, 300, unavailableWorkshopIds, warmedCopies);

@@ -105,9 +105,12 @@ Two phases:
 7. **Scenario leaderboard** (`buildScenarioRanking`): groups servers by `scenarioName`,
    sums players, computes avg fill %, picks top server by SQE rank, assigns `rank`
    by total players. Written to `cache:ranking:scenarios:{game}` (one KV write).
-8. **Mod sizes & server modpack** (`attachModSizesFromKvCache`, `warmTopModSizesFromWorkshop`,
-   `attachServerModpackSizes`): copies/scrapes workshop version sizes into
-   `cache:mod-size:{game}:{id}`; computes `modpackEstimatedBytes` per server for
+8. **Mod sizes & server modpack** (`attachModSizesFromBundle`, `warmTopModSizesFromWorkshop`,
+   `persistModSizesBundle`, `attachServerModpackSizes`): attaches workshop version sizes from the
+   aggregated `cache:bundle:modsizes:{game}` (1 KV read/run nuo v1.23.40 — anksčiau `attachModSizesFromKvCache`
+   skaitė po raktą vienam modui, ~22k reads/run), scrapes missing top mods into
+   `cache:mod-size:{game}:{id}` (per-mod raktai rašomi toliau — worker'io fallback'ui) ir po warm
+   šviežius dydžius sujungia atgal į bundle; computes `modpackEstimatedBytes` per server for
    the leaderboard and Storage Planner.
 9. **Server uptime samples** — each history point records per-server `online` (hourly)
    or merged `on`/`n` (daily/weekly) for availability charts; `bmLastSeenAt` on
@@ -138,7 +141,9 @@ suffix, Arma 3 uses `:arma3`):
 | `cache:mods_search_index:{game}` | description search index (name+author+summary+desc snippet; Reforger, built by collector warm) |
 | `cache:stats`, `cache:lastUpdate` | global counts |
 | `cache:trending:{daily\|weekly\|monthly}` | precomputed trending |
-| `cache:mod-size:{game}:{MODID}` | workshop version download size (7d) |
+| `cache:bundle:modfields:reforger` | aggregated author/thumbnail/workshopStatus for all mods (v1.23.32; worker skaito 1 raktą) |
+| `cache:bundle:modsizes:{game}` | aggregated sizeBytes for all mods (v1.23.40; collector skaito 1 raktą/run) |
+| `cache:mod-size:{game}:{MODID}` | workshop version download size (7d; per-mod fallback'as worker'io resolveModSizeBytes) |
 | `cache:server_bm_last_seen:{game}` | last collector scan when each server was online |
 | `history:{hourly\|daily\|weekly\|monthly\|yearly}:{game}:{i}` | sharded time series (mods + servers incl. uptime samples) |
 

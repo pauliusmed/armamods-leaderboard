@@ -51,10 +51,22 @@ Taisyklės:
 - `/api/mods` non-default laukai (author/thumbnail/workshopStatus) skaitomi iš
   vieno agreguoto `cache:bundle:modfields:reforger` rakto (v1.23.32) —
   ne iš ~22k per-mod raktų.
+- **Kolektorius buvo didžiausias reads generatorius** (09-16 auditas):
+  per-mod size/author read'ai iš ~22k sąrašo kas pilną run'ą → ~45–50K
+  reads/run (~33M/mėn tempas, ~$12,5/mėn). v1.23.40: agreguotas
+  `cache:bundle:modsizes:<game>` (1 read + 1 write/run), author'iai — iš
+  modfields bundle. **Išmatuota 09-17 (15h langas): 728K → 102K reads/dieną
+  (~3.1M/mėn, $0)** — < 5M tikslas tenkintas. Per-mod raktai rašomi toliau
+  (worker'io fallback'ams); jų loop'inis SKAITYMAS kolektoriuje grįžta tik
+  per vienkartinį bootstrap (bundle'ui dingus).
 - Naujos per-mod raktų „ventiliacijos" (loop'ai su `kv.get` pagal modą)
   rašant naują funkcionalumą — neleistinos: pirmiausia apsvarstyti bundle.
 - Known fazės 2 (dar neoptimizuota): mod detail server chunk scan (~15
-  reads), istorijos shard skenavimas (~28 reads).
+  reads), istorijos shard skenavimas (~28 reads). **09-17: istorijos full-scan
+`fetchModHistoryPoints` (worker.ts) įrodyta kaip `exceededMemory` šaltinis —
+  19 klaidų per 09-16 (5+14 vienose minutėse, kai kelios lygiagrečios
+  istorijos užklausos toje pačioje izoliate kartu viršija 128 MB).** Fix'as —
+  skaityti tik uodegos shard'us pagal `days` langą (chunk'ai laike surūšiuoti).
 
 ## D1
 
