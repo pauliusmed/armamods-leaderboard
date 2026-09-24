@@ -4,6 +4,29 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🗃️ Worker KV reads B etapas: istorijos R2 materializavimas (v1.23.42) - 2026-09-25
+
+- **Problema:** history/mod-changes endpointai kiekviename requeste skaito
+  visus KV shardus (09-24: server history 6 228 + mod history 3 948 +
+  mod-changes 5 706 req), todėl šie keliai liko didžiausi KV reads šaltiniai
+  po A etapo.
+- **Sprendimas:** lazy R2 read-through cache (`web/functions/lib/history-cache.ts`).
+  Pirmas requestas po collector run atlieka įprastą KV scan ir per
+  `c.executionCtx.waitUntil` įrašo rezultatą į `armamods-history` bucket'ą
+  (`HISTORY_BUCKET` binding); kiti to paties entity + query varianto requestai
+  skaito 1 R2 `get`. Versija: `cache:lastUpdate` istorijai, modpack-diff
+  fingerprint data mod-changes. R2 nėra/objektas pasenęs → dokumentuotas
+  fallback į seną kelią su `[HISTORY_R2]` warning. API kontraktas ir
+  collector'ius nekeisti.
+- **Išlaidos:** R2 Class A (writes) ir Class B (reads) lieka included ribose
+  (~15k writes/dieną viršutinė riba, 1M/mėn); KV writes nepadidėjo.
+- **Testai:** root 291/291 PASS (6 nauji `history-cache` testai), web vitest
+  45/45, `tsc --noEmit` švarus, wrangler dry-run rodo `HISTORY_BUCKET`
+  binding'ą. Lint: 1 pre-existing error `usePinnedFavoriteMods.ts:38`.
+- **Heavy CI: required because** keičiasi cache schema ir istorijos read
+  keliai; reikia realaus deploy smoke (R2 bucket `armamods-history` jau
+  sukurtas).
+
 ### 🧊 Worker KV reads A etapas: health cache + meta/index TTL (v1.23.41) - 2026-09-25
 
 - **Problema (billing 09-23 + Observability 09-24):** `trending_snapshots`

@@ -27,6 +27,12 @@ run_worker_first = ["/api/*", "/sitemap.xml", "/sitemap/*", "/mod/*", "/server/*
 binding = "TRENDING_KV"
 id = "a8f21c595e39452e95e7e41e3d812013"
 
+# Per-entity history/mod-changes materialization (read-through cache).
+# Worker'is rašo vieną objektą po KV scan; kiti requestai skaito 1 R2 get.
+[[r2_buckets]]
+binding = "HISTORY_BUCKET"
+bucket_name = "armamods-history"
+
 # Per-IP request limiter for page/API routes (bot bursts like 5.9k req/h on one mod page).
 # Period must be 10 or 60 s (platform constraint); counters are per Cloudflare location.
 [[ratelimits]]

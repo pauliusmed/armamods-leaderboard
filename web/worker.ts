@@ -80,9 +80,15 @@ import {
 } from './functions/lib/sitemap';
 import { loadListIdsFromKv } from './functions/lib/sitemap-kv';
 import { cached } from './functions/lib/module-cache';
+import {
+  entityHistoryObjectKey,
+  readMaterializedEntityHistory,
+  writeMaterializedEntityHistory,
+} from './functions/lib/history-cache';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
+  HISTORY_BUCKET?: R2Bucket;
   ASSETS: Fetcher;
   CLOUDFLARE_API_TOKEN?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
@@ -161,6 +167,23 @@ type SqeIndex = Record<string, SqeIndexEntry>;
 
 const SQE_INDEX_CACHE_TTL_MS = 60_000;
 const KV_META_CACHE_TTL_MS = 60_000;
+const HISTORY_VERSION_CACHE_TTL_MS = 10_000;
+
+/** Istorijos versija = paskutinis collector run'as; keičiasi kas run'ą. */
+async function getHistoryVersion(kv: KVNamespace, game: GameType): Promise<string | null> {
+  const keys = getKVKeys(game);
+  return cached(`historyversion:${game}`, HISTORY_VERSION_CACHE_TTL_MS, () =>
+    kv.get(keys.LAST_UPDATE, 'text')
+  );
+}
+
+/** Mod-changes versija = modpack diff fingerprint data; keičiasi kartą per dieną. */
+async function getModChangesVersion(kv: KVNamespace, game: GameType): Promise<string | null> {
+  return cached(`modchangesversion:${game}`, HISTORY_VERSION_CACHE_TTL_MS, async () => {
+    const fingerprint = await kv.get(modpackDiffKeys(game).fingerprint, 'json') as { date?: string } | null;
+    return fingerprint?.date ?? null;
+  });
+}
 
 async function loadSqeIndex(kv: KVNamespace, game: GameType): Promise<SqeIndex | null> {
   return cached(`sqeindex:${game}`, SQE_INDEX_CACHE_TTL_MS, async () => {
@@ -1209,6 +1232,25 @@ app.get('/mods/:modId/history', async (c) => {
   const days = requestingAll ? 9999 : parseInt(daysString);
   const plan = resolveHistoryQuery(days, game as HistoryGameType);
 
+  const historyVersion = await getHistoryVersion(c.env.TRENDING_KV, game);
+  const materializedKey = entityHistoryObjectKey(
+    game,
+    'mod-history',
+    `${plan.baseKey}:${plan.sliceCount}`,
+    modId
+  );
+  const materialized = await readMaterializedEntityHistory<any[]>(
+    c.env.HISTORY_BUCKET,
+    materializedKey,
+    historyVersion
+  );
+  if (materialized) {
+    const cachedResponse = c.json({ data: materialized });
+    cachedResponse.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, cachedResponse.clone()));
+    return cachedResponse;
+  }
+
   console.log(`[HISTORY] Fetching ${plan.baseKey} shards for ${modId}...`);
 
   let modHistory = await fetchModHistoryPoints(c.env.TRENDING_KV, modId, plan.baseKey);
@@ -1223,7 +1265,11 @@ app.get('/mods/:modId/history', async (c) => {
   }
   const finished = Date.now() - start;
   console.log(`[HISTORY] Prepared ${finalHistory.length} nodes in ${finished}ms`);
-  
+
+  c.executionCtx.waitUntil(
+    writeMaterializedEntityHistory(c.env.HISTORY_BUCKET, materializedKey, historyVersion, finalHistory)
+  );
+
   const finalResponse = c.json({ data: finalHistory });
   
   // Cache the response for 10 minutes — history taškai atsinaujina collector'iaus ciklu
@@ -1489,6 +1535,29 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
   if (cacheResponse) return cacheResponse;
 
   const keys = modpackDiffKeys(game);
+  const modChangesVersion = await getModChangesVersion(c.env.TRENDING_KV, game);
+  const materializedKey = entityHistoryObjectKey(game, 'mod-changes', String(days), serverId);
+  const materialized = await readMaterializedEntityHistory<{
+    data: unknown[];
+    daysAvailable: number;
+    lastSnapshotDate: string | null;
+  }>(c.env.HISTORY_BUCKET, materializedKey, modChangesVersion);
+  if (materialized) {
+    const cachedResponse = c.json({
+      data: materialized.data,
+      meta: {
+        days,
+        retention: MODPACK_DIFF_RETENTION_DAYS,
+        tracking: true,
+        daysAvailable: materialized.daysAvailable,
+        lastSnapshotDate: materialized.lastSnapshotDate,
+      },
+    });
+    cachedResponse.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, cachedResponse.clone()));
+    return cachedResponse;
+  }
+
   const meta = (await c.env.TRENDING_KV.get(`${keys.history}:meta`, 'json')) as {
     chunks?: number;
   } | null;
@@ -1516,6 +1585,14 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
   const data = extractServerModChanges(history, serverId, days);
   // lastSnapshotDate — newest day in the ring, so the UI can show "data as of"
   // and users don't mistake the once-daily cadence for stale data.
+  const lastSnapshotDate = history.length > 0 ? history[history.length - 1]?.time ?? null : null;
+  c.executionCtx.waitUntil(
+    writeMaterializedEntityHistory(c.env.HISTORY_BUCKET, materializedKey, modChangesVersion, {
+      data,
+      daysAvailable: history.length,
+      lastSnapshotDate,
+    })
+  );
   const response = c.json({
     data,
     meta: {
@@ -1523,7 +1600,7 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
       retention: MODPACK_DIFF_RETENTION_DAYS,
       tracking: true,
       daysAvailable: history.length,
-      lastSnapshotDate: history.length > 0 ? history[history.length - 1]?.time ?? null : null,
+      lastSnapshotDate,
     },
   });
   // Daily diff — 1 h TTL saugus, nes collector'ius rašo kartą per dieną
@@ -1867,6 +1944,25 @@ app.get('/servers/:serverId/history', async (c) => {
   const days = requestingAll ? 9999 : parseInt(daysString);
   let plan = resolveHistoryQuery(days, game as HistoryGameType);
 
+  const historyVersion = await getHistoryVersion(c.env.TRENDING_KV, game);
+  const materializedKey = entityHistoryObjectKey(
+    game,
+    'server-history',
+    `${plan.baseKey}:${plan.sliceCount}`,
+    serverId
+  );
+  const materialized = await readMaterializedEntityHistory<any[]>(
+    c.env.HISTORY_BUCKET,
+    materializedKey,
+    historyVersion
+  );
+  if (materialized) {
+    const cachedResponse = c.json({ data: materialized });
+    cachedResponse.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600');
+    c.executionCtx.waitUntil(cache.put(c.req.raw, cachedResponse.clone()));
+    return cachedResponse;
+  }
+
   let meta = (await c.env.TRENDING_KV.get(`${plan.baseKey}:meta`, 'json')) as { chunks?: number } | null;
   if (!meta?.chunks && plan.fallbackKey) {
     plan = {
@@ -1939,6 +2035,11 @@ app.get('/servers/:serverId/history', async (c) => {
   }
 
   const finalHistory = smoothServerHistory(rawHistory);
+
+  c.executionCtx.waitUntil(
+    writeMaterializedEntityHistory(c.env.HISTORY_BUCKET, materializedKey, historyVersion, finalHistory)
+  );
+
   const finalResponse = c.json({ data: finalHistory });
   finalResponse.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
