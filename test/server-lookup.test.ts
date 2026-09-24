@@ -1,10 +1,13 @@
-import { describe, it } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   findServerInChunks,
   buildServerIndex,
   ServerLookup,
 } from '../web/functions/lib/server-lookup.ts';
+import { clearModuleCache } from '../web/functions/lib/module-cache.ts';
+
+beforeEach(() => clearModuleCache());
 
 const chunk = JSON.stringify([
   { id: '111', name: 'Alpha Server', mods: [] },

@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   findModAliasTarget,
@@ -7,6 +7,9 @@ import {
   modAliasKey,
   normalizeModName,
 } from '../web/functions/lib/mod-alias.ts';
+import { clearModuleCache } from '../web/functions/lib/module-cache.ts';
+
+beforeEach(() => clearModuleCache());
 
 describe('normalizeModName', () => {
   it('lowercases and collapses whitespace', () => {

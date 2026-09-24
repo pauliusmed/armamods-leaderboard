@@ -1,4 +1,7 @@
 import type { GameType } from '../api/history-query';
+import { cached } from './module-cache';
+
+const SERVER_INDEX_CACHE_TTL_MS = 60_000;
 
 function findMatchingBrace(text: string, openPos: number): number {
   let depth = 0;
@@ -99,8 +102,12 @@ export class ServerLookup {
   static async create(kv: KVNamespace, game: GameType): Promise<ServerLookup | null> {
     const lookup = new ServerLookup(kv, game);
     const [index, meta] = await Promise.all([
-      lookup.kv.get(getServersIndexKey(game), 'json') as Promise<ServerIndexPayload | null>,
-      lookup.kv.get(`${getServersKey(game)}:meta`, 'json') as Promise<{ chunks?: number } | null>,
+      cached<ServerIndexPayload | null>(`serverindex:${game}`, SERVER_INDEX_CACHE_TTL_MS, () =>
+        lookup.kv.get(getServersIndexKey(game), 'json') as Promise<ServerIndexPayload | null>
+      ),
+      cached<{ chunks?: number } | null>(`${getServersKey(game)}:meta`, SERVER_INDEX_CACHE_TTL_MS, () =>
+        lookup.kv.get(`${getServersKey(game)}:meta`, 'json') as Promise<{ chunks?: number } | null>
+      ),
     ]);
     lookup.index = index ?? null;
     lookup.chunkCount = meta?.chunks ?? 0;

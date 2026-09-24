@@ -4,6 +4,27 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🧊 Worker KV reads A etapas: health cache + meta/index TTL (v1.23.41) - 2026-09-25
+
+- **Problema (billing 09-23 + Observability 09-24):** `trending_snapshots`
+  vartodavo ~240K KV reads/dieną; didžiausi šaltiniai: `/api/health`
+  (4 905 req × 8 reads = ~39K), history shardų skenavimas (server 6 228 +
+  mod 3 948 req × visi chunkai) ir server lookup meta/index reads
+  (~14K detail + 3,9K storage). Account'o overage už 09-09–09-23: KV $1,50.
+- **Fix:** naujas `web/functions/lib/module-cache.ts` (TTL + Promise
+  dedupe, ≤200 įrašų) — juo cache'inami tik maži raktai: `${base}:meta`,
+  SQE index, alias index, server index. `/api/health` gauna
+  `Cache-Control: public, max-age=60` + atskirą cache (`armamods:health`);
+  health KV reads per request sumažėja nuo 8 iki 0 ant cache hit.
+  History TTL 300→600 s, mod-changes 300→3600 s (collector rašo rečiau).
+  API kontraktas nekeistas.
+- **Testai:** root 285/285 PASS (nauji 5 `module-cache` testai, registruoti
+  `package.json`), web vitest 45/45, `tsc --noEmit` švarus, wrangler
+  dry-run OK. Lint: 1 pre-existing error `usePinnedFavoriteMods.ts:38`
+  (netaisytas — ne šio pakeitimo).
+- **Heavy CI: required because** keičiamasi KV/cache schema ir Worker read
+  keliai.
+
 ### 💰 Kolektoriaus KV reads: sizes bundle — 1 raktas vietoj ~22k (v1.23.40) - 2026-09-16
 
 - **Problema (GraphQL auditas 09-16):** pilnas kolektoriaus run'as vartodavo

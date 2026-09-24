@@ -79,6 +79,7 @@ import {
   xmlResponse,
 } from './functions/lib/sitemap';
 import { loadListIdsFromKv } from './functions/lib/sitemap-kv';
+import { cached } from './functions/lib/module-cache';
 
 type Bindings = {
   TRENDING_KV: KVNamespace;
@@ -158,22 +159,27 @@ function getKVKeys(game: GameType) {
 type SqeIndexEntry = { r: number; p: number };
 type SqeIndex = Record<string, SqeIndexEntry>;
 
+const SQE_INDEX_CACHE_TTL_MS = 60_000;
+const KV_META_CACHE_TTL_MS = 60_000;
+
 async function loadSqeIndex(kv: KVNamespace, game: GameType): Promise<SqeIndex | null> {
-  const keys = getKVKeys(game);
-  const index = await kv.get(keys.SERVER_SQE, 'json') as SqeIndex | null;
-  if (index && Object.keys(index).length > 0) return index;
+  return cached(`sqeindex:${game}`, SQE_INDEX_CACHE_TTL_MS, async () => {
+    const keys = getKVKeys(game);
+    const index = await kv.get(keys.SERVER_SQE, 'json') as SqeIndex | null;
+    if (index && Object.keys(index).length > 0) return index;
 
-  // Fallback: top-200 leaderboard until full index is written
-  const ranking = await kv.get(keys.SERVER_RANKING, 'json') as Array<{ id?: string; rank?: number; points?: number }> | null;
-  if (!ranking?.length) return null;
+    // Fallback: top-200 leaderboard until full index is written
+    const ranking = await kv.get(keys.SERVER_RANKING, 'json') as Array<{ id?: string; rank?: number; points?: number }> | null;
+    if (!ranking?.length) return null;
 
-  const fallback: SqeIndex = {};
-  for (const item of ranking) {
-    if (item?.id && item.rank != null) {
-      fallback[item.id] = { r: item.rank, p: item.points ?? 0 };
+    const fallback: SqeIndex = {};
+    for (const item of ranking) {
+      if (item?.id && item.rank != null) {
+        fallback[item.id] = { r: item.rank, p: item.points ?? 0 };
+      }
     }
-  }
-  return Object.keys(fallback).length > 0 ? fallback : null;
+    return Object.keys(fallback).length > 0 ? fallback : null;
+  });
 }
 
 function enrichServersWithSqe(servers: any[], sqeIndex: SqeIndex | null): any[] {
@@ -201,7 +207,7 @@ function enrichServerWithSqe(server: any, sqeIndex: SqeIndex | null): any {
 async function getChunkedData(kv: KVNamespace, baseKey: string, maxChunks?: number): Promise<any[]> {
   const start = Date.now();
   try {
-    const meta = await kv.get(`${baseKey}:meta`, 'json') as any;
+    const meta = await cached(`${baseKey}:meta`, KV_META_CACHE_TTL_MS, () => kv.get(`${baseKey}:meta`, 'json')) as any;
     if (!meta || !meta.chunks) {
         console.log(`[KV] No meta or chunks for ${baseKey}`);
         return [];
@@ -1220,8 +1226,8 @@ app.get('/mods/:modId/history', async (c) => {
   
   const finalResponse = c.json({ data: finalHistory });
   
-  // Cache the response for 5 minutes
-  finalResponse.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  // Cache the response for 10 minutes — history taškai atsinaujina collector'iaus ciklu
+  finalResponse.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
   
   return finalResponse;
@@ -1520,7 +1526,8 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
       lastSnapshotDate: history.length > 0 ? history[history.length - 1]?.time ?? null : null,
     },
   });
-  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  // Daily diff — 1 h TTL saugus, nes collector'ius rašo kartą per dieną
+  response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -1710,6 +1717,10 @@ app.get('/trending/:period?', async (c) => {
 // COMPREHENSIVE HEALTH CHECK
 // ──────────────────────────────────────────────
 app.get('/health', async (c) => {
+  const cache = await caches.open('armamods:health');
+  const cacheResponse = await cache.match(c.req.raw);
+  if (cacheResponse) return cacheResponse;
+
   const start = Date.now();
   const checks: Record<string, unknown> = {};
   const errors: string[] = [];
@@ -1719,10 +1730,10 @@ app.get('/health', async (c) => {
     const gameStart = Date.now();
     try {
       const [stats, modsMeta, serversMeta, lastUpdate] = await Promise.all([
-        c.env.TRENDING_KV.get(keys.STATS, 'json').catch(() => null),
-        c.env.TRENDING_KV.get(`${keys.MODS}:meta`, 'json').catch(() => null),
-        c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json').catch(() => null),
-        c.env.TRENDING_KV.get(keys.LAST_UPDATE, 'text').catch(() => null),
+        cached(`health:stats:${game}`, KV_META_CACHE_TTL_MS, () => c.env.TRENDING_KV.get(keys.STATS, 'json').catch(() => null)),
+        cached(`${keys.MODS}:meta`, KV_META_CACHE_TTL_MS, () => c.env.TRENDING_KV.get(`${keys.MODS}:meta`, 'json').catch(() => null)),
+        cached(`${keys.SERVERS}:meta`, KV_META_CACHE_TTL_MS, () => c.env.TRENDING_KV.get(`${keys.SERVERS}:meta`, 'json').catch(() => null)),
+        cached(`health:lastUpdate:${game}`, KV_META_CACHE_TTL_MS, () => c.env.TRENDING_KV.get(keys.LAST_UPDATE, 'text').catch(() => null)),
       ]);
 
       const now = Date.now();
@@ -1750,7 +1761,7 @@ app.get('/health', async (c) => {
   const duration = Date.now() - start;
   const errorCount = errors.length;
 
-  return c.json({
+  const response = c.json({
     status: errorCount === 0 ? 'healthy' : 'degraded',
     healthy: errorCount === 0,
     timestamp: new Date().toISOString(),
@@ -1759,6 +1770,9 @@ app.get('/health', async (c) => {
     errors: errors.slice(0, 20),
     checks,
   });
+  response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  return response;
 });
 
 // DEBUG & DIAGNOSTICS ENDPOINT: Full system health check
@@ -1926,7 +1940,7 @@ app.get('/servers/:serverId/history', async (c) => {
 
   const finalHistory = smoothServerHistory(rawHistory);
   const finalResponse = c.json({ data: finalHistory });
-  finalResponse.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  finalResponse.headers.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=3600');
   c.executionCtx.waitUntil(cache.put(c.req.raw, finalResponse.clone()));
   return finalResponse;
 });

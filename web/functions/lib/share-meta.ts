@@ -1,3 +1,5 @@
+import { cached } from './module-cache';
+
 export const SITE_ORIGIN = 'https://reforgermods.com';
 
 export type ShareGame = 'reforger' | 'arma3';
@@ -137,7 +139,9 @@ export async function lookupModsByIds(
   if (!wanted.size) return found;
 
   const keys = getKvKeys(game);
-  const meta = (await kv.get(`${keys.MODS}:meta`, 'json')) as { chunks?: number } | null;
+  const meta = await cached<{ chunks?: number } | null>(`${keys.MODS}:meta`, 60_000, () =>
+    kv.get(`${keys.MODS}:meta`, 'json') as Promise<{ chunks?: number } | null>
+  );
   if (!meta?.chunks) return found;
 
   for (let i = 0; i < meta.chunks && found.size < wanted.size; i++) {
@@ -184,7 +188,9 @@ export function modSizeBytesFromRecord(mod: Record<string, unknown> | null | und
 
 async function lookupServer(kv: KVNamespace, game: ShareGame, serverId: string): Promise<any | null> {
   const keys = getKvKeys(game);
-  const meta = (await kv.get(`${keys.SERVERS}:meta`, 'json')) as { chunks?: number } | null;
+  const meta = await cached<{ chunks?: number } | null>(`${keys.SERVERS}:meta`, 60_000, () =>
+    kv.get(`${keys.SERVERS}:meta`, 'json') as Promise<{ chunks?: number } | null>
+  );
   if (!meta?.chunks) return null;
 
   for (let i = 0; i < meta.chunks; i++) {

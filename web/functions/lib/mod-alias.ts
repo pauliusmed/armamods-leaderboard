@@ -11,6 +11,9 @@
  * normalizuota pavadinimo + autoriaus pora. 0 arba >1 kandidatų → nesujungiame.
  */
 import type { ShareGame } from './share-meta';
+import { cached } from './module-cache';
+
+const ALIAS_INDEX_CACHE_TTL_MS = 60_000;
 
 export type ModAliasRecord = {
   targetId: string;
@@ -77,20 +80,22 @@ export async function loadAliasedModIdSet(
   kv: KvLike,
   game: ShareGame
 ): Promise<Set<string>> {
-  let raw: unknown = null;
-  try {
-    raw = await kv.get(modAliasIndexKey(game), 'text');
-  } catch {
-    return new Set();
-  }
-  if (!raw) return new Set();
-  try {
-    const parsed = JSON.parse(String(raw));
-    if (!Array.isArray(parsed)) return new Set();
-    return new Set(
-      parsed.filter((id): id is string => typeof id === 'string').map((id) => id.toUpperCase())
-    );
-  } catch {
-    return new Set();
-  }
+  return cached(`aliasindex:${game}`, ALIAS_INDEX_CACHE_TTL_MS, async () => {
+    let raw: unknown = null;
+    try {
+      raw = await kv.get(modAliasIndexKey(game), 'text');
+    } catch {
+      return new Set<string>();
+    }
+    if (!raw) return new Set<string>();
+    try {
+      const parsed = JSON.parse(String(raw));
+      if (!Array.isArray(parsed)) return new Set<string>();
+      return new Set(
+        parsed.filter((id): id is string => typeof id === 'string').map((id) => id.toUpperCase())
+      );
+    } catch {
+      return new Set<string>();
+    }
+  });
 }
