@@ -39,7 +39,7 @@ pranešimams (pav. serverio perkėlimas, reitingų politikos pakeitimai).
 2. **Feature request ciklas** — aiškus kelias nuo idėjos iki sprendimo:
    `#feature-requests` → GitHub issue → changelog (žr. `docs/` + `CHANGELOG.md`).
 3. **Serverių savininkų ryšys** — FEATURED vieta, hosting rekomendacijos, duomenų
-   teisingumo pranešimai (žr. `docs/MONETIZATION.md`).
+   teisingumo pranešimai (privati monetizacijos politika — `docs-private/MONETIZATION.md`).
 4. **Skaidrumas ir atnaujinimai** — release notes, statuso pokyčiai, donacijų etapai.
 
 ## Kanalų struktūra

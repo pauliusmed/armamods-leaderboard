@@ -2,7 +2,7 @@
 
 React 19 SPA for [reforgermods.com](https://reforgermods.com) — mod/server leaderboards, trending, scenarios, storage planner, and config audit.
 
-Production API: Cloudflare Pages Functions in `functions/api/[[path]].ts` (not the root `npm run dev` proxy).
+Production API: Hono on Cloudflare Workers (`web/worker.ts`, unified SPA + API; not the root `npm run dev` proxy).
 
 ## Commands
 
