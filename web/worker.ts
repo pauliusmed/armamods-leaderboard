@@ -88,7 +88,8 @@ import {
 } from './functions/lib/history-cache';
 
 // Binding tipai generuojami per `npx wrangler types` → worker-configuration.d.ts (Cloudflare.Env).
-// Laikoma kaip šaltinis; ši alias išlaiko optional semantiką testams/local.
+// Naudojam generuotą Env kaip šaltinį — visi binding'ai required kaip prod; local/test
+// aplinkoje trūkstami perduodami per mock'ą, runtime tikrina `if (c.env.X)`.
 type Bindings = Env;
 
 type GameType = 'reforger' | 'arma3';
