@@ -26,7 +26,7 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.37**).
 | [UI_FILTERS.md](./UI_FILTERS.md) | ListFilterBar, favorites, table layout |
 | [PERFORMANCE.md](./PERFORMANCE.md) | KV/cache trade-offs, hot paths |
 | [LIGHTHOUSE.md](./LIGHTHOUSE.md) | PageSpeed / Lighthouse scores (before & after v1.21) |
-| [MONETIZATION.md](./MONETIZATION.md) | Pajamų politika, kietos ribos, FEATURED modelis, affiliate, donation |
+| MONETIZATION (private) | Pajamų politika ir FEATURED modelis — `docs-private/MONETIZATION.md` (ne viešinama) |
 | [COST_GUARDRAILS.md](./COST_GUARDRAILS.md) | Cloudflare resursų ribos: Images transformations (atsakotos; legacy 2 taškai), KV bundle politika, D1 |
 | [P0_GATES.md](./P0_GATES.md) | P0 Workshop/Steam auth vartai (GO/STOP kriterijai, tyrimo būsena) |
 | [DISCORD.md](./DISCORD.md) | Discord kanalų šablonas, tikslai, moderavimo taisyklės |

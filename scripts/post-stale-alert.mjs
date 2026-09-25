@@ -68,7 +68,7 @@ export function buildEmbed(stale, checks = {}) {
         description:
           `Collector did not write for >${THRESHOLD_HOURS}h. The gate only skips duplicate ` +
           `runs while snapshots are fresh — more than one collection cycle failed.\n` +
-          `[Collector runs](${COLLECTOR_RUNS_URL}) · [Health](${HEALTH_URL}) · cron-job.org job 7414079`,
+          `[Collector runs](${COLLECTOR_RUNS_URL}) · [Health](${HEALTH_URL}) · cron-job.org backup job`,
         color: 0xffb302,
         fields,
         footer: { text: 'reforgermods.com · admin alert' },

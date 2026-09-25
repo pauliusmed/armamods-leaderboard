@@ -8,7 +8,7 @@ Edge-native popularity rankings from live multiplayer servers — Cloudflare Wor
 [![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com/)
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-100_(desktop)_%7C_98_(mobile)-brightgreen.svg)](docs/LIGHTHOUSE.md)
 [![Lighthouse SEO](https://img.shields.io/badge/Lighthouse_SEO-100-brightgreen.svg)](docs/LIGHTHOUSE.md)
-[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Supplements the official Arma Workshop with engagement telemetry from active multiplayer servers: popularity index, retention signals, and community trends — not a workshop replacement.
 
@@ -186,5 +186,5 @@ Coverage includes surgical JSON extract, `mod-lookup`, EMA/SQE ranking, scenario
 **Docs:** [walkthrough.md](walkthrough.md) · [docs/DATA_SYNC.md](docs/DATA_SYNC.md) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) · [docs/ALGORITHM.md](docs/ALGORITHM.md) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) · [CHANGELOG.md](CHANGELOG.md) (through **v1.22.13**) · [PLAN.md](PLAN.md) (Current / Next).
 
 ## License & contact
-Copyright © 2026 Paulius Medžiukevičius. [Creative Commons CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
+Copyright © 2026 Paulius Medžiukevičius. [MIT License](LICENSE).
 GitHub or [LinkedIn](https://www.linkedin.com/in/paulius-medziukevi%C4%8Dius-003586168/).

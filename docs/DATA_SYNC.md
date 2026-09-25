@@ -20,7 +20,7 @@ The browser **never** calls BattleMetrics. Lists, trending, and charts are KV sn
 | Piece | Location |
 |-------|----------|
 | Cron workflow | `.github/workflows/collector.yml` — hourly trigger, but `collector-gate` skips the run when both snapshots are newer than 75 minutes |
-| **External trigger fallback** | `cron-job.org` job `7414079` (hourly `:30` UTC) → GitHub Actions REST `workflow_dispatch` — GitHub scheduler'is best-effort (praleido 8 slot'us, INC-2026-08-27). **Token = fine-grained PAT (`Actions: Read/Write`), ne `gho_...`** — žr. `docs/INCIDENTS.md` |
+| **External trigger fallback** | `cron-job.org` backup job (hourly `:30` UTC) → GitHub Actions REST `workflow_dispatch` — GitHub scheduler'is best-effort (praleido 8 slot'us, INC-2026-08-27). **Token = fine-grained PAT (`Actions: Read/Write`), ne `gho_...`** — žr. `docs/INCIDENTS.md` |
 | Ingestion | `scripts/collector.ts` |
 | BM client | `src/services/battlemetrics.ts` |
 | Precomputed hot pages | `web/functions/lib/precomputed-pages.ts` — default views materialized at write time (`cache:page:*:default`, `PRECOMPUTED_TTL_SECONDS = 7200`) |
@@ -49,7 +49,7 @@ Secrets:
 2. GitHub: `gh secret set BATTLEMETRICS_API_KEY`
 3. Local: `.env` → `BATTLEMETRICS_API_KEY=…` (see `.env.example`)
 
-Cloudflare Pages secrets do **not** need this key unless a Function calls BM directly (they do not today).
+Worker secrets do **not** need this key unless edge code calls BM directly (it does not today).
 
 ---
 

@@ -50,10 +50,10 @@ Every PR or commit with user-visible changes **must** update docs in the same ch
 ## 🚀 Deployment
 
 - Pull requests are automatically checked via GitHub Actions.
-- Production is deployed to Cloudflare Pages & Workers.
+- Production is deployed to Cloudflare Workers (unified SPA + API via `web/worker.ts`; the former Pages project was removed 2026-09-09).
 
 ---
 
 ## 🛡️ License
 
-By contributing, you agree that your contributions will be licensed under the project's [CC BY-NC 4.0 License](https://creativecommons.org/licenses/by-nc/4.0/).
+By contributing, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).

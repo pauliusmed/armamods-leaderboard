@@ -85,7 +85,7 @@ stale; kolektorius nebaigė Reforger grandinės) · **Statusas:** mitigated
 | 08-27 11:00 → 18:00 | **8 cron slot'ai neįvyko** (`11:00`–`18:00`) — GitHub Actions scheduler'is nepristatė `schedule` event'ų (ne `failure`, o apskritai nebuvo) |
 | 08-27 ~18:00 | `/api/health` → `staleHours=7.5 > 3` → `[STALE DATA]` banner'is (~7 h) |
 | 08-27 18:28 | Rankinis `workflow_dispatch` — run ok ~18 min, banner'is dingsta |
-| 08-27 18:35 | `cron-job.org` jobas `7414079` pataisytas ir įjungtas |
+| 08-27 18:35 | `cron-job.org` backup jobas pataisytas ir įjungtas |
 
 ### Poveikis
 
@@ -95,13 +95,13 @@ stale; kolektorius nebaigė Reforger grandinės) · **Statusas:** mitigated
 ### Šakninės priežastys
 
 1. **GitHub Actions scheduler'is nepatikimas** — `0 * * * *` (po INC-2026-08-26) vis tiek gali nepristatyti valandų; dokumentuota GA elgsena esant apkrovai. 8 praleisti slot'ai ≈ 8 h stale (3 h riba nesiekiama).
-2. **External fallback neegzistavo** — `cron-job.org` jobas `7414079` buvo `enabled:false`, URL rodė į nebeegzistuojantį Worker webhook (`/api/webhook/collect` → 404, `lastStatus 4`), o schedule `0,4,8,12,16,20` Vilnius laiko juosta.
+2. **External fallback neegzistavo** — `cron-job.org` backup jobas buvo `enabled:false`, URL rodė į nebeegzistuojantį Worker webhook (`/api/webhook/collect` → 404, `lastStatus 4`), o schedule `0,4,8,12,16,20` Vilnius laiko juosta.
 
 ### Veiksmai
 
 | # | Veiksmas | Statusas |
 |---|---|---|
-| 1 | `cron-job.org` `7414079` pataisytas: `enabled:true`, URL → GitHub `workflow_dispatch` REST (`collector.yml`), `requestMethod: POST`, `extendedData.headers.Authorization: Bearer gh auth token`, schedule `UTC :30` (kas valandą, backup GitHub `:00`), `saveResponses:true` | DONE (patikrinta: 19:30/20:30/21:30 `status=1`) |
+| 1 | `cron-job.org` backup jobas pataisytas: `enabled:true`, URL → GitHub `workflow_dispatch` REST (`collector.yml`), `requestMethod: POST`, `extendedData.headers.Authorization: Bearer gh auth token`, schedule `UTC :30` (kas valandą, backup GitHub `:00`), `saveResponses:true` | DONE (patikrinta: 19:30/20:30/21:30 `status=1`) |
 | 2 | **PAVOJUS:** `cron-job.org` saugo laikiną `gho_...` token'ą — pakeisti į ilgalaikį fine-grained PAT (`Actions: Read/Write` repo `pauliusmed/armamods-leaderboard`) | TODO |
 | 3 | Stale alert (Discord `#status` kai `staleHours>3`) | TODO (pasirinktinai) |
 

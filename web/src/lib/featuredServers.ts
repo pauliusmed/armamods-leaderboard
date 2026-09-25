@@ -9,7 +9,7 @@ export type FeaturedServer = {
  * Paid featured placements — MANUAL config, updated when a PayPal payment lands.
  * Got payment → add server ID + commit; after the month, remove it.
  * Never affects organic rankings — FEATURED is a separate, clearly-marked section.
- * Pricing: $9.99/mo per server (see docs/MONETIZATION.md).
+ * Pricing and terms: see private docs-private/MONETIZATION.md (not in public repo).
  */
 export const FEATURED_SERVERS: readonly FeaturedServer[] = [
   // { id: '39080633', game: 'reforger' },
