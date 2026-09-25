@@ -87,19 +87,13 @@ import {
   writeMaterializedEntityHistory,
 } from './functions/lib/history-cache';
 
-type Bindings = {
-  TRENDING_KV: KVNamespace;
-  HISTORY_BUCKET?: R2Bucket;
-  ASSETS: Fetcher;
-  CLOUDFLARE_API_TOKEN?: string;
-  CLOUDFLARE_ACCOUNT_ID?: string;
-  /** Workers ratelimit binding (wrangler [[ratelimits]]). Optional so tests/local tooling can omit it. */
-  PAGE_RATE_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
-};
+// Binding tipai generuojami per `npx wrangler types` → worker-configuration.d.ts (Cloudflare.Env).
+// Laikoma kaip šaltinis; ši alias išlaiko optional semantiką testams/local.
+type Bindings = Env;
 
 type GameType = 'reforger' | 'arma3';
 
-/** In-memory request/error counters per normalized path. Resets on each deploy/cold start. */
+/** In-memory request/error counters per normalized path — not request-scoped data, only aggregates. Resets on each deploy/cold start. */
 const routeCounters = new Map<string, { total: number; errors: number }>();
 
 function normalizeRoutePath(url: string): string {

@@ -1,6 +1,6 @@
 # Cloudflare Workers — unified SPA + API (migrated from Pages Functions 2026-08-24)
 name = "armamods-leaderboard"
-compatibility_date = "2026-08-24"
+compatibility_date = "2026-09-25"
 compatibility_flags = ["nodejs_compat"]
 main = "./worker.ts"
 
@@ -48,3 +48,10 @@ ENVIRONMENT = "production"
 
 [observability]
 enabled = true
+
+[observability.logs]
+head_sampling_rate = 1
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.01

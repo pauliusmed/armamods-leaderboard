@@ -4,6 +4,20 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🔧 Chore: Workers best-practice atnaujinimai (v1.23.44) - 2026-09-25
+
+- **Atitinka `workers/best-practices` (2026-09-24):** `compatibility_date`
+  `2026-08-24` → `2026-09-25` (`web/wrangler.toml:3`), `[observability]`
+  išplėsta iki `logs.head_sampling_rate=1` + `traces.enabled` (buvo tik
+  `enabled=true`), paleista `npx wrangler types` → atnaujintas
+  `web/worker-configuration.d.ts` (workerd@1.20260415.1).
+- **Tipai:** `web/worker.ts:90` `type Bindings = {…}` → `type Bindings = Env`
+  (generuota, ne hand-written) — atitinka „never hand-write binding interfaces“.
+- **Global state:** `worker.ts:102` `routeCounters` paaiškinta kaip ne
+  request-scoped; `module-cache.ts` / `chunked-scan.ts` `fullScanQueue` jau
+  dokumentuoti kaip TTL/cache, ne leak'as.
+- **Patikra:** `tsc` švarus, wrangler dry-run ✅.
+
 ### 🛠️ Fix: /api/servers OOM (paieškos burst'as) — match-only scan + pilnų scan'ų eilė (v1.23.43) - 2026-09-25
 
 - **Problema (Observability 09-24 23:00–09-25 11:00, 9 klaidos):** 1×
