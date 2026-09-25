@@ -80,25 +80,21 @@ import {
 } from './functions/lib/sitemap';
 import { loadListIdsFromKv } from './functions/lib/sitemap-kv';
 import { cached } from './functions/lib/module-cache';
+import { collectChunkedMatches, loadChunkedData } from './functions/lib/chunked-scan';
 import {
   entityHistoryObjectKey,
   readMaterializedEntityHistory,
   writeMaterializedEntityHistory,
 } from './functions/lib/history-cache';
 
-type Bindings = {
-  TRENDING_KV: KVNamespace;
-  HISTORY_BUCKET?: R2Bucket;
-  ASSETS: Fetcher;
-  CLOUDFLARE_API_TOKEN?: string;
-  CLOUDFLARE_ACCOUNT_ID?: string;
-  /** Workers ratelimit binding (wrangler [[ratelimits]]). Optional so tests/local tooling can omit it. */
-  PAGE_RATE_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
-};
+// Binding tipai generuojami per `npx wrangler types` → worker-configuration.d.ts (Cloudflare.Env).
+// Naudojam generuotą Env kaip šaltinį — visi binding'ai required kaip prod; local/test
+// aplinkoje trūkstami perduodami per mock'ą, runtime tikrina `if (c.env.X)`.
+type Bindings = Env;
 
 type GameType = 'reforger' | 'arma3';
 
-/** In-memory request/error counters per normalized path. Resets on each deploy/cold start. */
+/** In-memory request/error counters per normalized path — not request-scoped data, only aggregates. Resets on each deploy/cold start. */
 const routeCounters = new Map<string, { total: number; errors: number }>();
 
 function normalizeRoutePath(url: string): string {
@@ -225,35 +221,12 @@ function enrichServerWithSqe(server: any, sqeIndex: SqeIndex | null): any {
 /**
  * getChunkedData
  * @description Efficiently reconstructs sharded JSON datasets from Cloudflare KV.
- * Implements performance monitoring for slow I/O operations.
+ * Bounded pool + pilnų scan'ų eilė gyvena chunked-scan.ts; čia tik senoji
+ * klaidų semantika (log + tuščias masyvas), kad kiti endpointai nesikeistų.
  */
 async function getChunkedData(kv: KVNamespace, baseKey: string, maxChunks?: number): Promise<any[]> {
-  const start = Date.now();
   try {
-    const meta = await cached(`${baseKey}:meta`, KV_META_CACHE_TTL_MS, () => kv.get(`${baseKey}:meta`, 'json')) as any;
-    if (!meta || !meta.chunks) {
-        console.log(`[KV] No meta or chunks for ${baseKey}`);
-        return [];
-    }
-
-    const chunksToFetch = maxChunks ? Math.min(maxChunks, meta.chunks) : meta.chunks;
-    console.log(`[KV] Fetching ${chunksToFetch} of ${meta.chunks} chunks for ${baseKey}`);
-    const chunkArrays = await Promise.all(
-      Array.from({ length: chunksToFetch }, (_, i) =>
-        kv.get(`${baseKey}:${i}`, 'json').then((chunk) =>
-          chunk && Array.isArray(chunk) ? (chunk as any[]) : []
-        )
-      )
-    );
-    const chunks: any[] = [];
-    for (const chunk of chunkArrays) {
-      for (const item of chunk) {
-        chunks.push(item);
-      }
-    }
-    const totalTime = Date.now() - start;
-    console.log(`[KV] Finished ${baseKey} total fetch in ${totalTime}ms`);
-    return chunks;
+    return await loadChunkedData(kv, baseKey, maxChunks);
   } catch (err) {
     console.error(`[KV ERROR] Error reading chunks for ${baseKey}:`, err);
     return [];
@@ -1319,21 +1292,32 @@ app.get('/servers', async (c) => {
   }
 
   console.log(`[SERVERS] Fetching data for ${game}...`);
-  const servers = await getChunkedData(
-    c.env.TRENDING_KV,
-    keys.SERVERS,
-    full || search ? undefined : 1
-  );
-  
-  if (!servers || servers.length === 0) {
-    console.log(`[SERVERS] No data found in KV for ${game}`);
-    return c.json({ data: [], meta: { total: 0, limit, offset } });
-  }
-
-  let filtered = enrichServersWithSqe([...servers], await loadSqeIndex(c.env.TRENDING_KV, game));
-
+  let filtered: any[];
   if (search) {
-    filtered = filtered.filter((s) => matchesServerSearch(s, search));
+    // Match-only scan: kaupiami tik paieškos sutapimai, ne visas dataset'as.
+    // Pilnas load + keli lygiagretūs scan'ai izoliacijoje viršydavo 128MB
+    // (OOM 503, Observability 2026-09-25 ~01:12 — burst 13 užklausų/30s).
+    const { scanned, matches } = await collectChunkedMatches(
+      c.env.TRENDING_KV,
+      keys.SERVERS,
+      (s) => matchesServerSearch(s, search)
+    );
+    if (scanned === 0) {
+      console.log(`[SERVERS] No data found in KV for ${game}`);
+      return c.json({ data: [], meta: { total: 0, limit, offset } });
+    }
+    filtered = enrichServersWithSqe(matches, await loadSqeIndex(c.env.TRENDING_KV, game));
+  } else {
+    const servers = await getChunkedData(
+      c.env.TRENDING_KV,
+      keys.SERVERS,
+      full ? undefined : 1
+    );
+    if (!servers || servers.length === 0) {
+      console.log(`[SERVERS] No data found in KV for ${game}`);
+      return c.json({ data: [], meta: { total: 0, limit, offset } });
+    }
+    filtered = enrichServersWithSqe(servers, await loadSqeIndex(c.env.TRENDING_KV, game));
   }
 
   try {

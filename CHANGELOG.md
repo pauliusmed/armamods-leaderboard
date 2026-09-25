@@ -4,6 +4,48 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🔧 Chore: Workers best-practice atnaujinimai (v1.23.44) - 2026-09-25
+
+- **Atitinka `workers/best-practices` (2026-09-24):** `compatibility_date`
+  `2026-08-24` → `2026-09-25` (`web/wrangler.toml:3`), `[observability]`
+  išplėsta iki `logs.head_sampling_rate=1` + `traces.enabled` (buvo tik
+  `enabled=true`), paleista `npx wrangler types` → atnaujintas
+  `web/worker-configuration.d.ts` (workerd@1.20260415.1).
+- **Tipai:** `web/worker.ts:90` `type Bindings = {…}` → `type Bindings = Env`
+  (generuota, ne hand-written) — atitinka „never hand-write binding interfaces“.
+- **Global state:** `worker.ts:102` `routeCounters` paaiškinta kaip ne
+  request-scoped; `module-cache.ts` / `chunked-scan.ts` `fullScanQueue` jau
+  dokumentuoti kaip TTL/cache, ne leak'as.
+- **Patikra:** `tsc` švarus, wrangler dry-run ✅.
+
+### 🛠️ Fix: /api/servers OOM (paieškos burst'as) — match-only scan + pilnų scan'ų eilė (v1.23.43) - 2026-09-25
+
+- **Problema (Observability 09-24 23:00–09-25 11:00, 9 klaidos):** 1×
+  `Worker exceeded memory limit` (503) + 1× runtime klaida su request URL ant
+  `/api/servers` (~01:12 — per 30 s buvo 13 paieškos užklausų, pvz.
+  `search=Fuerzas+es&limit=5000`); likusios 7× `Network connection lost.` —
+  klientų atsijungimai `history`/`mod-changes` (ne kodo klaida, veiksmų nėra).
+- **Šaknis:** kiekviena `search` užklausa per `Promise.all` vienu metu
+  parse'ino **visus** serverių shard'us (reforger: 7 069 serveriai, 57 MB JSON
+  — pamatuota prod) + keli lygiagretūs scan'ai toje pačioje izoliacijoje →
+  virš 128 MB ribos.
+- **Fix 1:** naujas `web/functions/lib/chunked-scan.ts` — bounded pool
+  (4 chunk'ai vietoj visų iš karto) ir `withFullScanSlot` eilė: pilnas
+  scan'as izoliacijoje vyksta tik po vieną (burst'ai eina eilėj, ne į RAM);
+  `getChunkedData` perkeltas ten pat, klaidų semantika (log + tuščias) nepakeista.
+- **Fix 2:** paieškos kelias → `collectChunkedMatches`: kaupiami tik
+  `matchesServerSearch` sutapimai, kiti objektai išmetami iš karto — peak'as
+  ≈ 4 shard'ai + sutapimai vietoj ~viso dataset'o su dubliais. Rūšiavimas,
+  `meta.total` ir kontraktas nepasikeitė (sutapimų eilė tokia pati).
+- **Elgesio pokytis:** paieškos metu KV klaida dabar keliauja į `app.onError`
+  → 503 su žinute (klientas `fetchWithRetry'ina`) vietoj tyčia tuščio 200.
+- **Testai:** root **301/301** (10 naujų `chunked-scan` testų — registruoti
+  `package.json` sąraše), web vitest **45/45**, `tsc --noEmit` švarus,
+  wrangler dry-run ✅, `npm run build` ✅, lint — 0 naujų problemų
+  (1 pre-existing `usePinnedFavoriteMods.ts:38`).
+- **Heavy CI: required because** keičiasi `/api/servers` paieškos endpointo
+  duomenų kelias (API read path).
+
 ### 🗃️ Worker KV reads B etapas: istorijos R2 materializavimas (v1.23.42) - 2026-09-25
 
 - **Problema:** history/mod-changes endpointai kiekviename requeste skaito
