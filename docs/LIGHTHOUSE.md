@@ -121,7 +121,7 @@ Captured **2026-07-09 23:02 GMT+3** before list-metadata and thumbnail optimizat
 | Change | Lighthouse impact |
 |--------|-------------------|
 | `attachCachedListFields` on `GET /api/mods` | −~72 API round-trips → TBT → 0 |
-| `/api/mods/:id/thumbnail/img?w=64` + `IntersectionObserver` | Smaller bytes, deferred off-screen loads → LCP/FCP |
+| `IntersectionObserver` lazy thumbnails (resize removed v1.23.45) | Deferred off-screen loads → LCP/FCP; transformuotų baitų nebeliko dėl kainos (žr. `COST_GUARDRAILS.md`) |
 | `React.lazy()` for detail/planner/audit routes | Smaller initial JS on `/` |
 | `preconnect` to `ar-gcp-cdn.bistudio.com` | Faster CDN handshakes on image paths |
 | `aria-sort` on `<th scope="col">` (v1.21) | Accessibility baseline |

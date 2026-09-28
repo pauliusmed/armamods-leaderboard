@@ -3,46 +3,60 @@
 Projektas turi būti efektyvus naudodamas resursus. Šis lapas fiksuoja mokamų
 Cloudflare produktų naudojimo ribas ir vienintinius leidžiamus taškus kode.
 Nauji mokamų operacijų taškai kuriami tik savininkui patvirtinus
-(**išimtis: Images transformations — visiškai atsakotos, žr. žemiau**).
+(**Images transformations — pašalintos 2026-09-28, žr. žemiau**).
 
-## Images transformations
+## Images transformations — pašalintos
 
-**Politika (savininko sprendimas 2026-09-09): CF Images transformations
-šiame projekte ATSAKOMOS. Naujų `cf.image` naudojimo taškų NEKURIAMA —
-ankstesnis „savininkui patvirtinus" kelias panaikintas, išimčių nėra.**
+**Politika (savininko sprendimas 2026-09-28): CF Images transformacijos šiame
+projekte NENAUDOJAMOS.** Kode nebeliko nė vieno `cf.image` /
+`/cdn-cgi/image` taško, o zonoje `image_resizing = off` (kill switch, kad
+net botų URL užklausos negeneruotų transformacijų).
 
-Istorinė riba buvo < 5k unikalių (paveikslėlis, parinktys) porų/mėn (free
-lygis, po to $5/100k). Billingas skaičiuoja UNIKALIAS (paveikslėlis,
-parinktys) poras — ne requestus.
+Istorija: 2026-09-09 buvo atsisakyta NAUJŲ taškų, o du legacy taškai
+(`/api/mods/:id/thumbnail/img`, `/api/img/proxy`) palikti su pločių
+allowlist. Sprendimas neišsilaikė: 09-28 account-wide mėnesio kaupiklis
+rodė **8 655 unikalias** transformacijas (>5k free ribos; ~240/d. tempas po
+Pages sunaikinimo), ir skaičius struktūriškai auga su katalogu × pločiais.
+Todėl abu taškai **ištrinti**, o frontendas krauna originalus tiesiogiai iš
+Workshop CDN (sąmoninga ~2.4 MB mobilioji regresija, v1.23.33 analizė;
+thumbnailai lazy per `IntersectionObserver`, krovimo klaida → raidės
+placeholder).
 
-**Legacy taškai — tik du, jų NEPLĖSTI** (allowlist ir 302 fallback lieka,
-kol taškai gyvi; naujų pločių ar derinių nedėti):
+Jei kada grįžtama prie optimizavimo — **tik su aiškiu savininko
+patvirtinimu** ir be CF Images: iš anksto paruošti dydžiai R2 (generuojama
+kolektoriaus pusėje), tiekiant iš edge cache. Cloudflare Images „variants"
+netinka — originalai saugomi Workshop CDN, ne CF Images saugojime.
 
-| Endpointas | Leidžiami `w` | Fallback |
-| ---------- | ------------- | -------- |
-| `/api/mods/:id/thumbnail/img` | 64, 96, 128 | 302 → kanoninis `w=64` |
-| `/api/img/proxy` | 384, 768, 960, 1200, 1600, 1920 | 302 → kanoninis `w=960` |
+Likušios taisyklės:
 
-Taisyklės:
-
-- Neleistinas `w` (pvz. bot `w=33`) visada gauna **302 į kanoninį URL** —
-  tai dedup'ina ir edge cache, ir unikalių transformacijų derinius.
-- Nauji `cf.image` naudojimo taškai kode — **draudžiami visada**
-  (`fetch(url, { cf: { image: … } })`).
-- **Legacy taškų šalinimas — tik atskiru savininko sprendimu ir su
-  pakaitalu.** Pilnas išjungimas be pakaitalo duotų ~2.4 MB mobilųjį
-  atsisiuntimų regresiją (v1.23.33 analizė). Įmanomos kryptys: iš anksto
-  paruošti dydžiai (R2/edge cache, generuojama kolektoriaus pusėje) arba
-  originalų tiekimas tik dideliems ekranams. Cloudflare Images „variants"
-  **netinka** — originalai saugomi Workshop CDN, ne CF Images saugojime.
-- Frontendas pločius ima tik iš `SIZE_PX` (ModThumbnail) ir fiksuotų
-  `modScreenshotProxyUrl` kvietimų (960 galerija, 1600 lightbox).
-- Senasis Pages projektas `armamods-leaderboard.pages.dev` **sunaikintas
-  2026-09-09** — jis aptarnavo seną kodą ir generavo ~20k transformacijų/periodą.
-  Neprikabinti prie jo atgal.
 - **`workers_dev = false`** (`web/wrangler.toml`, 2026-09-09) — workers.dev
   subdomainas išjungtas. Vienintelis viešas puslapis yra **reforgermods.com**
   (zonos DNS); jokie dublikatai (pages.dev / workers.dev) nebeatkuriami.
+- Senasis Pages projektas `armamods-leaderboard.pages.dev` **sunaikintas
+  2026-09-09** — jis aptarnavo seną kodą ir generavo ~20k transformacijų/periodą.
+  Neprikabinti prie jo atgal.
+
+## Workers CPU
+
+**Politika: vidurkis < 10 ms CPU/request; bendras < ~500k ms/dieną.**
+(09-28 tyrimas: 1.29M ms/d. ir avg 41 ms/req; pikas 2.2M — v1.23.46 taisymai.)
+
+- Didžiausi šaltiniai: `mod-changes` (~36%; cold kelias parse'ino visus 12
+  modpack ring chunk'ų per request) ir `history` (~12%; skaitė visus shard'us).
+  ~56% šių requestų — SEO/AI crawleriai (Bytespider, AhrefsBot, Reflectionbot),
+  kurie renderina SPA ir kviečia API.
+- Guardrail'ai: `robots.txt` `Disallow: /api/`; WAF rule
+  `armamods-api-bot-guard` blokuoja SEO/AI crawlerius `/api/*` iki Worker'io
+  (Googlebot/Bingbot nepaliečiami — jiems serviruojamas prerender HTML).
+- Kode: modpack ring'as — isolate cache per versiją (`loadModpackDiffRing`);
+  mod/server history — skaitymas nuo uodegos su `historyCutoffPrefix`
+  (ne visi chunk'ai); mod-changes atsakymo TTL 6h.
+- **Nauji istorijos/ring'ų skaitytojai privalo naudoti tail-stop** (uodegos
+  chunk'ai + `firstPointTime` riba) — per-request didelių ring'ų `JSON.parse`
+  ar visų shard'ų skenavimas neleistinas.
+- Stebėjimas: Observability `$workers.cpuTimeMs` per `$metadata.trigger`
+  (atskirais kvietimais sum + count — kombinacija grąžina tuščią agregatą);
+  GraphQL `workersInvocationsAdaptive` per `scriptName`.
 
 ## KV (trending_snapshots)
 
@@ -78,4 +92,5 @@ patvirtinimas) — pamoka iš basketballmanager 37B rows read incidento.
 
 - KV/Workers/D1 usage per parą: GraphQL `kvOperationsAdaptiveGroups`,
   `workersInvocationsAdaptive`, `d1AnalyticsAdaptiveGroups` (tokenas .env).
-- Images unique per mėnesį: GraphQL `imagesUniqueTransformations`.
+- Images unique per mėnesį (kontrolei, kad liktų 0): GraphQL
+  `imagesUniqueTransformations`.

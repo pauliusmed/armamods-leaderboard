@@ -1,6 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveHistoryQuery, weekStartISO } from '../web/functions/api/history-query.ts';
+import {
+  resolveHistoryQuery,
+  weekStartISO,
+  historyCutoffPrefix,
+  firstPointTime,
+} from '../web/functions/api/history-query.ts';
 
 describe('weekStartISO', () => {
   it('returns Monday UTC for mid-week dates', () => {
@@ -38,5 +43,40 @@ describe('resolveHistoryQuery', () => {
     const q = resolveHistoryQuery(9999, 'arma3');
     assert.equal(q.baseKey, 'history:yearly:arma3');
     assert.equal(q.sliceCount, -10);
+  });
+});
+
+describe('historyCutoffPrefix', () => {
+  const now = Date.parse('2026-09-28T12:00:00Z');
+
+  it('returns date prefix for multi-day windows', () => {
+    assert.equal(historyCutoffPrefix(7, now), '2026-09-21');
+    assert.equal(historyCutoffPrefix(30, now), '2026-08-29');
+  });
+
+  it('returns hour prefix for 1 day', () => {
+    assert.equal(historyCutoffPrefix(1, now), '2026-09-27T12');
+  });
+
+  it('returns null for all-time sentinel and invalid values', () => {
+    assert.equal(historyCutoffPrefix(9999, now), null);
+    assert.equal(historyCutoffPrefix(0, now), null);
+    assert.equal(historyCutoffPrefix(Number.NaN, now), null);
+  });
+
+  it('prefix sorts after older chunk times (lexicographic early-stop)', () => {
+    const cutoff = historyCutoffPrefix(7, now)!;
+    assert.ok('2026-09-20' < cutoff);
+    assert.ok('2026-09-22' >= cutoff);
+  });
+});
+
+describe('firstPointTime', () => {
+  it('extracts the first time value from shard text', () => {
+    assert.equal(firstPointTime('{"time":"2026-09-20","mods":{}}'), '2026-09-20');
+  });
+
+  it('returns null when no time marker exists', () => {
+    assert.equal(firstPointTime('{"mods":{}}'), null);
   });
 });

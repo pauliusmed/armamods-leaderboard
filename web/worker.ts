@@ -19,7 +19,7 @@ import {
   type AuditStatus,
   type HistoryPoint,
 } from './functions/api/audit-config';
-import { resolveHistoryQuery, type GameType as HistoryGameType } from './functions/api/history-query';
+import { resolveHistoryQuery, historyCutoffPrefix, firstPointTime, type GameType as HistoryGameType } from './functions/api/history-query';
 import {
   buildShareMeta,
   defaultOgImage,
@@ -34,7 +34,6 @@ import {
   authorCacheKey,
   ogImageCacheKey,
   statusCacheKey,
-  ensureReforgerWorkshopMetadata,
   resolveModDependencies,
   resolveModAuthor,
   resolveModWorkshopCopy,
@@ -178,6 +177,31 @@ async function getModChangesVersion(kv: KVNamespace, game: GameType): Promise<st
   return cached(`modchangesversion:${game}`, HISTORY_VERSION_CACHE_TTL_MS, async () => {
     const fingerprint = await kv.get(modpackDiffKeys(game).fingerprint, 'json') as { date?: string } | null;
     return fingerprint?.date ?? null;
+  });
+}
+
+/**
+ * Parsed modpack diff ring'as (30 d.) izoliato atmintyje pagal versiją.
+ * Anksčiau kiekvienas cold `/mod-changes` requestas nuskaitydavo ir JSON.parse'indavo
+ * visus ring chunk'us (12) — dabar tai įvyksta kartą per izoliatą per versiją
+ * (CPU guardrail 2026-09-28). Grąžina null, jei ring'o meta nėra.
+ */
+async function loadModpackDiffRing(
+  kv: KVNamespace,
+  game: GameType,
+  version: string | null
+): Promise<ModpackDiffDay[] | null> {
+  if (!version) return null;
+  return cached(`modpackring:${game}:${version}`, 30 * 60_000, async () => {
+    const keys = modpackDiffKeys(game);
+    const meta = (await kv.get(`${keys.history}:meta`, 'json')) as { chunks?: number } | null;
+    if (!meta?.chunks) return null;
+    const ring: ModpackDiffDay[] = [];
+    for (let i = 0; i < meta.chunks; i++) {
+      const chunk = (await kv.get(`${keys.history}:${i}`, 'json')) as ModpackDiffDay[] | null;
+      if (Array.isArray(chunk)) ring.push(...chunk);
+    }
+    return ring;
   });
 }
 
@@ -835,26 +859,32 @@ function smoothHistoryData(data: any[]) {
 async function fetchModHistoryPoints(
   kv: KVNamespace,
   modId: string,
-  baseKey: string
+  baseKey: string,
+  cutoffPrefix: string | null = null
 ): Promise<any[]> {
-  const modHistory: any[] = [];
   const meta = (await kv.get(`${baseKey}:meta`, 'json')) as { chunks?: number } | null;
 
   if (meta?.chunks) {
-    // Sequential to avoid "Worker exceeded memory limit" (8×5 MB = 40 MB if parallel).
-    // History is cold path — +200ms latency is cheaper than 40 MB RAM.
-    for (let i = 0; i < meta.chunks; i++) {
+    // Nuo naujausio chunk'o atgal; stabdom, kai chunk'as senesnis už langą —
+    // days=7 skaito ~2 chunk'us vietoj visų 8 (CPU guardrail 2026-09-28).
+    const perChunk: any[][] = [];
+    for (let i = meta.chunks - 1; i >= 0; i--) {
       const shardText = await kv.get(`${baseKey}:${i}`, 'text');
-      if (shardText?.includes(`"${modId}":{`)) {
-        modHistory.push(...scanHistoryPoints(shardText, modId));
+      if (!shardText) continue;
+      if (shardText.includes(`"${modId}":{`)) {
+        perChunk.push(scanHistoryPoints(shardText, modId));
+      }
+      if (cutoffPrefix) {
+        const first = firstPointTime(shardText);
+        if (first && first < cutoffPrefix) break;
       }
     }
-  } else {
-    const historyText = await kv.get(baseKey, 'text');
-    if (historyText) modHistory.push(...scanHistoryPoints(historyText, modId));
+    perChunk.reverse();
+    return perChunk.flat();
   }
 
-  return modHistory;
+  const historyText = await kv.get(baseKey, 'text');
+  return historyText ? scanHistoryPoints(historyText, modId) : [];
 }
 
 app.get('/mods/:modId/workshop-status', async (c) => {
@@ -964,48 +994,6 @@ app.get('/mods/:modId/author', async (c) => {
   return response;
 });
 
-app.get('/mods/:modId/thumbnail/img', async (c) => {
-  const widthOk = allowedWidthOrDefault(c.req.query('w'), THUMBNAIL_WIDTHS, 64);
-  if (widthOk === null) return redirectToCanonicalWidth(c, 64);
-
-  const cache = await caches.open('armamods:mod_thumb_img');
-  const cacheResponse = await cache.match(c.req.raw);
-  if (cacheResponse) return cacheResponse;
-
-  const game = getGameFromQuery(c) as ShareGame;
-  const modId = c.req.param('modId');
-  const width = widthOk;
-  const url = await c.env.TRENDING_KV.get(ogImageCacheKey(game, modId), 'text');
-
-  if (!url || url.includes('og-image')) {
-    // Cold KV: redirect to the default immediately and warm workshop metadata in
-    // the background (synchronous scraping here caused edge 504 storms).
-    if (game !== 'arma3' && !url) {
-      const warm = ensureReforgerWorkshopMetadata(c.env.TRENDING_KV, game, modId).catch(() => {});
-      c.executionCtx.waitUntil(warm);
-    }
-    return c.redirect(defaultOgImage(), 302);
-  }
-
-  try {
-    const imageResponse = await fetch(url, {
-      cf: { image: { width, height: width, fit: 'cover', quality: 75 } },
-    } as RequestInit);
-    if (!imageResponse.ok) throw new Error('upstream');
-
-    const response = new Response(imageResponse.body, {
-      headers: {
-        'Content-Type': imageResponse.headers.get('Content-Type') || 'image/jpeg',
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
-      },
-    });
-    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
-    return response;
-  } catch {
-    return c.redirect(url, 302);
-  }
-});
-
 app.get('/mods/:modId/thumbnail', async (c) => {
   const cache = await caches.open('armamods:mod_thumbnails');
   const cacheResponse = await cache.match(c.req.raw);
@@ -1022,68 +1010,6 @@ app.get('/mods/:modId/thumbnail', async (c) => {
   response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
-});
-
-// Galerijos screenshot'ų proxy: resize (WebP/AVIF per format:auto) + 7d edge cache.
-// PSI 2026-09-07: bistudio CDN duoda ~300 KiB JPG be cache TTL — proxy sutaupo ~650 KiB puslapiui.
-const IMG_PROXY_HOST = 'ar-gcp-cdn.bistudio.com';
-
-// Images transformations billingas skaičiuoja UNIKALIUS (paveikslėlis, parinktys)
-// derinius — laisvas 5k/mėn lygis laikomas tik fiksuotu pločių rinkiniu.
-// Neleistinas w iš URL (bot w=33) kurtų naujus unikalius derinius, todėl
-// neteisingas w visada 302 į kanoninį (dedup'inasi ir cache, ir transformacijos).
-const THUMBNAIL_WIDTHS = [64, 96, 128];
-const GALLERY_WIDTHS = [384, 768, 960, 1200, 1600, 1920];
-
-function allowedWidthOrDefault(raw: string | undefined, allowed: number[], fallback: number): number | null {
-  const w = parseInt(raw || '', 10);
-  return Number.isFinite(w) && allowed.includes(w) ? w : null;
-}
-
-function redirectToCanonicalWidth(c: any, canonical: number): Response {
-  const url = new URL(c.req.url);
-  url.searchParams.set('w', String(canonical));
-  return c.redirect(url.toString(), 302);
-}
-
-// basePath('/api') — realus kelias /api/img/proxy
-app.get('/img/proxy', async (c) => {
-  const widthOk = allowedWidthOrDefault(c.req.query('w'), GALLERY_WIDTHS, 960);
-  if (widthOk === null) return redirectToCanonicalWidth(c, 960);
-
-  const cache = await caches.open('armamods:img_proxy');
-  const cacheResponse = await cache.match(c.req.raw);
-  if (cacheResponse) return cacheResponse;
-
-  let parsed: URL;
-  try {
-    parsed = new URL(c.req.query('u') || '');
-  } catch {
-    return c.json({ error: 'invalid url' }, 400);
-  }
-  // SSRF allowlist: tik Bohemia workshop CDN
-  if (parsed.protocol !== 'https:' || parsed.hostname !== IMG_PROXY_HOST) {
-    return c.json({ error: 'host not allowed' }, 403);
-  }
-
-  const width = widthOk;
-  try {
-    const upstream = await fetch(parsed.toString(), {
-      cf: { image: { width, fit: 'scale-down', quality: 75, format: 'auto' } },
-    } as RequestInit);
-    if (!upstream.ok) throw new Error('upstream');
-    const response = new Response(upstream.body, {
-      headers: {
-        'Content-Type': upstream.headers.get('Content-Type') || 'image/webp',
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
-      },
-    });
-    c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
-    return response;
-  } catch {
-    // Resize neprieinamas — nukreip į originalą (kaip thumbnail/img fallback)
-    return c.redirect(parsed.toString(), 302);
-  }
 });
 
 app.get('/mods/:modId/gallery', async (c) => {
@@ -1226,7 +1152,12 @@ app.get('/mods/:modId/history', async (c) => {
 
   console.log(`[HISTORY] Fetching ${plan.baseKey} shards for ${modId}...`);
 
-  let modHistory = await fetchModHistoryPoints(c.env.TRENDING_KV, modId, plan.baseKey);
+  let modHistory = await fetchModHistoryPoints(
+    c.env.TRENDING_KV,
+    modId,
+    plan.baseKey,
+    historyCutoffPrefix(days)
+  );
   let finalHistory = smoothHistoryData(modHistory.slice(plan.sliceCount));
 
   if (plan.fallbackKey && finalHistory.length < 4) {
@@ -1518,7 +1449,6 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
-  const keys = modpackDiffKeys(game);
   const modChangesVersion = await getModChangesVersion(c.env.TRENDING_KV, game);
   const materializedKey = entityHistoryObjectKey(game, 'mod-changes', String(days), serverId);
   const materialized = await readMaterializedEntityHistory<{
@@ -1537,16 +1467,14 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
         lastSnapshotDate: materialized.lastSnapshotDate,
       },
     });
-    cachedResponse.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    cachedResponse.headers.set('Cache-Control', 'public, max-age=21600, stale-while-revalidate=86400');
     c.executionCtx.waitUntil(cache.put(c.req.raw, cachedResponse.clone()));
     return cachedResponse;
   }
 
-  const meta = (await c.env.TRENDING_KV.get(`${keys.history}:meta`, 'json')) as {
-    chunks?: number;
-  } | null;
+  const history = await loadModpackDiffRing(c.env.TRENDING_KV, game, modChangesVersion);
 
-  if (!meta?.chunks) {
+  if (!history) {
     const empty = c.json({
       data: [],
       meta: { days, retention: MODPACK_DIFF_RETENTION_DAYS, tracking: false },
@@ -1554,16 +1482,6 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
     empty.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=3600');
     c.executionCtx.waitUntil(cache.put(c.req.raw, empty.clone()));
     return empty;
-  }
-
-  const history: ModpackDiffDay[] = [];
-  for (let i = 0; i < meta.chunks; i++) {
-    const chunk = (await c.env.TRENDING_KV.get(`${keys.history}:${i}`, 'json')) as
-      | ModpackDiffDay[]
-      | null;
-    if (Array.isArray(chunk)) {
-      for (const day of chunk) history.push(day);
-    }
   }
 
   const data = extractServerModChanges(history, serverId, days);
@@ -1587,8 +1505,8 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
       lastSnapshotDate,
     },
   });
-  // Daily diff — 1 h TTL saugus, nes collector'ius rašo kartą per dieną
-  response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  // Daily diff — 6 h TTL saugus, nes collector'ius rašo kartą per dieną
+  response.headers.set('Cache-Control', 'public, max-age=21600, stale-while-revalidate=86400');
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
   return response;
 });
@@ -1961,11 +1879,12 @@ app.get('/servers/:serverId/history', async (c) => {
     return finalResponse;
   }
 
-  // Sequential to avoid RAM spike (see fetchModHistoryPoints comment).
-  for (let i = 0; i < meta.chunks; i++) {
-    const shardText = await c.env.TRENDING_KV.get(`${plan.baseKey}:${i}`, 'text');
-    if (!shardText || !shardText.includes(serversKey)) continue;
+  // Nuo naujausio shard'o atgal; stabdom ties senesniu už langą chunk'u —
+  // days=7 skaito tik uodegą, ne visus chunk'us (CPU guardrail 2026-09-28).
+  const cutoffPrefix = requestingAll ? null : historyCutoffPrefix(days);
 
+  function collectShardPoints(shardText: string): any[] {
+    const points: any[] = [];
     let searchPos = 0;
     while (searchPos < shardText.length) {
       const timeIdx = shardText.indexOf(timeKey, searchPos);
@@ -1987,10 +1906,25 @@ app.get('/servers/:serverId/history', async (c) => {
 
       const { rank, players, uptimeRatio, mostlyOffline, online } = extractServerHistory(block, serverId);
 
-      serverHistory.push({ time, points: 0, rank, players, uptimeRatio, mostlyOffline, online });
+      points.push({ time, points: 0, rank, players, uptimeRatio, mostlyOffline, online });
       searchPos = blockEnd;
     }
+    return points;
   }
+
+  // Sequential to avoid RAM spike (see fetchModHistoryPoints comment).
+  const perChunkHistory: any[][] = [];
+  for (let i = meta.chunks - 1; i >= 0; i--) {
+    const shardText = await c.env.TRENDING_KV.get(`${plan.baseKey}:${i}`, 'text');
+    if (!shardText) continue;
+    if (shardText.includes(serversKey)) perChunkHistory.push(collectShardPoints(shardText));
+    if (cutoffPrefix) {
+      const first = firstPointTime(shardText);
+      if (first && first < cutoffPrefix) break;
+    }
+  }
+  perChunkHistory.reverse();
+  serverHistory.push(...perChunkHistory.flat());
 
   const rawHistory = serverHistory.slice(plan.sliceCount);
 

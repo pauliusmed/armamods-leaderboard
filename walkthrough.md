@@ -172,7 +172,7 @@ Recharts.
 
 **UI** (`src/lib/workshop.ts`, `src/components/ui/ModThumbnail.tsx`):
 - `workshopPageUrl()` — outbound link to Reforger workshop or Steam (Arma 3).
-- `modListThumbnailUrl()` — list rows use `GET /api/mods/:id/thumbnail/img?w=` (resized proxy, `IntersectionObserver` lazy load).
+- `modThumbnailUrl()` — `/api/og/preview/mod/:id` 302 į originalą; list rows krauna CDN URL iš duomenų (`IntersectionObserver` lazy load). Image transformations pašalintos v1.23.45.
 - `GET /api/mods` page slice includes cached `author`, `thumbnail`, `workshopStatus` — no per-row metadata JSON on leaderboard/trending.
 - Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302).
 - Letter fallback when no workshop preview exists.

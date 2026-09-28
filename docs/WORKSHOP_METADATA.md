@@ -55,13 +55,17 @@ v2 removed the redirect hop but still issued **one JSON request per visible row*
 ```
 GET /api/mods?limit=&offset=   → page slice includes author, thumbnail URL, workshopStatus (KV only)
 ModThumbnail (list)
-    → <img src="/api/mods/:id/thumbnail/img?w=64">  (resized proxy, edge-cached 7d)
+    → <img src="{CDN URL from data}">  (originalas; jokio resize)
     → IntersectionObserver — image fetch only when row nears viewport
 ```
 
-**Detail / OG** still use full URL or `/api/og/preview/mod/:id` (302) where quality matters.
+**Detail / OG** use the same full URL or `/api/og/preview/mod/:id` (302).
 
-**Resize taškų politika (2026-09-09):** CF Images transformacijos šiam projektui atsakotos — naujų `cf.image` taškų nekuriama. Dvi legacy vietos (`thumbnail/img` w ∈ {64,96,128}; `/api/img/proxy` w ∈ {384,768,960,1200,1600,1920}) lieka su fiksuotu allowlist — neleistinas `w` → 302 į kanoninį plotį. Detaliai — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md).
+**Image transformations (2026-09-28):** CF Images transformacijos pašalintos —
+`/api/mods/:id/thumbnail/img` ir `/api/img/proxy` ištrinti, zonoje
+`image_resizing=off`. Kaina (8 655 unikalių/mėn > 5k free) viršijo vertę.
+Grąžinimas — tik su aiškiu savininko patvirtinimu ir be CF Images.
+Detaliai — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md).
 
 **We store the CDN URL in KV, not the image bytes.** This avoids R2 storage, copyright re-hosting, and extra bandwidth on our origin.
 
@@ -71,7 +75,6 @@ ModThumbnail (list)
 |-------|-----------|----------|
 | KV | `cache:og-image:{game}:{MODID}` · 7 days | Bohemia/Steam CDN URL string |
 | Edge Cache API | `armamods:mod_thumbnails` · `max-age=86400` | JSON thumbnail response |
-| Edge Cache API | `armamods:mod_thumbnails_img` · `max-age=604800` | Resized image bytes (when CF Image Resizing available) |
 | Browser (`modsApi.getThumbnailUrl`) | in-memory · 7 days | Resolved CDN URL |
 | CF fetch (scrape) | `cacheEverything` · 24h | Workshop HTML (during scrape only) |
 
@@ -139,7 +142,6 @@ Co-deploy is computed in the collector (`scripts/collector.ts`) with **zero extr
 |--------|------|----------|-----|
 | GET | `/mods` (page slice) | `author`, `thumbnail`, `workshopStatus` on each mod | List rows — no per-row metadata API |
 | GET | `/mods/:id/thumbnail` | `{ data: { url } }` | Detail / legacy client path |
-| GET | `/mods/:id/thumbnail/img?w=` | Image bytes or 302 | List `ModThumbnail` (resized) |
 | GET | `/mods/:id/dependencies` | `{ data: ModDependency[] }` | Mod detail dependency table |
 | GET | `/mods/:id/size` | `{ data: { sizeBytes } }` | Mod detail + Storage Planner |
 | GET | `/mods/:id/workshop-status` | `{ data: { status, checkedAt } }` | UI badge — available / unavailable / unknown |
@@ -157,8 +159,8 @@ All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnai
 | `web/functions/lib/workshop-meta.ts` | Re-exports for tests / backward imports |
 | `web/functions/lib/share-meta.ts` | OG share HTML; `resolveModPreviewImage` → workshop-fetch |
 | `web/functions/api/[[path]].ts` | `attachCachedListFields()` — embed list metadata from KV |
-| `web/src/components/ui/ModThumbnail.tsx` | Lazy `<img>`; list uses `/thumbnail/img?w=` |
-| `web/src/lib/workshop.ts` | `workshopPageUrl()`, `modListThumbnailUrl()` |
+| `web/src/components/ui/ModThumbnail.tsx` | Lazy `<img>`; CDN URL from data (no resize) / `/og/preview` fallback |
+| `web/src/lib/workshop.ts` | `workshopPageUrl()`, `modThumbnailUrl()` |
 | `web/src/components/ui/CopyModConfigButton.tsx` | One-click `game.mods[]` snippet copy |
 | `web/src/lib/modConfig.ts` | `formatModConfigSnippet()`, server modpack formatter |
 | `web/src/api/client.ts` | `getThumbnailUrl`, `getDependencies` + client caches |
@@ -171,7 +173,7 @@ All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnai
 - **Store image files** in R2/KV (only URL strings) — keeps cost and ToS risk low
 - **Scrape all mods** on each collector run — would hit rate limits and KV write caps
 - **Replace co-deploy with dependencies** — they answer different questions
-- **Store full-size CDN images on list pages** — list uses resized proxy; full URL only on detail/OG
+- **Optimize/serve image bytes through CF Images** — pašalinta 2026-09-28; list krauna originalą lazy, full URL tik detail/OG
 
 ### List metadata embedding (v1.21+)
 
