@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { GameType } from '../../api/client';
-import { modListThumbnailUrl, cdnResizedThumbnailUrl, ENABLE_CDN_TRANSFORMS } from '../../lib/workshop';
-
-const SIZE_PX = { sm: 64, md: 96, lg: 128 } as const;
+import { modThumbnailUrl } from '../../lib/workshop';
 
 const SIZE_CLASS = {
   sm: 'w-8 h-8 text-[10px]',
@@ -68,17 +66,11 @@ export function ModThumbnail({
   const [visible, setVisible] = useState(priority === 'eager');
   const rootRef = useRef<HTMLSpanElement>(null);
   const sizeClass = SIZE_CLASS[size];
-  const sizePx = SIZE_PX[size];
 
-  const cdnSrc =
-    ENABLE_CDN_TRANSFORMS && thumbnailUrl && !thumbnailUrl.includes('og-image')
-      ? cdnResizedThumbnailUrl(thumbnailUrl, sizePx)
-      : null;
-  const proxySrc = modListThumbnailUrl(modId, game, sizePx);
-  // Eager keičia tik krovimo prioritetą (be IntersectionObserver), ne URL: žalias
-  // CDN originalas (keli šimtai KiB, be cache TTL) į 32–96 px thumbnailą krautų
-  // ~590 KiB pirmoms 8 eilutėms — visada per 64–128 px proxy (~1–2 KiB, 7 d cache).
-  const [src, setSrc] = useState<string>(cdnSrc ?? proxySrc);
+  // Image optimizavimas (cf.image) pašalintas 2026-09-28 — krauname originalą:
+  // tiesioginį URL iš duomenų arba 302 per /api/og/preview (KV cache).
+  const sourceSrc = thumbnailUrl ?? modThumbnailUrl(modId, game);
+  const [src, setSrc] = useState<string>(sourceSrc);
 
   // Adjust state during render when the source changes (React "derived state" pattern).
   const [prevKey, setPrevKey] = useState<string | undefined>(undefined);
@@ -87,18 +79,10 @@ export function ModThumbnail({
     setPrevKey(resetKey);
     setFailed(false);
     setVisible(priority === 'eager');
-    setSrc(cdnSrc ?? proxySrc);
+    setSrc(sourceSrc);
   }
 
-  // If the edge-transform URL fails (transformations not enabled), fall back to the
-  // Worker proxy; only then to the letter placeholder.
-  const handleError = () => {
-    if (src === cdnSrc && proxySrc && proxySrc !== cdnSrc) {
-      setSrc(proxySrc);
-      return;
-    }
-    setFailed(true);
-  };
+  const handleError = () => setFailed(true);
 
   useEffect(() => {
     if (priority === 'eager') return;

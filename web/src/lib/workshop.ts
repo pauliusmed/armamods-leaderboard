@@ -9,48 +9,12 @@ export function workshopPageUrl(modId: string, game: GameType = 'reforger'): str
 }
 
 /**
- * Lazy workshop preview — Worker scrapes og:image once, caches CDN URL in KV (7d),
- * then 302-redirects. Safe for <img loading="lazy"> in list rows.
+ * Lazy workshop preview — Worker 302-redirects to the cached og:image (KV, 7d)
+ * or the site default when missing. No resizing: image bytes come straight
+ * from the Workshop CDN (transformations removed 2026-09-28, see COST_GUARDRAILS).
  */
 export function modThumbnailUrl(modId: string, game: GameType = 'reforger'): string {
   return `/api/og/preview/mod/${encodeURIComponent(modId)}?game=${game}`;
-}
-
-/**
- * Resized workshop thumbnail for list rows — avoids multi-MB CDN originals in <img>.
- * Falls back to redirect when Cloudflare Image Resizing is unavailable.
- */
-export function modListThumbnailUrl(
-  modId: string,
-  game: GameType = 'reforger',
-  width = 64
-): string {
-  return `/api/mods/${encodeURIComponent(modId)}/thumbnail/img?game=${game}&w=${width}`;
-}
-
-/**
- * Edge-resized thumbnail via Cloudflare Image Transformations — served from the CDN
- * edge with NO Worker invocation (unlike modListThumbnailUrl), payload stays ~1-2KB.
- *
- * Requires "Image Transformations" (Resize Images) enabled on the zone with origin
- * `ar-gcp-cdn.bistudio.com` allowed. Leave the flag below false until that is done;
- * when true AND enabled, a leaderboard view drops ~24 Worker invocations. If enabled
- * incorrectly (transformations off) the UI falls back to modListThumbnailUrl on error.
- */
-export const ENABLE_CDN_TRANSFORMS = false;
-
-export function cdnResizedThumbnailUrl(cdnUrl: string, px: number): string {
-  const opts = `width=${px},height=${px},fit=cover,quality=75`;
-  return `/cdn-cgi/image/${opts}/${cdnUrl}`;
-}
-
-/**
- * Resized/WebP proxy for gallery screenshots — Worker resize'ina (cf.image, format:auto)
- * ir cache'ina 7d. Žali CDN originalai ~300 KiB JPG be cache TTL; per proxy ~30-80 KiB WebP.
- * Tik allowlist'intas bistudio CDN (worker'is grąžina 403 kitiems host'ams).
- */
-export function modScreenshotProxyUrl(cdnUrl: string, width = 960): string {
-  return `/api/img/proxy?u=${encodeURIComponent(cdnUrl)}&w=${width}`;
 }
 
 export function workshopLabel(game: GameType = 'reforger'): string {

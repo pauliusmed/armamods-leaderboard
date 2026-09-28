@@ -4,6 +4,51 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ⚡ Worker CPU: bot guardrail'ai + mod-changes/history cold kelio optimizacija (v1.23.46) - 2026-09-28
+
+- **Problema (09-28 tyrimas):** ~1.29M CPU ms/dieną (avg ~41 ms/request;
+  pikas 2.2M). Didžiulė dalis — `/api/servers/:id/mod-changes` (36%, avg
+  141 ms: cold kelias JSON.parse'indavo visus 12 modpack ring chunk'ų per
+  request) ir history endpointai (12%, skaitė visus shard'us). ~56% šių
+  requestų — SEO/AI crawleriai (Bytespider, AhrefsBot, Reflectionbot),
+  renderinantys SPA.
+- **A — bot guardrail'ai:** `robots.txt` `Disallow: /api/` + WAF custom rule
+  (`armamods-api-bot-guard`) blokuoja SEO/AI crawlerius `/api/*` iki Worker'io
+  (Googlebot/Bingbot nepaliesti — jiems serviruojamas prerender HTML).
+- **B — kodo optimizacijos:** (1) modpack ring parsed cache per izoliatą per
+  versiją (`loadModpackDiffRing`, 30 min) vietoj per-request parse;
+  (2) mod/server history skaitomi nuo naujausio chunk'o ir stabdomi ties
+  `historyCutoffPrefix` riba (days=7 → ~2 chunk'ai vietoj 8);
+  (3) mod-changes TTL 1h → 6h.
+- **Patikra:** root 307/307 (nauji `history-query` testai), web vitest 45/45,
+  `tsc` ✅, eslint — savo pakeitimuose klaidų nėra, wrangler dry-run ✅.
+- **Heavy CI: required because** kinta history skaitymo/caching elgsena ir
+  API atsakymų TTL.
+
+### 🗑️ Image transformations pašalintos: proxy endpointai ištrinti, zona be resize (v1.23.45) - 2026-09-28
+
+- **Problema (09-28 auditas):** CF Images mėnesio kaupiklis rodė **8 655
+  unikalias** transformacijas (>5k free ribos, peržengta ~09-14; ~240/d.
+  tempas vien iš mūsų zonos pusės). Reforgermods zonoje dominavo thumbnail
+  `w64` (21,2k įvykių/mėn) ir galerija `w960` (3,4k); tame pačiame account'e
+  esanti `fns.lt` zona pridėdavo ~11k įvykių tai pačiai 5k kvotai.
+- **Sprendimas (savininko):** pilnas šalinimas — `GET /api/mods/:id/thumbnail/img`
+  ir `GET /api/img/proxy` ištrinti (kartu su pločių allowlist/302 helperiais);
+  zonoje `image_resizing=off` (kill switch botų `/cdn-cgi/image/` užklausoms).
+- **Frontend:** `ModThumbnail` krauna `thumbnailUrl` iš duomenų arba 302 per
+  `/api/og/preview/mod/:id`; galerija ir lightbox — `image.url` tiesiogiai.
+  Išmestas ir negyvas `ENABLE_CDN_TRANSFORMS`/`/cdn-cgi/image` kelias.
+- **Sąmoninga sąskaita:** ~2.4 MB mobilioji regresija (v1.23.33 analizė) —
+  priimta, nes transformacijų kaina viršijo vertę. Thumbai lazy +
+  `onError` → raidės placeholder; seni cache'inti proxy URL atsakys 404.
+- **Dokumentacija:** `COST_GUARDRAILS.md` politika perrašyta (pašalinta, ne
+  „atsakyta“), atnaujinti `AGENTS.md`, `WORKSHOP_METADATA.md`, `PERFORMANCE.md`,
+  `LIGHTHOUSE.md`, `walkthrough.md`, `README.md`.
+- **Patikra:** root 301/301, web vitest 45/45, `tsc` ✅, eslint (savo
+  pakeitimuose klaidų nėra), wrangler dry-run ✅.
+- **Heavy CI: required because** kinta API/URL kontraktas (endpointai šalinami)
+  ir vartotojo matomas elgesys (paveikslų krovimas).
+
 ### 🔧 Chore: Workers best-practice atnaujinimai (v1.23.44) - 2026-09-25
 
 - **Atitinka `workers/best-practices` (2026-09-24):** `compatibility_date`

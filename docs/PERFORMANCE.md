@@ -43,7 +43,7 @@ see [DATA_SYNC.md](./DATA_SYNC.md).
 Documented in [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md):
 
 - **List metadata** — `author`, `thumbnail`, `workshopStatus` embedded in `GET /api/mods` page slice (KV only); rows skip per-item API when present.
-- **Lazy thumbnail bytes** — list rows load `/api/mods/:id/thumbnail/img?w=` on viewport (`IntersectionObserver`), not full CDN originals.
+- **Lazy thumbnail bytes** — list rows load the CDN original only when the row nears the viewport (`IntersectionObserver`); image transformations pašalintos 2026-09-28 (didesni baitai, $0 transformacijų) — žr. `COST_GUARDRAILS.md`.
 - **On-demand author** — `cache:mod-author:*` filled on scrape/detail; list uses embedded author when cached.
 - **Default mod list** — **precomputed** kolektoriaus run metu (`cache:page:mods:reforger:default`, `web/functions/lib/precomputed-pages.ts`; 1 KV read, globalus visiems PoP). Fallback — chunk 0 + 75 workshop field read'ų.
 - **Full mod shards** — loaded when search, activity filter, or non-default sort is active ([ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) § Lazy Chunk Loading).
@@ -97,13 +97,14 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 
 ---
 
-### Thumbnail resize proxy
+### Thumbnail bytes (no resize since v1.23.45)
 
-`GET /api/mods/:id/thumbnail/img?w=64|128|256`:
-
-- Resolves CDN URL from KV, then serves via **Cloudflare Image Resizing** when available.
-- Falls back to **302** to CDN if resizing is unavailable.
-- Edge-cached 7 days; `modListThumbnailUrl()` builds client URLs.
+`/api/mods/:id/thumbnail/img` ir `/api/img/proxy` ištrinti (2026-09-28) — CF
+Images transformacijos kainavo daugiau, nei davė. `ModThumbnail` krauna CDN
+originalą (URL iš list payload) arba 302 per `/api/og/preview/mod/:id`;
+krovimo klaida → raidės placeholder. Galerija/lightbox — `image.url`
+tiesiogiai. Regresija: didesni baitai pirmo krovimo metu (žr.
+[COST_GUARDRAILS.md](./COST_GUARDRAILS.md)).
 
 ### Route code-splitting (v1.23.26 — visi puslapiai)
 
@@ -155,8 +156,8 @@ Collector adds `online` / `on` / `n` per server in `history:*` without extra KV 
 |------|--------|----------|
 | **Mod list filter/sort** | Any non-default view loads **all** mod shards server-side | Medium |
 | **Server search API** | `?search=` on `/api/servers` loads **all** server shards | Medium |
-| **Thumbnail resize** | Without CF Image Resizing, `/thumbnail/img` 302s to full CDN size | Medium |
-| **Leaderboard rows** | ~24 resized image requests per page (lazy, viewport-gated) — no per-row author/status JSON | Low |
+| **Thumbnail bytes** | No resizing (transformations removed 2026-09-28): rows load CDN originals; lazy + placeholder mitigate | Medium |
+| **Leaderboard rows** | ~24 CDN original image requests per page (lazy, viewport-gated) — no per-row author/status JSON | Low |
 | **Planner + /servers** | Each page fetch up to 5000 servers (mitigated by 5 min client cache) | Low |
 | **ServerDetail similar** | Similar servers computed from **top 100** list fetch only | Low |
 | **No per-server KV index** | `findServerById` still scans shard text (one load, not O(1) key) | Low |

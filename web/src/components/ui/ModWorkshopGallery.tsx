@@ -3,7 +3,6 @@ import type { GameType } from '../../api/client';
 import { modsApi } from '../../api/client';
 import type { ModGalleryImage } from '../../types';
 import { GalleryLightbox } from './GalleryLightbox';
-import { modScreenshotProxyUrl } from '../../lib/workshop';
 
 function isLandscapeImage(image: ModGalleryImage): boolean {
   return Boolean(image.width && image.height && image.width > image.height);
@@ -143,7 +142,7 @@ export function ModWorkshopGallery({
             aria-label={`View screenshot ${index + 1} of ${images.length}`}
           >
             <img
-              src={modScreenshotProxyUrl(image.url, 960)}
+              src={image.url}
               alt={`${label} screenshot ${index + 1} of ${images.length}`}
               loading={index === 0 ? 'eager' : 'lazy'}
               // Pirmas (eager) dažniausiai būna LCP — leidžiam naršyklei teikti jam prioritetą

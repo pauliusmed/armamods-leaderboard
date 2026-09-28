@@ -35,3 +35,25 @@ export function resolveHistoryQuery(days: number, game: GameType): HistoryQueryP
   }
   return { baseKey: `history:yearly:${game}`, sliceCount: -10 };
 }
+
+/**
+ * Lexikografiniam palyginimui tinkantis laiko prefiksas: jei chunk'o pirmo
+ * taško laikas < šio prefikso, chunk'as yra senesnis už langą ir skaitymą
+ * galima stabdyti. Grąžina null, kai ribos nėra („viskas“ / nekorektiškas days).
+ */
+export function historyCutoffPrefix(days: number, nowMs: number = Date.now()): string | null {
+  if (!Number.isFinite(days) || days <= 0 || days >= 9999) return null;
+  const windowMs = days <= 1 ? 24 * 60 * 60 * 1000 : days * 24 * 60 * 60 * 1000;
+  const iso = new Date(nowMs - windowMs).toISOString();
+  return days <= 1 ? iso.slice(0, 13) : iso.slice(0, 10);
+}
+
+/** Pirmo `"time":"…"` laiko reikšmė shard'o tekste (chunk'ai rašomi laike didėjant). */
+export function firstPointTime(historyText: string): string | null {
+  const marker = '"time":"';
+  const idx = historyText.indexOf(marker);
+  if (idx === -1) return null;
+  const start = idx + marker.length;
+  const end = historyText.indexOf('"', start);
+  return end === -1 ? null : historyText.slice(start, end);
+}

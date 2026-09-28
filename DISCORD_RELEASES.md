@@ -3,6 +3,10 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.45] - 2026-09-28
+
+- Workshop images (mod thumbnails and screenshot galleries) now load straight from the official CDN. The first visit to a page may take slightly more data, while repeat views stay cached in your browser.
+
 ## [1.23.35] - 2026-09-09
 
 - Mod status labels are now worded more accurately: mods that lost all their players after an update are marked "Likely broken" instead of "Broken" — the status is inferred from player activity, not a verified failure report.
