@@ -20,7 +20,7 @@ Sveiki atvykę į reforgermods.com bendruomenės Discord!
 
 Nuorodos:
 - Svetainė: https://reforgermods.com
-- GitHub: https://github.com/GrybasTV/armamods-leaderboard
+- GitHub: https://github.com/pauliusmed/armamods-leaderboard
 - Duomenys sinchronizuojami kas ~2h iš BattleMetrics.
 
 Kaip gauti pagalbą: klauskite #support. Serverių savininkams — #server-owners.
@@ -29,8 +29,9 @@ Kaip gauti pagalbą: klauskite #support. Serverių savininkams — #server-owner
 ### #announcements (automatinis skelbimas)
 
 `#announcements` gauna automatinį pranešimą per webhook kiekvieną kartą, kai
-pasikeičia `CHANGELOG.md` (release). Rankiniu būdu rašyti nereikia — tik dideliems
-pranešimams (pav. serverio perkėlimas, reitingų politikos pakeitimai).
+pasikeičia **`DISCORD_RELEASES.md`** (ne `CHANGELOG.md` — žr. „Automatinis release
+pranešimas" žemiau). Rankiniu būdu rašyti nereikia — tik dideliems pranešimams
+(pav. serverio perkėlimas, reitingų politikos pakeitimai).
 
 ## Tikslai (kodėl egzistuoja serveris)
 
@@ -100,9 +101,10 @@ angliškas. Automatika siunčia tik pastarąjį.
 
 1. Discord: Channel Settings → Integrations → Webhooks → New Webhook, nustatyk kanalą `#announcements`, nukopijuok URL.
 2. GitHub: repo Settings → Secrets → `DISCORD_WEBHOOK_URL`.
-3. Kiekvienam deploy'ui, kuriame pasikeitė `DISCORD_RELEASES.md`, workflowas
-   (`deploy.yml` → `Announce release to Discord`) pats išsiunčia embed su naujausiu
-   įrašu per `scripts/post-discord-release.mjs`.
+3. Kiekvienam push'ui į `main`, kuriame pasikeitė `DISCORD_RELEASES.md`, workflowas
+   **`.github/workflows/discord-release.yml`** (žingsnis `Post release to Discord`)
+   pats išsiunčia embed su naujausiu įrašu per `scripts/post-discord-release.mjs`.
+   **`deploy.yml` neturi Discord žingsnio** — tai atskiras workflow.
 
 Be `DISCORD_RELEASES.md` pakeitimo pranešimas nesiunčiamas — taip išvengiama spam'o
 kiekvienam push'ui. CHANGELOG.md pakeitimai pranešimo nebeišsiunčia.

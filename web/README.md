@@ -24,8 +24,9 @@ src/
   lib/              favorites, siteCopy, modConfig, serverUptimeChart, …
   api/client.ts     axios + in-memory TTL cache
 functions/
-  api/              Hono edge API (production)
-  lib/              mod-lookup, server-lookup, storage-calc, …
+  api/              tik 2 moduliai: audit-config.ts, history-query.ts
+  lib/              mod-lookup, server-lookup, storage-calc, share-meta, …
+worker.ts           Hono edge API (production) + ASSETS — visas /api/* maršrutai
 ```
 
 ## Key UI patterns (v1.22.8)
@@ -41,7 +42,7 @@ functions/
 | Config copy | `CopyModConfigButton`, `modConfig.ts` |
 | Server uptime chart | `serverUptimeChart.ts` + Recharts `ReferenceArea` on `ServerDetail` |
 | Stale sync banner | `useDataFreshness.ts`, `DataStaleBanner.tsx` (hides charts when `isStale`) |
-| Donation goal ($25) | `lib/donation.ts`, `DonationCard`, `SupportPage` |
+| Donation goal ($50) | `lib/donation.ts` (`DONATION_GOAL_USD = 50`), `DonationCard`, `SupportPage` |
 
 See [docs/UI_FILTERS.md](../docs/UI_FILTERS.md), [docs/DATA_SYNC.md](../docs/DATA_SYNC.md), and [walkthrough.md](../walkthrough.md).
 

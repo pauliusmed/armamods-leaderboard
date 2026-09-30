@@ -112,12 +112,12 @@ Paveldima iš [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md), bet su mobile patikslinima
 
 ## 8. Offline / stale data
 
-- **Service Worker** (vite-plugin-pwa): `NetworkFirst` API užklausoms (`/api/` – 2h cache, max 100, 10s timeout). 28 assets precache.
+- **Service Worker** (vite-plugin-pwa, `generateSW`): **NĖRA `runtimeCaching` blokų** — `web/vite.config.ts:71` sako „*No runtimeCaching for `/api/*` on purpose*" (gyva leaderboard niekada neatsakoma iš SW cache; 10s timeout sukeldavo phantom „No matches found"). Šviežumą užtikrina edge `Cache-Control` + kliento in-memory cache. `navigateFallbackDenylist: [/^\/api\//]`. **85** assets precache.
 - **Offline indikatorius**: `OfflineBanner.tsx` — amber bar "UPLINK LOST — Showing cached telemetry", rodomas kai `navigator.onLine === false`. Stebi `online`/`offline` events.
 - **Stale data indikacija**: `DataStaleBanner` amber bar po header (ne sinchronizuoti duomenys, ne tinklas).
 - **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #B8784A`, SVG icon.
 - **Auto-update:** `registerType: 'autoUpdate'`.
-- IndexedDB persistence dar neįgyvendintas — žr. [Planuojama](#10-planuojama-roadmap).
+- **IndexedDB persistence įgyvendinta**: `web/src/lib/db.ts` — `indexedDB.open('armamods-cache')` + `persistentCache` (stale-while-revalidate, in-flight dedupe, 7 d. `prune()`). Žr. [docs/PERFORMANCE.md](./PERFORMANCE.md).
 
 ---
 
@@ -169,8 +169,8 @@ Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi ve
 ## 9. Offline / PWA
 
 - **Service Worker** generuojamas per `vite-plugin-pwa` (Workbox `generateSW`).
-- **Strategija:** `NetworkFirst` API užklausoms (`/api/` – 2h cache, max 100 entries, 10s timeout).
-- **Precache:** 28 assets (JS, CSS, HTML, SVG, woff2). `og-image.png` ignoruojamas (per didelis).
+- **Strategija:** **nėra `runtimeCaching`** — `/api/*` niekada nebus atsakoma iš SW cache (žr. `web/vite.config.ts:71`).
+- **Precache:** 85 assets (JS, CSS, HTML, SVG, woff2). `globIgnores: ['**/og-*.png', 'brand/**/*']`.
 - **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #B8784A`, SVG icon.
 - **Auto-update:** `registerType: 'autoUpdate'` – nauja SW versija automatiškai užsiregistruoja.
 - Dėl pilno offline (IndexedDB persistence) – žr. Planuojama.
@@ -181,7 +181,7 @@ Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi ve
 
 | Planuojama | Dabartinis pakaitalas |
 |------------|----------------------|
-| IndexedDB persistence (fully offline) | HTTP cache + SW network-first |
+| IndexedDB persistence | ✅ įgyvendinta (`web/src/lib/db.ts` → `persistentCache`) |
 
 ---
 
