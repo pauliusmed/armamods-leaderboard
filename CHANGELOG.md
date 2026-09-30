@@ -4,6 +4,34 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ♻️ Share prerender: serverių paieška per `ServerLookup` indeksą (v1.23.47) - 2026-09-30
+
+- **Problema:** `share-meta.ts` `lookupServer()` (share prerender `/mod/:id`,
+  `/server/:id` → `buildShareMeta`) skaitė **nuosekliai visus**
+  `cache:servers:<i>` shard'us (~16 × ~5 MB) kiekvienam crawler'ui — be
+  `servers-index`, be izoliato cache'o, be batchingo. Tuo pačiu darbas jau
+  buvo padarytas `/server/:id` puslapiui (`ServerLookup`), bet share kelias
+  liko nepanaudotas.
+- **Sprendimas:** `lookupServer()` deleguoja `ServerLookup.create()` +
+  naują `findByIdWithScan()` — indeksas (60s izoliato cache) → 1 shardas,
+  ~16 → ~3 reads. Batched full-scan ištrauktas į `ServerLookup.scanFor()`,
+  naudojamas abiem keliams (be duplikavimo).
+- **Elgesys nepablogėja:** jei `servers-index` dar neperprašytas naujam
+  snapshot'ui (kolektorius rašo shardus ir indeksą neatomiskai, langas
+  ~1–2 val.), `findByIdWithScan()` vis tiek praveda batched full-scan —
+  social preview kortelės ir OG tag'ai nepridyksta.
+- **Kontekstas (09-30 matavimas):** šis pakeitimas buvo *atrinktas po
+  matavimo*, ne pagal kodo auditą. 1 % trace sampling parodė, kad
+  `cache:mod-size:*` = 12 %, `cache:mod-alias:*` = 2.3 % visų KV reads, o
+  vidurkis — 5.05 reads/request (ne „60–220", kaip rodė teorinis kodas).
+  Du kiti planuoti pataisymai (mod-sizes bundle fast-path, alias 301 po
+  cache) **atmesti kaip netas neigiiami**: sutaupytų nemokamus reads
+  (~26 % nuo 10M/mėn free) už papildomą CPU (550 KB JSON parse).
+- **Patikra:** root 314/314 (7 nauji testai), web vitest 45/45, `tsc` ✅,
+  eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
+  po; wrangler dry-run ✅.
+- **Heavy CI: required because** kinta KV skaitymo kelias share prerender'iui.
+
 ### ⚡ Worker CPU: bot guardrail'ai + mod-changes/history cold kelio optimizacija (v1.23.46) - 2026-09-28
 
 - **Problema (09-28 tyrimas):** ~1.29M CPU ms/dieną (avg ~41 ms/request;

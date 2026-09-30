@@ -122,6 +122,22 @@ export class ServerLookup {
     return text;
   }
 
+  /** Batched full scan — 4 shardai (~20MB RAM) vienu metu, per 1-shard LRU. */
+  private async scanFor(serverId: string): Promise<Record<string, unknown> | null> {
+    for (let start = 0; start < this.chunkCount; start += FALLBACK_BATCH) {
+      const end = Math.min(start + FALLBACK_BATCH, this.chunkCount);
+      const texts = await Promise.all(
+        Array.from({ length: end - start }, (_, j) => this.loadShard(start + j))
+      );
+      for (const text of texts) {
+        if (!text) continue;
+        const server = findServerInChunks([text], serverId);
+        if (server) return server;
+      }
+    }
+    return null;
+  }
+
   async findById(serverId: string): Promise<Record<string, unknown> | null> {
     if (this.index) {
       const shardIdx = this.index.map[serverId];
@@ -135,18 +151,23 @@ export class ServerLookup {
     console.warn(
       `[SERVER_LOOKUP] servers-index missing for ${this.game} — batched full-scan fallback (${this.chunkCount} shards)`
     );
-    for (let start = 0; start < this.chunkCount; start += FALLBACK_BATCH) {
-      const end = Math.min(start + FALLBACK_BATCH, this.chunkCount);
-      const texts = await Promise.all(
-        Array.from({ length: end - start }, (_, j) => this.loadShard(start + j))
-      );
-      for (const text of texts) {
-        if (!text) continue;
-        const server = findServerInChunks([text], serverId);
-        if (server) return server;
-      }
-    }
-    return null;
+    return this.scanFor(serverId);
+  }
+
+  /**
+   * Index kelys, o jam prošvaistojus — vis tiek batched scan.
+   *
+   * Reikalingas ten, kur anksčiau buvo rankinis nuoseklus visų shard'ų skenas:
+   * jis rasdavo serverį net jei `servers-index` dar nebuvo perprašytas naujam
+   * snapshot'ui (kolektoriaus runas rašo shardus ir indeksą neatomiskai). Toks
+   * langas trunka iki kito run'o (~1–2 val.) — be šio fallback'o social preview
+   * kortelėms ir OG tag'ams pradingtų.
+   */
+  async findByIdWithScan(serverId: string): Promise<Record<string, unknown> | null> {
+    const hit = await this.findById(serverId);
+    if (hit) return hit;
+    if (!this.index || !this.chunkCount) return null;
+    return this.scanFor(serverId);
   }
 }
 

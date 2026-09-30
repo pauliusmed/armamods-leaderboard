@@ -167,3 +167,60 @@ describe('ServerLookup — batched full-scan fallback (index missing)', () => {
     assert.equal(await ServerLookup.create(kv, 'reforger'), null);
   });
 });
+
+describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', () => {
+  // Indexas parašytas prieš paskutinį shard'ų snapshot'ą: shard'e 5 serveris yra,
+  // indekse jo nėra — tikras kolektoriaus run'o rašymo langas.
+  const staleIndex = buildServerIndex([
+    [{ id: 'srv-0' }], [{ id: 'srv-1' }], [{ id: 'srv-2' }],
+    [{ id: 'srv-3' }], [{ id: 'srv-4' }], [],
+  ]);
+  const entries = {
+    ...shardEntries,
+    'cache:servers-index': JSON.stringify(staleIndex),
+    'cache:servers:meta': JSON.stringify({ total: SHARDS, chunks: SHARDS }),
+  };
+
+  it('scans and finds a server the index does not know', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    // be fallback'o — greitas 404
+    assert.equal(await lookup.findById('srv-5'), null);
+    assert.equal(shardGets(kv).length, 0);
+
+    const found = await lookup.findByIdWithScan('srv-5');
+    assert.equal(found?.id, 'srv-5');
+    assert.equal(shardGets(kv).length, SHARDS);
+  });
+
+  it('does not scan when the index already answers', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    assert.equal((await lookup.findByIdWithScan('srv-3'))?.id, 'srv-3');
+    assert.deepEqual(shardGets(kv), ['cache:servers:3']);
+  });
+
+  it('returns null when the index misses and no shard has it', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
+    assert.equal(shardGets(kv).length, SHARDS);
+  });
+
+  it('does not double-scan when the index is missing entirely', async () => {
+    const kv = makeKv({ ...shardEntries, 'cache:servers:meta': entries['cache:servers:meta'] });
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+    assert.equal(lookup.hasIndex, false);
+
+    assert.equal(await lookup.findByIdWithScan('nope'), null);
+    // create() → findById() jau perskanavo visus shard'us; nėra antrojo pilno skeno
+    assert.equal(shardGets(kv).length, SHARDS);
+  });
+});
