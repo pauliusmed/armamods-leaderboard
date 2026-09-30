@@ -4,6 +4,18 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 📖 Docs: versijos, indeksas, mirusios `file://` nuorodos (v1.23.52) - 2026-09-30
+
+- **`docs/README.md:3` — „current: **v1.23.45**"** nors factiškai v1.23.51: **4 versijos pasenusios**. Tai dokumentacijos įėjimas, iš kurio vedamos visos kitos nuorodos.
+- **Indeksas buvo incompletas** — 4 failai egzistavo ir buvo sekami git, bet **nebuvo įtraukti į jokią lentelę**: `DESIGN_SYSTEM.md`, `DESIGN_DECISIONS.md`, `BRAND_ASSETS.md`, `scripts/steam-auth-probe/README.md`. Įtraukti į „Start here" (pirmieji trys — su `Audience` stulpeliu, nes stilius 3 stulpelių) ir „Other" (steam-auth-probe). **Patikra:** 28 santykinių nuorodų patikrinta `fs.existsSync` → **0 nutrūkusių**.
+- **`docs/PERFORMANCE.md:90` — „v1.24, bendras šildymas"** — **tokios versijos niekada nebuvo**. Iš tikrųjų susijusi su `CHANGELOG.md` § `[1.23.24] - 2026-08-27` „🚀 Bendras šildymas (compute-at-write)". Pakeista į **v1.23.24**.
+- **`CHANGELOG.md` — 18 `file://` nuorodų, 0 gyvų** (patikrinta `git ls-files`):
+  - absoliučios **šio kompiuterio** keliai (`file:///c:/Users/GrybasTv/Desktop/code/armamods/…`) — neveikia niekam kitam;
+  - **kito žmogaus** keliai (`file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/…`) — **nutekėjusios privačios archyvo struktūros į viešą changelog'ą**;
+  - vedė į ištrintus failus (`web/functions/api/[[path]].ts`, `web/src/components/ServerCard.tsx` — tikras kelias `ui/`).
+  Pakeista į backtick code spans: **18 → 0**. Numatytosios santykinės nuorodos liko nepakitusios.
+- **Heavy CI: skipped because** lyginama tik `.md` dokumentacija.
+
 ### 📖 Docs: collector cron `~2h` → hourly (v1.23.51) - 2026-09-30
 
 `.github/workflows/collector.yml:12` = `cron: '0 * * * *'` **kas valandą** nuo INC-2026-08-26. **11 gyvų dokumentų** vis dar rašė „~2h" / „kas-2h" / „every 2 hours" — dalis jų vedė į **skaičiavimus, kurie dabar 2× neteisingi**.
@@ -1581,36 +1593,36 @@ Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyt
 ## [1.14.3] - 2026-06-22
 
 ### 🛡️ Saugumo ir dokumentacijos klaidų ištaisymas
-- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš [[[[path]].ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/functions/api/[[path]].ts), kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
-- **Wrangler konfigūracijos išvalymas**: Iš [wrangler.toml](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/wrangler.toml) pašalintas nenaudojamas `WEBHOOK_SECRET` kintamasis.
-- **Dokumentacijos EMA alpha reikšmės sutikslinimas**: Pataisyta klaidingai nurodyta $\alpha = 0.15$ reikšmė [README.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/README.md), [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/docs/ALGORITHM.md) (15% offline decay pakeista į teisingą 10%) bei senesniuose `CHANGELOG.md` įrašuose į teisingą $\alpha = 0.10$ (90% / 10%), atitinkančią realią kolektoriaus elgseną bei algoritmo aprašymą.
-- **Komentarų vertimas į anglų kalbą**: Lietuviški komentarai bei diagnostikos pranešimai išversti į anglų kalbą visuose šaltinio failuose — core logikoje ([collector.ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/scripts/collector.ts), [[[path]].ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/functions/api/[[path]].ts), [audit-config.ts](file:///c:/Users/GrybasTv/Desktop/code/armamods/web/functions/api/audit-config.ts)) bei ad-hoc diagnostikos skriptuose (`scripts/check-17-drop.mjs`, `check-config-bm.mjs`, `check-mod-gameversion.mjs`, `run-audit-local.mjs`) — siekiant užtikrinti vientisą repozitorijos toną.
-- **README marketingo tono sušvelninimas**: Sušvelninti skambūs teiginiai („hype“) faile [README.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/README.md) bei patikslintas vietinio paleidimo aprašas, aiškiai nubrėžiant ribą tarp vietinio proxy ir tikrosios edge funkcijų API architektūros.
-- **Techninė ataskaita (walkthrough)**: Sukurtas [walkthrough.md](file:///c:/Users/GrybasTv/Desktop/code/armamods/walkthrough.md) — inžinerinis projekto pristatymas, apimantis duomenų srautą, komponentus, API paviršių bei pagrindinius architektūros sprendimus, skirtas naujam skaitytojui greitai susiorientuoti kode.
+- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš [[[[path]].ts]([[path]].ts), kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
+- **Wrangler konfigūracijos išvalymas**: Iš `wrangler.toml` pašalintas nenaudojamas `WEBHOOK_SECRET` kintamasis.
+- **Dokumentacijos EMA alpha reikšmės sutikslinimas**: Pataisyta klaidingai nurodyta $\alpha = 0.15$ reikšmė `README.md`, `docs/ALGORITHM.md` (15% offline decay pakeista į teisingą 10%) bei senesniuose `CHANGELOG.md` įrašuose į teisingą $\alpha = 0.10$ (90% / 10%), atitinkančią realią kolektoriaus elgseną bei algoritmo aprašymą.
+- **Komentarų vertimas į anglų kalbą**: Lietuviški komentarai bei diagnostikos pranešimai išversti į anglų kalbą visuose šaltinio failuose — core logikoje (`collector.ts`, [[[path]].ts]([[path]].ts), `audit-config.ts`) bei ad-hoc diagnostikos skriptuose (`scripts/check-17-drop.mjs`, `check-config-bm.mjs`, `check-mod-gameversion.mjs`, `run-audit-local.mjs`) — siekiant užtikrinti vientisą repozitorijos toną.
+- **README marketingo tono sušvelninimas**: Sušvelninti skambūs teiginiai („hype“) faile `README.md` bei patikslintas vietinio paleidimo aprašas, aiškiai nubrėžiant ribą tarp vietinio proxy ir tikrosios edge funkcijų API architektūros.
+- **Techninė ataskaita (walkthrough)**: Sukurtas `walkthrough.md` — inžinerinis projekto pristatymas, apimantis duomenų srautą, komponentus, API paviršių bei pagrindinius architektūros sprendimus, skirtas naujam skaitytojui greitai susiorientuoti kode.
 
 ## [1.14.2] - 2026-06-07
 
 ### 📝 Dokumentacijos bei diagnostikos versijos atnaujinimai
-- **README aplinkos kintamųjų bei sharding parametrų tikslinimas**: Failas [README.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/README.md) atnaujintas pašalinant nenaudojamą `CLOUDFLARE_KV_NAMESPACE`, įtraukiant realiai naudojamus `CLOUDFLARE_API_TOKEN` bei `WORKER_URL` kintamuosius, ir pataisytas sharding aprašymas iš 1MB į teisingą 5MB.
-- **Diagnostikos versijos sinchronizavimas**: API Gateway [\[\[path\]\].ts](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/functions/api/[[path]].ts) faile pataisyta diagnostikos `/diagnostics` endpointo grąžinama versijos eilutė iš pasenusios `1.4.0-diag` į `1.14.1-diag` (atitinkančią dabartinę projekto būseną).
+- **README aplinkos kintamųjų bei sharding parametrų tikslinimas**: Failas `README.md` atnaujintas pašalinant nenaudojamą `CLOUDFLARE_KV_NAMESPACE`, įtraukiant realiai naudojamus `CLOUDFLARE_API_TOKEN` bei `WORKER_URL` kintamuosius, ir pataisytas sharding aprašymas iš 1MB į teisingą 5MB.
+- **Diagnostikos versijos sinchronizavimas**: API Gateway [\[\[path\]\].ts]([[path]].ts) faile pataisyta diagnostikos `/diagnostics` endpointo grąžinama versijos eilutė iš pasenusios `1.4.0-diag` į `1.14.1-diag` (atitinkančią dabartinę projekto būseną).
 
 ## [1.14.1] - 2026-06-07
 
 ### ⚡ API Našumo ir CPU viršijimo pataisymai (503/1102 klaidos)
-- **Chirurginis serverių parsinimas (`splitJsonArray`)**: Pakeistas serverių informacijos gavimas modifikacijų detalių API maršrute (`/api/mods/:modId`) faile [[[path]].ts](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/functions/api/[[path]].ts). Vietoj viso 2MB dydžio serverių sąrašo chunk'o parsinimo su `JSON.parse` (kas viršydavo 10ms CPU limitą nemokamame plane ir išmesdavo 503/1102 klaidas), dabar JSON tekstas išskaidomas į atskirų serverių teksto blokus. `JSON.parse` iškviečiamas tik tiems keliems serveriams, kurie iš tikrųjų naudoja ieškomą modifikaciją. Tai sumažino CPU laiko sąnaudas iki minimumo.
+- **Chirurginis serverių parsinimas (`splitJsonArray`)**: Pakeistas serverių informacijos gavimas modifikacijų detalių API maršrute (`/api/mods/:modId`) faile [[[path]].ts]([[path]].ts). Vietoj viso 2MB dydžio serverių sąrašo chunk'o parsinimo su `JSON.parse` (kas viršydavo 10ms CPU limitą nemokamame plane ir išmesdavo 503/1102 klaidas), dabar JSON tekstas išskaidomas į atskirų serverių teksto blokus. `JSON.parse` iškviečiamas tik tiems keliems serveriams, kurie iš tikrųjų naudoja ieškomą modifikaciją. Tai sumažino CPU laiko sąnaudas iki minimumo.
 
 ## [1.14.0] - 2026-06-07
 
 ### 🖥️ Panašių serverių sekcijos (Similar Deployed Servers) įdiegimas
-- **Serverių panašumo algoritmas kliento pusėje**: Sukurtas `similarServers` skaičiavimo modulis faile [ServerDetail.tsx](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/src/components/ServerDetail.tsx), kuris veikia 100% kliento naršyklėje (React aplinkoje). Algoritmas lygina esamo serverio modifikacijų sutapimą (naudojant *Jaccard similarity*) bei žaidėjų skaičiaus santykį, sujungdamas juos į bendrą balą (70% modų sutapimas, 30% žaidėjų skaičiaus panašumas).
+- **Serverių panašumo algoritmas kliento pusėje**: Sukurtas `similarServers` skaičiavimo modulis faile `ServerDetail.tsx`, kuris veikia 100% kliento naršyklėje (React aplinkoje). Algoritmas lygina esamo serverio modifikacijų sutapimą (naudojant *Jaccard similarity*) bei žaidėjų skaičiaus santykį, sujungdamas juos į bendrą balą (70% modų sutapimas, 30% žaidėjų skaičiaus panašumas).
 - **0 papildomų KV operacijų**: Kadangi serverių sąrašas parsiunčiamas lygiagrečiai su pagrindine užklausa ir yra kešuojamas, ši funkcija neišnaudoja papildomų Cloudflare KV ar Workers CPU resursų (kvotų).
 - **Premium atvaizdavimas**: Serverio detalių puslapyje pridėtas naujas vizualinis blokas „Similar Deployed Servers“, rodantis top 5 panašius serverius, jų aktyvių žaidėjų skaičių ir modifikacijų sutapimo procentą (Overlap %).
 
 ## [1.13.3] - 2026-06-07
 
 ### 🛠️ UI pataisymai (atsikratyta −0% užrašo ir CLS mažinimas)
-- **dropPct sąlygos pataisymas**: Modifikacijų detalių ([ModDetail.tsx](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/src/components/ModDetail.tsx)) ir bendro audito ([ConfigAuditPage.tsx](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/src/components/ConfigAuditPage.tsx)) puslapiuose `dropPct` (populiarumo kritimo procentas) dabar atvaizduojamas tik tada, kai jo vertė yra griežtai didesnė už 0 (`dropPct > 0`). Tai išsprendžia problemą, kai modifikacijoms, kurios neprarado žaidėjų po 1.7 atnaujinimo, buvo rodomas klaidinantis ir matematiškai neteisingas `−0%` užrašas.
-- **CLS (Layout Shift) mažinimas**: Pagrindiniam puslapio `<main>` konteineriui faile [Layout.tsx](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/web/src/components/Layout.tsx) priskirta `min-h-[60vh]` taisyklė. Tai užtikrina, kad krovimosi metu (kai turinys dar nėra gautas iš API) puslapio apačia (`footer`) nebus pritraukta prie pat viršaus ir vėliau staigiai nenustumta žemyn, taip drastiškai pagerinant svetainės CLS rodiklį.
+- **dropPct sąlygos pataisymas**: Modifikacijų detalių (`ModDetail.tsx`) ir bendro audito (`ConfigAuditPage.tsx`) puslapiuose `dropPct` (populiarumo kritimo procentas) dabar atvaizduojamas tik tada, kai jo vertė yra griežtai didesnė už 0 (`dropPct > 0`). Tai išsprendžia problemą, kai modifikacijoms, kurios neprarado žaidėjų po 1.7 atnaujinimo, buvo rodomas klaidinantis ir matematiškai neteisingas `−0%` užrašas.
+- **CLS (Layout Shift) mažinimas**: Pagrindiniam puslapio `<main>` konteineriui faile `Layout.tsx` priskirta `min-h-[60vh]` taisyklė. Tai užtikrina, kad krovimosi metu (kai turinys dar nėra gautas iš API) puslapio apačia (`footer`) nebus pritraukta prie pat viršaus ir vėliau staigiai nenustumta žemyn, taip drastiškai pagerinant svetainės CLS rodiklį.
 
 ## [1.13.2] - 2026-06-07
 
@@ -1730,13 +1742,13 @@ Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyt
 ### 📈 Eksponentinio slopinimo (EMA) ir reputacijos išlaikymo diegimas
 - **Eksponentinis slopinimas (EMA - Exponential Moving Average)**: Serverių reitingavimo skaičiavimuose įdiegtas EMA modelis su koeficientu $\alpha = 0.10$. Tai 90% reitingo taškų svorio perkelia iš sukaupto patikimumo balso, panaikinant naktinius reitingų svyravimus ir apsaugant serverius nuo staigaus nukritimo trumpų restartų metu.
 - **Tolygaus gesimo (Fadeaway) garantija**: Neaktyvūs ar visiškai išjungti serveriai nebeprapuola iškart, o gražiai ir tolygiai leidžiasi reitingų sąrašu žemyn, užtikrinant reputacinį tęstinumą.
-- **Dokumentacija**: Pilnai atnaujintas [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/docs/ALGORITHM.md) dokumentas, aprašantis naujosios formulės veikimą ir matematines savybes.
+- **Dokumentacija**: Pilnai atnaujintas `docs/ALGORITHM.md` dokumentas, aprašantis naujosios formulės veikimą ir matematines savybes.
 
 ## [1.8.2] - 2026-05-18
 
 ### 📉 Serverio valandinės istorijos pataisymai (24H Graph Fix)
 - **Valandinio rėžio įjungimas**: Ištaisyta sisteminė klaida `/servers/:serverId/history` endpoint'e, kur valandinis rėžis (24H) klaidingai grąžindavo kasdienius taškus. Dabar sistema sėkmingai persijungia į `history:hourly` raktą ir atvaizduoja pilną 24 valandų grafiko kreivę su valandiniais taškais.
-- **Dokumentacijos atnaujinimas**: Papildytas [docs/ALGORITHM.md](file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/docs/ALGORITHM.md) dokumentas, aprašantis valandinio, kasdienio, mėnesinio bei metinio istorijos rėžių veikimą bei KV sharding maršrutus.
+- **Dokumentacijos atnaujinimas**: Papildytas `docs/ALGORITHM.md` dokumentas, aprašantis valandinio, kasdienio, mėnesinio bei metinio istorijos rėžių veikimą bei KV sharding maršrutus.
 
 ## [1.8.1] - 2026-05-18
 
