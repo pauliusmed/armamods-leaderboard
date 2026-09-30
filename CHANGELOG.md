@@ -10,9 +10,9 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **Indeksas buvo incompletas** — 4 failai egzistavo ir buvo sekami git, bet **nebuvo įtraukti į jokią lentelę**: `DESIGN_SYSTEM.md`, `DESIGN_DECISIONS.md`, `BRAND_ASSETS.md`, `scripts/steam-auth-probe/README.md`. Įtraukti į „Start here" (pirmieji trys — su `Audience` stulpeliu, nes stilius 3 stulpelių) ir „Other" (steam-auth-probe). **Patikra:** 28 santykinių nuorodų patikrinta `fs.existsSync` → **0 nutrūkusių**.
 - **`docs/PERFORMANCE.md:90` — „v1.24, bendras šildymas"** — **tokios versijos niekada nebuvo**. Iš tikrųjų susijusi su `CHANGELOG.md` § `[1.23.24] - 2026-08-27` „🚀 Bendras šildymas (compute-at-write)". Pakeista į **v1.23.24**.
 - **`CHANGELOG.md` — 18 `file://` nuorodų, 0 gyvų** (patikrinta `git ls-files`):
-  - absoliučios **šio kompiuterio** keliai (`file:///c:/Users/GrybasTv/Desktop/code/armamods/…`) — neveikia niekam kitam;
-  - **kito žmogaus** keliai (`file:///c:/Users/GrybasTv/Desktop/code/Archyvas/armamods/…`) — **nutekėjusios privačios archyvo struktūros į viešą changelog'ą**;
-  - vedė į ištrintus failus (`web/functions/api/[[path]].ts`, `web/src/components/ServerCard.tsx` — tikras kelias `ui/`).
+- absoliučios **vietinio kompiuterio** keliai (pvz. `c:/Users/<user>/Desktop/code/armamods/…`) — neveikia niekam kitam;
+- absoliučios **vietinio kompiuterio** keliai (pvz. `c:/Users/<user>/Desktop/code/armamods/…`) — neveikia niekam kitam;
+- **archyvo** keliai (`…/Desktop/code/<archive>/armamods/…`) — **nutekėjusios privačios struktūros į viešą changelog'ą**;
   Pakeista į backtick code spans: **18 → 0**. Numatytosios santykinės nuorodos liko nepakitusios.
 - **Heavy CI: skipped because** lyginama tik `.md` dokumentacija.
 
