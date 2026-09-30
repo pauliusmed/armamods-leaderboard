@@ -103,11 +103,17 @@ export class ServerLookup {
   private chunkCount = 0;
   // 1-shard cache (~5MB cap): storage plan queries neighbouring ids that share a shard.
   private lastShard: { idx: number; text: string } | null = null;
+  // Aiškūs laukai, NE constructor parameter properties: `share-meta` importuoja
+  // šitą modulį, todėl jis patenka į `web/tsconfig.app.json` programą (iš `src/`
+  // per `precomputed-pages.test.ts` → `precomputed-pages.ts` → `share-meta`),
+  // o ten `erasableSyntaxOnly: true` — parameter properties neleistini (TS1294).
+  private readonly kv: KVNamespace;
+  private readonly game: GameType;
 
-  private constructor(
-    private readonly kv: KVNamespace,
-    private readonly game: GameType
-  ) {}
+  private constructor(kv: KVNamespace, game: GameType) {
+    this.kv = kv;
+    this.game = game;
+  }
 
   /** False = paieška einą per batched full-scan fallbacką (indekso rakto KV nėra). */
   get hasIndex(): boolean {
