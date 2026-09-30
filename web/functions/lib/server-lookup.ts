@@ -75,8 +75,10 @@ export function findServerInChunks(
   return null;
 }
 
-/** Full-scan batch size — 4 shards × ~5MB keeps peak RAM ~20MB per lookup instead of ~80MB. */
-const FALLBACK_BATCH = 4;
+/** Full-scan batch size — 4 shards × ~5MB keeps peak RAM ~20MB per lookup instead of ~80MB.
+ *  Eksportuojamas, nes tai yra **sutartis, ne implementacijos detalė**: bet koks
+ *  skenas turi laikyti ≤ FALLBACK_BATCH shardų vienu metu (128 MB Workers RAM riba). */
+export const FALLBACK_BATCH = 4;
 
 /**
  * Log-safe server id.
@@ -84,10 +86,10 @@ const FALLBACK_BATCH = 4;
  * `serverId` ateina iš URL kelio (`/server/:id`), t. y. bot'ų kontroliuojamas.
  * Įrašant ją į `console.warn` be filtravimo, `/server/%0a[FAKE] ...` tipo
  * užklausa suforguotų netikrus log įrašus, o kiekvienas neegzistuojantis
- * serveris generuootų po įrašą (log užpildymas). Žiauname: 32 ženkliai
+ * serveris generuotų po įrašą (log užpildymas). Žiauname: 32 ženkliai
  * ir tik `[A-Za-z0-9_-]`.
  */
-function logSafeId(value: string): string {
+export function logSafeId(value: string): string {
   return value.replace(/[^A-Za-z0-9_-]/g, '?').slice(0, 32) || '(empty)';
 }
 

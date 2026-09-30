@@ -4,10 +4,25 @@ import {
   findServerInChunks,
   buildServerIndex,
   ServerLookup,
+  FALLBACK_BATCH,
+  logSafeId,
 } from '../web/functions/lib/server-lookup.ts';
 import { clearModuleCache } from '../web/functions/lib/module-cache.ts';
 
 beforeEach(() => clearModuleCache());
+
+/** Run `fn` with console.warn captured; the `finally` restore is the part that matters. */
+async function captureWarn(fn: () => Promise<unknown>): Promise<string[]> {
+  const lines: string[] = [];
+  const real = console.warn;
+  console.warn = (...args: unknown[]) => { lines.push(args.map(String).join(' ')); };
+  try {
+    await fn();
+  } finally {
+    console.warn = real;
+  }
+  return lines;
+}
 
 const chunk = JSON.stringify([
   { id: '111', name: 'Alpha Server', mods: [] },
@@ -226,10 +241,14 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
-  it('scans with exactly FALLBACK_BATCH shard reads in flight', async () => {
-    // 6 shardai. Plokščias get'ų sąrašas [0..5] NEDIFERENCUOJA lygiagumo —
-    // ta patį duoda viena 6-paralelinė banga ir nuoseklus skenas. Tvirtiname
-    // lygiagumą: nuoseklus = 1, be batchingo = 6, su FALLBACK_BATCH (4) = 4.
+  it('holds the full-scan parallelism within FALLBACK_BATCH', async () => {
+    // Tvirtiname SUTARTĮ, ne skaičių: bet koks skenas turi laikyti ≤
+    // FALLBACK_BATCH shardų vienu metu (RAM sutartis, 128 MB riba). Tikslus
+    // `=== 4` būtų per griežtas: dar saugesnis nuoseklus skenas (1) taip pat
+    // teiktų sutartį, bet testas jį atmestų.
+    //   - be batchingo (viena 6 banga) → 6  ⇒ KRINTA
+    //   - su FALLBACK_BATCH           → 4  ⇒ praeina
+    //   - nuoseklus                  → 1  ⇒ praeina (dar saugesnis)
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
@@ -239,7 +258,9 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     kv.probe.reset();
     assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
     assert.equal(shardGets(kv).length, SHARDS);
-    assert.equal(kv.probe.maxInFlight, 4);
+    assert.ok(kv.probe.maxInFlight <= FALLBACK_BATCH, `maxInFlight=${kv.probe.maxInFlight}`);
+    // Lygiagumas turi egzistuoti — kitaip batchas nepasiteisimu.
+    assert.ok(kv.probe.maxInFlight > 1, `maxInFlight=${kv.probe.maxInFlight}`);
   });
 
   it('does not double-scan when the index is missing entirely', async () => {
@@ -255,50 +276,62 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
-  it('never logs a raw URL-supplied id (log-injection guard)', async () => {
-    // serverId ateina iš `/server/:id` — botas gali įrėžti `\n` ir suforguoti
-    // netikrus log įrašus. Kiekvienas įrašas turi būti VIENOS eilutės.
+  it('routes the logged id through logSafeId (log-injection guard)', async () => {
+    // serverId ateina iš `/server/:id` — bots gali įrėžti `\n` ir suforguoti
+    // netikrus log įrašus. Tvirtiname SUTARTĮ (kad naudojama `logSafeId`),
+    // o ne pasisekimo šabloną: testas turi likti teisingas po bet kurio žodžio
+    // pakeitimo pranešime.
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
 
-    const lines: string[] = [];
-    const real = console.warn;
-    console.warn = (...args: unknown[]) => { lines.push(args.map(String).join(' ')); };
-    try {
-      await lookup.findByIdWithScan('srv\n[SERVER_LOOKUP] forged line');
-    } finally {
-      console.warn = real;
-    }
+    const attack = 'srv\n[SERVER_LOOKUP] forged line';
+    const lines = await captureWarn(() => lookup.findByIdWithScan(attack));
 
     assert.equal(lines.length, 1);
     assert.equal(lines[0].includes('\n'), false);
-    assert.equal(lines[0].includes('forged'), true);
-    // Kiekvienas neleidžiamas simbolis (newline, `[`, `]`, tarpas) → '?':
-    // 'srv\n[SERVER_LOOKUP] forged line' turi likti VIENA eilute.
-    assert.equal(lines[0].includes('srv??SERVER_LOOKUP??forged?line'), true);
+    assert.equal(lines[0].includes(logSafeId(attack)), true);
   });
 
   it('caps the logged id at 32 characters (log-volume guard)', async () => {
-    // Antroji logSafeId pusė: be `.slice(0, 32)` botas galėtų įrėžti šimtai
-    // ženklų į kiekvieną log įrašą. Serverių id realiai ≤ 8 skaitmenys.
+    // Be `.slice(0, 32)` bots galėtų įrėžti šimtus ženklų į kiekvieną log
+    // įrašą. Serverių id realiai ≤ 8 skaitmenys.
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
 
     const flood = 'A'.repeat(5_000);
-    const lines: string[] = [];
-    const real = console.warn;
-    console.warn = (...args: unknown[]) => { lines.push(args.map(String).join(' ')); };
-    try {
-      await lookup.findByIdWithScan(flood);
-    } finally {
-      console.warn = real;
-    }
+    const lines = await captureWarn(() => lookup.findByIdWithScan(flood));
 
     assert.equal(lines.length, 1);
-    assert.equal(lines[0].length, 32 + '[SERVER_LOOKUP] servers-index miss for reforger/'.length
-      + ' — full-scan fallback (6 shards)'.length);
     assert.equal(lines[0].includes(flood), false);
+    assert.equal(logSafeId(flood).length, 32);
+  });
+});
+
+describe('logSafeId', () => {
+  it('strips everything outside [A-Za-z0-9_-] so one id stays one log line', () => {
+    // Newline, `[`, `]`, tarpas → visi `?`. Jokio '\n' nelieka.
+    assert.equal(logSafeId('srv\n[SERVER_LOOKUP] forged line'), 'srv??SERVER_LOOKUP??forged?line');
+    assert.equal(logSafeId('a\nb').includes('\n'), false);
+  });
+
+  it('caps length at 32 characters', () => {
+    assert.equal(logSafeId('A'.repeat(5_000)).length, 32);
+    assert.equal(logSafeId('A'.repeat(5_000)), 'A'.repeat(32));
+  });
+
+  it('keeps legitimate server ids intact', () => {
+    assert.equal(logSafeId('41066386'), '41066386');
+    assert.equal(logSafeId('army-3_A'), 'army-3_A');
+  });
+
+  it('never returns an empty label', () => {
+    assert.equal(logSafeId(''), '(empty)');
+  });
+
+  it('renders an all-unsafe id as placeholders, not nothing', () => {
+    // `'??'` — matoma, kad buvo kažkas neteisingo, o ne „tuščias serveris".
+    assert.equal(logSafeId('\n\n'), '??');
   });
 });

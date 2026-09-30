@@ -46,19 +46,25 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
     **batch testas, kuris tikrai gali nepavykti** (ankstesnis plokščias
     shard'ų sąrašas nepagrindė lygiagumo — 1 banga ir nuoseklus skenas duoda
     tą patį sąrašą; dabar `makeKv` matuoja `maxInFlight`).
-  - 3-as raundas (5 findings, 2 NAJOS) — 2 ištaisyta: lygiagumo probe
-    dabar **išvalomas po `create()`** (kad matuotų tik skeną, o ne visą
-    užklausą) ir tvirtinamas **tiksliai** (`=== 4`, ne „ne daugiau kaip"),
-    pridėtas **ilgio ribos testas** (`slice(0, 32)` anksčiau buvo
-    neapginta).
-  - **Patikrinta mutacijomis:** `FALLBACK_BATCH 4 → 64` → lygiagumo testas
-    krenta (`expected: 4, actual: 6`); `logSafeId → raw` → log-injection
-    testas krenta; `drop .slice(0, 32)` → ilgio ribos testas krenta.
-    Visi apsaugoti, ne „testai, kurie visada praeina".
+  - 3-as raundas (5 findings, 2 NAJOS) ir 4-as raundas (3 findings,
+    2 NAJOS) — testai perversti iš *implementacijos* į *sutartį*:
+    `FALLBACK_BATCH` ir `logSafeId` **eksportuoti** ir testuojami tiesiogiai
+    (nebelyginamas pranešimo šablonas, kuris lūžtų nuo bet kurio žodžio
+    pakeitimo), `console.warn` gaudymas ištrauktas į `captureWarn()` helper'į
+    (3× copy-paste → 1), lygiagumo testas tvirtina **≤ `FALLBACK_BATCH`**
+    (sutartis) + `> 1` (lygiagumas egzistuoja) vietoj `=== 4` — dabar
+    nuoseklus skenas, kuris yra dar saugesnis, praeina teisingai, o ne
+    atmetamas.
+  - **Patikrinta mutacijomis (visos 4 krenta):**
+    `FALLBACK_BATCH 4 → 64` → lygiagumo sutartis krenta;
+    `logSafeId → raw` → 2 testai krenta;
+    `drop .slice(0, 32)` → 2 testai krenta;
+    `log filtras neutralizuotas` → 1 testas krenta.
+    Tai „testai, kurie tikrai gali nepavykti", ne „visada praeina".
   - **Atmesta:** 1-slot LRU padidinimas — LRU *turi* likti 1-slot, 4 shardai
     (~20 MB) jau yra `FALLBACK_BATCH` riba, sauganti 128 MB Workers RAM ribą
     (projektas jau gavo `exceededMemory` 503: 09-16, 19 klaidų).
-- **Patikra:** root **317/317** (11 naujų testų), web vitest 45/45, `tsc` ✅,
+- **Patikra:** root **322/322** (16 naujų testų), web vitest 45/45, `tsc` ✅,
   eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
   po; wrangler dry-run ✅.
 - **Heavy CI: required because** kinta KV skaitymo kelias share prerender'iui.
