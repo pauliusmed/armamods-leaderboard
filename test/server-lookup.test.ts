@@ -64,7 +64,7 @@ function makeKv(entries: Record<string, string>) {
   // (a flat ordered get-list cannot tell 4-at-a-time batching from 1-wave or
   // fully sequential scanning — all three produce the same list).
   let inFlight = 0;
-  const probe = { maxInFlight: 0 };
+  const probe = { maxInFlight: 0, reset: () => { probe.maxInFlight = 0; } };
   return {
     gets,
     probe,
@@ -81,7 +81,7 @@ function makeKv(entries: Record<string, string>) {
         inFlight--;
       }
     },
-  } as unknown as KVNamespace & { gets: string[]; probe: { maxInFlight: number } };
+  } as unknown as KVNamespace & { gets: string[]; probe: { maxInFlight: number; reset: () => void } };
 }
 
 const SHARDS = 6;
@@ -226,17 +226,19 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
-  it('never keeps more than FALLBACK_BATCH shard reads in flight', async () => {
-    // 6 shardai. Bandymas: viena 6-paralelinė banga arba nuoseklus skenas irgi
-    // duoda plokštų get'ų sąrašą [0..5] — todėl tvirtiname ne tvarką, o
-    // lygiagumą. Be batchingo čia būtų 6; su juo — 4.
+  it('scans with exactly FALLBACK_BATCH shard reads in flight', async () => {
+    // 6 shardai. Plokščias get'ų sąrašas [0..5] NEDIFERENCUOJA lygiagumo —
+    // ta patį duoda viena 6-paralelinė banga ir nuoseklus skenas. Tvirtiname
+    // lygiagumą: nuoseklus = 1, be batchingo = 6, su FALLBACK_BATCH (4) = 4.
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
 
+    // `create()` skaitė index+meta paraleliai (2) — išvalome, kad matuotume
+    // TIK skeno lygiagumą, o ne visos užklausos.
+    kv.probe.reset();
     assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
     assert.equal(shardGets(kv).length, SHARDS);
-    // create() skaito index+meta (2) → batchai po 4 ir 2. Maksimumas lygus 4.
     assert.equal(kv.probe.maxInFlight, 4);
   });
 
@@ -275,5 +277,28 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     // Kiekvienas neleidžiamas simbolis (newline, `[`, `]`, tarpas) → '?':
     // 'srv\n[SERVER_LOOKUP] forged line' turi likti VIENA eilute.
     assert.equal(lines[0].includes('srv??SERVER_LOOKUP??forged?line'), true);
+  });
+
+  it('caps the logged id at 32 characters (log-volume guard)', async () => {
+    // Antroji logSafeId pusė: be `.slice(0, 32)` botas galėtų įrėžti šimtai
+    // ženklų į kiekvieną log įrašą. Serverių id realiai ≤ 8 skaitmenys.
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    const flood = 'A'.repeat(5_000);
+    const lines: string[] = [];
+    const real = console.warn;
+    console.warn = (...args: unknown[]) => { lines.push(args.map(String).join(' ')); };
+    try {
+      await lookup.findByIdWithScan(flood);
+    } finally {
+      console.warn = real;
+    }
+
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].length, 32 + '[SERVER_LOOKUP] servers-index miss for reforger/'.length
+      + ' — full-scan fallback (6 shards)'.length);
+    assert.equal(lines[0].includes(flood), false);
   });
 });
