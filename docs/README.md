@@ -1,6 +1,6 @@
 # Documentation index
 
-Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.45**).
+Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.52**).
 
 ## Start here
 
@@ -11,6 +11,9 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.45**).
 | [web/README.md](../web/README.md) | Frontend | Vite app structure, UI patterns |
 | [DATA_SYNC.md](./DATA_SYNC.md) | Ops / maintainers | BM paid API, collector switch, stale UI, donation fund |
 | [SEO.md](./SEO.md) | Ops / SEO | Search Console, crawler HTML, sitemap |
+| [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) | Frontend | Design language: colors, typography, spacing, mobile density tiers |
+| [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) | Frontend | UI decisions: what was chosen and why |
+| [BRAND_ASSETS.md](./BRAND_ASSETS.md) | Design | Logo, wordmark, brand asset usage |
 
 ## Domain guides
 
@@ -40,3 +43,4 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.45**).
 |-----|--------|
 | [ENGINEERING_CASE_STUDY.md](./ENGINEERING_CASE_STUDY.md) | Long-form architecture narrative |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | PR workflow, tests, conventions |
+| [../scripts/steam-auth-probe/README.md](../scripts/steam-auth-probe/README.md) | Steam/WS auth probe (research tool) |

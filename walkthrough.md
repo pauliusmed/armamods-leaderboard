@@ -29,7 +29,7 @@ pipeline with game-suffixed keys.
 
 ```
 BattleMetrics REST API
-        │  every 2h (GitHub Actions cron)
+        │  hourly (GitHub Actions cron 0 * * * *)
         ▼
 scripts/collector.ts  ──  ranks, trends, SQE scores, scenario leaderboard, history, co-deployment
         │  shards into ≤5MB chunks

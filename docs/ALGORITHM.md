@@ -79,7 +79,15 @@ To reward server owners who:
 
 ### Snapshot Formula
 
-Points are calculated every collector run (every 2 hours):
+Points are calculated every collector run (hourly):
+
+> ⚠️ **The constants below assume 12 runs/day (2h cadence). The collector has
+> been hourly (`0 * * * *`) since 2026-08-26**, so the *effective* values are
+> **half the stated periods**: EMA half-life ≈ **5 days, not 10**; tenure ramp
+> ≈ **7 days, not 14**. `scripts/collector.ts:1459-1461` still uses the literals
+> `HALF_LIFE_DAYS * 12` and `RAMP_RUNS = 168`. This section documents the code
+> **as written** — fixing the constants is a behaviour change and needs an
+> owner decision, not a docs edit (see `CHANGELOG.md` v1.23.51).
 
 ```
 SnapshotScore = (Players × 5) - (ModCount × 1) + UniquenessBonus

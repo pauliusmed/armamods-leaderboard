@@ -204,19 +204,19 @@ vien ant BM.
 
 ### Prioritetas: P0b (Workshop API) padarytas; istorija jau veikia
 
-**BM snapshot istorija JAU kaupiama** (hourly/daily/weekly per kas-2h ciklą) — tai
+**BM snapshot istorija JAU kaupiama** (hourly/daily/weekly per valandini ciklą) — tai
 duoda firstSeen, trend, activity. Dažnesnis snapshot neprioritetas (žr. P0a žemiau).
 
 ### P0a — BM serverių snapshot istorija (ATIDĖTA — dažnesnis snapshot nereikalingas)
 
-Dabartinė KV istorija (hourly/daily/weekly/monthly/yearly, kolektorius kas-2h) jau
+Dabartinė KV istorija (hourly/daily/weekly/monthly/yearly, kolektorius kas valandą) jau
 teikia firstSeen, trend, activity. **Dažnesnis snapshot (kas 5–15 min) NEREIKALINGAS**
 — sprendimas 2026-08-30. R2 tyrimas parodytas kaip ateities pasiūlymas:
 
 **R2 kaip istorijos saugykla (tyrimo išvada, neatlikta):**
 - R2 free: 10 GB, 1M Class A / mėn (rašymas), 10M Class B (skaitymas).
-- **Per-server objektai kas 2h viršija limitą** (60k/day ≈ 1.8M/mėn) — NEdaryti.
-- **Agreguotas objektas per snapshot** (visas momentas ~220KB) — tik 12/day, niekada
+- **Per-server objektai kas valandą viršytų limitą** (120k/day ≈ 3.6M/mėn) — NEdaryti.
+- **Agreguotas objektas per snapshot** (visas momentas ~220KB) — tik 24/day, niekada
   neviršys; atvertų kas-5-min snapshot'us be limitų.
 - Migracija reiškia Edge skaitymo logikos perrašymą — daryti tik kai atsiras realus
   poreikis (smulki 24h kreivė / tikslesnis trend).

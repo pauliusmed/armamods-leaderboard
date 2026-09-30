@@ -8,7 +8,7 @@ See also: [DATA_SYNC.md](./DATA_SYNC.md) · [ARCHITECTURE_DECISION.md](./ARCHITE
 
 ## Behaviour
 
-1. Collector runs (~2h). On the **first successful run of each UTC day**, after server shards are written:
+1. Collector runs (hourly). On the **first successful run of each UTC day**, after server shards are written:
    - Load previous fingerprint `cache:server_modset:{game}`
    - Diff each server’s current mod IDs vs previous day
    - Append a sparse day blob to `history:modpack_diff:{game}` (only servers with non-empty added/removed)

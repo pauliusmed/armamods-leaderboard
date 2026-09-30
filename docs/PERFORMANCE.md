@@ -87,7 +87,7 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 - Response includes `author`, `thumbnail`, `workshopStatus` — **one** `GET /api/mods` replaces ~72 row-level JSON calls (24 rows × 3).
 - Politika ir ribos — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md): naujos per-mod `kv.get` „ventiliacijos" sąrašuose draudžiamos.
 
-### Mod list — precomputed pages (v1.24, bendras šildymas)
+### Mod list — precomputed pages (v1.23.24, bendras šildymas)
 
 `web/functions/lib/precomputed-pages.ts` — `cache:page:*:*`.
 

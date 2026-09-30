@@ -9,7 +9,7 @@ See also: [walkthrough.md](../walkthrough.md) §4–7 · [PERFORMANCE.md](./PERF
 ## Pipeline (happy path)
 
 ```
-BattleMetrics API  →  scripts/collector.ts (GitHub Actions cron ~2h)
+BattleMetrics API  →  scripts/collector.ts (GitHub Actions cron hourly, `0 * * * *`)
                    →  Cloudflare KV (TRENDING_KV: shards + precomputed pages)
                    →  Cloudflare Worker /api/* (web/worker.ts)
                    →  React UI

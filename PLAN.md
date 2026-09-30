@@ -8,7 +8,7 @@
 
 ## Current
 
-- Multi-game collector (Reforger / Arma 3) via BattleMetrics → GitHub Actions cron ~2h → Cloudflare KV shards
+- Multi-game collector (Reforger / Arma 3) via BattleMetrics → GitHub Actions cron hourly (`0 * * * *`) → Cloudflare KV shards
 - Unified Hono edge Worker (`web/worker.ts`) + KV: serverId→shard indeksas (v1.23.25, INC-2026-09-06), precomputed default pages, surgical JSON extract
 - React 19 UI: mod/server leaderboards, trending, scenarios, storage planner, favorites, uptime history, modpack diffs
 - Frontend: visi 21 puslapis `React.lazy` + `DeferredSection` below-fold mounting (v1.23.26)
