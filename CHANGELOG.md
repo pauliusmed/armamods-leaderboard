@@ -55,12 +55,23 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
     (sutartis) + `> 1` (lygiagumas egzistuoja) vietoj `=== 4` — dabar
     nuoseklus skenas, kuris yra dar saugesnis, praeina teisingai, o ne
     atmetamas.
-  - **Patikrinta mutacijomis (visos 4 krenta):**
-    `FALLBACK_BATCH 4 → 64` → lygiagumo sutartis krenta;
-    `logSafeId → raw` → 2 testai krenta;
-    `drop .slice(0, 32)` → 2 testai krenta;
-    `log filtras neutralizuotas` → 1 testas krenta.
-    Tai „testai, kurie tikrai gali nepavykti", ne „visada praeina".
+  - 5-as raundas (2 findings, 2 NAJOS) — abi teisingos, abi taisytos:
+    **RAM siena saugojo save patį** (tik `maxInFlight <= FALLBACK_BATCH` —
+    konstanto, kurio paties dydį tikrina, atžvilgiu → pakėlus 4→8 testai liko
+    žiami, o pikas 8×5 MB = 40 MB vietoj 20 MB). Dabar lygiagumo testas
+    **fiksuoja absoliučią reikšmę pagal RAM biudžetą**
+    (`FALLBACK_BATCH × 5 MB ≤ 128 MB / 4`) **ir** santykį; **32 ženklių riba
+    atkelta iš integracijos į `logSafeId` unit testą** (ji buvo ten tik
+    dubiavimas).
+  - **Patikrinta mutacijomis (7 mutacijos, 7 KRENTA):**
+    `FALLBACK_BATCH → 64` · `→ 8` (RAM biudžetas) · `→ 2` (lygiagumo
+    praradimas) · `logSafeId → raw` · `drop .slice(0, 32)` ·
+    `slice 32 → 64` · `log filtras neutralizuotas`.
+    **Svarbu:** pirmasis matavimas buvo **netikrus** — testas
+    `assert.equal(true, 'msg')` buvo pats sulūžęs, todėl visos mutacijos
+    „krentų" dėl neteisingos priežasties. Matavimo skriptas dabar
+    **privalo patikrinti baseline'ą** (žalią) prieš mutacijas ir sustoja,
+    jei jis raudonas.
   - **Atmesta:** 1-slot LRU padidinimas — LRU *turi* likti 1-slot, 4 shardai
     (~20 MB) jau yra `FALLBACK_BATCH` riba, sauganti 128 MB Workers RAM ribą
     (projektas jau gavo `exceededMemory` 503: 09-16, 19 klaidų).

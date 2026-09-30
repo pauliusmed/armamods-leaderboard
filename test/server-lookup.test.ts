@@ -196,6 +196,11 @@ describe('ServerLookup — batched full-scan fallback (index missing)', () => {
   });
 });
 
+/** ~5 MB vienam `cache:servers:<i>` shardui (išmatuota 09-30). */
+const SHARD_MB = 5;
+/** Workers izoliato RAM riba. */
+const ISOLATE_MB = 128;
+
 describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', () => {
   // Indexas parašytas prieš paskutinį shard'ų snapshot'ą: shard'e 5 serveris yra,
   // indekse jo nėra — tikras kolektoriaus run'o rašymo langas.
@@ -242,13 +247,16 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
   });
 
   it('holds the full-scan parallelism within FALLBACK_BATCH', async () => {
-    // Tvirtiname SUTARTĮ, ne skaičių: bet koks skenas turi laikyti ≤
-    // FALLBACK_BATCH shardų vienu metu (RAM sutartis, 128 MB riba). Tikslus
-    // `=== 4` būtų per griežtas: dar saugesnis nuoseklus skenas (1) taip pat
-    // teiktų sutartį, bet testas jį atmestų.
-    //   - be batchingo (viena 6 banga) → 6  ⇒ KRINTA
-    //   - su FALLBACK_BATCH           → 4  ⇒ praeina
-    //   - nuoseklus                  → 1  ⇒ praeina (dar saugesnis)
+    // Tvirtiname SUTARTĮ su RAM biudžetu, ne tik su savo pačiu konstantu.
+    // Tik `maxInFlight <= FALLBACK_BATCH` būtų tautologija: pakėlus
+    // FALLBACK_BATCH iki 8, testas liktų žalias, o pikas 8×5 = 40 MB (~31 %)
+    // vietoj 4×5 = 20 MB (~16 %) — siena, kuri saugo save pati. Todėl čia
+    // fiksuojama ir **absoliuti** reikšmė pagal RAM ribą, ir santykis.
+    assert.ok(
+      FALLBACK_BATCH * SHARD_MB <= ISOLATE_MB / 4,
+      `FALLBACK_BATCH=${FALLBACK_BATCH} → ${FALLBACK_BATCH * SHARD_MB} MB virš ${ISOLATE_MB / 4} MB biudžeto`
+    );
+
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
@@ -303,9 +311,11 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     const flood = 'A'.repeat(5_000);
     const lines = await captureWarn(() => lookup.findByIdWithScan(flood));
 
+    // Čia tik integracijos klausimas: pranešime NĖRA raw id. Ilgio riba
+    // tikrinama atskirai (`logSafeId` describe) — čia kartoti būtų dubiavimas.
     assert.equal(lines.length, 1);
     assert.equal(lines[0].includes(flood), false);
-    assert.equal(logSafeId(flood).length, 32);
+    assert.equal(lines[0].includes(logSafeId(flood)), true);
   });
 });
 
