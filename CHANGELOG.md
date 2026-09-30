@@ -4,6 +4,32 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🔧 Deploy fix: `erasableSyntaxOnly` (TS1294) — `ServerLookup` konstruktorius (v1.23.48) - 2026-09-30
+
+- **Incidentas:** PR #16 merge → `main` → **auto-deploy FAILED** (`npm run build --prefix web` → `tsc -b` → TS1294 `server-lookup.ts(108,5)`). Produkcija liko ankstesnėje versijoje.
+- **Tikroji priežastis (ne „deploy nutrūko"):** v1.23.47 importavo
+  `server-lookup` iš `share-meta.ts`. `web/tsconfig.app.json` turi
+  `include: ["src", "functions/api/audit-config.ts"]`, bet į programą
+  patenka visas **importo grafas** iš `src/`. Kelias:
+  `src/lib/precomputed-pages.test.ts` → `functions/lib/precomputed-pages.ts`
+  → `import type { ShareGame } from './share-meta'` → `server-lookup.ts`.
+  **Ankstesnis `server-lookup.ts` taip niekada nebuvo tikrinamas** jo
+  `erasableSyntaxOnly` pažeidimas (constructor parameter properties) —
+  latentinis, ne naujas. Mano importas jį įtraukė į programą.
+- **Fix'as:** `ServerLookup` konstruktorius perrašytas į aiškius laukus
+  (`private readonly kv` / `game` + priskyrimas ctoriuje) — elgsena identiška.
+- **Pamoka (proceso klaida, ne kodo klaida):** prieš merge'ą **nepatikrinta
+  `npm --prefix web run build`**. Buvo paleista `npx tsc --noEmit` (root
+  config, kuri `functions/lib/**` neturi) + `wrangler deploy --dry-run`
+  (esbuild, neturi tipų) — **nei vienas** jų neatkliepia `web/tsconfig.*`.
+  AGENTS.md `Build` eilutė (`npm --prefix web run build`) yra privaloma
+  merge'o patikra. CI (`Lint & Test Suite`) šito taip pat netikrina —
+  **deploy`'o build` peržiūra nėra CI gate**, todėl klaida praėjo pro
+  „žalią" PR.
+- **Rezultatas:** `npm --prefix web run build` ✅ · root 323/323 · web vitest
+  45/45 · `tsc --noEmit` ✅ · wrangler dry-run ✅.
+- **Heavy CI: required because** lygina deploy'ą (build`as, ne logika).
+
 ### ♻️ Share prerender: serverių paieška per `ServerLookup` indeksą (v1.23.47) - 2026-09-30
 
 - **Problema:** `share-meta.ts` `lookupServer()` (share prerender `/mod/:id`,
