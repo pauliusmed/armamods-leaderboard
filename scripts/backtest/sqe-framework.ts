@@ -300,6 +300,9 @@ function main() {
   // (`0 * * * *`, hourly). Sweep'o noise/response nuo to nepriklauso
   // (modelis operuoja dienomis) — bet `recommendation.alphaPerRun` be teisingo
   // daugiklio būtų neteisingas, kaip buvo iki v1.23.54 (`* 12`, 2h-era).
+  // Šaltinis tiesai: `scripts/collector.ts` → `RUNS_PER_DAY` (ten nominalus 24,
+  // faktas ~26/dieną dėl cron + cron-job.org dubliavimosi). Šis failas tik
+  // atspindi tą pačią konstantą ataskaitai — behaviour čia nėra, tik matematika.
   const RUNS_PER_DAY = 24;
   const rows: any[] = [];
 

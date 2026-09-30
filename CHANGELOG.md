@@ -48,7 +48,7 @@ ne pačios konstantos. Keičiant cron, keisti `RUNS_PER_DAY`, ne skaičius.
   dinamiką per ~H dienų. **Nėra „viso leaderboard perskaičiavimo"** — ankstesnė
   šio įrašo redakcija tai teigė neteisingai.
 - **RAMP (`168 → 336`): vienkartinė korekcija, matoma iškart.** Serveris su
-  `age` 168–335 krenta iš `tenure = 1.0` į 0.47–1.0 (pvz. `age` 200: 1.0 →
+  `age` 168–335 krenta iš `tenure = 1.0` į 0.625–1.0 (pvz. `age` 200: 1.0 →
   0.70) ir vėl kyla per dienas. **Tai taisymas veikiantis teisingai**, ne
   regresija — senasis 1.0 rėmėsi klaidinga prielaida, kad 200 runų = 16.7
   dienos (faktiškai ~8.3). Migracijos nereikia: `age` toliau auga po +1/run,

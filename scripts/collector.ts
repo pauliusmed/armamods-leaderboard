@@ -1482,8 +1482,11 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       // alpha_run = 1 - 2^(-1 / (H*RUNS_PER_DAY)) — time-calibrated, not magic.
       // RUNS_PER_DAY privalo atitikti `.github/workflows/collector.yml` cron
       // (`0 * * * *`, hourly nuo 2026-08-26). 2h-eros `* 12` po cron
-      // pakeitimo tyliai perpus sutrumpino efektyvų half-life iki 5d —
-      // žr. CHANGELOG v1.23.54. Keičiant cron, keisti ČIA, ne konstantas.
+      // pakeitimo tyliai perpus sutrumpino efektyvų half-life iki ~5d —
+      // žr. CHANGELOG v1.23.54. Tikslumas: faktas ~26/dieną (cron +
+      // cron-job.org dubliuojasi :30), todėl efektyvus H ≈ 9.2d, ne lygiai
+      // 10d — 8 % nuokrypis, gerokai mažesnis už Pareto knee plotį (H=10 vs 14).
+      // Keičiant cron, keisti ČIA, ne konstantas.
       const HALF_LIFE_DAYS = 10;
       const RUNS_PER_DAY = 24;
       const ALPHA = 1 - Math.pow(2, -1 / (HALF_LIFE_DAYS * RUNS_PER_DAY)); // ≈0.0029
