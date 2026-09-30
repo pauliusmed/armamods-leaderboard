@@ -17,10 +17,10 @@ export type ServerHistorySnapshot = {
   online?: boolean;
 };
 
-export function isServerOnlineSample(
-  bmStatus: string | null | undefined,
+export function isServerOnlineSample<S>(
+  bmStatus: S | null | undefined,
   players: number | null | undefined,
-  isOnline: (status: string | null | undefined) => boolean
+  isOnline: (status: S | null | undefined) => boolean
 ): boolean {
   return isOnline(bmStatus) || (players ?? 0) > 0;
 }

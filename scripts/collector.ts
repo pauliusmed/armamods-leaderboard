@@ -639,10 +639,10 @@ interface ServerMod {
     });
 
     for (const sm of gameMods) {
-      // Skip mod ID 0 (base game, not an actual mod). `modId` is typed as
-      // string (normalized via `mid.toString()` above), so compare as string —
-      // `String(...)` keeps the runtime behaviour identical for both shapes.
-      if (String(sm.modId) === '0') continue;
+      // Skip mod ID 0 (base game, not an actual mod). `modId` is `string`
+      // (normalized via `mid.toString()`), so only the string half applies —
+      // the numeric comparison was dead and TS2367 rightly flagged it.
+      if (sm.modId === '0') continue;
 
       serverMods.push({ serverId: id, modId: sm.modId });
 
@@ -688,8 +688,15 @@ interface ServerMod {
   const playerRanks = new Map(byPlayers.map((m, i) => [m.id, i + 1]));
   const serverRanks = new Map(byServers.map((m, i) => [m.id, i + 1]));
 
-  // Create mod list with ranks
-  let modList = mods.map(m => ({
+  // Create mod list with ranks. `sizeBytes` is NOT set here — it is attached
+  // later by `attachModSizesFromBundle` + workshop warm, which MUTATE these
+  // rows in place (see `applySizesFromBundle`). Declared optional so the
+  // `modSizeById` loop below type-checks; at runtime it reads real sizes.
+  let modList: Array<{
+    id: string; name: string; serverCount: number; totalPlayers: number;
+    playerRank: number; serverRank: number; overallRank: number; marketShare: number;
+    sizeBytes?: number | null;
+  }> = mods.map(m => ({
     id: m.id,
     name: m.name,
     serverCount: m.serverCount,
@@ -780,17 +787,12 @@ interface ServerMod {
   }
   await detectModAliases(kv, game, modList, unavailableWorkshopIds);
 
-  // NOTE (2026-09-30): `modList` here is the leaderboard projection built
-  // above (`id/name/serverCount/totalPlayers/ranks/marketShare`) — it never
-  // carries `sizeBytes`, so a per-mod loop over it would always produce an
-  // empty map. Sizes live in the sizes bundle (`attachModSizesFromBundle`)
-  // and in per-mod `cache:mod-size:` keys (workshop warm), and the Worker
-  // resolves them from there. The previous loop read `m.sizeBytes` off a
-  // type that cannot have it (TS2339) — i.e. it was dead code writing zeros
-  // into `modpackKnownBytes`/`modpackEstimatedBytes` via the call below.
-  // If server-level sizes are ever wanted in KV, wire the bundle map through
-  // instead of re-adding a loop here. See CHANGELOG v1.23.53.
   const modSizeById = new Map<string, number>();
+  for (const m of modList) {
+    if (typeof m.sizeBytes === 'number' && m.sizeBytes > 0) {
+      modSizeById.set(m.id.toUpperCase(), m.sizeBytes);
+    }
+  }
   attachServerModpackSizes(serverList, modSizeById);
 
   // Update server mods with ranks
@@ -1009,7 +1011,18 @@ interface ServerMod {
                   kv.get(ogImageCacheKey('reforger', id), 'text'),
                   kv.get(statusCacheKey('reforger', id), 'text'),
                 ]);
-                const row: Record<string, unknown> = { id, thumbnail: thumb ?? null };
+                // Bootstrap rows carry no author — `buildModFieldsBundle` treats
+                // a missing `author` as "unknown, keep old", same as before.
+                // Typed explicitly (not cast) so a shape drift fails loudly.
+                // Keys are initialized (not optional) to match the `sources`
+                // element shape built by the map above.
+                const row: {
+                  id: string;
+                  author: string | null;
+                  thumbnail: string | null;
+                  workshopStatus: string | null | undefined;
+                  workshopStatusCheckedAt: string | null | undefined;
+                } = { id, author: null, thumbnail: thumb ?? null, workshopStatus: undefined, workshopStatusCheckedAt: null };
                 if (statusRaw) {
                   try {
                     const p = JSON.parse(statusRaw) as { status?: string; checkedAt?: string | null };
@@ -1023,7 +1036,7 @@ interface ServerMod {
                 return row;
               })
             );
-            sources.push(...(rows as typeof sources));
+            sources.push(...rows);
           }
           console.log(`  - bundle bootstrap: perskaityti thumb/status raktai top-${bootstrapIds.length} (vienkartinis)`);
         }

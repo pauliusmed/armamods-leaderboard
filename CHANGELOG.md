@@ -24,24 +24,26 @@ redizaino:
 
 | Failas | Klaidos | Kas |
 |---|---|---|
-| `scripts/collector.ts` | 8 | `GameType` → `import type` (TS1484); `String(sm.modId) === '0'` vietoj string/number disjunkcijos (TS2367); **negyvas `modSizeById` loop'as ištrintas** — `modList` projekcija niekada nenešė `sizeBytes`, todėl map visada tuščias (TS2339 ×3, žr. žemiau); `rows as typeof sources` vietoj `as unknown[]` (TS2345); `mergedServers: Record<string, ServerHistorySnapshot>` + `import type` (TS2322) |
+| `scripts/collector.ts` | 8 | `GameType` → `import type` (TS1484); `sm.modId === '0'` — tik string pusė, nes `modId: string` (TS2367; ankstesnis `String(...)` buvo nereikalingas); `modList` projekcijai pridėtas `sizeBytes?: number \| null`, nes `attachModSizesFromBundle` + workshop warm **mutuoja** eilutes vėliau — ankstesnė išvada „loop negyvas” buvo **klaidinga**, žr. pataisą žemiau (TS2339 ×3); `row` tipuotas eksplicitiškai vietoj `as unknown[]` (TS2345); `mergedServers: Record<string, ServerHistorySnapshot>` + `import type` (TS2322); `isServerOnlineSample` padarytas generiniu `<S>`, kad `isBmServerOnline` liktų siauras (TS2345) |
 | `web/functions/lib/workshop-api.ts` | 2 | `postJson`/`getJson` grąžinimo tipas `status: number` → `number \| null` — kodas **jau** tikrino `status === null`, tipas melavo (TS2322 ×2) |
 | `scripts/backtest/debug-syn.ts` | 1 | `quality0.get(id) ?? 0` (TS2532, debug skriptas) |
 | `test/audit-config.test.ts` | 10 | fixture'ai be `rankBefore/rankRecent` (+`classificationHint`) — pridėtas eksplicitus `null` (kodas tikrina ir `null`, ir `undefined`, todėl tas pats) |
 | `test/server-lookup.test.ts` | 4 | trūkstami `assert.ok(lookup)` (3 pre-existing, 1 savas) |
 | `test/post-stale-alert.test.ts` | 1 | `.mjs` importas be deklaracijų → `allowJs` (TS7016) |
 
-**Tikras radinys, ne tik tipas — `modpackKnownBytes` KV visada 0.**
-`modMap` reikšmės (`{id, name, serverCount, totalPlayers}`) ir 688 eil. projekcija
-**niekada** nenešė `sizeBytes`, todėl 779–784 loop'as (`modSizeById`) buvo
-negyvas, o `attachServerModpackSizes(serverList, emptyMap)` rašė
-`modpackKnownBytes = 0`, `modpackSizedCount = 0`, `modpackCoverage = 0` į
-**kiekvieną** serverio eilutę. Dydžiai realiai ateina iš bundle
-(`attachModSizesFromBundle`) ir per-mod `cache:mod-size:` raktų (workshop warm).
-Loop'as ištrintas, paliktas eksplicitus tuščias map su paaiškinimu
-(`CHANGELOG` — jei server-level dydžiai kada norimi KV, vesti bundle map'ą,
-ne grąžinti loop'ą). **Elgsena nepakitusi** (map visada buvo tuščias) — bet jei
-frontend'as rodė „modpack size" iš serverio eilutės, jis rodė 0. **Follow-up.**
+**Pataisa (Kilo Code Review rado klaidą): `modSizeById` loop’as buvo GYVAS, ne negyvas.**
+Ankstesnė šio įrašo redakcija teigė, kad 779–784 loop’as niekada neveikė, ir jį
+ištrynė. **Neteisingai.** `attachModSizesFromBundle` (771 eil.) mutuoja `modList`
+eilutes per `applySizesFromBundle` (`row.sizeBytes = n`), o `warmTopModSizesFromWorkshop`
+(772 eil.) — per `mod.sizeBytes = sizeBytes`. Todėl loop’as skaitė **realius** dydžius,
+pildė `modSizeById`, o `attachServerModpackSizes` skaičiavo **realius**
+`modpackKnownBytes`/`modpackEstimatedBytes` — kuriuos frontend’as skaito
+(`useServers.ts`, `serverModpack.ts`). Ištrynimas būtų nuline `modpack*` laukus
+kiekvienam serveriui. **Loop’as grąžintas; vietoj to pataisytas TIPAS**: `modList`
+projekcijai pridėtas `sizeBytes?: number | null` (mutacija ateina vėliau, tipas
+turi tai atspindėti). Pamoka: TS2339 „property does not exist" reiškė „tipas per
+siauras", ne „kodas negyvas" — skirtumą įrodo tik runtime mutacijų grandinė,
+ne projekcijos skaitymas.
 
 **Ištrinta:** `scripts/server-elite-inertia.ts` + `test/server-elite-inertia.test.ts`
 (7 testai) + išbraukta iš `package.json` test sąrašo. Vienintelė nuoroda buvo

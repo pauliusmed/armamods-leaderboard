@@ -17,7 +17,7 @@ export function normalizeBmServerStatus(raw: string | null | undefined): BmServe
   return 'unknown';
 }
 
-export function isBmServerOnline(status: string | null | undefined): boolean {
+export function isBmServerOnline(status: BmServerStatus | null | undefined): boolean {
   return status === 'online';
 }
 
