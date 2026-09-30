@@ -144,7 +144,7 @@ shown points = quality x tenure (no elite cushion)`).
 ⚠️ **Tai mirusi funkcija su žaliu testu, ne tuščia muziejus.** Ji vis dar
 kviečiama **9 kartus** `test/server-elite-inertia.test.ts` (`grep -c` — 9 kvietimo
 vietos, ne 11; ankstesnios redakcijos skaičius buvo neteisingas). Taigi: gamybinis
-kelias nekeičia senos logikos, bet testai ją tikrina ir laiko „gyva". **Sprendimas
+kelias nekeičia senos logikos, bet testai ją tikrina ir laiko „gyvą". **Sprendimas
 (ne šiame docs-only PR):** arba ištrinti modulį su testu, arba pažymėti
 `@deprecated` su priežastimi — kad „testas dengia neegzistuojantį kelią" pats
 savaime yra klaida.
