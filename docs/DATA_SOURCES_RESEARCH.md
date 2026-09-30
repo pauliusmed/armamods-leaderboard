@@ -1,6 +1,17 @@
 # Data Sources Research — BattleMetrics Alternatives
 
-Status: **research, no code change yet** · Date: 2026-08-30 · Owner: collector/research
+Status: **P0b įgyvendintas** · Date: 2026-08-30 · Owner: collector/research
+**Atnaujinta 2026-09-30:** kolektoriaus **warm pass’ai** naudoja oficialų
+Workshop API (`api-ar-workshop.bistudio.com/workshop-api/api/v3.0/`,
+`web/functions/lib/workshop-api.ts`, ~50× mažiau užklausų). Žr.
+[WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md).
+
+**Kadangi dar ne viskas:** `workshop-fetch.ts` **išlieka gyvas** — jame liko HTML
+parseriai ir tikras `fetch()` į `reforger.armaplatform.com/workshop/{id}` (Bohemia
+*puslapiai*, ne image CDN); `storage-service.ts` → `resolveModSizesBatch` dar
+dar **naudoja tą patį `workshop-fetch.ts` scraper’ą**, kai dydis dar nežinomas (Worker-side). Taigi
+teisingas statusas: **kolektoriaus top-mod ir server-modpack warm’ai perkelti į
+oficialų API; Worker-side scraper kelias dar gyvas.**
 
 Tyrimas, ar egzistuoja BattleMetrics alternatyvų Reforger / Arma 3 telemetrijai.
 Aukšto lygio išvados ir rekomendacijos. **Techninė analizė (endpoint'ai, auth flow,
@@ -210,10 +221,12 @@ teikia firstSeen, trend, activity. **Dažnesnis snapshot (kas 5–15 min) NEREIK
 - Migracija reiškia Edge skaitymo logikos perrašymą — daryti tik kai atsiras realus
   poreikis (smulki 24h kreivė / tikslesnis trend).
 
-### P0b — iškart po (3-7 d.): Workshop duomenų sluoksnis
+### P0b — ✅ ATLIKTA (2026-08-30, šaltinis patvirtintas 09-30)
 
-2. Pakeisti HTML scrape'ą oficialiu Workshop sluoksniu (batch lookup, daugiau duomenų).
-3. API: pridėti `source`, `observedAt`, `stale` — šaltinių atskiriamumui.
+2. ✅ **HTML scrape pakeistas oficialiu Workshop sluoksniu** — `web/functions/lib/workshop-api.ts`
+   (catalog + detail + batch by ids), naudojamas `warmTopModSizesFromWorkshop` ir
+   `warmServerModpackModSizes` vietoj per-mod HTML (`~50×` mažiau užklausų).
+3. ⬜ **Likęs:** API: pridėti `source`, `observedAt`, `stale` — šaltinių atskiriamumui.
 
 ### Atidėta
 

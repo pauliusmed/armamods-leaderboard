@@ -133,9 +133,21 @@ Swap i↔j only if P > τ,  τ = 0.80
 - **Why τ=0.80 with H=10:** Pareto sweep (H×τ) showed knee at H=10 τ=0.8 → noise 11.6% response 17.5d (vs 48.9%/1.6d at old H=0.55 τ=0.5). The previous `ELITE_INERTIA_TIERS` + `applyEliteInertiaCushion` is deprecated — hysteresis is now top-200, age-weighted via σ.
 - A genuine challenger still breaks through: a raw-SQE lead larger than the cushion margin (~8% over the champion) overtakes regardless.
 
-Implementation: `scripts/server-elite-inertia.ts` (`applyEliteInertiaCushion`, `ELITE_INERTIA_TIERS`).
+Implementation: `scripts/collector.ts:1583-1625` — top-200 servery, kiekvienai
+skaičiuojamas `probBetter(band[i], band[i+1])`; kai `P > τ` (τ = 0.80) — swap.
 
-This creates a "hysteresis" effect: once a server reaches the elite tier, it needs a meaningful lead by a challenger to be displaced, eliminating noisy #1-#3 swaps while still allowing true shifts in popularity.
+`scripts/server-elite-inertia.ts` (`ELITE_INERTIA_TIERS`,
+`applyEliteInertiaCushion`) yra **nebenaudojamas gamybiniame kode** — kolektorius
+jo neimportuoja (`collector.ts:1579`: `displayedScores[id] = weighted; //
+shown points = quality x tenure (no elite cushion)`).
+
+⚠️ **Tai mirusi funkcija su žaliu testu, ne tuščia muziejus.** Ji vis dar
+kviečiama **9 kartus** `test/server-elite-inertia.test.ts` (`grep -c` — 9 kvietimo
+vietos, ne 11; ankstesnios redakcijos skaičius buvo neteisingas). Taigi: gamybinis
+kelias nekeičia senos logikos, bet testai ją tikrina ir laiko „gyvą". **Sprendimas
+(ne šiame docs-only PR):** arba ištrinti modulį su testu, arba pažymėti
+`@deprecated` su priežastimi — kad „testas dengia neegzistuojantį kelią" pats
+savaime yra klaida.
 
 ### Uniqueness Bonus/Penalty Calculation
 

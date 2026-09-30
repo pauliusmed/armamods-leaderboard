@@ -13,7 +13,7 @@ See also: [walkthrough.md](../walkthrough.md) · dynamic sitemap · [CHANGELOG.m
 | Canonical + robots meta | `web/src/components/ui/SEO.tsx` |
 | JSON-LD (WebSite, ItemList, SoftwareApplication, HowTo, Breadcrumb) | `web/src/lib/seoJsonLd.ts` + page wiring |
 | Sitemap index + mods/servers | `/sitemap.xml`, `/sitemap/{pages,mods,servers}.xml` |
-| Crawler HTML for `/mod/:id` and `/server/:id` | `_middleware.ts` + `share-meta.ts` (Googlebot + social) |
+| Crawler HTML for `/mod/:id` and `/server/:id` | `web/functions/lib/share-meta.ts` (prerender) + `web/worker.ts` (Hono/dispatch) |
 | `noindex` | `/admin`, `/status`, `/arma3/status` |
 | Guides | `/how-to-find-popular-arma-reforger-mods`, `/how-to-check-arma-reforger-modpack-size` |
 
