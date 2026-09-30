@@ -60,15 +60,28 @@ describe('buildServerIndex', () => {
 /** Minimal KV fake — tracks every get so tests can assert how many shards were loaded. */
 function makeKv(entries: Record<string, string>) {
   const gets: string[] = [];
+  // In-flight tracking: lets tests assert parallelism, not just the final order
+  // (a flat ordered get-list cannot tell 4-at-a-time batching from 1-wave or
+  // fully sequential scanning — all three produce the same list).
+  let inFlight = 0;
+  const probe = { maxInFlight: 0 };
   return {
     gets,
+    probe,
     get: async (key: string, type?: string) => {
       gets.push(key);
-      const value = entries[key];
-      if (value === undefined) return null;
-      return type === 'json' ? JSON.parse(value) : value;
+      inFlight++;
+      if (inFlight > probe.maxInFlight) probe.maxInFlight = inFlight;
+      try {
+        await Promise.resolve();
+        const value = entries[key];
+        if (value === undefined) return null;
+        return type === 'json' ? JSON.parse(value) : value;
+      } finally {
+        inFlight--;
+      }
     },
-  } as unknown as KVNamespace & { gets: string[] };
+  } as unknown as KVNamespace & { gets: string[]; probe: { maxInFlight: number } };
 }
 
 const SHARDS = 6;
@@ -213,18 +226,18 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
-  it('scans in FALLBACK_BATCH-sized batches, not all shards at once', async () => {
-    // 6 shardai, batchas 4 → dvejos bangos (0..3, 4..5). Jei būtų viena banga,
-    // RAM butų ~30 MB vietoj ~20 MB — su 16 shardais tai 80 MB (128 MB riba).
+  it('never keeps more than FALLBACK_BATCH shard reads in flight', async () => {
+    // 6 shardai. Bandymas: viena 6-paralelinė banga arba nuoseklus skenas irgi
+    // duoda plokštų get'ų sąrašą [0..5] — todėl tvirtiname ne tvarką, o
+    // lygiagumą. Be batchingo čia būtų 6; su juo — 4.
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
 
     assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
-    assert.deepEqual(shardGets(kv), [
-      'cache:servers:0', 'cache:servers:1', 'cache:servers:2', 'cache:servers:3',
-      'cache:servers:4', 'cache:servers:5',
-    ]);
+    assert.equal(shardGets(kv).length, SHARDS);
+    // create() skaito index+meta (2) → batchai po 4 ir 2. Maksimumas lygus 4.
+    assert.equal(kv.probe.maxInFlight, 4);
   });
 
   it('does not double-scan when the index is missing entirely', async () => {
@@ -238,5 +251,29 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     // per savo batched fallback'ą. `findByIdWithScan()` mato `index === null`
     // ir neatlieka antrojo pilno skeno.
     assert.equal(shardGets(kv).length, SHARDS);
+  });
+
+  it('never logs a raw URL-supplied id (log-injection guard)', async () => {
+    // serverId ateina iš `/server/:id` — botas gali įrėžti `\n` ir suforguoti
+    // netikrus log įrašus. Kiekvienas įrašas turi būti VIENOS eilutės.
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    const lines: string[] = [];
+    const real = console.warn;
+    console.warn = (...args: unknown[]) => { lines.push(args.map(String).join(' ')); };
+    try {
+      await lookup.findByIdWithScan('srv\n[SERVER_LOOKUP] forged line');
+    } finally {
+      console.warn = real;
+    }
+
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].includes('\n'), false);
+    assert.equal(lines[0].includes('forged'), true);
+    // Kiekvienas neleidžiamas simbolis (newline, `[`, `]`, tarpas) → '?':
+    // 'srv\n[SERVER_LOOKUP] forged line' turi likti VIENA eilute.
+    assert.equal(lines[0].includes('srv??SERVER_LOOKUP??forged?line'), true);
   });
 });

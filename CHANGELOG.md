@@ -37,14 +37,22 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
   atmestais „optimizacijomis" su pagrindais. `AGENTS.md` — ištaisytas
   klaidingas „1.45M reads/dieną" (tai buvo istorinis **pagas** lygis;
   realus 24 val. mastelis ~180k **prieš** 09-28 deployą ir **86k po jo**).
-- **Kilo Code Review (6 findings, 0 critical):** 4 ištaisyta (read-count
-  assertion`ai testuose + `FALLBACK_BATCH` ribojimo testas, klainga pastraipa
-  apie `create()` vs `findById()`, „to patvirtina nepatvirtina" sakinyje,
-  prieštaringas CHANGELOG skaičius); 1 iš dalies (`findByIdWithScan` miss
-  branch'ui pridėtas `console.warn` — scanas nebev tylus, `AGENTS.md`
-  „nenaudok tylaus fallback" taisyklė); 1 atmesta (1-slot LRU *turi* likti
-  1-slot dėl 128 MB RAM ribos — „didesnis LRU“ būtų žalingas).
-- **Patikra:** root **315/315** (8 nauji testai), web vitest 45/45, `tsc` ✅,
+- **Kilo Code Review (2 raundos, 0 critical):**
+  - 1-as raundas (6 findings) — 5 ištaisyta, 1 atmesta.
+  - 2-as raundas (4 findings, 2 NAJOS) — 2 ištaisyta:
+    **log-injection apsauga** (`serverId` iš URL kelio įrašomas į
+    `console.warn` be filtravimo → `/server/%0a…` suforguotų netikrus log
+    įrašus; dabar `logSafeId()`: tik `[A-Za-z0-9_-]`, 32 ženkliai) ir
+    **batch testas, kuris tikrai gali nepavykti** (ankstesnis plokščias
+    shard'ų sąrašas nepagrindė lygiagumo — 1 banga ir nuoseklus skenas duoda
+    tą patį sąrašą; dabar `makeKv` matuoja `maxInFlight`).
+  - **Patikrinta mutacijomis:** `FALLBACK_BATCH 4 → 64` → testas krenta
+    (`expected: 4, actual: 6`); `logSafeId → raw` → log-injection testas
+    krenta. Abu apsaugoti, ne „testas, kuris visada praeina".
+  - **Atmesta:** 1-slot LRU padidinimas — LRU *turi* likti 1-slot, 4 shardai
+    (~20 MB) jau yra `FALLBACK_BATCH` riba, sauganti 128 MB Workers RAM ribą
+    (projektas jau gavo `exceededMemory` 503: 09-16, 19 klaidų).
+- **Patikra:** root **316/316** (10 naujų testų), web vitest 45/45, `tsc` ✅,
   eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
   po; wrangler dry-run ✅.
 - **Heavy CI: required because** kinta KV skaitymo kelias share prerender'iui.

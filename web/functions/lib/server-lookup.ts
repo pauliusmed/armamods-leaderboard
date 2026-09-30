@@ -79,6 +79,19 @@ export function findServerInChunks(
 const FALLBACK_BATCH = 4;
 
 /**
+ * Log-safe server id.
+ *
+ * `serverId` ateina iš URL kelio (`/server/:id`), t. y. bot'ų kontroliuojamas.
+ * Įrašant ją į `console.warn` be filtravimo, `/server/%0a[FAKE] ...` tipo
+ * užklausa suforguotų netikrus log įrašus, o kiekvienas neegzistuojantis
+ * serveris generuootų po įrašą (log užpildymas). Žiauname: 32 ženkliai
+ * ir tik `[A-Za-z0-9_-]`.
+ */
+function logSafeId(value: string): string {
+  return value.replace(/[^A-Za-z0-9_-]/g, '?').slice(0, 32) || '(empty)';
+}
+
+/**
  * Server lookup with collector-written index. Index path: load only the shard the id maps to.
  * Fallback (index key missing, e.g. before the first collector run after deploy): batched
  * full-scan — documented, not silent: console.warn + `meta.indexFallback: true` in responses.
@@ -171,7 +184,7 @@ export class ServerLookup {
     // (128 MB riba), todaž turi būti matomas — index/shard skew arba dažnas
     // neegzistuojančių serverių srautas turi tai signalizuoti, ne slėpti.
     console.warn(
-      `[SERVER_LOOKUP] servers-index miss for ${this.game}/${serverId} — full-scan fallback (${this.chunkCount} shards)`
+      `[SERVER_LOOKUP] servers-index miss for ${this.game}/${logSafeId(serverId)} — full-scan fallback (${this.chunkCount} shards)`
     );
     return this.scanFor(serverId);
   }
