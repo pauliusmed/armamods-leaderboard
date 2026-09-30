@@ -6,7 +6,7 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ### 📖 Docs: versijos, indeksas, mirusios `file://` nuorodos (v1.23.52) - 2026-09-30
 
-- **`docs/README.md:3` — „current: **v1.23.45**"** nors factiškai v1.23.51: **4 versijos pasenusios**. Tai dokumentacijos įėjimas, iš kurio vedamos visos kitos nuorodos.
+- **`docs/README.md:3` — „current: **v1.23.45**"** nors faktiškai v1.23.52: **6 versijos pasenusios** (46–51). Tai dokumentacijos įėjimas, iš kurio vedamos visos kitos nuorodos.
 - **Indeksas buvo incompletas** — 4 failai egzistavo ir buvo sekami git, bet **nebuvo įtraukti į jokią lentelę**: `DESIGN_SYSTEM.md`, `DESIGN_DECISIONS.md`, `BRAND_ASSETS.md`, `scripts/steam-auth-probe/README.md`. Įtraukti į „Start here" (pirmieji trys — su `Audience` stulpeliu, nes stilius 3 stulpelių) ir „Other" (steam-auth-probe). **Patikra:** 28 santykinių nuorodų patikrinta `fs.existsSync` → **0 nutrūkusių**.
 - **`docs/PERFORMANCE.md:90` — „v1.24, bendras šildymas"** — **tokios versijos niekada nebuvo**. Iš tikrųjų susijusi su `CHANGELOG.md` § `[1.23.24] - 2026-08-27` „🚀 Bendras šildymas (compute-at-write)". Pakeista į **v1.23.24**.
 - **`CHANGELOG.md` — 18 `file://` nuorodų, 0 gyvų** (patikrinta `git ls-files`):
@@ -1583,7 +1583,7 @@ Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyt
 
 ### 🖥️ Serverių sąrašo ( /servers ) pataisymai
 - **SQE reitingų atkūrimas kolektoriuje**: Pataisyta `runServerScoring()` klaida faile [collector.ts](scripts/collector.ts), kai `oldLeaderboard` kintamasis buvo deklaruotas vidiniame `try` bloke, bet naudojamas išorėje (`ReferenceError`). Dėl to visi serveriai KV buvo rašomi be `sqeRank` / `sqePoints`, o `/servers` puslapyje rodė `UNRANKED` ir neteisingą tvarką. Po fix'o reikia paleisti `npm run collect` (arba palaukti cron), kad KV duomenys atsinaujintų.
-- **`/api/servers/ranking` maršruto prioritetas**: Endpointas perkeltas prieš `/servers/:serverId` faile [[[path]].ts](web/functions/api/[[path]].ts), kad `"ranking"` nebebūtų interpretuojamas kaip serverio ID (anksčiau grąžindavo `404 Server not found`).
+- **`/api/servers/ranking` maršruto prioritetas**: Endpointas perkeltas prieš `/servers/:serverId` faile `web/functions/api/[[path]].ts`, kad `"ranking"` nebebūtų interpretuojamas kaip serverio ID (anksčiau grąžindavo `404 Server not found`).
 - **Pagination dizaino suderinimas**: [Pagination.tsx](web/src/components/ui/Pagination.tsx) perrašytas taktiniu stiliumi (kaip [ModList.tsx](web/src/components/ModList.tsx)) — pašalintas baltas „rounded“ UI su violetine-rožine gradientu.
 - **Rikiavimo ir filtro patobulinimai**: [useServers.ts](web/src/hooks/useServers.ts) — SQE rank rikiavimas su žaidėjų skaičiaus tiebreaker; `resetFilters` grąžina numatytąjį `rank` sortą. [ServerCard.tsx](web/src/components/ServerCard.tsx) — `sqeRank` rodomas per `??`, ne `||`.
 
@@ -1593,7 +1593,7 @@ Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyt
 ## [1.14.3] - 2026-06-22
 
 ### 🛡️ Saugumo ir dokumentacijos klaidų ištaisymas
-- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš [`web/functions/api/[[path]].ts`, kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
+- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš `web/functions/api/[[path]].ts`, kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
 - **Wrangler konfigūracijos išvalymas**: Iš `wrangler.toml` pašalintas nenaudojamas `WEBHOOK_SECRET` kintamasis.
 - **Dokumentacijos EMA alpha reikšmės sutikslinimas**: Pataisyta klaidingai nurodyta $\alpha = 0.15$ reikšmė `README.md`, `docs/ALGORITHM.md` (15% offline decay pakeista į teisingą 10%) bei senesniuose `CHANGELOG.md` įrašuose į teisingą $\alpha = 0.10$ (90% / 10%), atitinkančią realią kolektoriaus elgseną bei algoritmo aprašymą.
 - **Komentarų vertimas į anglų kalbą**: Lietuviški komentarai bei diagnostikos pranešimai išversti į anglų kalbą visuose šaltinio failuose — core logikoje (`collector.ts`, `web/functions/api/[[path]].ts`, `audit-config.ts`) bei ad-hoc diagnostikos skriptuose (`scripts/check-17-drop.mjs`, `check-config-bm.mjs`, `check-mod-gameversion.mjs`, `run-audit-local.mjs`) — siekiant užtikrinti vientisą repozitorijos toną.
