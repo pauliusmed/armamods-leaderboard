@@ -14,13 +14,15 @@
  */
 
 import 'dotenv/config';
-import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
+import { BattleMetricsService } from '../src/services/battlemetrics.js';
+import type { GameType } from '../src/services/battlemetrics.js';
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
 import { buildServerIndex } from '../web/functions/lib/server-lookup.js';
 import { normalizeBmServerStatus, isBmServerOnline } from '../web/functions/lib/server-status.js';
 import {
   isServerOnlineSample,
   mergeServerHistorySnapshot,
+  type ServerHistorySnapshot,
 } from '../web/functions/lib/server-uptime-history.js';
 import {
   sizeCacheKey,
@@ -637,8 +639,10 @@ interface ServerMod {
     });
 
     for (const sm of gameMods) {
-      // Skip mod ID 0 (base game, not an actual mod)
-      if (sm.modId === '0' || sm.modId === 0) continue;
+      // Skip mod ID 0 (base game, not an actual mod). `modId` is typed as
+      // string (normalized via `mid.toString()` above), so compare as string —
+      // `String(...)` keeps the runtime behaviour identical for both shapes.
+      if (String(sm.modId) === '0') continue;
 
       serverMods.push({ serverId: id, modId: sm.modId });
 
@@ -776,12 +780,17 @@ interface ServerMod {
   }
   await detectModAliases(kv, game, modList, unavailableWorkshopIds);
 
+  // NOTE (2026-09-30): `modList` here is the leaderboard projection built
+  // above (`id/name/serverCount/totalPlayers/ranks/marketShare`) — it never
+  // carries `sizeBytes`, so a per-mod loop over it would always produce an
+  // empty map. Sizes live in the sizes bundle (`attachModSizesFromBundle`)
+  // and in per-mod `cache:mod-size:` keys (workshop warm), and the Worker
+  // resolves them from there. The previous loop read `m.sizeBytes` off a
+  // type that cannot have it (TS2339) — i.e. it was dead code writing zeros
+  // into `modpackKnownBytes`/`modpackEstimatedBytes` via the call below.
+  // If server-level sizes are ever wanted in KV, wire the bundle map through
+  // instead of re-adding a loop here. See CHANGELOG v1.23.53.
   const modSizeById = new Map<string, number>();
-  for (const m of modList) {
-    if (typeof m.sizeBytes === 'number' && m.sizeBytes > 0) {
-      modSizeById.set(m.id.toUpperCase(), m.sizeBytes);
-    }
-  }
   attachServerModpackSizes(serverList, modSizeById);
 
   // Update server mods with ranks
@@ -1014,7 +1023,7 @@ interface ServerMod {
                 return row;
               })
             );
-            sources.push(...(rows as unknown[]));
+            sources.push(...(rows as typeof sources));
           }
           console.log(`  - bundle bootstrap: perskaityti thumb/status raktai top-${bootstrapIds.length} (vienkartinis)`);
         }
@@ -1139,8 +1148,10 @@ interface ServerMod {
             mergedMods[id] = current;
           }
         }
-        // Merge server history (peak rank/players + uptime sample counts)
-        const mergedServers: Record<string, { rank: number; players: number; online: boolean; on?: number; n?: number }> = {
+        // Merge server history (peak rank/players + uptime sample counts).
+        // `ServerHistorySnapshot.online` is optional by design (hourly-only
+        // single scans); the previous inline type wrongly required it.
+        const mergedServers: Record<string, ServerHistorySnapshot> = {
           ...(existingPoint.servers || {}),
         };
         for (const [id, data] of Object.entries(serverHistoryMap)) {

@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    /* Same resolution behaviour as the code that runs: tsx resolves
+       "./x.js" -> "./x.ts" exactly like `moduleResolution: bundler`
+       + `allowImportingTsExtensions` (see web/tsconfig.app.json). */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    /* The .mjs ops scripts (post-stale-alert, discord-template helpers) are
+       plain JS by design — no declarations. `allowJs` lets TS resolve those
+       imports (as `any`) instead of erroring TS7016; `checkJs` stays off so
+       JS itself is never type-checked. */
+    "allowJs": true,
+    /* Node runtime (tsx) + Workers globals shared with web/functions/lib,
+       which this program type-checks via the import graph. */
+    "types": ["node", "@cloudflare/workers-types"],
+    "lib": ["ES2023"]
+  },
+  "include": ["scripts/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -4,6 +4,59 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🔍 Type-check `scripts/` + testai: 26 klaidos → 0, miręs modulis ištrintas (v1.23.53) - 2026-09-30
+
+**Problema:** root `tsconfig.json` turi `include: ["src/**/*"]` → `tsc --noEmit
+--listFilesOnly` rodo **0 failų** iš `scripts/`, `test/`, `web/`. T. y.
+`scripts/collector.ts` (**1693 eilutės** pinigų pipeline) ir visi `test/*.test.ts`
+**nebuvo tikrinami niekur** — nei root `tsc`, nei `web/tsconfig.*`, nei CI.
+
+**Sprendimas:** naujas `tsconfig.scripts.json` — `include: ["scripts/**/*.ts",
+"test/**/*.ts"]`, `strict`, `moduleResolution: bundler` +
+`allowImportingTsExtensions` (toks pat rezoliucijos elgesys kaip tsx, kuriuo
+kodas vykdomas), `verbatimModuleSyntax`, `types: ["node",
+"@cloudflare/workers-types"]` (kolektorius dalinasi kodu su `web/functions/lib`,
+kuriam reikia Workers globalų), `allowJs` (`.mjs` ops skriptai tyčia be tipų —
+`checkJs` išjungtas, todėl JS netikrinamas, tik rezoliuojamas kaip `any`).
+
+**Pirmas paleidimas rado 26 klaidas.** Visos ištaisytos, nė viena nereikalavo
+redizaino:
+
+| Failas | Klaidos | Kas |
+|---|---|---|
+| `scripts/collector.ts` | 8 | `GameType` → `import type` (TS1484); `String(sm.modId) === '0'` vietoj string/number disjunkcijos (TS2367); **negyvas `modSizeById` loop'as ištrintas** — `modList` projekcija niekada nenešė `sizeBytes`, todėl map visada tuščias (TS2339 ×3, žr. žemiau); `rows as typeof sources` vietoj `as unknown[]` (TS2345); `mergedServers: Record<string, ServerHistorySnapshot>` + `import type` (TS2322) |
+| `web/functions/lib/workshop-api.ts` | 2 | `postJson`/`getJson` grąžinimo tipas `status: number` → `number \| null` — kodas **jau** tikrino `status === null`, tipas melavo (TS2322 ×2) |
+| `scripts/backtest/debug-syn.ts` | 1 | `quality0.get(id) ?? 0` (TS2532, debug skriptas) |
+| `test/audit-config.test.ts` | 10 | fixture'ai be `rankBefore/rankRecent` (+`classificationHint`) — pridėtas eksplicitus `null` (kodas tikrina ir `null`, ir `undefined`, todėl tas pats) |
+| `test/server-lookup.test.ts` | 4 | trūkstami `assert.ok(lookup)` (3 pre-existing, 1 savas) |
+| `test/post-stale-alert.test.ts` | 1 | `.mjs` importas be deklaracijų → `allowJs` (TS7016) |
+
+**Tikras radinys, ne tik tipas — `modpackKnownBytes` KV visada 0.**
+`modMap` reikšmės (`{id, name, serverCount, totalPlayers}`) ir 688 eil. projekcija
+**niekada** nenešė `sizeBytes`, todėl 779–784 loop'as (`modSizeById`) buvo
+negyvas, o `attachServerModpackSizes(serverList, emptyMap)` rašė
+`modpackKnownBytes = 0`, `modpackSizedCount = 0`, `modpackCoverage = 0` į
+**kiekvieną** serverio eilutę. Dydžiai realiai ateina iš bundle
+(`attachModSizesFromBundle`) ir per-mod `cache:mod-size:` raktų (workshop warm).
+Loop'as ištrintas, paliktas eksplicitus tuščias map su paaiškinimu
+(`CHANGELOG` — jei server-level dydžiai kada norimi KV, vesti bundle map'ą,
+ne grąžinti loop'ą). **Elgsena nepakitusi** (map visada buvo tuščias) — bet jei
+frontend'as rodė „modpack size" iš serverio eilutės, jis rodė 0. **Follow-up.**
+
+**Ištrinta:** `scripts/server-elite-inertia.ts` + `test/server-elite-inertia.test.ts`
+(7 testai) + išbraukta iš `package.json` test sąrašo. Vienintelė nuoroda buvo
+pats testas (`../scripts/server-elite-inertia.js`); `collector.ts` jo neimportuoja
+(`displayedScores[id] = weighted; // no elite cushion`). Grįžtama per `git`.
+
+**CI:** `.github/workflows/ci.yml` + žingsnis `npx tsc --noEmit -p tsconfig.scripts.json`
+(po root `tsc`). Dabar visos trys programos turi gate: `src/**` (root `tsc`),
+`scripts/**` + `test/**` (scripts `tsc`), `web/**` (web build).
+
+**Patikra:** `tsconfig.scripts.json` **26 → 0** · root `npm test` **316/316**
+(323 minus 7 ištrinti) · `npx tsc --noEmit` ✅ · `npm run build --prefix web` ✅ ·
+`npm --prefix web test` 45/45 ✅.
+- **Heavy CI: required because** keičiasi kolektoriaus tipų ribos, CI konfigas ir trinamas kodas.
+
 ### 📖 Docs: versijos, indeksas, mirusios `file://` nuorodos (v1.23.52) - 2026-09-30
 
 - **`docs/README.md:3` — „current: **v1.23.45**"** nors faktiškai v1.23.52: **6 versijos pasenusios** (46–51). Tai dokumentacijos įėjimas, iš kurio vedamos visos kitos nuorodos.
