@@ -21,7 +21,7 @@ Sveiki atvykę į reforgermods.com bendruomenės Discord!
 Nuorodos:
 - Svetainė: https://reforgermods.com
 - GitHub: https://github.com/pauliusmed/armamods-leaderboard
-- Duomenys sinchronizuojami kas ~2h iš BattleMetrics.
+- Duomenys sinchronizuojami kas valandą iš BattleMetrics.
 
 Kaip gauti pagalbą: klauskite #support. Serverių savininkams — #server-owners.
 ```

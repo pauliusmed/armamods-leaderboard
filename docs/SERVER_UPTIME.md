@@ -17,7 +17,7 @@ A single missed scan (restart, BM lag) should not paint an entire day as offline
 
 ## Data model
 
-Each collector run (~2h) records one sample per server inside the shared history point:
+Each collector run (hourly) records one sample per server inside the shared history point:
 
 ```json
 {

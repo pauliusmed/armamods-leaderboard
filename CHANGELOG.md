@@ -4,6 +4,30 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 📖 Docs: collector cron `~2h` → hourly (v1.23.51) - 2026-09-30
+
+`.github/workflows/collector.yml:12` = `cron: '0 * * * *'` **kas valandą** nuo INC-2026-08-26. **11 gyvų dokumentų** vis dar rašė „~2h" / „kas-2h" / „every 2 hours" — dalis jų vedė į **skaičiavimus, kurie dabar 2× neteisingi**.
+
+- **Pakeista (11 failų, dabartinės būsenos dokumentai):** `README.md` (2), `walkthrough.md`, `PLAN.md`, `docs/DATA_SYNC.md`, `docs/DISCORD.md` (vartotojui skirtas tekstas), `docs/MODPACK_DIFF.md`, `docs/SERVER_UPTIME.md`, `docs/WORKSHOP_METADATA.md`, `docs/ALGORITHM.md:82`, `docs/DATA_SOURCES_RESEARCH.md` (3).
+- **Perskaičiuoti skaičiai, ne tik žodžiai** (`DATA_SOURCES_RESEARCH.md`): „per-server objektai kas 2h viršija limitą (60k/day ≈ 1.8M/mėn)" → **kas valandą 120k/day ≈ 3.6M/mėn**; „agreguotas objektas tik 12/day" → **24/day**. Seni skaičiai buvo teisingi tik 12 run'ų/parą.
+- **Sąmoningai NEpakeista (istoriniai šaltiniai):**
+  - `CHANGELOG.md` senesni įrašai — cron tuo metu really buvo ~2h, tai release istorija, ne dabartinė būsena.
+  - `docs/INCIDENTS.md:137` — tai incidentas *dėl* `0 */2 * * *`, istorinis aprašymas.
+  - `DISCORD_RELEASES.md:135` — **jau paskelbtas viešas pranešimas** (v1.22.28, 2026-07-31). Tuo metu teisinga; perrašyti = falsifikuoti paskelbtą istoriją.
+- **Neištaisyta, nes tai NE dokumentacijos klaida, o elgsenos klausimas (reikia savininko):**
+  `scripts/collector.ts:1460` `ALPHA = 1 - 2^(-1/(HALF_LIFE_DAYS * 12))` ir
+  `:1461` `RAMP_RUNS = 168` abu teikia „**x 2h**" komentaruose ir abu
+  **programiškai numato 12 run'ų/parą**. Perėjus prie `0 * * * *`:
+  **EMA half-life faktiškai 5 dienos, ne 10** (konstanta pavadinta
+  `HALF_LIFE_DAYS` = 10, bet 12 run/2h ≠ 24 run/1d), o **tenure ramp
+  faktiškai 7 dienos, ne 14**. Tai keičia reitingų skaičiavimą — **ne
+  dokumentacijos taisymas, o sprendimas**. `ALGORITHM.md` šiuo metu
+  **teisingai** transkribuoja kodą (`α = 1 − 2^(−1/(H×12))`), todėl
+  neatnaujinau.
+- **Patikra:** `git log` INC-2026-08-26 + `.github/workflows/collector.yml:12`
+  (`cron: '0 * * * *'  # Hourly; collector-gate skips duplicate fresh runs`).
+- **Heavy CI: skipped because** lyginama tik `.md` dokumentacija.
+
 ### 📖 Docs: incident-class klaidos — build komanda, deploy mechanizmas, cf.image sprendimas (v1.23.50) - 2026-09-30
 
 Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyta **tai, kas aktyviai klaida** (t. y. gali pasikartoti incidentas arba pavesti paleisti mirusį kodą), ne kosmetika.

@@ -79,7 +79,7 @@ To reward server owners who:
 
 ### Snapshot Formula
 
-Points are calculated every collector run (every 2 hours):
+Points are calculated every collector run (hourly):
 
 ```
 SnapshotScore = (Players × 5) - (ModCount × 1) + UniquenessBonus

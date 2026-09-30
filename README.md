@@ -77,7 +77,7 @@ graph TD
     end
 
     subgraph "Ingestion"
-        GHA[GitHub Actions cron ~2h] --> COL[scripts/collector.ts]
+        GHA[GitHub Actions cron hourly] --> COL[scripts/collector.ts]
         COL --> |co-deploy / EMA / sharding| KV[(Cloudflare KV)]
     end
 
@@ -105,7 +105,7 @@ Collector schedule: `.github/workflows/collector.yml` (`0 * * * *`, hourly; the 
 | **Frontend** | React 19, Vite, Tailwind CSS v4, Recharts, TypeScript | Leaderboards, charts, client cache (served via Workers Assets) |
 | **API** | Hono on Cloudflare Workers (unified `web/worker.ts` + `assets` + `run_worker_first`) | Edge reads, workshop scrape, sitemap, share prerender, caching |
 | **Storage** | Cloudflare KV (`TRENDING_KV`) | Sharded rankings, history, metadata |
-| **Ingestion** | TypeScript collector, BattleMetrics REST, GitHub Actions | Cron ~2h collect + trending |
+| **Ingestion** | TypeScript collector, BattleMetrics REST, GitHub Actions | Cron hourly (`0 * * * *`) collect + trending |
 
 ---
 
