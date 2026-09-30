@@ -197,13 +197,33 @@ describe('ServerLookup — batched full-scan fallback (index missing)', () => {
 });
 
 /**
- * PRIELAIDA (ne išmatuota reikšmė): vieno `cache:servers:<i>` shard'o dydis
- * ~5 MB (09-30 matavimas). Perskaičiuoti: `wrangler kv key get --binding
- * TRENDING_KV "cache:servers:0" --remote`.
+ * PRIELAIDA (ne išmatuota testu reikšmė): vieno `cache:servers:<i>` shard'o
+ * dydis ~5 MB (09-30 matavimas). **Tai prielaida, ne tikrasis dydis** — shard'ai
+ * auga su serverių skaičiumi kiekviename kolektoriaus run'e, todėl ši skaičius
+ * gali atsilikti nuo tikrovės ir tada būti arba per griežta, arba per lax.
+ * Perskaičiuoti: `wrangler kv key get --binding TRENDING_KV "cache:servers:0" --remote`.
+ *
+ * Keliama ranka (ne CI gate): skriptas rašo/karčia šaltinio failą vietoje, todėl
+ * pavojinga paleisti lygiagrečiai. Atliekama ranka, PRIME žalią baseline'ą
+ * PRIEŠ mutacijų — iš raudono baseline'o „mutacijos krenta" nieko nepasako.
  */
 const ASSUMED_SHARD_MB = 5;
 /** Workers izoliato RAM riba (nepažeidžiama). */
 const ISOLATE_MB = 128;
+
+/**
+ * Tripwire, ne elgsenos testas: jei kas nors sąmoningai keičia
+ * `FALLBACK_BATCH`, čia turi būti argumentas. Pats `maxInFlight <= FALLBACK_BATCH`
+ * nepagauna — santykis su savimi liktų žali (tautologija).
+ */
+describe('FALLBACK_BATCH RAM budget', () => {
+  it('keeps a full-scan wave under 1/4 of the isolate ceiling', () => {
+    assert.ok(
+      FALLBACK_BATCH * ASSUMED_SHARD_MB <= ISOLATE_MB / 4,
+      `FALLBACK_BATCH=${FALLBACK_BATCH} → ${FALLBACK_BATCH * ASSUMED_SHARD_MB} MB virš ${ISOLATE_MB / 4} MB biudžeto`
+    );
+  });
+});
 
 describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', () => {
   // Indexas parašytas prieš paskutinį shard'ų snapshot'ą: shard'e 5 serveris yra,
@@ -250,24 +270,6 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
-  it('FALLBACK_BATCH fits the isolate RAM budget', () => {
-    // Atskiras testas, NE lygiagumo: biudžeto pažeidimas neturi būti
-    // diagnozuojamas kaip lygiagumo klaida.
-    //
-    // Tvirtina **absoliutią** reikšmę, ne tik `maxInFlight <= FALLBACK_BATCH`
-    // (tauta logika: pakėlus 4→8, santykis liktų žali).
-    //
-    // PRIELAIDA: `ASSUMED_SHARD_MB` — vieno `cache:servers:<i>` shard'o dydis
-    // (~5 MB, įmatuota 09-30). **Tai prielaida, ne išmatuota testu reikšmė**;
-    // shard'ai auga su serverių skaičiumi kiekviename kolektoriaus run'e. Jei
-    // tikrasis dydis nušoka, šis testas gali tapti per griežtu (klaida, kai
-    // viskas gerai) arba per lax (klaida, kai jau blogai). Perskaičiuoti:
-    // `wrangler kv key get --binding TRENDING_KV "cache:servers:0" --remote`.
-    assert.ok(
-      FALLBACK_BATCH * ASSUMED_SHARD_MB <= ISOLATE_MB / 4,
-      `FALLBACK_BATCH=${FALLBACK_BATCH} → ${FALLBACK_BATCH * ASSUMED_SHARD_MB} MB virš ${ISOLATE_MB / 4} MB biudžeto`
-    );
-  });
 
   it('holds the full-scan parallelism within FALLBACK_BATCH', async () => {
     const kv = makeKv(entries);
@@ -279,8 +281,7 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     kv.probe.reset();
     assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
     assert.equal(shardGets(kv).length, SHARDS);
-    // Sutartis: pikas ≤ FALLBACK_BATCH (RAM, 128 MB riba) — su nuosekliu
-    // skenu (1) taip pat teisinga, nes jis saugesis.
+    // Sutartis: pikas ≤ FALLBACK_BATCH (RAM, 128 MB riba).
     assert.ok(kv.probe.maxInFlight <= FALLBACK_BATCH, `maxInFlight=${kv.probe.maxInFlight}`);
     // Lygiagumas turi egzistuoti — kitaip batchas nepasiteisimu.
     assert.ok(kv.probe.maxInFlight > 1, `maxInFlight=${kv.probe.maxInFlight}`);

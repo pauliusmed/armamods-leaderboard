@@ -55,14 +55,18 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
     (sutartis) + `> 1` (lygiagumas egzistuoja) vietoj `=== 4` — dabar
     nuoseklus skenas, kuris yra dar saugesnis, praeina teisingai, o ne
     atmetamas.
-  - 5-as raundas (2 findings, 2 NAJOS) — abi teisingos, abi taisytos:
-    **RAM siena saugojo save patį** (tik `maxInFlight <= FALLBACK_BATCH` —
-    konstanto, kurio paties dydį tikrina, atžvilgiu → pakėlus 4→8 testai liko
-    žiami, o pikas 8×5 MB = 40 MB vietoj 20 MB). Dabar lygiagumo testas
-    **fiksuoja absoliučią reikšmę pagal RAM biudžetą**
-    (`FALLBACK_BATCH × 5 MB ≤ 128 MB / 4`) **ir** santykį; **32 ženklių riba
-    atkelta iš integracijos į `logSafeId` unit testą** (ji buvo ten tik
-    dubiavimas).
+  - 5-as, 6-as ir 7-as raundai (2 + 4 + 3 findings, 9 NAJOS) — visos
+    teisingos, visos taisytos, niekas neatmestas: **RAM siena saugojo save
+    patį** (tik `maxInFlight <= FALLBACK_BATCH` → pakėlus 4→8 testai liko
+    žiami, o pikas 8×5 MB = 40 MB vietoj 20 MB); biudžeto pažeidimas buvo
+    „diagnozuojamas kaip lygiagumo klaida" faile be lygiagumo klaidos;
+    `includes(logSafeId(flood))` buvo **tylesnė tautologija** (nepavyktų
+    nei vienos savo mutacijos) — neši taisyba liko neigiama; `SHARD_MB = 5`
+    buvo nukopijuota pastraipa, todėl pervadinta `ASSUMED_SHARD_MB` ir
+    aiškiai pavadinta **prielaida** su perskaičiavimo komanda (viena kopija,
+    ne dvi); buvo apgaubta **tripwire**, ne „promotion ceremony for
+    arithmetic" — pavadinta taip, kad būtų aišku, jog tai ne elgsenos
+    testas.
   - **Patikrinta mutacijomis (7 mutacijos, 7 KRENTA):**
     `FALLBACK_BATCH → 64` · `→ 8` (RAM biudžetas) · `→ 2` (lygiagumo
     praradimas) · `logSafeId → raw` · `drop .slice(0, 32)` ·
