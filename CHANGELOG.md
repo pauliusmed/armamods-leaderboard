@@ -41,9 +41,24 @@ const RAMP_RUNS = 14 * RUNS_PER_DAY; // 336 ≈ 14 dienų
 kitas cron pasikeitimas negalėtų tyliai sulaužyti — tai buvo šakninė priežastis,
 ne pačios konstantos. Keičiant cron, keisti `RUNS_PER_DAY`, ne skaičius.
 
-**Poveikis:** visas leaderboard perskaičiuojamas — visi balai pasislinks
-teisinga kryptimi (mažiau triukšmo: 13.2 % → 11.6 %). Matoma vartotojams,
-todėl atskiras PR, ne „šalia".
+**Poveikis (sąžiningai, ne „instant"):**
+
+- **ALPHA (`* 12 → * 24`): nėra diskontinuiteto.** Ta pati formulė, mažesnis
+  svoris per run’ą. Balai evoliucionuoja tolydžiai ir konverguoja į naują
+  dinamiką per ~H dienų. **Nėra „viso leaderboard perskaičiavimo"** — ankstesnė
+  šio įrašo redakcija tai teigė neteisingai.
+- **RAMP (`168 → 336`): vienkartinė korekcija, matoma iškart.** Serveris su
+  `age` 168–335 krenta iš `tenure = 1.0` į 0.47–1.0 (pvz. `age` 200: 1.0 →
+  0.70) ir vėl kyla per dienas. **Tai taisymas veikiantis teisingai**, ne
+  regresija — senasis 1.0 rėmėsi klaidinga prielaida, kad 200 runų = 16.7
+  dienos (faktiškai ~8.3). Migracijos nereikia: `age` toliau auga po +1/run,
+  nauja interpretacija (valandiniai stebėjimai) yra teisinga.
+- **Backtest failai suderinti:** `sqe-framework.ts` per-run vertimas `* 12 →
+  RUNS_PER_DAY` (sweep’o noise/response nuo kadencijos nepriklauso — modelis
+  operuoja dienomis); `pareto-report.json` `alphaPerRun` 0.0041 → **0.0021**
+  + `refreshed` provenansas (sweep eilutės nepakitusios). `sqe-ebk.ts` **paliktas**
+  (`ALPHA=0.10`, `RAMP_RUNS=168`) — tai įšaldytas eksperimentinis baseline su
+  paaiškinimu, ne gyvas kodas; jo „taisyti" reikštų eksperimento perrašymą.
 
 **Patikra:** `tsconfig.scripts.json` ✅ · root `npm test` 316/316 · `tsc` ✅ ·
 `npm run build --prefix web` ✅ · web vitest 45/45 ✅.

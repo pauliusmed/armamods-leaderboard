@@ -23,6 +23,10 @@ interface DayPoint {
 }
 
 // ---------- Current model (reimplemented faithfully) ----------
+// FROZEN BASELINE: mirrors pre-1.23.9 production (ALPHA=0.10, H=0.55d,
+// RAMP_RUNS=168 at 2h cadence) for comparison against the EB-Kalman
+// candidate. Do NOT "fix" these to the current production values —
+// that would rewrite the experiment. See CHANGELOG v1.23.54.
 const ALPHA = 0.10;
 const RAMP_RUNS = 168;
 const TENURE_FLOOR = 0.25;
