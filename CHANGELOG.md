@@ -11,9 +11,9 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 - **`docs/PERFORMANCE.md:90` — „v1.24, bendras šildymas"** — **tokios versijos niekada nebuvo**. Iš tikrųjų susijusi su `CHANGELOG.md` § `[1.23.24] - 2026-08-27` „🚀 Bendras šildymas (compute-at-write)". Pakeista į **v1.23.24**.
 - **`CHANGELOG.md` — 18 `file://` nuorodų, 0 gyvų** (patikrinta `git ls-files`):
 - absoliučios **vietinio kompiuterio** keliai (pvz. `c:/Users/<user>/Desktop/code/armamods/…`) — neveikia niekam kitam;
-- absoliučios **vietinio kompiuterio** keliai (pvz. `c:/Users/<user>/Desktop/code/armamods/…`) — neveikia niekam kitam;
-- **archyvo** keliai (`…/Desktop/code/<archive>/armamods/…`) — **nutekėjusios privačios struktūros į viešą changelog'ą**;
-  Pakeista į backtick code spans: **18 → 0**. Numatytosios santykinės nuorodos liko nepakitusios.
+- **archyvo** keliai (`…/Desktop/code/<archive>/armamods/…`) — **nutekėjusios privačios struktūros į viešą changelog'ą** (kelių katalogai, vardai);
+- vedė į **ištrintus** failus (`web/functions/api/[[path]].ts` — ištrintas 2026-08-24 migracijoje į Workers; `web/src/components/ServerCard.tsx` — tikras kelias yra `web/src/components/ui/`).
+  Pakeista į backtick code spans su tikrais keliais: **18 → 0**. Numatytosios santykinės nuorodos liko nepakitusios.
 - **Heavy CI: skipped because** lyginama tik `.md` dokumentacija.
 
 ### 📖 Docs: collector cron `~2h` → hourly (v1.23.51) - 2026-09-30
