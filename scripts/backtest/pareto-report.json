@@ -537,7 +537,7 @@
   "recommendation": {
     "halfLifeDays": 14,
     "tau": 0.8,
-    "alphaPerRun": 0.0041,
-    "alphaPerRunFormula": "alpha_run = 1 - 2^(-1 / (H_days * 12))"
+    "alphaPerRun": 0.0021,
+    "alphaPerRunFormula": "alpha_run = 1 - 2^(-1 / (H_days * RUNS_PER_DAY))"
   }
 }

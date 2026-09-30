@@ -4,6 +4,67 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 📐 EMA/RAMP: cadence konstantos suderintos su hourly cron (v1.23.54) - 2026-09-30
+
+**Problema:** `.github/workflows/collector.yml` = `0 * * * *` **kas valandą** nuo
+2026-08-26, bet `scripts/collector.ts` tebenaudojo 2h-eros konstantas:
+
+```ts
+const ALPHA = 1 - Math.pow(2, -1 / (HALF_LIFE_DAYS * 12)); // 12 run/para
+const RAMP_RUNS = 168;          // 168 runai = 14 dienų TIK prie 2h
+```
+
+Efektyviai: **EMA half-life 5 dienos, ne 10** (`HALF_LIFE_DAYS` melavo);
+**tenure ramp 7 dienos, ne 14**. Mėnuo reitingų skaičiuota perpus greitesne
+dinamika, nei suprojektuota.
+
+**Įrodymas (ne spėjimas) — `scripts/backtest/pareto-report.json`, tau=0.8:**
+
+| H (efektyvus) | Triukšmas | Atsakas |
+|---|---|---|
+| **5** (buvo, hourly × senos konstantos) | **13.2 %** | 18.5 d. |
+| **10** (projektuota, atstatoma) | **11.6 %** | **17.5 d.** |
+| 14 (backtest rekomendacija) | 10.6 % | 18 d. |
+
+Esamas H=5 yra **dominuojamas H=10 abiem ašim**. H=10 pasirinktas kaip
+„auksinis viduriukas" (ne 14), todėl atstatoma **10**, ne 14.
+
+**Sprendimas (`scripts/collector.ts:1483-1488`):**
+
+```ts
+const RUNS_PER_DAY = 24; // privalo atitikti collector.yml cron
+const ALPHA = 1 - Math.pow(2, -1 / (HALF_LIFE_DAYS * RUNS_PER_DAY)); // ≈0.0029
+const RAMP_RUNS = 14 * RUNS_PER_DAY; // 336 ≈ 14 dienų
+```
+
+`RUNS_PER_DAY` iškelta į **vardinę konstantą su įspėjamuoju komentaru**, kad
+kitas cron pasikeitimas negalėtų tyliai sulaužyti — tai buvo šakninė priežastis,
+ne pačios konstantos. Keičiant cron, keisti `RUNS_PER_DAY`, ne skaičius.
+
+**Poveikis (sąžiningai, ne „instant"):**
+
+- **ALPHA (`* 12 → * 24`): nėra diskontinuiteto.** Ta pati formulė, mažesnis
+  svoris per run’ą. Balai evoliucionuoja tolydžiai ir konverguoja į naują
+  dinamiką per ~H dienų. **Nėra „viso leaderboard perskaičiavimo"** — ankstesnė
+  šio įrašo redakcija tai teigė neteisingai.
+- **RAMP (`168 → 336`): vienkartinė korekcija, matoma iškart.** Serveris su
+  `age` 168–335 krenta iš `tenure = 1.0` į 0.625–1.0 (pvz. `age` 200: 1.0 →
+  0.70) ir vėl kyla per dienas. **Tai taisymas veikiantis teisingai**, ne
+  regresija — senasis 1.0 rėmėsi klaidinga prielaida, kad 200 runų = 16.7
+  dienos (faktiškai ~8.3). Migracijos nereikia: `age` toliau auga po +1/run,
+  nauja interpretacija (valandiniai stebėjimai) yra teisinga.
+- **Backtest failai suderinti:** `sqe-framework.ts` per-run vertimas `* 12 →
+  RUNS_PER_DAY` (sweep’o noise/response nuo kadencijos nepriklauso — modelis
+  operuoja dienomis); `pareto-report.json` `alphaPerRun` 0.0041 → **0.0021**
+  + `refreshed` provenansas (sweep eilutės nepakitusios). `sqe-ebk.ts` **paliktas**
+  (`ALPHA=0.10`, `RAMP_RUNS=168`) — tai įšaldytas eksperimentinis baseline su
+  paaiškinimu, ne gyvas kodas; jo „taisyti" reikštų eksperimento perrašymą.
+
+**Patikra:** `tsconfig.scripts.json` ✅ · root `npm test` 316/316 · `tsc` ✅ ·
+`npm run build --prefix web` ✅ · web vitest 45/45 ✅.
+`docs/ALGORITHM.md` įspėjimas pakeistas patvirtinimu.
+- **Heavy CI: required because** keičiasi reitingų skaičiavimas (vartotojams matoma).
+
 ### 🔍 Type-check `scripts/` + testai: 26 klaidos → 0, miręs modulis ištrintas (v1.23.53) - 2026-09-30
 
 **Problema:** root `tsconfig.json` turi `include: ["src/**/*"]` → `tsc --noEmit

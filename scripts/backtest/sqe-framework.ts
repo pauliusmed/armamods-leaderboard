@@ -31,7 +31,12 @@
  *                   players at day 10) to enter its deserved top-20 rank
  *
  * Sweep: H x tau -> Pareto -> knee. Recommended production params:
- *      alpha_run = 1 - 2^(-1 / (H_days * 12 runs/day))
+ *      alpha_run = 1 - 2^(-1 / (H_days * RUNS_PER_DAY))
+ *
+ * RUNS_PER_DAY privalo atitikti `.github/workflows/collector.yml` cron
+ * (`0 * * * *`, hourly nuo 2026-08-26). Iki v1.23.54 čia buvo įkalta `* 12`
+ * (2h-era) — sweep'o noise/response skaičiai nuo to nepriklausė (modelis
+ * operuoja dienomis), bet `recommendation.alphaPerRun` vertimas buvo neteisingas.
  *
  * Weights (production integration; players-only in this backtest since
  * history shards lack uniqueness/modCount):
@@ -291,6 +296,14 @@ function main() {
 
   const Hs = [0.55, 1, 2, 3, 4, 5, 7, 10, 14, 21];
   const taus = [0.5, 0.6, 0.7, 0.75, 0.8, 0.85];
+  // Per-run vertimas H(dienomis) -> alpha. Privalo atitikti collector cron
+  // (`0 * * * *`, hourly). Sweep'o noise/response nuo to nepriklauso
+  // (modelis operuoja dienomis) — bet `recommendation.alphaPerRun` be teisingo
+  // daugiklio būtų neteisingas, kaip buvo iki v1.23.54 (`* 12`, 2h-era).
+  // Šaltinis tiesai: `scripts/collector.ts` → `RUNS_PER_DAY` (ten nominalus 24,
+  // faktas ~26/dieną dėl cron + cron-job.org dubliavimosi). Šis failas tik
+  // atspindi tą pačią konstantą ataskaitai — behaviour čia nėra, tik matematika.
+  const RUNS_PER_DAY = 24;
   const rows: any[] = [];
 
   for (const H of Hs) {
@@ -326,7 +339,7 @@ function main() {
     : null;
   const knee = constrained ?? chordKnee;
 
-  const alphaRun = 1 - Math.pow(2, -1 / (knee.H * 12));
+  const alphaRun = 1 - Math.pow(2, -1 / (knee.H * RUNS_PER_DAY));
   const report = {
     meta: { days: days.length, sigmaE: +sigmaE.toFixed(1), productionEquivalent: { H: 0.55, alphaRun: 0.10 } },
     sweep: rows,
@@ -338,7 +351,7 @@ function main() {
       halfLifeDays: knee.H,
       tau: knee.tau,
       alphaPerRun: +alphaRun.toFixed(4),
-      alphaPerRunFormula: 'alpha_run = 1 - 2^(-1 / (H_days * 12))',
+      alphaPerRunFormula: 'alpha_run = 1 - 2^(-1 / (H_days * RUNS_PER_DAY))',
     },
   };
   writeFileSync('scripts/backtest/pareto-report.json', JSON.stringify(report, null, 2));
