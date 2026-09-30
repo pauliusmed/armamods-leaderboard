@@ -173,7 +173,7 @@ Kortelė rodo tik **Pirminius + 1–2 Antrinius** stulpelius. Tretiniai (visi ve
 - **Precache:** 85 assets (JS, CSS, HTML, SVG, woff2). `globIgnores: ['**/og-*.png', 'brand/**/*']`.
 - **Manifest:** `name: "Arma Mods Intelligence"`, `theme_color: #B8784A`, SVG icon.
 - **Auto-update:** `registerType: 'autoUpdate'` – nauja SW versija automatiškai užsiregistruoja.
-- Dėl pilno offline (IndexedDB persistence) – žr. Planuojama.
+- Dėl pilno offline: **IndexedDB jau įgyvendinta** (`web/src/lib/db.ts` → `persistentCache`) — žr. [PERFORMANCE.md](./PERFORMANCE.md).
 
 ---
 

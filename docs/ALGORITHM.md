@@ -137,10 +137,16 @@ Implementation: `scripts/collector.ts:1583-1625` — top-200 servery, kiekvienai
 skaičiuojamas `probBetter(band[i], band[i+1])`; kai `P > τ` (τ = 0.80) — swap.
 
 `scripts/server-elite-inertia.ts` (`ELITE_INERTIA_TIERS`,
-`applyEliteInertiaCushion`) yra **nebenaudojamas** — 0 caller'ų. Išliko
-eksportuotas, bet kolektorius jo neimportuoja (`collector.ts:1579`:
-`displayedScores[id] = weighted; // shown points = quality x tenure (no elite cushion)`).
-Tai senos „elite cushion" architektūros liekana — **ne gyva implementacija**.
+`applyEliteInertiaCushion`) yra **nebenaudojamas gamybiniame kode** — kolektorius
+jo neimportuoja (`collector.ts:1579`: `displayedScores[id] = weighted; //
+shown points = quality x tenure (no elite cushion)`).
+
+⚠️ **Tai mirusi funkcija su žaliu testu, ne tuščia muziejus.** Ji vis dar
+kviečiama **11 kartų** `test/server-elite-inertia.test.ts`. Taigi: gamybinis kelias
+nekada neeilutų senos logikos, bet testai tai tikrina ir laiką „gyvą". **Sprendimas
+(ne šiame docs-only PR):** arba ištrinti modulį su testu, arba pažymėti
+`@deprecated` su priežastimi — kad „testas dengia neegzistuojantį kelią" pats
+savaime yra klaida.
 
 ### Uniqueness Bonus/Penalty Calculation
 
