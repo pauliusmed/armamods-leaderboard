@@ -99,7 +99,7 @@ describe('analyzeTrend', () => {
 
 describe('classifyModAudit', () => {
   it('marks dead when popular before and zero after', () => {
-    const trend = { phase: 'declining' as const, label: '', detail: '', recentAvg: 0, earlyAfterAvg: 0 };
+    const trend = { phase: 'declining' as const, label: '', detail: '', recentAvg: 0, earlyAfterAvg: 0, rankBefore: null, rankRecent: null };
     const r = classifyModAudit({ beforeAvg: 200, afterAvg: 2, currentPlayers: 0, trend });
     assert.equal(r.status, 'dead');
     assert.match(r.title, /Likely broken after/i);
@@ -112,6 +112,8 @@ describe('classifyModAudit', () => {
       detail: 'Usage is coming back.',
       recentAvg: 50,
       earlyAfterAvg: 5,
+      rankBefore: null,
+      rankRecent: null,
     };
     const r = classifyModAudit({ beforeAvg: 200, afterAvg: 2, currentPlayers: 12, trend });
     assert.equal(r.status, 'ok');
@@ -125,6 +127,8 @@ describe('classifyModAudit', () => {
       detail: 'After 1.7 dip, last week improved.',
       recentAvg: 19,
       earlyAfterAvg: 4,
+      rankBefore: null,
+      rankRecent: null,
     };
     const r = classifyModAudit({ beforeAvg: 208, afterAvg: 16, currentPlayers: 10, trend });
     assert.equal(r.status, 'ok');
@@ -182,6 +186,8 @@ describe('classifyModAudit', () => {
       detail: 'x',
       recentAvg: 6,
       earlyAfterAvg: 4,
+      rankBefore: null,
+      rankRecent: null,
     };
     const r = classifyModAudit({
       beforeAvg: 80,
@@ -224,6 +230,8 @@ describe('classifyModAudit', () => {
       detail: 'x',
       recentAvg: 900,
       earlyAfterAvg: 800,
+      rankBefore: null,
+      rankRecent: null,
     };
     const r = classifyModAudit({ beforeAvg: 1500, afterAvg: 800, currentPlayers: 1035, trend });
     assert.equal(r.status, 'ok');
@@ -236,6 +244,8 @@ describe('classifyModAudit', () => {
       detail: 'x',
       recentAvg: 6,
       earlyAfterAvg: 4,
+      rankBefore: null,
+      rankRecent: null,
     };
     const r = classifyModAudit({ beforeAvg: 100, afterAvg: 8, currentPlayers: 3, trend });
     assert.equal(r.status, 'dead');
@@ -249,6 +259,8 @@ describe('classifyModAudit', () => {
       detail: 'x',
       recentAvg: 6030,
       earlyAfterAvg: 2000,
+      rankBefore: null,
+      rankRecent: null,
     };
     const r = classifyModAudit({
       beforeAvg: 11040,
@@ -426,6 +438,9 @@ describe('sortAuditRowsWorstFirst', () => {
         trendLabel: '',
         trendDetail: '',
         recentAvg: 10,
+        rankBefore: null,
+        rankRecent: null,
+        classificationHint: null,
         alternatives: [],
       },
       {
@@ -444,6 +459,9 @@ describe('sortAuditRowsWorstFirst', () => {
         trendLabel: '',
         trendDetail: '',
         recentAvg: 0,
+        rankBefore: null,
+        rankRecent: null,
+        classificationHint: null,
         alternatives: [],
       },
       {
@@ -462,6 +480,9 @@ describe('sortAuditRowsWorstFirst', () => {
         trendLabel: '',
         trendDetail: '',
         recentAvg: 4,
+        rankBefore: null,
+        rankRecent: null,
+        classificationHint: null,
         alternatives: [],
       },
     ]);

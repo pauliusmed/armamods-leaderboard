@@ -33,7 +33,7 @@ Thank you for your interest in improving the project! This document provides gui
    (`web/src/hooks/usePinnedFavoriteMods.ts:38`, `react-hooks/set-state-in-effect`).
    **Nefiksuok jos** — tai užregistuota užduotis, ne tavo pakeitimas
    (`AGENTS.md`: pre-existing lint klaidų neatlysime).
-6. **Tests**: `npm test` (root, **37** failų) ir `npm --prefix web test` (vitest)
+6. **Tests**: `npm test` (root, **36** failų) ir `npm --prefix web test` (vitest)
    prieš atidarant PR. CI dabar paleidžia tik `test/utils.test.ts` iš root — **tai
    nėra pakankama**, visus testus paleidžiate lokaliai. Key suites:
 

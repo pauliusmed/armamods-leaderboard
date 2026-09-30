@@ -69,7 +69,7 @@ const HEADERS: Record<string, string> = {
   'x-client-id': WORKSHOP_API_CLIENT_ID,
 };
 
-async function postJson<T>(url: string, body: unknown): Promise<{ status: number; data: T | null; error?: string }> {
+async function postJson<T>(url: string, body: unknown): Promise<{ status: number | null; data: T | null; error?: string }> {
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -87,7 +87,7 @@ async function postJson<T>(url: string, body: unknown): Promise<{ status: number
   }
 }
 
-async function getJson<T>(url: string): Promise<{ status: number; data: T | null; error?: string }> {
+async function getJson<T>(url: string): Promise<{ status: number | null; data: T | null; error?: string }> {
   try {
     const res = await fetch(url, { headers: HEADERS });
     if (!res.ok) {

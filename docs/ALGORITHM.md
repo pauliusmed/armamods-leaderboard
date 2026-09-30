@@ -149,12 +149,11 @@ skaičiuojamas `probBetter(band[i], band[i+1])`; kai `P > τ` (τ = 0.80) — sw
 jo neimportuoja (`collector.ts:1579`: `displayedScores[id] = weighted; //
 shown points = quality x tenure (no elite cushion)`).
 
-⚠️ **Tai mirusi funkcija su žaliu testu, ne tuščia muziejus.** Ji vis dar
-kviečiama **9 kartus** `test/server-elite-inertia.test.ts` (`grep -c` — 9 kvietimo
-vietos, ne 11; ankstesnios redakcijos skaičius buvo neteisingas). Taigi: gamybinis
-kelias nekeičia senos logikos, bet testai ją tikrina ir laiko „gyvą". **Sprendimas
-(ne šiame docs-only PR):** arba ištrinti modulį su testu, arba pažymėti
-`@deprecated` su priežastimi — kad „testas dengia neegzistuojantį kelią" pats
+⚠️ **`scripts/server-elite-inertia.ts` IŠTRINTAS (v1.23.53).** Jis buvo
+nebenaudojamas gamybiniame kode (kolektorius jo neimportavo), bet vis dar
+buvo kviečiamas 9 kartus `test/server-elite-inertia.test.ts` — „testas dengė
+neegzistuojantį kelią". Modulis ir testas ištrinti (`git` istorijoje išliko);
+`package.json` test sąrašas atnaujintas.
 savaime yra klaida.
 
 ### Uniqueness Bonus/Penalty Calculation

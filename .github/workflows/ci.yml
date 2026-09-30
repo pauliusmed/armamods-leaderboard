@@ -26,8 +26,14 @@ jobs:
 
       # Root config neturi `web/**` — `npx tsc --noEmit` NEMAČO nei `web/tsconfig.*`,
       # nei failų, kuriuos jie traukia į programą per importo grafą.
-      - name: 🔍 Type Check (root tsconfig)
+      - name: 🔍 Type Check (root tsconfig → src/**)
         run: npx tsc --noEmit
+
+      # `tsconfig.scripts.json` dengia tai, ko nedengia NIEKAS kitas:
+      # `scripts/**/*.ts` (kolektorius, backtest) + `test/**/*.ts`.
+      # Pridėta po 2026-09-30 audito, kuris rado 26 klaidas (0 žinomų).
+      - name: 🔍 Type Check (scripts + tests)
+        run: npx tsc --noEmit -p tsconfig.scripts.json
 
       - name: 🧪 Run Automated Unit Tests
         run: npx tsx --test test/utils.test.ts

@@ -142,6 +142,7 @@ describe('ServerLookup — index path', () => {
     });
 
     const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
     assert.equal(await lookup.findById('srv-unknown'), null);
     assert.equal(shardGets(kv).length, 0);
   });
@@ -154,6 +155,7 @@ describe('ServerLookup — index path', () => {
     });
 
     const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
     await lookup.findById('srv-2');
     await lookup.findById('srv-2');
     assert.deepEqual(shardGets(kv), ['cache:servers:2']);
@@ -186,6 +188,7 @@ describe('ServerLookup — batched full-scan fallback (index missing)', () => {
   it('scans all shards (batched) when id is nowhere', async () => {
     const kv = makeKv(metaOnly);
     const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
     assert.equal(await lookup.findById('nope'), null);
     assert.equal(shardGets(kv).length, SHARDS);
   });

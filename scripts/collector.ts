@@ -14,13 +14,15 @@
  */
 
 import 'dotenv/config';
-import { BattleMetricsService, GameType } from '../src/services/battlemetrics.js';
+import { BattleMetricsService } from '../src/services/battlemetrics.js';
+import type { GameType } from '../src/services/battlemetrics.js';
 import { buildScenarioRanking } from '../web/functions/lib/scenario-ranking.js';
 import { buildServerIndex } from '../web/functions/lib/server-lookup.js';
 import { normalizeBmServerStatus, isBmServerOnline } from '../web/functions/lib/server-status.js';
 import {
   isServerOnlineSample,
   mergeServerHistorySnapshot,
+  type ServerHistorySnapshot,
 } from '../web/functions/lib/server-uptime-history.js';
 import {
   sizeCacheKey,
@@ -637,8 +639,10 @@ interface ServerMod {
     });
 
     for (const sm of gameMods) {
-      // Skip mod ID 0 (base game, not an actual mod)
-      if (sm.modId === '0' || sm.modId === 0) continue;
+      // Skip mod ID 0 (base game, not an actual mod). `modId` is `string`
+      // (normalized via `mid.toString()`), so only the string half applies —
+      // the numeric comparison was dead and TS2367 rightly flagged it.
+      if (sm.modId === '0') continue;
 
       serverMods.push({ serverId: id, modId: sm.modId });
 
@@ -684,8 +688,15 @@ interface ServerMod {
   const playerRanks = new Map(byPlayers.map((m, i) => [m.id, i + 1]));
   const serverRanks = new Map(byServers.map((m, i) => [m.id, i + 1]));
 
-  // Create mod list with ranks
-  let modList = mods.map(m => ({
+  // Create mod list with ranks. `sizeBytes` is NOT set here — it is attached
+  // later by `attachModSizesFromBundle` + workshop warm, which MUTATE these
+  // rows in place (see `applySizesFromBundle`). Declared optional so the
+  // `modSizeById` loop below type-checks; at runtime it reads real sizes.
+  let modList: Array<{
+    id: string; name: string; serverCount: number; totalPlayers: number;
+    playerRank: number; serverRank: number; overallRank: number; marketShare: number;
+    sizeBytes?: number | null;
+  }> = mods.map(m => ({
     id: m.id,
     name: m.name,
     serverCount: m.serverCount,
@@ -1000,7 +1011,18 @@ interface ServerMod {
                   kv.get(ogImageCacheKey('reforger', id), 'text'),
                   kv.get(statusCacheKey('reforger', id), 'text'),
                 ]);
-                const row: Record<string, unknown> = { id, thumbnail: thumb ?? null };
+                // Bootstrap rows carry no author — `buildModFieldsBundle` treats
+                // a missing `author` as "unknown, keep old", same as before.
+                // Typed explicitly (not cast) so a shape drift fails loudly.
+                // Keys are initialized (not optional) to match the `sources`
+                // element shape built by the map above.
+                const row: {
+                  id: string;
+                  author: string | null;
+                  thumbnail: string | null;
+                  workshopStatus: string | null | undefined;
+                  workshopStatusCheckedAt: string | null | undefined;
+                } = { id, author: null, thumbnail: thumb ?? null, workshopStatus: undefined, workshopStatusCheckedAt: null };
                 if (statusRaw) {
                   try {
                     const p = JSON.parse(statusRaw) as { status?: string; checkedAt?: string | null };
@@ -1014,7 +1036,7 @@ interface ServerMod {
                 return row;
               })
             );
-            sources.push(...(rows as unknown[]));
+            sources.push(...rows);
           }
           console.log(`  - bundle bootstrap: perskaityti thumb/status raktai top-${bootstrapIds.length} (vienkartinis)`);
         }
@@ -1139,8 +1161,10 @@ interface ServerMod {
             mergedMods[id] = current;
           }
         }
-        // Merge server history (peak rank/players + uptime sample counts)
-        const mergedServers: Record<string, { rank: number; players: number; online: boolean; on?: number; n?: number }> = {
+        // Merge server history (peak rank/players + uptime sample counts).
+        // `ServerHistorySnapshot.online` is optional by design (hourly-only
+        // single scans); the previous inline type wrongly required it.
+        const mergedServers: Record<string, ServerHistorySnapshot> = {
           ...(existingPoint.servers || {}),
         };
         for (const [id, data] of Object.entries(serverHistoryMap)) {
