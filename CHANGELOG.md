@@ -1593,10 +1593,10 @@ Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyt
 ## [1.14.3] - 2026-06-22
 
 ### 🛡️ Saugumo ir dokumentacijos klaidų ištaisymas
-- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš [[[[path]].ts]([[path]].ts), kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
+- **Nesaugaus debug endpointo pašalinimas**: Visiškai pašalintas `/api/debug/raw/:key` maršrutas iš [`web/functions/api/[[path]].ts`, kuris viešai atskleisdavo Cloudflare KV žaliąjį turinį be jokios autentifikacijos.
 - **Wrangler konfigūracijos išvalymas**: Iš `wrangler.toml` pašalintas nenaudojamas `WEBHOOK_SECRET` kintamasis.
 - **Dokumentacijos EMA alpha reikšmės sutikslinimas**: Pataisyta klaidingai nurodyta $\alpha = 0.15$ reikšmė `README.md`, `docs/ALGORITHM.md` (15% offline decay pakeista į teisingą 10%) bei senesniuose `CHANGELOG.md` įrašuose į teisingą $\alpha = 0.10$ (90% / 10%), atitinkančią realią kolektoriaus elgseną bei algoritmo aprašymą.
-- **Komentarų vertimas į anglų kalbą**: Lietuviški komentarai bei diagnostikos pranešimai išversti į anglų kalbą visuose šaltinio failuose — core logikoje (`collector.ts`, [[[path]].ts]([[path]].ts), `audit-config.ts`) bei ad-hoc diagnostikos skriptuose (`scripts/check-17-drop.mjs`, `check-config-bm.mjs`, `check-mod-gameversion.mjs`, `run-audit-local.mjs`) — siekiant užtikrinti vientisą repozitorijos toną.
+- **Komentarų vertimas į anglų kalbą**: Lietuviški komentarai bei diagnostikos pranešimai išversti į anglų kalbą visuose šaltinio failuose — core logikoje (`collector.ts`, `web/functions/api/[[path]].ts`, `audit-config.ts`) bei ad-hoc diagnostikos skriptuose (`scripts/check-17-drop.mjs`, `check-config-bm.mjs`, `check-mod-gameversion.mjs`, `run-audit-local.mjs`) — siekiant užtikrinti vientisą repozitorijos toną.
 - **README marketingo tono sušvelninimas**: Sušvelninti skambūs teiginiai („hype“) faile `README.md` bei patikslintas vietinio paleidimo aprašas, aiškiai nubrėžiant ribą tarp vietinio proxy ir tikrosios edge funkcijų API architektūros.
 - **Techninė ataskaita (walkthrough)**: Sukurtas `walkthrough.md` — inžinerinis projekto pristatymas, apimantis duomenų srautą, komponentus, API paviršių bei pagrindinius architektūros sprendimus, skirtas naujam skaitytojui greitai susiorientuoti kode.
 
@@ -1604,12 +1604,12 @@ Dokumentacijos auditas (32 git-tracked `.md` failai) po v1.23.47–49. Ištaisyt
 
 ### 📝 Dokumentacijos bei diagnostikos versijos atnaujinimai
 - **README aplinkos kintamųjų bei sharding parametrų tikslinimas**: Failas `README.md` atnaujintas pašalinant nenaudojamą `CLOUDFLARE_KV_NAMESPACE`, įtraukiant realiai naudojamus `CLOUDFLARE_API_TOKEN` bei `WORKER_URL` kintamuosius, ir pataisytas sharding aprašymas iš 1MB į teisingą 5MB.
-- **Diagnostikos versijos sinchronizavimas**: API Gateway [\[\[path\]\].ts]([[path]].ts) faile pataisyta diagnostikos `/diagnostics` endpointo grąžinama versijos eilutė iš pasenusios `1.4.0-diag` į `1.14.1-diag` (atitinkančią dabartinę projekto būseną).
+- **Diagnostikos versijos sinchronizavimas**: API Gateway faile `web/functions/api/[[path]].ts` pataisyta diagnostikos `/diagnostics` endpointo grąžinama versijos eilutė iš pasenusios `1.4.0-diag` į `1.14.1-diag` (atitinkančią dabartinę projekto būseną).
 
 ## [1.14.1] - 2026-06-07
 
 ### ⚡ API Našumo ir CPU viršijimo pataisymai (503/1102 klaidos)
-- **Chirurginis serverių parsinimas (`splitJsonArray`)**: Pakeistas serverių informacijos gavimas modifikacijų detalių API maršrute (`/api/mods/:modId`) faile [[[path]].ts]([[path]].ts). Vietoj viso 2MB dydžio serverių sąrašo chunk'o parsinimo su `JSON.parse` (kas viršydavo 10ms CPU limitą nemokamame plane ir išmesdavo 503/1102 klaidas), dabar JSON tekstas išskaidomas į atskirų serverių teksto blokus. `JSON.parse` iškviečiamas tik tiems keliems serveriams, kurie iš tikrųjų naudoja ieškomą modifikaciją. Tai sumažino CPU laiko sąnaudas iki minimumo.
+- **Chirurginis serverių parsinimas (`splitJsonArray`)**: Pakeistas serverių informacijos gavimas modifikacijų detalių API maršrute (`/api/mods/:modId`) faile `web/functions/api/[[path]].ts`. Vietoj viso 2MB dydžio serverių sąrašo chunk'o parsinimo su `JSON.parse` (kas viršydavo 10ms CPU limitą nemokamame plane ir išmesdavo 503/1102 klaidas), dabar JSON tekstas išskaidomas į atskirų serverių teksto blokus. `JSON.parse` iškviečiamas tik tiems keliems serveriams, kurie iš tikrųjų naudoja ieškomą modifikaciją. Tai sumažino CPU laiko sąnaudas iki minimumo.
 
 ## [1.14.0] - 2026-06-07
 
