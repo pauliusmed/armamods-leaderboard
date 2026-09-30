@@ -9,7 +9,7 @@ Workshop API (`api-ar-workshop.bistudio.com/workshop-api/api/v3.0/`,
 **Kadangi dar ne viskas:** `workshop-fetch.ts` **išlieka gyvas** — jame liko HTML
 parseriai ir tikras `fetch()` į `reforger.armaplatform.com/workshop/{id}` (Bohemia
 *puslapiai*, ne image CDN); `storage-service.ts` → `resolveModSizesBatch` dar
-dveilgia **per tą patį scraper’ą**, kai dydis dar nežinomas (Worker-side). Taigi
+naudoja **per tą patį scraper’ą**, kai dydis dar nežinomas (Worker-side). Taigi
 teisingas statusas: **kolektoriaus top-mod ir server-modpack warm’ai perkelti į
 oficialų API; Worker-side scraper kelias dar gyvas.**
 
