@@ -8,10 +8,10 @@ Workshop API (`api-ar-workshop.bistudio.com/workshop-api/api/v3.0/`,
 
 **Kadangi dar ne viskas:** `workshop-fetch.ts` **išlieka gyvas** — jame liko HTML
 parseriai ir tikras `fetch()` į `reforger.armaplatform.com/workshop/{id}` (Bohemia
-*puslapiai*, ne image CDN); `storage-service.ts` → `resolveModSizesBatch` dargiuna
-**per tą patį scraper’ą**, kai dydis dar nežinomas (Worker-side). Taigi teisingas
-statusas: **kolektoriaus top-mod ir server-modpack warm’ai perkelti į oficialų API;
-Worker-side scraper kelias dar gyvas.**
+*puslapiai*, ne image CDN); `storage-service.ts` → `resolveModSizesBatch` dar
+dveilgia **per tą patį scraper’ą**, kai dydis dar nežinomas (Worker-side). Taigi
+teisingas statusas: **kolektoriaus top-mod ir server-modpack warm’ai perkelti į
+oficialų API; Worker-side scraper kelias dar gyvas.**
 
 Tyrimas, ar egzistuoja BattleMetrics alternatyvų Reforger / Arma 3 telemetrijai.
 Aukšto lygio išvados ir rekomendacijos. **Techninė analizė (endpoint'ai, auth flow,
