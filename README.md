@@ -94,7 +94,7 @@ graph TD
     BM --> COL
 ```
 
-Collector schedule: `.github/workflows/collector.yml` (`0 */2 * * *`). Deploy via Cloudflare Workers Builds (push į `main` → `web/dist` build + `wrangler deploy` Cloudflare pusėje; buvęs Pages deploy pašalintas 2026-08-24). Ops: [docs/DATA_SYNC.md](docs/DATA_SYNC.md).
+Collector schedule: `.github/workflows/collector.yml` (`0 * * * *`, hourly; the gate skips duplicate fresh runs). **Deploy** via `.github/workflows/deploy.yml` — GitHub Actions, not Cloudflare Workers Builds: `push` to `main` touching `web/**` runs `npm ci --prefix web` → `npm run build --prefix web` → `cloudflare/wrangler-action@v3`. The former Pages deploy was removed 2026-08-24; the Pages *project* was destroyed 2026-09-09. Ops: [docs/DATA_SYNC.md](docs/DATA_SYNC.md).
 
 ---
 

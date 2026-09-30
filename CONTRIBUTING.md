@@ -8,9 +8,31 @@ Thank you for your interest in improving the project! This document provides gui
 2. **Install dependencies**:
    - Root: `npm install`
    - Web: `cd web && npm install`
-3. **Run Linting**: Ensure your code passes TypeScript checks with `npx tsc --noEmit`.
-4. **Local Proxy**: Use `npm run dev` in the root to test API interactions.
-5. **Tests**: Run `npm test` before opening a PR. Key suites:
+3. **Type check + build** — **both** configs, `web/` has its own `package.json` and its own `tsconfig`s:
+
+   ```bash
+   npx tsc --noEmit                 # root config — neturi web/**
+   npm run build --prefix web       # tsc -b && vite build — CI gate + deploy gate
+   ```
+
+   ⚠️ **`npx tsc --noEmit` vienas NEPAKANKA.** Root `tsconfig.json` neturi `web/**`;
+   `web/tsconfig.app.json` turi `erasableSyntaxOnly: true` ir `include: ["src",
+   "functions/api/audit-config.ts"]`, bet į programą patenka **visas importo grafas**
+   iš `src/`. Failas, kurio niekas neimportuoja iš `src/`, yra **ne tikrinamas
+   niekada** — 2026-09-30 incidentas (`erasableSyntaxOnly` TS1294) praėjo pro žalią
+   PR su vien tik `npx tsc --noEmit` ir numetė auto-deploy'ą (`CHANGELOG.md` v1.23.48/49).
+
+4. **Local dev**: `npm --prefix web run dev` (Vite, `web/vite.config.ts` jau
+   proxy'ina `/api` → `reforgermods.com`). Root `npm run dev` yra **deprecated**
+   Express proxy (`src/index.ts`) — nenaudoti.
+5. **Lint** (jei keiti `web/`): `npm --prefix web run lint`. **Žinojimas:** ši
+   komanda dabar krenta dėl **pre-existing** klaidos
+   (`web/src/hooks/usePinnedFavoriteMods.ts:38`, `react-hooks/set-state-in-effect`).
+   **Nefiksuok jos** — tai užregistuota užduotis, ne tavo pakeitimas
+   (`AGENTS.md`: pre-existing lint klaidų neatlysime).
+6. **Tests**: `npm test` (root, **37** failų) ir `npm --prefix web test` (vitest)
+   prieš atidarant PR. CI dabar paleidžia tik `test/utils.test.ts` iš root — **tai
+   nėra pakankama**, visus testus paleidžiate lokaliai. Key suites:
 
 | Area | Module | Test file |
 |------|--------|-----------|
@@ -30,14 +52,17 @@ Every PR or commit with user-visible changes **must** update docs in the same ch
 
 | Change type | Update |
 |-------------|--------|
-| Feature, fix, perf, UX | New section under `## [x.y.z]` at top of [CHANGELOG.md](CHANGELOG.md) |
+| Feature, fix, perf, UX | New `###` entry at top of the current section in [CHANGELOG.md](CHANGELOG.md), with the version in the heading (`(v1.23.50) - YYYY-MM-DD`) |
+| **User-facing** (new page, visible behaviour) | **Also** a top entry in [DISCORD_RELEASES.md](DISCORD_RELEASES.md) — 1–5 lines, English, user value only. Deploy ships it to `#announcements`. Technical fixes do **not** need it. |
 | Architecture / API / cron | [README.md](README.md), [walkthrough.md](walkthrough.md) |
 | UI patterns, filters, tables | [docs/UI_FILTERS.md](docs/UI_FILTERS.md) |
 | KV, cache, PageSpeed | [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) if scores change |
+| **Cloudflare resource use** (CPU, KV, requests) | [docs/COST_GUARDRAILS.md](docs/COST_GUARDRAILS.md) |
 | New doc file | [docs/README.md](docs/README.md) index |
 
-- Use **semver patch** (`1.22.2`) for doc-only releases; bump minor for features.
-- Date format: `YYYY-MM-DD` on the version heading.
+- Versions are sequential patch bumps (`v1.23.49` → `v1.23.50`); bump minor only for features.
+- Date format: `YYYY-MM-DD` in the entry heading.
+- New root test files **must** be registered in the explicit list in `package.json` → `"test"` — CI does not glob.
 - Agent rule: [.cursor/rules/changelog-and-docs.mdc](.cursor/rules/changelog-and-docs.mdc).
 
 ## 📜 Coding Standards
@@ -49,8 +74,18 @@ Every PR or commit with user-visible changes **must** update docs in the same ch
 
 ## 🚀 Deployment
 
-- Pull requests are automatically checked via GitHub Actions.
-- Production is deployed to Cloudflare Workers (unified SPA + API via `web/worker.ts`; the former Pages project was removed 2026-09-09).
+- PR'ams GitHub Actions paleidžia **CI gate**: `npx tsc --noEmit`,
+  `test/utils.test.ts`, `npm ci --prefix web`, **`npm run build --prefix web`**,
+  `npm --prefix web test`. (Pridėta v1.23.49 po 2026-09-30 incidento.)
+- **Deploy** — `.github/workflows/deploy.yml`, GitHub Actions, **ne** Cloudflare
+  Workers Builds. Trigger: `push` į `main`, jei pasikeitė `web/**` arba pats
+  `deploy.yml`. Žingsniai: `npm ci --prefix web` → `npm run build --prefix web`
+  → `cloudflare/wrangler-action@v3`. Slapti: `CLOUDFLARE_API_TOKEN`,
+  `CLOUDFLARE_ACCOUNT_ID`.
+- Release žinutė į Discord: `.github/workflows/discord-release.yml` (jei pasikeitė
+  `DISCORD_RELEASES.md`, slaptas `DISCORD_WEBHOOK_URL`).
+- Produkcija — `reforgermods.com` per Cloudflare Workers (`web/worker.ts`).
+  `workers_dev = false`; senasis Pages projektas sunaikintas 2026-09-09.
 
 ---
 

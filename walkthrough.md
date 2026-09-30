@@ -46,7 +46,7 @@ React 19 + Vite + Tailwind 4 + Recharts  (web/src)
 The repository ships **one unified entrypoint** (migrated from Pages Functions 2026-08-24):
 
 - `web/worker.ts` — the **real edge Worker** (API + sitemap + share prerender + ASSETS fallback). Exports `default { fetch }` with `run_worker_first` for `/api/*`, `/sitemap/*`, `/mod/*`, `/server/*`.
-- `src/index.ts` — **deprecated** Express proxy (37 lines), kept for `npm run dev` compat. Production uses `npx wrangler dev --cwd web` instead.
+- `src/index.ts` — **deprecated** Express proxy (42 lines), kept for `npm run dev` compat. Production uses `npx wrangler dev --cwd web` instead.
 
 ---
 
@@ -82,7 +82,7 @@ docs/                      ALGORITHM, SERVER_UPTIME, UI_FILTERS, PERFORMANCE, LI
 ## 4. The data pipeline
 
 ### 4.1 Ingestion — `scripts/collector.ts`
-Triggered by the `collector.yml` workflow on `cron: '0 */2 * * *'`, gated by
+Triggered by the `collector.yml` workflow on `cron: '0 * * * *'` (hourly), gated by
 `collector-gate` (`enabled=true|false`). See [docs/DATA_SYNC.md](./docs/DATA_SYNC.md)
 for the BM paid-API requirement and how to re-enable the cron.
 
@@ -277,8 +277,17 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 ## 7. Infrastructure & automation
 
 - **Hosting**: Cloudflare Workers (Static Assets + API) and KV — migrated from Pages 2026-08-24 (`web/worker.ts`, `web/wrangler.toml` with `assets` + `run_worker_first`).
-- **Deploy**: Cloudflare Workers Builds (GitHub-connected). Push į `main` automatiškai buildina `web` (`npm run build` → `web/dist`) ir `npx wrangler deploy` Cloudflare pusėje. `.github/workflows/deploy.yml` pašalintas — deploy nebevyksta per GitHub Actions. Konfigūracija: Cloudflare dashboard → Workers & Pages → `armamods-leaderboard` → Settings → Builds → Root directory `web`, Build `npm run build`, Deploy `npx wrangler deploy`.
-- **Collector cron**: `.github/workflows/collector.yml`, `0 */2 * * *`. Runs
+- **Deploy**: `.github/workflows/deploy.yml` — **GitHub Actions**, ne Cloudflare
+  Workers Builds. Trigger: `push` į `main`, jei pasikeitė `web/**` arba pats
+  workflow. Žingsniai: `npm ci --prefix web` → `npm run build --prefix web`
+  (`tsc -b && vite build` → `web/dist`) → `cloudflare/wrangler-action@v3`.
+  Slapti: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. Release žinutė į
+  Discord — atskiras `.github/workflows/discord-release.yml` (jei pasikeitė
+  `DISCORD_RELEASES.md`; slaptas `DISCORD_WEBHOOK_URL`).
+- **CI gate**: `.github/workflows/ci.yml` — `npx tsc --noEmit` (root config),
+  `test/utils.test.ts`, `npm ci --prefix web`, `npm run build --prefix web`,
+  `npm --prefix web test`.
+- **Collector cron**: `.github/workflows/collector.yml`, `0 * * * *` (hourly). Runs
   Reforger collect → Arma 3 collect → Reforger trending → Arma 3 trending, with
   dependencies so Arma 3 reuses leftover BM quota. (Lieka GitHub — KV writes via API token).
 - **BattleMetrics API**: since ~2026-07-20 all BM requests require a paid

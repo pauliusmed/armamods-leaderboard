@@ -204,37 +204,43 @@ Mods deleted from Reforger Workshop still appear in BattleMetrics telemetry unti
 
 ---
 
-## Thumbnail sourcing & cost decision (2026-08-20)
+## Thumbnail sourcing — SUPERSEDED sprendimas (2026-08-20 → atšauktas 2026-09-28)
 
-**Source of truth:** every mod thumbnail originates from Bohemia's CDN
-(`ar-gcp-cdn.bistudio.com`). We store only the **URL string** in KV, never the
-image bytes (see "What we deliberately do NOT do"). The recurring question — *"we
-already get the images from Arma/Bohemia's site, why re-serve them through our
-Worker?"* — has two answers:
+> ⛔ **Ši sekcija istorinė. Jos sprendimas BEVEIK SUVERSIANAS.**
+> 2026-08-20 buvo priimta „laikyti Worker `cf.image` resize proxy".
+> **2026-09-28 savininko sprendimu visos CF Images transformacijos pašalintos**
+> (žr. [`COST_GUARDRAILS.md`](./COST_GUARDRAILS.md) § „Images transformations —
+> pašalintos"). Šiame faile tai pat patvirtinta 64–68 eilutėse.
+> **Dabartinė architektūra:** `GET /api/mods/:id/thumbnail/img` ir
+> `GET /api/img/proxy` **ištrinti**, zonoje `image_resizing = off`, kodo nebeliko
+> nė vieno `cf.image` / `/cdn-cgi/image` taško. Frontendas krauna originalus
+> **tiesiogiai iš Bohemia CDN**. Gyvas sprendimas — žemiau.
 
-1. **Bandwidth.** The raw CDN originals are large (~1280×1280, 14–84 KB) while list
-   rows render 32–48 px avatars. The proxy resizes via Cloudflare `cf.image` down to
-   ~1.7 KB — roughly a 20× client payload saving vs. hotlinking the original.
-2. **Stability & fallback.** The Worker layer adds an edge-cached (7 d) copy plus a
-   letter-avatar fallback if Bohemia changes or blocks the URL, so a CDN change
-   never breaks the UI.
+**Tada (2026-08-20) — kodėl buvo pasirinkta proxy:** source of truth — kiekvieno
+thumbnail source'as yra Bohemia CDN (`ar-gcp-cdn.bistudio.com`); KV saugome tik
+**URL eilutę**, niekada ne paveikslų baitus. Du argumentai:
 
-**Decision — keep the Worker `cf.image` resize proxy (current design).**
-We evaluated moving thumbnail resizing to Cloudflare edge **Image Transformations**
-(`/cdn-cgi/image/...`, no Worker) to remove ~24 Worker invocations per list view.
-**Rejected:** the Transformations product is a paid SKU we chose not to enable. The
-existing Worker proxy already uses `cf.image` resizing, so this keeps the current
-(accepted) per-image resizing cost while preserving the tiny 1.7 KB payload.
+1. **Plaidumas.** Originalai dideli (~1280×1280, 14–84 KB), o eilutės rodo
+   32–48 px avatarus. Proxy per `cf.image` sumažindavo iki ~1.7 KB — ~20×
+   kliento payload sutaupoma.
+2. **Stabilumas.** Worker sluoksnis pridėdavo edge-kašį (7 d.) kopiją + raidės
+   fallback, jei Bohemia pakeitų arba blokotų URL.
 
-**Alternative considered & rejected:** hotlink Bohemia's CDN directly
-(`ModThumbnail` → raw `thumbnailUrl`, zero Worker / zero transform cost). Rejected
-to avoid the ~700–840 KB first-load payload that full-resolution originals imply.
-The proxy's resizing is the cheaper option *for the client* even though it costs *on
-our side*.
+**Tada atmesta:** tiesioginis Bohemia CDN hotlink (`ModThumbnail` → raw
+`thumbnailUrl`) — atmesta dėl ~700–840 KB pirmo krovimo. **Šis atmetimas
+apsiverstė 2026-09-28** ir dabar yra **priimta architektūra** (~2.4 MB mobilioji
+regresija, priimta sąmoningai — `CHANGELOG.md` v1.23.45, `PLAN.md` v1.23.33
+analizė). Thumbnailai lazy per `IntersectionObserver`; krovimo klaida → raidės
+placeholder.
 
-> Net: we deliberately pay for `cf.image` resize so end users download ~1.7 KB
-> thumbnails instead of ~35 KB originals. The no-cost path exists (direct CDN
-> hotlink) but was declined in favour of smaller client payloads.
+**Kas liko gyvas iš šios sekcijos:** „KV saugome tik URL, niekada ne baitus" —
+tai dar galioja ir yra pagrindinis „What we deliberately do NOT do" argumentas.
+
+**Kodėl transformacijos pašalintos:** 2026-09-28 account-wide mėnesio kaupiklis
+rodė **8 655 unikalias** transformacijas (virš 5k free ribos), skaičius
+struktūriškai augo su katalogu × pločiais. Tai buvo vienintelis realiai
+mokamas resursų taškas projekte. Jei kada grįžtama — **tik su aiškiu savininko
+patvirtinimu** ir be CF Images (dydžiai iš anksto R2, tiekiama iš edge cache).
 
 ---
 

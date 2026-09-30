@@ -52,11 +52,29 @@ Likušios taisyklės:
 > Vidurkis todėl auga mechaniškai, o realus pinigų efektas yra atvirkščias.
 >
 > **Kodėl riba realistiška arba ne:** Workers CPU skaitiklis — vienintelis
-> artas prie free ribos (30M ms/mėn; dabar 24.3M = 81 %). Requests (6.9M/mėn
-> = 69 % nuo 10M) ir KV reads (2.6M/mėn = 26 % nuo 10M) — žymių atsarga.
-> Visa sąskaita dabar ≈ $5/mėn (Workers Paid bazė), viršijimo $0.
-> Net 3× traffic → ~+$4/mėn. **Optimizuoti reikia ne dėl pinigų, o dėl
-> atsparumo ir 128 MB RAM sienos.**
+> artas prie free ribos: **30M ms/mėn, dabar 24.3M = 81 %**. KV reads
+> 2.6M/mėn = **26 %** nuo 10M — žymi atsarga. Visa sąskaita ≈ $5/mėn
+> (Workers Paid bazė), viršijimo $0; net 3× traffic → ~+$4/mėn.
+> **Optimizuoti reikia ne dėl pinigų, o dėl atsparumo ir 128 MB RAM sienos.**
+>
+> ⚠️ **Requests skaitiklis — nepainiojamas.** Du skirtingi skaičiai:
+> - **Worker invokacijos** 17k/24h ≈ **510k/mėn = 5 %** nuo 10M/mėn Workers
+>   request kvotos. Tai faktinis darbas, kurį daro `worker.ts`.
+> - **Zonos HTTP užklausos** ~230k/dieną ≈ **6.9M/mėn = 69 %** nuo tos pačios
+>   10M kvotos — tai viskas, kas ateina į `reforgermods.com`, įskaitant static
+>   assets, kurie **Worker'io neliečia**.
+>
+>   CF dokumentacija šiuo klausimu **prieštaringa**: `workers/platform/pricing`
+>   sako „*Requests to static assets are free and unlimited*", o
+>   `workers/cache` sako „*When caching is enabled, every request to your Worker
+>   is charged at the standard Workers request rate, including requests that are
+>   normally free: static asset requests*". **Tikroji faktinė sąskaita šiuo metu
+>   $0** (deployas praėjo 2026-09-30 be jokių viršijimo), todėl coledown'o
+>   negačioms 6.9M ir 510k **nėra pagrindo daryti išvadų**. Stebėti reikia
+>   faktinį billing, ne zoną.
+> - **Cache HIT`ai vis tiek apmokestinami** kaip standartinis request rate, bet
+>   **CPU nemokamas** (tik cache MISS/BYPASS atveju) — todėl 09-28 deployas
+>   ir sutaupė CPU, bet nepakeitė request kvotos.
 >
 > **Konkretus neatneštas kandidatas:** CPU deginamas ne KV reads, o 5 MB
 > shard'o *teksto skenavime* — `findMatchingBrace` (`server-lookup.ts`) yra
@@ -65,8 +83,10 @@ Likušios taisyklės:
 
 - Didžiausi šaltiniai (09-30, p95 per path): `/server/:id` **376 ms**,
   `/api/servers/:id/mod-changes` **181 ms**, `/api/servers/:id/storage` 114 ms,
-  `/arma3/server/:id` 48–93 ms. `/mod/*`, `/api/mods/*/thumbnail/img`,
+  `/arma3/server/:id` 48–93 ms. `/mod/*`, `/api/mods/*/thumbnail`,
   `/api/og/preview/*` — 3–9 ms (pigūs).
+  (`/api/mods/:id/thumbnail/img` **nebegauna** — ištrintas 2026-09-28, žr. pirmą
+  sekciją; ankstesnė šio dokumento redakcija dar jį čia rodė.)
 - Iš anksto 09-28: didžiausi šaltiniai buvo `mod-changes` (~36 %; cold kelias
   parse'ino visus 12 modpack ring chunk'ų per request) ir `history` (~12 %;
   skaitė visus shard'us). ~56 % tų requestų — SEO/AI crawleriai
