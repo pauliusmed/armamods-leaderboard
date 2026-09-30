@@ -1477,12 +1477,17 @@ async function runServerScoring(game: string, kv: CloudflareKVClient, serverList
       // snapshot each run. Without it, any newcomer (or any server outside the previous
       // top-200) bypassed EMA entirely and could leapfrog to #1 on a single snapshot.
       const emaKey = `cache:server_ema:${game}`;
-      // Half-life H=10 days (120 runs × 2h) — Pareto optimum from backtest
+      // Half-life H=10 days (240 runs × 1h) — Pareto optimum from backtest
       // (1.23.9: H=10 τ0.8 noise 11.6% response 17.5d; production was H=0.55d).
-      // alpha_run = 1 - 2^(-1 / (H*12)) — time-calibrated, not magic.
+      // alpha_run = 1 - 2^(-1 / (H*RUNS_PER_DAY)) — time-calibrated, not magic.
+      // RUNS_PER_DAY privalo atitikti `.github/workflows/collector.yml` cron
+      // (`0 * * * *`, hourly nuo 2026-08-26). 2h-eros `* 12` po cron
+      // pakeitimo tyliai perpus sutrumpino efektyvų half-life iki 5d —
+      // žr. CHANGELOG v1.23.54. Keičiant cron, keisti ČIA, ne konstantas.
       const HALF_LIFE_DAYS = 10;
-      const ALPHA = 1 - Math.pow(2, -1 / (HALF_LIFE_DAYS * 12)); // ≈0.0058
-      const RAMP_RUNS = 168;          // ~14 days (168 runs x 2h) for a new server to reach full rank weight
+      const RUNS_PER_DAY = 24;
+      const ALPHA = 1 - Math.pow(2, -1 / (HALF_LIFE_DAYS * RUNS_PER_DAY)); // ≈0.0029
+      const RAMP_RUNS = 14 * RUNS_PER_DAY; // 336 runs ≈ 14 days at hourly
       const TENURE_FLOOR = 0.25;      // a brand-new server's rank starts at 25% weight, ramping to 100%
       const TAU = 0.80;               // P(swap) > tau to overtake — hysteresis (0.5 = none)
 

@@ -81,13 +81,13 @@ To reward server owners who:
 
 Points are calculated every collector run (hourly):
 
-> ⚠️ **The constants below assume 12 runs/day (2h cadence). The collector has
-> been hourly (`0 * * * *`) since 2026-08-26**, so the *effective* values are
-> **half the stated periods**: EMA half-life ≈ **5 days, not 10**; tenure ramp
-> ≈ **7 days, not 14**. `scripts/collector.ts:1459-1461` still uses the literals
-> `HALF_LIFE_DAYS * 12` and `RAMP_RUNS = 168`. This section documents the code
-> **as written** — fixing the constants is a behaviour change and needs an
-> owner decision, not a docs edit (see `CHANGELOG.md` v1.23.51).
+> ✅ **Cadence-constantos suderintos (v1.23.54).** `scripts/collector.ts` naudoja
+> `RUNS_PER_DAY = 24` (`HALF_LIFE_DAYS * RUNS_PER_DAY`, `RAMP_RUNS = 14 *
+> RUNS_PER_DAY`), todėl efektyvios reikšmės atitinka deklaruotas: EMA half-life
+> **10 dienų**, tenure ramp **14 dienų** (Pareto: H=10 τ0.8 noise 11.6%,
+> response 17.5d). **2026-08-26 → 2026-09-30** laikotarpiu galiojo 2h-eros
+> `* 12` su hourly cron — efektyviai 5d/7d. Keičiant cron, keisti
+> `RUNS_PER_DAY` kolektoriuje, ne konstantas (žr. komentarą kode).
 
 ```
 SnapshotScore = (Players × 5) - (ModCount × 1) + UniquenessBonus
