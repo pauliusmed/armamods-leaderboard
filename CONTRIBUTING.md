@@ -18,7 +18,7 @@ Thank you for your interest in improving the project! This document provides gui
    ⚠️ **Nė viena iš jų dengia `scripts/` ir `test/`.** Root `tsconfig.json` turi
    `include: ["src/**/*"]`; `web/tsconfig.app.json` — `["src",
    "functions/api/audit-config.ts"]` **+ visas importo grafas iš `web/src/`**.
-   Rezultatas: `scripts/collector.ts` (1694 eilutės) ir visi `test/*.test.ts`
+   Rezultatas: `scripts/collector.ts` (1693 eilutės) ir visi `test/*.test.ts`
    **netikrinami nė viena konfiga** — tik vykdomi kaip `tsx --test`.
    Failas, kurio niekas neimportuoja iš `src/`, yra **ne tikrinamas niekada**
    (2026-09-30 incidentas: `erasableSyntaxOnly` TS1294 praėjo pro žalią PR su
