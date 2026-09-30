@@ -4,6 +4,18 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### 🛡️ CI: `web/` build`as + testai tapo privalomi (v1.23.49) - 2026-09-30
+
+- **Problema (2026-09-30 incidentas, PR #16 → PR #17):** `ci.yml` (31 eilutė) paleidžia **tik** `npx tsc --noEmit` (root config) ir **1 iš 35** testų failų (`test/utils.test.ts`). **`web/` netikomas** — todėl build'o klaida (`erasableSyntaxOnly` TS1294) praėjo pro „žalią" PR, o `main` auto-deploy'o `npm run build --prefix web` **krito**; produkcija 14 min. liko senesnė versija.
+- **Kodėl `npx tsc --noEmit` nematė klaidos:** root `tsconfig` neturi `web/**`; `web/tsconfig.app.json` turi `erasableSyntaxOnly: true` ir `include: ["src", "functions/api/audit-config.ts"]`, bet į programą patenka **visas importo grafas** iš `src/` — todėl `functions/lib/*` pasiekia tik per konkrečias importo grandines. Failas, kurio niekas neimportuoja iš `src/`, yra **ne tikrinamas niekada**.
+- **Pridėta į `ci.yml`:**
+  1. `npm ci --prefix web` — `web/` turi atskirą `package.json`.
+  2. **`npm run build --prefix web` (`tsc -b && vite build`) — tas pats komandas, kurį naudo `deploy.yml`; dabar tai CI gate.**
+  3. `npm --prefix web test` (vitest, 7 failų / 45 testų).
+- **Sąmoningai NEpridėta:** `npm --prefix web run lint` — dabar krenta dėl pre-existing klaidos (`web/src/hooks/usePinnedFavoriteMods.ts:38`, `react-hooks/set-state-in-effect`). Pridėjus, CI būtų raudonas nuo pirmojo run'o. Kai klaida sutvarkoma — langą reikia atidaryti (pažymėta komentariumi `ci.yml`).
+- **Lokalios emuliacijos patikra (prieš PR):** root `tsc` ✅ · `test/utils.test.ts` 9/9 ✅ · `npm run build --prefix web` ✅ (`built in 414ms`, 85 precache) · `npm --prefix web test` 45/45 ✅.
+- **Heavy CI: skipped because** lyginamas tik pats `.github/workflows/ci.yml` (testų/Workerio logikos neliečiama).
+
 ### 🔧 Deploy fix: `erasableSyntaxOnly` (TS1294) — `ServerLookup` konstruktorius (v1.23.48) - 2026-09-30
 
 - **Incidentas:** PR #16 merge → `main` → **auto-deploy FAILED** (`npm run build --prefix web` → `tsc -b` → TS1294 `server-lookup.ts(108,5)`). Produkcija liko ankstesnėje versijoje.

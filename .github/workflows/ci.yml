@@ -24,8 +24,32 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm ci
 
-      - name: 🔍 Type Check (TypeScript Lint)
+      # Root config neturi `web/**` — `npx tsc --noEmit` NEMAČO nei `web/tsconfig.*`,
+      # nei failų, kuriuos jie traukia į programą per importo grafą.
+      - name: 🔍 Type Check (root tsconfig)
         run: npx tsc --noEmit
 
       - name: 🧪 Run Automated Unit Tests
         run: npx tsx --test test/utils.test.ts
+
+      # ── Web (Vite SPA + Worker bundle) ──────────────────────────────────────
+      # `web/` turi atskirą package.json ir atskirus tsconfig'us. Be šių
+      # žingsnių build'o klaidos (pvz. `erasableSyntaxOnly` TS1294) pasiekia
+      # `main` pro žalią PR ir ten tai/USD deploy'o build'ą (2026-09-30 incidentas,
+      # PR #16 → PR #17).
+      - name: 📦 Install web Dependencies
+        run: npm ci --prefix web
+
+      # `npm run build --prefix web` = `tsc -b && vite build` — tas pats komandas,
+      # kurį naudo deploy.yml. Čia jis yra CI gate, ten vykdymas.
+      - name: 🏗️ Build web (tsc -b + vite build) — deploy gate
+        run: npm run build --prefix web
+
+      - name: 🧪 Run web Unit Tests (vitest)
+        run: npm --prefix web test
+
+      # ⚠️ `npm --prefix web run lint` DAR NEPRIDĖTAS: jis dabar krenta dėl
+      # pre-existing klaidos (`web/src/hooks/usePinnedFavoriteMods.ts:38`,
+      # react-hooks/set-state-in-effect) — pridėjus jį, CI būtų raudonas. Kai
+      # klaida bus sutvarkyta, langą čia reikia atidaryti. `AGENTS.md`:
+      # pre-existing lint klaidų neatlysime čia.
