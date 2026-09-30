@@ -196,9 +196,13 @@ describe('ServerLookup — batched full-scan fallback (index missing)', () => {
   });
 });
 
-/** ~5 MB vienam `cache:servers:<i>` shardui (išmatuota 09-30). */
-const SHARD_MB = 5;
-/** Workers izoliato RAM riba. */
+/**
+ * PRIELAIDA (ne išmatuota reikšmė): vieno `cache:servers:<i>` shard'o dydis
+ * ~5 MB (09-30 matavimas). Perskaičiuoti: `wrangler kv key get --binding
+ * TRENDING_KV "cache:servers:0" --remote`.
+ */
+const ASSUMED_SHARD_MB = 5;
+/** Workers izoliato RAM riba (nepažeidžiama). */
 const ISOLATE_MB = 128;
 
 describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', () => {
@@ -246,17 +250,26 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
-  it('holds the full-scan parallelism within FALLBACK_BATCH', async () => {
-    // Tvirtiname SUTARTĮ su RAM biudžetu, ne tik su savo pačiu konstantu.
-    // Tik `maxInFlight <= FALLBACK_BATCH` būtų tautologija: pakėlus
-    // FALLBACK_BATCH iki 8, testas liktų žalias, o pikas 8×5 = 40 MB (~31 %)
-    // vietoj 4×5 = 20 MB (~16 %) — siena, kuri saugo save pati. Todėl čia
-    // fiksuojama ir **absoliuti** reikšmė pagal RAM ribą, ir santykis.
+  it('FALLBACK_BATCH fits the isolate RAM budget', () => {
+    // Atskiras testas, NE lygiagumo: biudžeto pažeidimas neturi būti
+    // diagnozuojamas kaip lygiagumo klaida.
+    //
+    // Tvirtina **absoliutią** reikšmę, ne tik `maxInFlight <= FALLBACK_BATCH`
+    // (tauta logika: pakėlus 4→8, santykis liktų žali).
+    //
+    // PRIELAIDA: `ASSUMED_SHARD_MB` — vieno `cache:servers:<i>` shard'o dydis
+    // (~5 MB, įmatuota 09-30). **Tai prielaida, ne išmatuota testu reikšmė**;
+    // shard'ai auga su serverių skaičiumi kiekviename kolektoriaus run'e. Jei
+    // tikrasis dydis nušoka, šis testas gali tapti per griežtu (klaida, kai
+    // viskas gerai) arba per lax (klaida, kai jau blogai). Perskaičiuoti:
+    // `wrangler kv key get --binding TRENDING_KV "cache:servers:0" --remote`.
     assert.ok(
-      FALLBACK_BATCH * SHARD_MB <= ISOLATE_MB / 4,
-      `FALLBACK_BATCH=${FALLBACK_BATCH} → ${FALLBACK_BATCH * SHARD_MB} MB virš ${ISOLATE_MB / 4} MB biudžeto`
+      FALLBACK_BATCH * ASSUMED_SHARD_MB <= ISOLATE_MB / 4,
+      `FALLBACK_BATCH=${FALLBACK_BATCH} → ${FALLBACK_BATCH * ASSUMED_SHARD_MB} MB virš ${ISOLATE_MB / 4} MB biudžeto`
     );
+  });
 
+  it('holds the full-scan parallelism within FALLBACK_BATCH', async () => {
     const kv = makeKv(entries);
     const lookup = await ServerLookup.create(kv, 'reforger');
     assert.ok(lookup);
@@ -266,6 +279,8 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     kv.probe.reset();
     assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
     assert.equal(shardGets(kv).length, SHARDS);
+    // Sutartis: pikas ≤ FALLBACK_BATCH (RAM, 128 MB riba) — su nuosekliu
+    // skenu (1) taip pat teisinga, nes jis saugesis.
     assert.ok(kv.probe.maxInFlight <= FALLBACK_BATCH, `maxInFlight=${kv.probe.maxInFlight}`);
     // Lygiagumas turi egzistuoti — kitaip batchas nepasiteisimu.
     assert.ok(kv.probe.maxInFlight > 1, `maxInFlight=${kv.probe.maxInFlight}`);
@@ -311,11 +326,14 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     const flood = 'A'.repeat(5_000);
     const lines = await captureWarn(() => lookup.findByIdWithScan(flood));
 
-    // Čia tik integracijos klausimas: pranešime NĖRA raw id. Ilgio riba
-    // tikrinama atskirai (`logSafeId` describe) — čia kartoti būtų dubiavimas.
+    // Čia tik integracijos klausimas: **neigiama** taisyba — raw flood
+    // (5 000 ženklų) NĖRA pranešime. Tai vienintelė nešanti šio testo
+    // assertion; teigiamos (`includes(logSafeId(...))`) taisyba negalėtų
+    // nepavykti nei vienai iš šių mutacijų (neutralizuotas filtras ir
+    // atjungtas `logSafeId` abu palieka 32 A per eilutę), todėl neturi
+    // svėrties. Ilgio riba ir simbolių filtras tikrinami `logSafeId` teste.
     assert.equal(lines.length, 1);
     assert.equal(lines[0].includes(flood), false);
-    assert.equal(lines[0].includes(logSafeId(flood)), true);
   });
 });
 

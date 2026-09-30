@@ -69,13 +69,20 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
     `slice 32 → 64` · `log filtras neutralizuotas`.
     **Svarbu:** pirmasis matavimas buvo **netikrus** — testas
     `assert.equal(true, 'msg')` buvo pats sulūžęs, todėl visos mutacijos
-    „krentų" dėl neteisingos priežasties. Matavimo skriptas dabar
-    **privalo patikrinti baseline'ą** (žalią) prieš mutacijas ir sustoja,
-    jei jis raudonas.
+    „krentų" dėl neteisingos priežasties. **Rezultatas šiame PR:** 7
+    mutacijos, 7 KRENTA — `FALLBACK_BATCH → 64` · `→ 8` (RAM biudžetas) ·
+    `→ 2` (lygiagumo praradimas) · `logSafeId → raw` · `drop .slice(0, 32)`
+    · `slice 32 → 64` · `log filtras neutralizuotas`.
+    **Sąmoningai NEĮKOMITUOTA į repo:** matavimo skriptas (a) rašo/karčia
+    šaltinio failą vietoje, todėl pavojinga paleisti lygiagrečiai, (b) tai
+    ad-hoc priemonė, o ne regresijos testas. Registryje: **neegzistuoja
+    kaip CI gate** — taisyklė „matuok, o ne tiki kodu" (*AGENTS.md*) lieka
+    rankinė, tačiau kiekvieną kartą turi lydėti **žali baseline patikra**
+    prieš mutacijas, kitaip rezultatas nieko nepasako (taip buvo šiame PR).
   - **Atmesta:** 1-slot LRU padidinimas — LRU *turi* likti 1-slot, 4 shardai
     (~20 MB) jau yra `FALLBACK_BATCH` riba, sauganti 128 MB Workers RAM ribą
     (projektas jau gavo `exceededMemory` 503: 09-16, 19 klaidų).
-- **Patikra:** root **322/322** (16 naujų testų), web vitest 45/45, `tsc` ✅,
+- **Patikra:** root **323/323** (16 naujų testų), web vitest 45/45, `tsc` ✅,
   eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
   po; wrangler dry-run ✅.
 - **Heavy CI: required because** kinta KV skaitymo kelias share prerender'iui.
