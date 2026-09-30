@@ -27,6 +27,15 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
   Du kiti planuoti pataisymai (mod-sizes bundle fast-path, alias 301 po
   cache) **atmesti kaip netas neigiiami**: sutaupytų nemokamus reads
   (~26 % nuo 10M/mėn free) už papildomą CPU (550 KB JSON parse).
+- **Dokumentacija:** `docs/COST_GUARDRAILS.md` CPU sekcija perrašyta — 09-28
+  bazė (1.29M ms/d., avg 41 ms/req) buvo pasenusi; dabar ~810k ms/d., avg
+  61 ms/req, p50 13–15 ms. **Pažymėta, kad 10 ms/500k ms/d. riba praktiškai
+  neatspėjama** (net po deployo) ir kodėl: Workers Caching įjungimas
+  sutrumpino invokacijas 3.9×, todėl liko tik brangūs cache-miss'ai.
+  KV sekcija papildyta 09-30 duomenimis (85 817 reads/dieną, 5.05
+  reads/invokacija, reads'ų pasiskirstymas pagal raktus) ir trimis
+  atmestais „optimizacijomis" su pagrindais. `AGENTS.md` — ištaisytas
+  klaidingas „1.45M reads/dieną" (realus ~180k/24h).
 - **Patikra:** root 314/314 (7 nauji testai), web vitest 45/45, `tsc` ✅,
   eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
   po; wrangler dry-run ✅.

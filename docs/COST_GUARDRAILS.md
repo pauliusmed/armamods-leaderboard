@@ -39,24 +39,53 @@ Likušios taisyklės:
 ## Workers CPU
 
 **Politika: vidurkis < 10 ms CPU/request; bendras < ~500k ms/dieną.**
-(09-28 tyrimas: 1.29M ms/d. ir avg 41 ms/req; pikas 2.2M — v1.23.46 taisymai.)
 
-- Didžiausi šaltiniai: `mod-changes` (~36%; cold kelias parse'ino visus 12
-  modpack ring chunk'ų per request) ir `history` (~12%; skaitė visus shard'us).
-  ~56% šių requestų — SEO/AI crawleriai (Bytespider, AhrefsBot, Reflectionbot),
-  kurie renderina SPA ir kviečia API.
+> ⚠️ **Riba praktiškai neatspėjama nuo 09-28.** Ką tik pasiekti skaičiai
+> (matuota 09-30, po v1.23.45-46 deploy): **~810k ms/d., avg 61 ms/req**,
+> p50 13–15 ms, p90 ~216 ms, p99 ~540 ms, max 1 092 ms. Lygiagreti su
+> 09-28 bazės matavimu (1.29M ms/d., avg 41 ms/req) tai **−37 % bendro
+> CPU**, bet **+50 % CPU į vieną invokaciją**.
+>
+> **Priežasnis, svarbus interpretacijai:** 09-28 deployas (Workers Caching)
+> sutrumpino Worker invokacijas ~3.9× (50k → 17k/24h). Į Worker'į dabar
+> atlieka tik cache-miss'ai — t. y. brangiausios užklausos, o ne pigios.
+> Vidurkis todėl auga mechaniškai, o realus pinigų efektas yra atvirkščias.
+>
+> **Kodėl riba realistiška arba ne:** Workers CPU skaitiklis — vienintelis
+> artas prie free ribos (30M ms/mėn; dabar 24.3M = 81 %). Requests (6.9M/mėn
+> = 69 % nuo 10M) ir KV reads (2.6M/mėn = 26 % nuo 10M) — žymių atsarga.
+> Visa sąskaita dabar ≈ $5/mėn (Workers Paid bazė), viršijimo $0.
+> Net 3× traffic → ~+$4/mėn. **Optimizuoti reikia ne dėl pinigų, o dėl
+> atsparumo ir 128 MB RAM sienos.**
+>
+> **Konkretus neatneštas kandidatas:** CPU deginamas ne KV reads, o 5 MB
+> shard'o *teksto skenavime* — `findMatchingBrace` (`server-lookup.ts`) yra
+> char-by-char JS ciklas per 5 MB, plius `chunkText.includes()` + `JSON.parse`
+> per shard. Tai matyti kaip ~900–1092 ms p99/max. Ticketų neatidaryta.
+
+- Didžiausi šaltiniai (09-30, p95 per path): `/server/:id` **376 ms**,
+  `/api/servers/:id/mod-changes` **181 ms**, `/api/servers/:id/storage` 114 ms,
+  `/arma3/server/:id` 48–93 ms. `/mod/*`, `/api/mods/*/thumbnail/img`,
+  `/api/og/preview/*` — 3–9 ms (pigūs).
+- Iš anksto 09-28: didžiausi šaltiniai buvo `mod-changes` (~36 %; cold kelias
+  parse'ino visus 12 modpack ring chunk'ų per request) ir `history` (~12 %;
+  skaitė visus shard'us). ~56 % tų requestų — SEO/AI crawleriai
+  (Bytespider, AhrefsBot, Reflectionbot), kurie renderina SPA.
 - Guardrail'ai: `robots.txt` `Disallow: /api/`; WAF rule
   `armamods-api-bot-guard` blokuoja SEO/AI crawlerius `/api/*` iki Worker'io
   (Googlebot/Bingbot nepaliečiami — jiems serviruojamas prerender HTML).
 - Kode: modpack ring'as — isolate cache per versiją (`loadModpackDiffRing`);
   mod/server history — skaitymas nuo uodegos su `historyCutoffPrefix`
-  (ne visi chunk'ai); mod-changes atsakymo TTL 6h.
+  (ne visi chunk'ai); mod-changes atsakymo TTL 6h; share prerender serverių
+  paieška per `servers-index` (`ServerLookup`, v1.23.47) vietoj ~16 nuoseklių
+  shard'ų.
 - **Nauji istorijos/ring'ų skaitytojai privalo naudoti tail-stop** (uodegos
   chunk'ai + `firstPointTime` riba) — per-request didelių ring'ų `JSON.parse`
   ar visų shard'ų skenavimas neleistinas.
 - Stebėjimas: Observability `$workers.cpuTimeMs` per `$metadata.trigger`
   (atskirais kvietimais sum + count — kombinacija grąžina tuščią agregatą);
   GraphQL `workersInvocationsAdaptive` per `scriptName`.
+
 
 ## KV (trending_snapshots)
 
@@ -73,6 +102,30 @@ Likušios taisyklės:
   (~3.1M/mėn, $0)** — < 5M tikslas tenkintas. Per-mod raktai rašomi toliau
   (worker'io fallback'ams); jų loop'inis SKAITYMAS kolektoriuje grįžta tik
   per vienkartinį bootstrap (bundle'ui dingus).
+- **Išmatuota 09-30 (24 val.): 85 817 reads/dieną** (~2.6M/mėn, **26 %** nuo
+  10M/mėn free ribos) → **$0 viršijimo**. Iš anksto (prieš 09-28 deployą)
+  buvo ~156k–269k/dieną; deployas Workers Caching įjungimu sumažino ~53 %.
+  Vidurkis **5.05 reads/Worker invokacija**.
+- **Kodėl tai mažai svarbu finansiškai:** KV reads nemokamos iki 10M/mėn, o
+  dabar naudojama 26 %. Kiekvienas papildomas reads „sutaupymas" čia yra be
+  piniginės vertės — jis svarbus tik kaip **proxy į CPU** (kv.get → await →
+  parse) ir kaip signalas apie neefektyvų kelią.
+- **09-30 read'ų pasiskirstymas (1 % trace sampling, ~130 KV spanų):**
+  `cache:servers:<shard>` **38 %** · `cache:mods:meta` **32 %** ·
+  `cache:mod-size:*` 12 % · og-image/history/lastUpdate ~10 % ·
+  `cache:mod-alias:*` **2.3 %**.
+- **09-30 atmesti „optimizacijos" (matavimo pagrindu, ne pagal kodo auditą):**
+  - *mod-sizes bundle fast-path* (`applySizesFromBundle` į
+    `resolveModSizesBatch`) — taupytų ~12 % reads, bet pridėtų ~550 KB
+    `JSON.parse` per 5 min per izoliatą (~43 CPU-s/d = ~5 % CPU biudžeto).
+    **Netas neigiamas.** Kol kas neatidaryta.
+  - *alias 301 po `caches.default.match()`* (`worker.ts` ~2560) — 2.3 % reads.
+    Ne vertas atskiro pataisymo.
+  - **Prieštarinantis faktas:** kodo auditas rodė „60–220 reads per
+    `/api/servers/:id/storage` requestą", bet **išmatuotas vidurkis 5.05**
+    to patvirtina nepatvirtina — leaderboard eilutės jau neša `sizeBytes`, todėl
+    `workshop-fetch.ts:846` per-mod loopas praktiškai nepasiekiamas.
+    **Matuok, o ne tiki kodu.**
 - Naujos per-mod raktų „ventiliacijos" (loop'ai su `kv.get` pagal modą)
   rašant naują funkcionalumą — neleistinos: pirmiausia apsvarstyti bundle.
 - Known fazės 2 (dar neoptimizuota): mod detail server chunk scan (~15
