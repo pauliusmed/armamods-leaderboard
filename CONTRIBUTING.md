@@ -8,19 +8,22 @@ Thank you for your interest in improving the project! This document provides gui
 2. **Install dependencies**:
    - Root: `npm install`
    - Web: `cd web && npm install`
-3. **Type check + build** — **both** configs, `web/` has its own `package.json` and its own `tsconfig`s:
+3. **Type check + build** — **visos** konfigos, kiekviena dengia kitą plotį:
 
    ```bash
-   npx tsc --noEmit                 # root config — neturi web/**
-   npm run build --prefix web       # tsc -b && vite build — CI gate + deploy gate
+   npx tsc --noEmit                 # root: include: ["src/**/*"] → tik src/
+   npm run build --prefix web       # tsc -b && vite build → web/src/** + web/functions/**
    ```
 
-   ⚠️ **`npx tsc --noEmit` vienas NEPAKANKA.** Root `tsconfig.json` neturi `web/**`;
-   `web/tsconfig.app.json` turi `erasableSyntaxOnly: true` ir `include: ["src",
-   "functions/api/audit-config.ts"]`, bet į programą patenka **visas importo grafas**
-   iš `src/`. Failas, kurio niekas neimportuoja iš `src/`, yra **ne tikrinamas
-   niekada** — 2026-09-30 incidentas (`erasableSyntaxOnly` TS1294) praėjo pro žalią
-   PR su vien tik `npx tsc --noEmit` ir numetė auto-deploy'ą (`CHANGELOG.md` v1.23.48/49).
+   ⚠️ **Nė viena iš jų dengia `scripts/` ir `test/`.** Root `tsconfig.json` turi
+   `include: ["src/**/*"]`; `web/tsconfig.app.json` — `["src",
+   "functions/api/audit-config.ts"]` **+ visas importo grafas iš `web/src/`**.
+   Rezultatas: `scripts/collector.ts` (~1600 eilučių) ir visi `test/*.test.ts`
+   **netikrinami nė viena konfiga** — tik vykdomi kaip `tsx --test`.
+   Failas, kurio niekas neimportuoja iš `src/`, yra **ne tikrinamas niekada**
+   (2026-09-30 incidentas: `erasableSyntaxOnly` TS1294 praėjo pro žalią PR su
+   vien `npx tsc --noEmit` ir numetė auto-deploy'ą — `CHANGELOG.md` v1.23.48/49).
+   **Trūkstamos ribos žymimos** — atskiras follow-up.
 
 4. **Local dev**: `npm --prefix web run dev` (Vite, `web/vite.config.ts` jau
    proxy'ina `/api` → `reforgermods.com`). Root `npm run dev` yra **deprecated**

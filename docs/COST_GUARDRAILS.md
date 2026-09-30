@@ -60,9 +60,10 @@ Likušios taisyklės:
 > ⚠️ **Requests skaitiklis — nepainiojamas.** Du skirtingi skaičiai:
 > - **Worker invokacijos** 17k/24h ≈ **510k/mėn = 5 %** nuo 10M/mėn Workers
 >   request kvotos. Tai faktinis darbas, kurį daro `worker.ts`.
-> - **Zonos HTTP užklausos** ~230k/dieną ≈ **6.9M/mėn = 69 %** nuo tos pačios
->   10M kvotos — tai viskas, kas ateina į `reforgermods.com`, įskaitant static
->   assets, kurie **Worker'io neliečia**.
+> - **Zonos HTTP užklausos** ~230k/dieną ≈ **6.9M/mėn** — tai viskas, kas ateina
+>   į `reforgermods.com`, įskaitant static assets, kurie **Worker'io neliečia**.
+>   **Šio skaičiaus NEVIESTI su Workers request kvota.** Kuriems iš jų skaitomas
+>   Workers rate (ar net skaitoma) — žr. CF dokumentacijos prieštaravimą žemiau.
 >
 >   CF dokumentacija šiuo klausimu **prieštaringa**: `workers/platform/pricing`
 >   sako „*Requests to static assets are free and unlimited*", o
@@ -72,7 +73,7 @@ Likušios taisyklės:
 >   $0** (deployas praėjo 2026-09-30 be jokių viršijimo), todėl coledown'o
 >   negačioms 6.9M ir 510k **nėra pagrindo daryti išvadų**. Stebėti reikia
 >   faktinį billing, ne zoną.
-> - **Cache HIT`ai vis tiek apmokestinami** kaip standartinis request rate, bet
+> - **Cache HIT’ai vis tiek apmokestinami** kaip standartinis request rate, bet
 >   **CPU nemokamas** (tik cache MISS/BYPASS atveju) — todėl 09-28 deployas
 >   ir sutaupė CPU, bet nepakeitė request kvotos.
 >
