@@ -1,4 +1,5 @@
 import { cached } from './module-cache';
+import { ServerLookup } from './server-lookup';
 
 export const SITE_ORIGIN = 'https://reforgermods.com';
 
@@ -112,7 +113,6 @@ function getKvKeys(game: ShareGame) {
   const suffix = game === 'arma3' ? ':arma3' : '';
   return {
     MODS: `cache:mods${suffix}`,
-    SERVERS: `cache:servers${suffix}`,
   };
 }
 
@@ -186,30 +186,18 @@ export function modSizeBytesFromRecord(mod: Record<string, unknown> | null | und
   return null;
 }
 
+/**
+ * Serverio paieška share prerender'ui.
+ *
+ * Anksčiau — nuoseklus skenas per VISUS `cache:servers:<i>` shard'us (~16 × ~5 MB)
+ * kiekvienam crawler'ui, be `servers-index`, be izoliato cache'o. Dabar deleguoja
+ * `ServerLookup`: indexas (60s izoliato cache) → 1 shardas (~5 MB), o jei indexas
+ * serverio dar nežino — batched full-scan fallback, todėl elgesys nepablogėja.
+ */
 async function lookupServer(kv: KVNamespace, game: ShareGame, serverId: string): Promise<any | null> {
-  const keys = getKvKeys(game);
-  const meta = await cached<{ chunks?: number } | null>(`${keys.SERVERS}:meta`, 60_000, () =>
-    kv.get(`${keys.SERVERS}:meta`, 'json') as Promise<{ chunks?: number } | null>
-  );
-  if (!meta?.chunks) return null;
-
-  for (let i = 0; i < meta.chunks; i++) {
-    const chunkText = await kv.get(`${keys.SERVERS}:${i}`, 'text');
-    if (!chunkText?.includes(`"id":"${serverId}"`)) continue;
-
-    const searchStr = `"id":"${serverId}"`;
-    const idPos = chunkText.indexOf(searchStr);
-    const startPos = chunkText.lastIndexOf('{', idPos);
-    const endPos = findMatchingBrace(chunkText, startPos);
-    if (startPos === -1 || endPos === -1) continue;
-
-    try {
-      return JSON.parse(chunkText.slice(startPos, endPos + 1));
-    } catch {
-      return null;
-    }
-  }
-  return null;
+  const lookup = await ServerLookup.create(kv, game);
+  if (!lookup) return null;
+  return lookup.findByIdWithScan(serverId);
 }
 
 import { resolveModThumbnailUrl } from './workshop-fetch';

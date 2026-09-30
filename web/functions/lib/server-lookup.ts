@@ -75,8 +75,23 @@ export function findServerInChunks(
   return null;
 }
 
-/** Full-scan batch size — 4 shards × ~5MB keeps peak RAM ~20MB per lookup instead of ~80MB. */
-const FALLBACK_BATCH = 4;
+/** Full-scan batch size — 4 shards × ~5MB keeps peak RAM ~20MB per lookup instead of ~80MB.
+ *  Eksportuojamas, nes tai yra **sutartis, ne implementacijos detalė**: bet koks
+ *  skenas turi laikyti ≤ FALLBACK_BATCH shardų vienu metu (128 MB Workers RAM riba). */
+export const FALLBACK_BATCH = 4;
+
+/**
+ * Log-safe server id.
+ *
+ * `serverId` ateina iš URL kelio (`/server/:id`), t. y. bot'ų kontroliuojamas.
+ * Įrašant ją į `console.warn` be filtravimo, `/server/%0a[FAKE] ...` tipo
+ * užklausa suforguotų netikrus log įrašus, o kiekvienas neegzistuojantis
+ * serveris generuotų po įrašą (log užpildymas). Žiauname: 32 ženkliai
+ * ir tik `[A-Za-z0-9_-]`.
+ */
+export function logSafeId(value: string): string {
+  return value.replace(/[^A-Za-z0-9_-]/g, '?').slice(0, 32) || '(empty)';
+}
 
 /**
  * Server lookup with collector-written index. Index path: load only the shard the id maps to.
@@ -122,6 +137,22 @@ export class ServerLookup {
     return text;
   }
 
+  /** Batched full scan — 4 shardai (~20MB RAM) vienu metu, per 1-shard LRU. */
+  private async scanFor(serverId: string): Promise<Record<string, unknown> | null> {
+    for (let start = 0; start < this.chunkCount; start += FALLBACK_BATCH) {
+      const end = Math.min(start + FALLBACK_BATCH, this.chunkCount);
+      const texts = await Promise.all(
+        Array.from({ length: end - start }, (_, j) => this.loadShard(start + j))
+      );
+      for (const text of texts) {
+        if (!text) continue;
+        const server = findServerInChunks([text], serverId);
+        if (server) return server;
+      }
+    }
+    return null;
+  }
+
   async findById(serverId: string): Promise<Record<string, unknown> | null> {
     if (this.index) {
       const shardIdx = this.index.map[serverId];
@@ -135,18 +166,29 @@ export class ServerLookup {
     console.warn(
       `[SERVER_LOOKUP] servers-index missing for ${this.game} — batched full-scan fallback (${this.chunkCount} shards)`
     );
-    for (let start = 0; start < this.chunkCount; start += FALLBACK_BATCH) {
-      const end = Math.min(start + FALLBACK_BATCH, this.chunkCount);
-      const texts = await Promise.all(
-        Array.from({ length: end - start }, (_, j) => this.loadShard(start + j))
-      );
-      for (const text of texts) {
-        if (!text) continue;
-        const server = findServerInChunks([text], serverId);
-        if (server) return server;
-      }
-    }
-    return null;
+    return this.scanFor(serverId);
+  }
+
+  /**
+   * Index kelys, o jam prošvaistojus — vis tiek batched scan.
+   *
+   * Reikalingas ten, kur anksčiau buvo rankinis nuoseklus visų shard'ų skenas:
+   * jis rasdavo serverį net jei `servers-index` dar nebuvo perprašytas naujam
+   * snapshot'ui (kolektoriaus runas rašo shardus ir indeksą neatomiskai). Toks
+   * langas trunka iki kito run'o (~1–2 val.) — be šio fallback'o social preview
+   * kortelėms ir OG tag'ams pradingtų.
+   */
+  async findByIdWithScan(serverId: string): Promise<Record<string, unknown> | null> {
+    const hit = await this.findById(serverId);
+    if (hit) return hit;
+    if (!this.index || !this.chunkCount) return null;
+    // Ne tylus fallback: scanas kainuoja ~chunkCount reads + ~5 MB shardų RAM
+    // (128 MB riba), todaž turi būti matomas — index/shard skew arba dažnas
+    // neegzistuojančių serverių srautas turi tai signalizuoti, ne slėpti.
+    console.warn(
+      `[SERVER_LOOKUP] servers-index miss for ${this.game}/${logSafeId(serverId)} — full-scan fallback (${this.chunkCount} shards)`
+    );
+    return this.scanFor(serverId);
   }
 }
 

@@ -4,6 +4,93 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## Research (unreleased) - 2026-08-30
 
+### ♻️ Share prerender: serverių paieška per `ServerLookup` indeksą (v1.23.47) - 2026-09-30
+
+- **Problema:** `share-meta.ts` `lookupServer()` (share prerender `/mod/:id`,
+  `/server/:id` → `buildShareMeta`) skaitė **nuosekliai visus**
+  `cache:servers:<i>` shard'us (~16 × ~5 MB) kiekvienam crawler'ui — be
+  `servers-index`, be izoliato cache'o, be batchingo. Tuo pačiu darbas jau
+  buvo padarytas `/server/:id` puslapiui (`ServerLookup`), bet share kelias
+  liko nepanaudotas.
+- **Sprendimas:** `lookupServer()` deleguoja `ServerLookup.create()` +
+  naują `findByIdWithScan()` — indeksas (60s izoliato cache) → 1 shardas,
+  ~16 → ~3 reads. Batched full-scan ištrauktas į `ServerLookup.scanFor()`,
+  naudojamas abiem keliams (be duplikavimo).
+- **Elgesys nepablogėja:** jei `servers-index` dar neperprašytas naujam
+  snapshot'ui (kolektorius rašo shardus ir indeksą neatomiskai, langas
+  ~1–2 val.), `findByIdWithScan()` vis tiek praveda batched full-scan —
+  social preview kortelės ir OG tag'ai nepridyksta.
+- **Kontekstas (09-30 matavimas):** šis pakeitimas buvo *atrinktas po
+  matavimo*, ne pagal kodo auditą. 1 % trace sampling parodė, kad
+  `cache:mod-size:*` = 12 %, `cache:mod-alias:*` = 2.3 % visų KV reads, o
+  vidurkis — 5.05 reads/request (ne „60–220", kaip rodė teorinis kodas).
+  Du kiti planuoti pataisymai (mod-sizes bundle fast-path, alias 301 po
+  cache) **atmesti kaip netas neigiiami**: sutaupytų nemokamus reads
+  (~26 % nuo 10M/mėn free) už papildomą CPU (550 KB JSON parse).
+- **Dokumentacija:** `docs/COST_GUARDRAILS.md` CPU sekcija perrašyta — 09-28
+  bazė (1.29M ms/d., avg 41 ms/req) buvo pasenusi; dabar ~810k ms/d., avg
+  61 ms/req, p50 13–15 ms. **Pažymėta, kad 10 ms/500k ms/d. riba praktiškai
+  neatspėjama** (net po deployo) ir kodėl: Workers Caching įjungimas
+  sutrumpino invokacijas 3.9×, todėl liko tik brangūs cache-miss'ai.
+  KV sekcija papildyta 09-30 duomenimis (85 817 reads/dieną, 5.05
+  reads/invokacija, reads'ų pasiskirstymas pagal raktus) ir trimis
+  atmestais „optimizacijomis" su pagrindais. `AGENTS.md` — ištaisytas
+  klaidingas „1.45M reads/dieną" (tai buvo istorinis **pagas** lygis;
+  realus 24 val. mastelis ~180k **prieš** 09-28 deployą ir **86k po jo**).
+- **Kilo Code Review (2 raundos, 0 critical):**
+  - 1-as raundas (6 findings) — 5 ištaisyta, 1 atmesta.
+  - 2-as raundas (4 findings, 2 NAJOS) — 2 ištaisyta:
+    **log-injection apsauga** (`serverId` iš URL kelio įrašomas į
+    `console.warn` be filtravimo → `/server/%0a…` suforguotų netikrus log
+    įrašus; dabar `logSafeId()`: tik `[A-Za-z0-9_-]`, 32 ženkliai) ir
+    **batch testas, kuris tikrai gali nepavykti** (ankstesnis plokščias
+    shard'ų sąrašas nepagrindė lygiagumo — 1 banga ir nuoseklus skenas duoda
+    tą patį sąrašą; dabar `makeKv` matuoja `maxInFlight`).
+  - 3-as raundas (5 findings, 2 NAJOS) ir 4-as raundas (3 findings,
+    2 NAJOS) — testai perversti iš *implementacijos* į *sutartį*:
+    `FALLBACK_BATCH` ir `logSafeId` **eksportuoti** ir testuojami tiesiogiai
+    (nebelyginamas pranešimo šablonas, kuris lūžtų nuo bet kurio žodžio
+    pakeitimo), `console.warn` gaudymas ištrauktas į `captureWarn()` helper'į
+    (3× copy-paste → 1), lygiagumo testas tvirtina **≤ `FALLBACK_BATCH`**
+    (sutartis) + `> 1` (lygiagumas egzistuoja) vietoj `=== 4` — dabar
+    nuoseklus skenas, kuris yra dar saugesnis, praeina teisingai, o ne
+    atmetamas.
+  - 5-as, 6-as ir 7-as raundai (2 + 4 + 3 findings, 9 NAJOS) — visos
+    teisingos, visos taisytos, niekas neatmestas: **RAM siena saugojo save
+    patį** (tik `maxInFlight <= FALLBACK_BATCH` → pakėlus 4→8 testai liko
+    žiami, o pikas 8×5 MB = 40 MB vietoj 20 MB); biudžeto pažeidimas buvo
+    „diagnozuojamas kaip lygiagumo klaida" faile be lygiagumo klaidos;
+    `includes(logSafeId(flood))` buvo **tylesnė tautologija** (nepavyktų
+    nei vienos savo mutacijos) — neši taisyba liko neigiama; `SHARD_MB = 5`
+    buvo nukopijuota pastraipa, todėl pervadinta `ASSUMED_SHARD_MB` ir
+    aiškiai pavadinta **prielaida** su perskaičiavimo komanda (viena kopija,
+    ne dvi); buvo apgaubta **tripwire**, ne „promotion ceremony for
+    arithmetic" — pavadinta taip, kad būtų aišku, jog tai ne elgsenos
+    testas.
+  - **Patikrinta mutacijomis (7 mutacijos, 7 KRENTA):**
+    `FALLBACK_BATCH → 64` · `→ 8` (RAM biudžetas) · `→ 2` (lygiagumo
+    praradimas) · `logSafeId → raw` · `drop .slice(0, 32)` ·
+    `slice 32 → 64` · `log filtras neutralizuotas`.
+    **Svarbu:** pirmasis matavimas buvo **netikrus** — testas
+    `assert.equal(true, 'msg')` buvo pats sulūžęs, todėl visos mutacijos
+    „krentų" dėl neteisingos priežasties. **Rezultatas šiame PR:** 7
+    mutacijos, 7 KRENTA — `FALLBACK_BATCH → 64` · `→ 8` (RAM biudžetas) ·
+    `→ 2` (lygiagumo praradimas) · `logSafeId → raw` · `drop .slice(0, 32)`
+    · `slice 32 → 64` · `log filtras neutralizuotas`.
+    **Sąmoningai NEĮKOMITUOTA į repo:** matavimo skriptas (a) rašo/karčia
+    šaltinio failą vietoje, todėl pavojinga paleisti lygiagrečiai, (b) tai
+    ad-hoc priemonė, o ne regresijos testas. Registryje: **neegzistuoja
+    kaip CI gate** — taisyklė „matuok, o ne tiki kodu" (*AGENTS.md*) lieka
+    rankinė, tačiau kiekvieną kartą turi lydėti **žali baseline patikra**
+    prieš mutacijas, kitaip rezultatas nieko nepasako (taip buvo šiame PR).
+  - **Atmesta:** 1-slot LRU padidinimas — LRU *turi* likti 1-slot, 4 shardai
+    (~20 MB) jau yra `FALLBACK_BATCH` riba, sauganti 128 MB Workers RAM ribą
+    (projektas jau gavo `exceededMemory` 503: 09-16, 19 klaidų).
+- **Patikra:** root **323/323** (16 naujų testų), web vitest 45/45, `tsc` ✅,
+  eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
+  po; wrangler dry-run ✅.
+- **Heavy CI: required because** kinta KV skaitymo kelias share prerender'iui.
+
 ### ⚡ Worker CPU: bot guardrail'ai + mod-changes/history cold kelio optimizacija (v1.23.46) - 2026-09-28
 
 - **Problema (09-28 tyrimas):** ~1.29M CPU ms/dieną (avg ~41 ms/request;

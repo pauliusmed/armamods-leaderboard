@@ -4,10 +4,25 @@ import {
   findServerInChunks,
   buildServerIndex,
   ServerLookup,
+  FALLBACK_BATCH,
+  logSafeId,
 } from '../web/functions/lib/server-lookup.ts';
 import { clearModuleCache } from '../web/functions/lib/module-cache.ts';
 
 beforeEach(() => clearModuleCache());
+
+/** Run `fn` with console.warn captured; the `finally` restore is the part that matters. */
+async function captureWarn(fn: () => Promise<unknown>): Promise<string[]> {
+  const lines: string[] = [];
+  const real = console.warn;
+  console.warn = (...args: unknown[]) => { lines.push(args.map(String).join(' ')); };
+  try {
+    await fn();
+  } finally {
+    console.warn = real;
+  }
+  return lines;
+}
 
 const chunk = JSON.stringify([
   { id: '111', name: 'Alpha Server', mods: [] },
@@ -60,15 +75,28 @@ describe('buildServerIndex', () => {
 /** Minimal KV fake — tracks every get so tests can assert how many shards were loaded. */
 function makeKv(entries: Record<string, string>) {
   const gets: string[] = [];
+  // In-flight tracking: lets tests assert parallelism, not just the final order
+  // (a flat ordered get-list cannot tell 4-at-a-time batching from 1-wave or
+  // fully sequential scanning — all three produce the same list).
+  let inFlight = 0;
+  const probe = { maxInFlight: 0, reset: () => { probe.maxInFlight = 0; } };
   return {
     gets,
+    probe,
     get: async (key: string, type?: string) => {
       gets.push(key);
-      const value = entries[key];
-      if (value === undefined) return null;
-      return type === 'json' ? JSON.parse(value) : value;
+      inFlight++;
+      if (inFlight > probe.maxInFlight) probe.maxInFlight = inFlight;
+      try {
+        await Promise.resolve();
+        const value = entries[key];
+        if (value === undefined) return null;
+        return type === 'json' ? JSON.parse(value) : value;
+      } finally {
+        inFlight--;
+      }
     },
-  } as unknown as KVNamespace & { gets: string[] };
+  } as unknown as KVNamespace & { gets: string[]; probe: { maxInFlight: number; reset: () => void } };
 }
 
 const SHARDS = 6;
@@ -165,5 +193,174 @@ describe('ServerLookup — batched full-scan fallback (index missing)', () => {
   it('returns null when neither index nor meta exist', async () => {
     const kv = makeKv({});
     assert.equal(await ServerLookup.create(kv, 'reforger'), null);
+  });
+});
+
+/**
+ * PRIELAIDA (ne išmatuota testu reikšmė): vieno `cache:servers:<i>` shard'o
+ * dydis ~5 MB (09-30 matavimas). **Tai prielaida, ne tikrasis dydis** — shard'ai
+ * auga su serverių skaičiumi kiekviename kolektoriaus run'e, todėl ši skaičius
+ * gali atsilikti nuo tikrovės ir tada būti arba per griežta, arba per lax.
+ * Perskaičiuoti: `wrangler kv key get --binding TRENDING_KV "cache:servers:0" --remote`.
+ *
+ * Keliama ranka (ne CI gate): skriptas rašo/karčia šaltinio failą vietoje, todėl
+ * pavojinga paleisti lygiagrečiai. Atliekama ranka, PRIME žalią baseline'ą
+ * PRIEŠ mutacijų — iš raudono baseline'o „mutacijos krenta" nieko nepasako.
+ */
+const ASSUMED_SHARD_MB = 5;
+/** Workers izoliato RAM riba (nepažeidžiama). */
+const ISOLATE_MB = 128;
+
+/**
+ * Tripwire, ne elgsenos testas: jei kas nors sąmoningai keičia
+ * `FALLBACK_BATCH`, čia turi būti argumentas. Pats `maxInFlight <= FALLBACK_BATCH`
+ * nepagauna — santykis su savimi liktų žali (tautologija).
+ */
+describe('FALLBACK_BATCH RAM budget', () => {
+  it('keeps a full-scan wave under 1/4 of the isolate ceiling', () => {
+    assert.ok(
+      FALLBACK_BATCH * ASSUMED_SHARD_MB <= ISOLATE_MB / 4,
+      `FALLBACK_BATCH=${FALLBACK_BATCH} → ${FALLBACK_BATCH * ASSUMED_SHARD_MB} MB virš ${ISOLATE_MB / 4} MB biudžeto`
+    );
+  });
+});
+
+describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', () => {
+  // Indexas parašytas prieš paskutinį shard'ų snapshot'ą: shard'e 5 serveris yra,
+  // indekse jo nėra — tikras kolektoriaus run'o rašymo langas.
+  const staleIndex = buildServerIndex([
+    [{ id: 'srv-0' }], [{ id: 'srv-1' }], [{ id: 'srv-2' }],
+    [{ id: 'srv-3' }], [{ id: 'srv-4' }], [],
+  ]);
+  const entries = {
+    ...shardEntries,
+    'cache:servers-index': JSON.stringify(staleIndex),
+    'cache:servers:meta': JSON.stringify({ total: SHARDS, chunks: SHARDS }),
+  };
+
+  it('scans and finds a server the index does not know', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    // be fallback'o — greitas 404
+    assert.equal(await lookup.findById('srv-5'), null);
+    assert.equal(shardGets(kv).length, 0);
+
+    const found = await lookup.findByIdWithScan('srv-5');
+    assert.equal(found?.id, 'srv-5');
+    assert.equal(shardGets(kv).length, SHARDS);
+  });
+
+  it('does not scan when the index already answers', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    assert.equal((await lookup.findByIdWithScan('srv-3'))?.id, 'srv-3');
+    assert.deepEqual(shardGets(kv), ['cache:servers:3']);
+  });
+
+  it('returns null when the index misses and no shard has it', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
+    assert.equal(shardGets(kv).length, SHARDS);
+  });
+
+
+  it('holds the full-scan parallelism within FALLBACK_BATCH', async () => {
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    // `create()` skaitė index+meta paraleliai (2) — išvalome, kad matuotume
+    // TIK skeno lygiagumą, o ne visos užklausos.
+    kv.probe.reset();
+    assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
+    assert.equal(shardGets(kv).length, SHARDS);
+    // Sutartis: pikas ≤ FALLBACK_BATCH (RAM, 128 MB riba).
+    assert.ok(kv.probe.maxInFlight <= FALLBACK_BATCH, `maxInFlight=${kv.probe.maxInFlight}`);
+    // Lygiagumas turi egzistuoti — kitaip batchas nepasiteisimu.
+    assert.ok(kv.probe.maxInFlight > 1, `maxInFlight=${kv.probe.maxInFlight}`);
+  });
+
+  it('does not double-scan when the index is missing entirely', async () => {
+    const kv = makeKv({ ...shardEntries, 'cache:servers:meta': entries['cache:servers:meta'] });
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+    assert.equal(lookup.hasIndex, false);
+
+    assert.equal(await lookup.findByIdWithScan('nope'), null);
+    // `create()` skaito tik index+meta; visus shard'us perskaitė `findById()`
+    // per savo batched fallback'ą. `findByIdWithScan()` mato `index === null`
+    // ir neatlieka antrojo pilno skeno.
+    assert.equal(shardGets(kv).length, SHARDS);
+  });
+
+  it('routes the logged id through logSafeId (log-injection guard)', async () => {
+    // serverId ateina iš `/server/:id` — bots gali įrėžti `\n` ir suforguoti
+    // netikrus log įrašus. Tvirtiname SUTARTĮ (kad naudojama `logSafeId`),
+    // o ne pasisekimo šabloną: testas turi likti teisingas po bet kurio žodžio
+    // pakeitimo pranešime.
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    const attack = 'srv\n[SERVER_LOOKUP] forged line';
+    const lines = await captureWarn(() => lookup.findByIdWithScan(attack));
+
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].includes('\n'), false);
+    assert.equal(lines[0].includes(logSafeId(attack)), true);
+  });
+
+  it('caps the logged id at 32 characters (log-volume guard)', async () => {
+    // Be `.slice(0, 32)` bots galėtų įrėžti šimtus ženklų į kiekvieną log
+    // įrašą. Serverių id realiai ≤ 8 skaitmenys.
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    const flood = 'A'.repeat(5_000);
+    const lines = await captureWarn(() => lookup.findByIdWithScan(flood));
+
+    // Čia tik integracijos klausimas: **neigiama** taisyba — raw flood
+    // (5 000 ženklų) NĖRA pranešime. Tai vienintelė nešanti šio testo
+    // assertion; teigiamos (`includes(logSafeId(...))`) taisyba negalėtų
+    // nepavykti nei vienai iš šių mutacijų (neutralizuotas filtras ir
+    // atjungtas `logSafeId` abu palieka 32 A per eilutę), todėl neturi
+    // svėrties. Ilgio riba ir simbolių filtras tikrinami `logSafeId` teste.
+    assert.equal(lines.length, 1);
+    assert.equal(lines[0].includes(flood), false);
+  });
+});
+
+describe('logSafeId', () => {
+  it('strips everything outside [A-Za-z0-9_-] so one id stays one log line', () => {
+    // Newline, `[`, `]`, tarpas → visi `?`. Jokio '\n' nelieka.
+    assert.equal(logSafeId('srv\n[SERVER_LOOKUP] forged line'), 'srv??SERVER_LOOKUP??forged?line');
+    assert.equal(logSafeId('a\nb').includes('\n'), false);
+  });
+
+  it('caps length at 32 characters', () => {
+    assert.equal(logSafeId('A'.repeat(5_000)).length, 32);
+    assert.equal(logSafeId('A'.repeat(5_000)), 'A'.repeat(32));
+  });
+
+  it('keeps legitimate server ids intact', () => {
+    assert.equal(logSafeId('41066386'), '41066386');
+    assert.equal(logSafeId('army-3_A'), 'army-3_A');
+  });
+
+  it('never returns an empty label', () => {
+    assert.equal(logSafeId(''), '(empty)');
+  });
+
+  it('renders an all-unsafe id as placeholders, not nothing', () => {
+    // `'??'` — matoma, kad buvo kažkas neteisingo, o ne „tuščias serveris".
+    assert.equal(logSafeId('\n\n'), '??');
   });
 });

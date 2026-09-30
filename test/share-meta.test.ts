@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   isSocialCrawler,
@@ -8,7 +8,12 @@ import {
   pageUrl,
   modPreviewImageUrl,
   renderShareHtml,
+  buildShareMeta,
 } from '../web/functions/lib/share-meta.ts';
+import { buildServerIndex } from '../web/functions/lib/server-lookup.ts';
+import { clearModuleCache } from '../web/functions/lib/module-cache.ts';
+
+beforeEach(() => clearModuleCache());
 
 describe('parseShareRoute', () => {
   it('parses reforger mod links', () => {
@@ -75,5 +80,79 @@ describe('renderShareHtml', () => {
     assert.equal(html.includes('http-equiv="refresh"'), false);
     assert.match(html, /<h1>/);
     assert.match(html, /Mod leaderboard/);
+  });
+});
+
+describe('buildShareMeta — server lookup goes through ServerLookup', () => {
+  const SHARDS = 6;
+
+  function makeKv(entries: Record<string, string>) {
+    const gets: string[] = [];
+    return {
+      gets,
+      get: async (key: string, type?: string) => {
+        gets.push(key);
+        const value = entries[key];
+        if (value === undefined) return null;
+        return type === 'json' ? JSON.parse(value) : value;
+      },
+    } as unknown as KVNamespace & { gets: string[] };
+  }
+
+  const index = buildServerIndex(
+    Array.from({ length: SHARDS }, (_, i) => [{ id: `srv-${i}` }])
+  );
+
+  function shardEntries(prefix: string): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (let i = 0; i < SHARDS; i++) {
+      out[`${prefix}${i}`] = JSON.stringify([
+        { id: `srv-${i}`, name: `Server ${i}`, players: 30, maxPlayers: 60, mods: [] },
+      ]);
+    }
+    return out;
+  }
+
+  it('reads only the index-mapped shard, not all of them', async () => {
+    const kv = makeKv({
+      ...shardEntries('cache:servers:'),
+      'cache:servers-index': JSON.stringify(index),
+      'cache:servers:meta': JSON.stringify({ total: SHARDS, chunks: SHARDS }),
+    });
+
+    const meta = await buildShareMeta(kv, { game: 'reforger', kind: 'server', id: 'srv-4' });
+    assert.equal(meta?.kind, 'server');
+    assert.equal(meta?.name, 'Server 4');
+    assert.match(meta?.description ?? '', /30\/60 players/);
+    assert.deepEqual(kv.gets.filter((k) => /^cache:servers:\d+$/.test(k)), ['cache:servers:4']);
+  });
+
+  it('uses the :arma3 suffixed keys for arma3 routes', async () => {
+    const kv = makeKv({
+      ...shardEntries('cache:servers:arma3:'),
+      'cache:servers-index:arma3': JSON.stringify(index),
+      'cache:servers:meta:arma3': JSON.stringify({ total: SHARDS, chunks: SHARDS }),
+    });
+
+    const meta = await buildShareMeta(kv, { game: 'arma3', kind: 'server', id: 'srv-2' });
+    assert.equal(meta?.name, 'Server 2');
+    assert.deepEqual(kv.gets.filter((k) => /^cache:servers:arma3:\d+$/.test(k)), ['cache:servers:arma3:2']);
+  });
+
+  it('returns null for an unknown server id after exhausting the scan', async () => {
+    const kv = makeKv({
+      ...shardEntries('cache:servers:'),
+      'cache:servers-index': JSON.stringify(index),
+      'cache:servers:meta': JSON.stringify({ total: SHARDS, chunks: SHARDS }),
+    });
+
+    assert.equal(await buildShareMeta(kv, { game: 'reforger', kind: 'server', id: 'srv-none' }), null);
+    // Nežinomas id prašo įrodyti neegzistavimo: indexas prašvaistoja, todėl
+    // `findByIdWithScan()` eina į batched full-scan (visi SHARDS shardai).
+    // Žinomas id kainuoja 1 shardą — kontrastą žiūrėk pirmuosiuose 2 testuose.
+    assert.deepEqual(kv.gets.filter((k) => /^cache:servers:\d+$/.test(k)), [
+      'cache:servers:0', 'cache:servers:1', 'cache:servers:2', 'cache:servers:3',
+      'cache:servers:4', 'cache:servers:5',
+    ]);
   });
 });
