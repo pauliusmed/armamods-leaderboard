@@ -213,6 +213,20 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(shardGets(kv).length, SHARDS);
   });
 
+  it('scans in FALLBACK_BATCH-sized batches, not all shards at once', async () => {
+    // 6 shardai, batchas 4 → dvejos bangos (0..3, 4..5). Jei būtų viena banga,
+    // RAM butų ~30 MB vietoj ~20 MB — su 16 shardais tai 80 MB (128 MB riba).
+    const kv = makeKv(entries);
+    const lookup = await ServerLookup.create(kv, 'reforger');
+    assert.ok(lookup);
+
+    assert.equal(await lookup.findByIdWithScan('srv-gone'), null);
+    assert.deepEqual(shardGets(kv), [
+      'cache:servers:0', 'cache:servers:1', 'cache:servers:2', 'cache:servers:3',
+      'cache:servers:4', 'cache:servers:5',
+    ]);
+  });
+
   it('does not double-scan when the index is missing entirely', async () => {
     const kv = makeKv({ ...shardEntries, 'cache:servers:meta': entries['cache:servers:meta'] });
     const lookup = await ServerLookup.create(kv, 'reforger');
@@ -220,7 +234,9 @@ describe('ServerLookup — findByIdWithScan (index miss falls back to scan)', ()
     assert.equal(lookup.hasIndex, false);
 
     assert.equal(await lookup.findByIdWithScan('nope'), null);
-    // create() → findById() jau perskanavo visus shard'us; nėra antrojo pilno skeno
+    // `create()` skaito tik index+meta; visus shard'us perskaitė `findById()`
+    // per savo batched fallback'ą. `findByIdWithScan()` mato `index === null`
+    // ir neatlieka antrojo pilno skeno.
     assert.equal(shardGets(kv).length, SHARDS);
   });
 });

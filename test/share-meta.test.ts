@@ -139,7 +139,7 @@ describe('buildShareMeta — server lookup goes through ServerLookup', () => {
     assert.deepEqual(kv.gets.filter((k) => /^cache:servers:arma3:\d+$/.test(k)), ['cache:servers:arma3:2']);
   });
 
-  it('returns null for an unknown server id', async () => {
+  it('returns null for an unknown server id after exhausting the scan', async () => {
     const kv = makeKv({
       ...shardEntries('cache:servers:'),
       'cache:servers-index': JSON.stringify(index),
@@ -147,5 +147,12 @@ describe('buildShareMeta — server lookup goes through ServerLookup', () => {
     });
 
     assert.equal(await buildShareMeta(kv, { game: 'reforger', kind: 'server', id: 'srv-none' }), null);
+    // Nežinomas id prašo įrodyti neegzistavimo: indexas prašvaistoja, todėl
+    // `findByIdWithScan()` eina į batched full-scan (visi SHARDS shardai).
+    // Žinomas id kainuoja 1 shardą — kontrastą žiūrėk pirmuosiuose 2 testuose.
+    assert.deepEqual(kv.gets.filter((k) => /^cache:servers:\d+$/.test(k)), [
+      'cache:servers:0', 'cache:servers:1', 'cache:servers:2', 'cache:servers:3',
+      'cache:servers:4', 'cache:servers:5',
+    ]);
   });
 });

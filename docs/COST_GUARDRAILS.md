@@ -121,11 +121,11 @@ Likušios taisyklės:
     **Netas neigiamas.** Kol kas neatidaryta.
   - *alias 301 po `caches.default.match()`* (`worker.ts` ~2560) — 2.3 % reads.
     Ne vertas atskiro pataisymo.
-  - **Prieštarinantis faktas:** kodo auditas rodė „60–220 reads per
-    `/api/servers/:id/storage` requestą", bet **išmatuotas vidurkis 5.05**
-    to patvirtina nepatvirtina — leaderboard eilutės jau neša `sizeBytes`, todėl
-    `workshop-fetch.ts:846` per-mod loopas praktiškai nepasiekiamas.
-    **Matuok, o ne tiki kodu.**
+  - **Prieštarinis faktas:** kodo auditas rodė „60–220 reads per
+    `/api/servers/:id/storage` requestą", bet **išmatuotas vidurkis 5.05
+    reads/invokacija** jį paneigia — leaderboard eilutės jau neša
+    `sizeBytes`, todėl `workshop-fetch.ts:846` per-mod loopas praktiškai
+    nepasiekiamas. **Matuok, o ne tiki kodu.**
 - Naujos per-mod raktų „ventiliacijos" (loop'ai su `kv.get` pagal modą)
   rašant naują funkcionalumą — neleistinos: pirmiausia apsvarstyti bundle.
 - Known fazės 2 (dar neoptimizuota): mod detail server chunk scan (~15

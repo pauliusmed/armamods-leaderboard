@@ -167,6 +167,12 @@ export class ServerLookup {
     const hit = await this.findById(serverId);
     if (hit) return hit;
     if (!this.index || !this.chunkCount) return null;
+    // Ne tylus fallback: scanas kainuoja ~chunkCount reads + ~5 MB shardų RAM
+    // (128 MB riba), todaž turi būti matomas — index/shard skew arba dažnas
+    // neegzistuojančių serverių srautas turi tai signalizuoti, ne slėpti.
+    console.warn(
+      `[SERVER_LOOKUP] servers-index miss for ${this.game}/${serverId} — full-scan fallback (${this.chunkCount} shards)`
+    );
     return this.scanFor(serverId);
   }
 }

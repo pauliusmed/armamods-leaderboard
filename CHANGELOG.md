@@ -35,8 +35,16 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
   KV sekcija papildyta 09-30 duomenimis (85 817 reads/dieną, 5.05
   reads/invokacija, reads'ų pasiskirstymas pagal raktus) ir trimis
   atmestais „optimizacijomis" su pagrindais. `AGENTS.md` — ištaisytas
-  klaidingas „1.45M reads/dieną" (realus ~180k/24h).
-- **Patikra:** root 314/314 (7 nauji testai), web vitest 45/45, `tsc` ✅,
+  klaidingas „1.45M reads/dieną" (tai buvo istorinis **pagas** lygis;
+  realus 24 val. mastelis ~180k **prieš** 09-28 deployą ir **86k po jo**).
+- **Kilo Code Review (6 findings, 0 critical):** 4 ištaisyta (read-count
+  assertion`ai testuose + `FALLBACK_BATCH` ribojimo testas, klainga pastraipa
+  apie `create()` vs `findById()`, „to patvirtina nepatvirtina" sakinyje,
+  prieštaringas CHANGELOG skaičius); 1 iš dalies (`findByIdWithScan` miss
+  branch'ui pridėtas `console.warn` — scanas nebev tylus, `AGENTS.md`
+  „nenaudok tylaus fallback" taisyklė); 1 atmesta (1-slot LRU *turi* likti
+  1-slot dėl 128 MB RAM ribos — „didesnis LRU“ būtų žalingas).
+- **Patikra:** root **315/315** (8 nauji testai), web vitest 45/45, `tsc` ✅,
   eslint — 13 problemos (1 pre-existing klaida + 12 warning) tiek prieš, tiek
   po; wrangler dry-run ✅.
 - **Heavy CI: required because** kinta KV skaitymo kelias share prerender'iui.
