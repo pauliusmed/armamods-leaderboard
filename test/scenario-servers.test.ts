@@ -104,3 +104,24 @@ test('Worker endpoint preserves sorting/payload and reuses cache across equivale
     else delete runtime.caches;
   }
 });
+
+for (const [label, entry] of Object.entries({
+  null: null, missing: {}, invalidShards: { shards: null, count: 2 },
+  stringShard: { shards: ['1'], count: 2 }, range: { shards: [99], count: 2 },
+  duplicate: { shards: [1, 1], count: 2 }, count: { shards: [1, 4], count: -1 },
+})) {
+  test(`malformed scenario entry (${label}) uses the bounded scan without losing servers`, async () => {
+    const f = fixture();
+    const index = f.entries['cache:servers-index'] as ReturnType<typeof buildServerIndex>;
+    index.scenarios!.Target = entry as never;
+    assert.deepEqual(await loadScenarioServers(f.kv, 'reforger', 'Target'), [chunks[1][0], chunks[4][0]]);
+    assert.equal(f.gets.filter((key) => /^cache:servers:\d+$/.test(key)).length, 6);
+  });
+}
+
+test('a malformed scenarios container also uses the old-snapshot path', async () => {
+  const f = fixture();
+  const index = f.entries['cache:servers-index'] as ReturnType<typeof buildServerIndex>;
+  index.scenarios = [] as never;
+  assert.deepEqual(await loadScenarioServers(f.kv, 'reforger', 'Target'), [chunks[1][0], chunks[4][0]]);
+});
