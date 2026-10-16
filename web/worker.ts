@@ -57,7 +57,9 @@ import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
 import { analyzeStoragePlan } from './functions/lib/storage-calc';
 import { buildServerStoragePack } from './functions/lib/storage-service';
 import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from './functions/lib/search-match';
-import { buildScenarioRanking, scenarioKey } from './functions/lib/scenario-ranking';
+import { buildScenarioRanking } from './functions/lib/scenario-ranking';
+import { loadScenarioServers, scenarioCacheRequest } from './functions/lib/scenario-servers';
+import { openResponseCache, responseCache } from './functions/lib/response-cache';
 import { parseServerHistoryFields } from './functions/lib/server-uptime-history';
 import { extractModFromChunks } from './functions/lib/mod-lookup';
 import { loadAliasedModIdSet, modAliasKey, type ModAliasRecord } from './functions/lib/mod-alias';
@@ -264,7 +266,7 @@ async function getChunkedData(kv: KVNamespace, baseKey: string, maxChunks?: numb
 // ---------------------------------------------------------
 
 app.get('/stats', async (c) => {
-  const cache = await caches.open('armamods:stats');
+  const cache = await openResponseCache('armamods:stats');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -391,7 +393,7 @@ function compareAuthors(a: string, b: string, dir: number): number {
 }
 
 app.get('/mods', async (c) => {
-  const cache = await caches.open('armamods:mods');
+  const cache = await openResponseCache('armamods:mods');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -534,7 +536,7 @@ app.get('/mods/:modId', async (c) => {
     }
   }
 
-  const cache = await caches.open('armamods:details');
+  const cache = await openResponseCache('armamods:details');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) {
       console.log(`[CACHE HIT] Detail data for ${c.req.url}`);
@@ -888,7 +890,7 @@ async function fetchModHistoryPoints(
 }
 
 app.get('/mods/:modId/workshop-status', async (c) => {
-  const cache = await caches.open('armamods:mod_workshop_status');
+  const cache = await openResponseCache('armamods:mod_workshop_status');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -948,7 +950,7 @@ app.get('/mods/:modId/workshop-status', async (c) => {
 });
 
 app.get('/mods/:modId/author', async (c) => {
-  const cache = await caches.open('armamods:mod_authors');
+  const cache = await openResponseCache('armamods:mod_authors');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -995,7 +997,7 @@ app.get('/mods/:modId/author', async (c) => {
 });
 
 app.get('/mods/:modId/thumbnail', async (c) => {
-  const cache = await caches.open('armamods:mod_thumbnails');
+  const cache = await openResponseCache('armamods:mod_thumbnails');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1013,7 +1015,7 @@ app.get('/mods/:modId/thumbnail', async (c) => {
 });
 
 app.get('/mods/:modId/gallery', async (c) => {
-  const cache = await caches.open('armamods:mod_gallery');
+  const cache = await openResponseCache('armamods:mod_gallery');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1046,7 +1048,7 @@ app.get('/mods/:modId/gallery', async (c) => {
 });
 
 app.get('/mods/:modId/dependencies', async (c) => {
-  const cache = await caches.open('armamods:mod_deps');
+  const cache = await openResponseCache('armamods:mod_deps');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1119,7 +1121,7 @@ app.get('/mods/:modId/size', async (c) => {
 });
 
 app.get('/mods/:modId/history', async (c) => {
-  const cache = await caches.open('armamods:history');
+  const cache = await openResponseCache('armamods:history');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1184,7 +1186,7 @@ app.get('/mods/:modId/history', async (c) => {
 });
 
 app.get('/servers', async (c) => {
-  const cache = await caches.open('armamods:servers');
+  const cache = await openResponseCache('armamods:servers');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) {
       console.log(`[CACHE HIT] Servers data for ${c.req.url}`);
@@ -1282,7 +1284,7 @@ app.get('/servers', async (c) => {
 app.get('/scenarios', async (c) => {
   const game = getGameFromQuery(c);
   const keys = getKVKeys(game);
-  const cache = await caches.open('armamods:scenarios');
+  const cache = await openResponseCache('armamods:scenarios');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1310,21 +1312,19 @@ app.get('/scenarios', async (c) => {
 // Servers running a specific scenario (on-demand drill-down)
 app.get('/scenarios/servers', async (c) => {
   const game = getGameFromQuery(c);
-  const keys = getKVKeys(game);
   const scenarioName = c.req.query('name')?.trim();
   if (!scenarioName) {
     return c.json({ error: 'Missing name query parameter' }, 400);
   }
 
-  const cache = await caches.open('armamods:scenario-servers');
-  const cacheResponse = await cache.match(c.req.raw);
+  const cache = await openResponseCache('armamods:scenario-servers');
+  const cacheKey = scenarioCacheRequest(c.req.raw, game, scenarioName);
+  const cacheResponse = await cache.match(cacheKey);
   if (cacheResponse) return cacheResponse;
 
-  const servers = await getChunkedData(c.env.TRENDING_KV, keys.SERVERS);
+  const servers = await loadScenarioServers(c.env.TRENDING_KV, game, scenarioName);
   const sqeIndex = await loadSqeIndex(c.env.TRENDING_KV, game);
-  const enriched = enrichServersWithSqe(servers ?? [], sqeIndex);
-  const matched = enriched
-    .filter((s) => scenarioKey(s.scenarioName) === scenarioName)
+  const matched = enrichServersWithSqe(servers, sqeIndex)
     .sort((a, b) => {
       const rankA = a.sqeRank ?? Number.MAX_SAFE_INTEGER;
       const rankB = b.sqeRank ?? Number.MAX_SAFE_INTEGER;
@@ -1337,14 +1337,14 @@ app.get('/scenarios/servers', async (c) => {
     meta: { total: matched.length, scenario: scenarioName },
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
-  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
 });
 
 // Get Top Ranked Servers (Leaderboard) — must be registered before /servers/:serverId
 app.get('/servers/ranking', async (c) => {
   const game = c.req.query('game') || 'reforger';
-  const cache = await caches.open('armamods:ranking:servers');
+  const cache = await openResponseCache('armamods:ranking:servers');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1445,7 +1445,7 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
   const daysRaw = parseInt(c.req.query('days') || '7', 10);
   const days = daysRaw === 30 ? 30 : 7;
 
-  const cache = await caches.open('armamods:server_mod_changes');
+  const cache = await openResponseCache('armamods:server_mod_changes');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1513,7 +1513,7 @@ app.get('/servers/:serverId/mod-changes', async (c) => {
 
 // Get Single Server Details
 app.get('/servers/:serverId', async (c) => {
-  const cache = await caches.open('armamods:server_details');
+  const cache = await openResponseCache('armamods:server_details');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1593,7 +1593,7 @@ function serverBadgeSvg(opts: { tier: string | null; rank: number | null; name: 
  * by the collector). Cached 10 min.
  */
 app.get('/badge/server/:serverId', async (c) => {
-  const cache = await caches.open('armamods:badge');
+  const cache = await openResponseCache('armamods:badge');
   const cached = await cache.match(c.req.raw);
   if (cached) return cached;
 
@@ -1647,7 +1647,7 @@ app.get('/badge/server/:serverId', async (c) => {
 
 // Trending logic (Pre-calculated by collector)
 app.get('/trending/:period?', async (c) => {
-    const cache = await caches.open('armamods:trending');
+    const cache = await openResponseCache('armamods:trending');
     const cacheResponse = await cache.match(c.req.raw);
     if (cacheResponse) return cacheResponse;
 
@@ -1696,7 +1696,7 @@ app.get('/trending/:period?', async (c) => {
 // COMPREHENSIVE HEALTH CHECK
 // ──────────────────────────────────────────────
 app.get('/health', async (c) => {
-  const cache = await caches.open('armamods:health');
+  const cache = await openResponseCache('armamods:health');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -1803,7 +1803,7 @@ app.get('/diagnostics', async (c) => {
 app.get('/servers/:serverId/history', async (c) => {
   const serverId = c.req.param('serverId');
   const game = c.req.query('game') || 'reforger';
-  const cache = await caches.open('armamods:server_history');
+  const cache = await openResponseCache('armamods:server_history');
   const cacheResponse = await cache.match(c.req.raw);
   if (cacheResponse) return cacheResponse;
 
@@ -2522,7 +2522,7 @@ export default {
 
     // Root sitemap index
     if (url.pathname === '/sitemap.xml') {
-      const cache = caches.default as Cache;
+      const cache = responseCache(caches.default as Cache);
       const cached = await cache.match(request);
       if (cached) return cached;
       const body = renderSitemapIndex(sitemapIndexEntries());
@@ -2534,7 +2534,7 @@ export default {
     // Child sitemaps: /sitemap/pages.xml, /sitemap/mods.xml, /sitemap/servers.xml
     if (url.pathname.startsWith('/sitemap/')) {
       const part = url.pathname.slice('/sitemap/'.length);
-      const cache = caches.default as Cache;
+      const cache = responseCache(caches.default as Cache);
       const cached = await cache.match(request);
       if (cached) return cached;
       const body = await buildSitemapPart(env.TRENDING_KV as KVNamespace, part);
@@ -2590,7 +2590,7 @@ export default {
     // Botams share prerender'is jau grąžintas aukščiau; serverio neradus — plain SPA shell.
     const serverPageMatch = /^\/(arma3\/)?server\/([^/]+)\/?$/.exec(pathname);
     if (serverPageMatch) {
-      const cache = caches.default as Cache;
+      const cache = responseCache(caches.default as Cache);
       const cached = await cache.match(request);
       if (cached) return cached;
 
@@ -2622,7 +2622,7 @@ export default {
     // bet jo URL sužinomas tik iš API. PSI Est savings ~80 ms + greitesnis pirmas screenshot.
     const modPageMatch = /^\/(arma3\/)?mod\/([^/]+)\/?$/.exec(pathname);
     if (modPageMatch) {
-      const cache = caches.default as Cache;
+      const cache = responseCache(caches.default as Cache);
       const cached = await cache.match(request);
       if (cached) return cached;
       const htmlRes = await env.ASSETS.fetch(request);

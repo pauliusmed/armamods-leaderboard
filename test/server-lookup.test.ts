@@ -57,6 +57,7 @@ describe('buildServerIndex', () => {
       total: 3,
       shards: 2,
       map: { '111': 0, '222': 0, '333': 1 },
+      scenarios: { '— Unknown —': { shards: [0, 1], count: 3 } },
     });
   });
 
@@ -68,7 +69,7 @@ describe('buildServerIndex', () => {
 
   it('handles empty shards', () => {
     const index = buildServerIndex([[], []]);
-    assert.deepEqual(index, { total: 0, shards: 2, map: {} });
+    assert.deepEqual(index, { total: 0, shards: 2, map: {}, scenarios: {} });
   });
 });
 

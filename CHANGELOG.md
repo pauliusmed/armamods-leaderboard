@@ -2,6 +2,18 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.55] - 2026-10-16 (unreleased)
+
+### ARM-CPU-CACHE-1 — scenarijų serverių skaitymai ir Cache API politika
+
+- **Pataisyta:** kolektoriaus jau rašomas `cache:servers-index` papildytas scenarijų → shard'ų nuorodomis ir serverių skaičiumi. KV raktų / write operacijų nepridėta; Reforger ir Arma 3 naudoja tą patį kontraktą. API pasirenka tik reikalingus shard'us, išlaiko visus serverio laukus, SQE praturtinimą ir rikiavimą; lygiavertės scenarijaus užklausos dalijasi kanoniniu vidinio kešo raktu.
+- **Pereinamoji būsena:** senam indeksui / indekso ir shard'ų skaičiaus neatitikimui — aiškiai registruojamas riboto lygiagretumo skenas, kaupiant tik sutapimus. Naujų nuorodų nauda atsiras po šio kodo įjungimo ir kito įprasto kolektoriaus paleidimo. Jei scenarijus paplitęs visuose shard'uose, visus juos vis tiek reikės perskaityti; visos produkcijos CPU nauda dar neišmatuota.
+- **Kešo kontraktas:** Cache API saugomas tik palaikomas fresh TTL; originali vieša SWR politika atkuriama atsakyme išoriniam Workers Cache / klientui, vidinė metaduomenų antraštė pašalinama. Vidiniam Cache API nepriskiriamas nepalaikomas automatinis SWR. Šaltinis: https://developers.cloudflare.com/workers/runtime-apis/cache/.
+- **Patikra:** `npm test` **327/327**, `npm --prefix web test` **45/45**; root ir scripts `tsc` PASS, `npm --prefix web run build` PASS, `wrangler deploy --cwd web --dry-run` PASS (253.90 KiB, gzip 58.86 KiB). Nauji helperiai ESLint 0; Worker turi tik tuos pačius 3 ankstesnius warning. Testai registruoti root rinkinyje ir CI. Hono Worker API integracijos testas patvirtino payload / rikiavimo paritetą ir cache reuse; izoliuotas 6 shard'ų scenarijus skaitė 2 shard'us (ne produkcijos CPU matavimas).
+- **Pradinis lint blokatorius:** pilnas web lint dar PRIEŠ šį pakeitimą turėjo 1 klaidą `web/src/hooks/usePinnedFavoriteMods.ts:38` (`react-hooks/set-state-in-effect`) ir 12 warning; šiame darbe nesusijęs hook'as nekeistas. Neprilyginama žaliam pilnam lint.
+- **Vartai:** Heavy CI / pilni testai **required ir lokaliai atlikti** (cache kontraktas ir serverių paieškos skaitymo kelias). Darbo šaka `perf/ema-half-life-hourly-cadence` ir indekso papildymas patvirtinti savininko. Merge / deploy / produkcijos prieš-po patikra dar neatlikti; naujas kolektoriaus run'as nepaleistas.
+- **Komunikacija:** vidinė našumo / patikimumo pataisa, viešas funkcionalumas nesikeičia; `Discord release: skipped`.
+
 ## Research (unreleased) - 2026-08-30
 
 ### 📐 EMA/RAMP: cadence konstantos suderintos su hourly cron (v1.23.54) - 2026-09-30
