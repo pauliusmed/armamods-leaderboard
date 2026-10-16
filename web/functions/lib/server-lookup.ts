@@ -1,5 +1,7 @@
 import type { GameType } from '../api/history-query';
 import { cached } from './module-cache';
+import { getServersKey, getServersIndexKey, type ServerIndexPayload } from './server-index';
+export { buildServerIndex, type ServerIndexPayload } from './server-index';
 
 const SERVER_INDEX_CACHE_TTL_MS = 60_000;
 
@@ -24,33 +26,6 @@ function findMatchingBrace(text: string, openPos: number): number {
     }
   }
   return -1;
-}
-
-function getServersKey(game: GameType): string {
-  return game === 'arma3' ? 'cache:servers:arma3' : 'cache:servers';
-}
-
-function getServersIndexKey(game: GameType): string {
-  return game === 'arma3' ? 'cache:servers-index:arma3' : 'cache:servers-index';
-}
-
-/** Collector-written serverId → shard map, so the edge loads one shard (~5MB) instead of all (~80MB).
- *  Lygiagretos detail užklausos su pilnu skenu peršokdavo Worker 128MB ribą (exceededMemory 503). */
-export interface ServerIndexPayload {
-  total: number;
-  shards: number;
-  map: Record<string, number>;
-}
-
-/** Pure helper — used by the collector right after sharding the server list. */
-export function buildServerIndex(chunks: Array<Array<{ id: unknown }>>): ServerIndexPayload {
-  const map: Record<string, number> = {};
-  chunks.forEach((chunk, shardIdx) => {
-    for (const server of chunk) {
-      if (server?.id != null) map[String(server.id)] = shardIdx;
-    }
-  });
-  return { total: Object.keys(map).length, shards: chunks.length, map };
 }
 
 /** Parse one server object from preloaded shard text (testable without KV). */

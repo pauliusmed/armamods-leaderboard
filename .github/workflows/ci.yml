@@ -36,7 +36,7 @@ jobs:
         run: npx tsc --noEmit -p tsconfig.scripts.json
 
       - name: 🧪 Run Automated Unit Tests
-        run: npx tsx --test test/utils.test.ts
+        run: npx tsx --test test/utils.test.ts test/server-lookup.test.ts test/scenario-servers.test.ts test/response-cache.test.ts
 
       # ── Web (Vite SPA + Worker bundle) ──────────────────────────────────────
       # `web/` turi atskirą package.json ir atskirus tsconfig'us. Be šių
