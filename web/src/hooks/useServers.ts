@@ -18,6 +18,18 @@ const SERVER_SORTS: readonly ServerSortBy[] = ['rank', 'players', 'name', 'mods'
 const CONSOLE_FILTERS: readonly ConsoleFitFilter[] = ['all', 'vanilla', 'ps5', 'xbox-x', 'xbox-s'];
 const BM_STATUS_FILTERS: readonly BmStatusFilter[] = ['all', 'online', 'offline'];
 
+/**
+ * Paieškos debounce. `useUrlListState` atidėlioja tik URL įrašymą — `searchInput`
+ * keičiasi kiekvienu simboliu, todėl be šio delay'aus kiekviena raidė siuntė
+ * `/api/servers?search=` užklausą, kuri serveryje skaito VISUS shard'us.
+ */
+const SEARCH_DEBOUNCE_MS = 400;
+/**
+ * Kiek eilučių prašome paieškai. Serveris cap'ina taip pat
+ * (`SERVERS_LIST_LIMIT_CAP`), bet 5000 prašymas atsisiųsdavo ~25 MB JSON.
+ */
+const SEARCH_FETCH_LIMIT = 500;
+
 function modpackSortBytes(server: Server): number {
   if ((server.mods?.length ?? 0) === 0) return 0;
   return server.modpackEstimatedBytes ?? server.modpackKnownBytes ?? 0;
@@ -100,7 +112,7 @@ export function useServers(options: UseServersOptions = {}) {
       const [serversData, statsData] = await fetchWithRetry(
         () =>
           Promise.all([
-            serversApi.getList(query ? 5000 : 200, 0, game, { search: query || undefined }),
+            serversApi.getList(query ? SEARCH_FETCH_LIMIT : 200, 0, game, { search: query || undefined }),
             modsApi.getGlobalStats(game),
           ]),
         (attempt) => setRetryCount(attempt),
@@ -153,8 +165,14 @@ export function useServers(options: UseServersOptions = {}) {
     setSortDir(column === 'name' ? 'asc' : column === 'rank' ? 'asc' : 'desc');
   }, [sortBy, setSortBy, setSortDir]);
 
+  // Pirmas užkrovimas — be delay'aus (LCP), tolesni — debounce, kad rašymas
+  // nesiųstų po užklausą kiekvienam simboliui.
+  const firstLoadRef = useRef(true);
   useEffect(() => {
-    loadServers(searchInput);
+    const delay = firstLoadRef.current ? 0 : SEARCH_DEBOUNCE_MS;
+    firstLoadRef.current = false;
+    const handle = setTimeout(() => loadServers(searchInput), delay);
+    return () => clearTimeout(handle);
   }, [loadServers, searchInput]);
 
   const allFilteredServers = useMemo(() => {
