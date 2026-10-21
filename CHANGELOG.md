@@ -2,6 +2,19 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.56] - 2026-10-21 (unreleased)
+
+### ARM-CPU-CACHE-2 — serverių paieška: debounce, limit cap, ilgesnis kešas
+
+- **Problema:** `/api/servers?search=` kiekvieną kartą skaito visus serverių shard'us (`collectChunkedMatches`, ~16 × 5 MB, serializuota `withFullScanSlot`). 7 d. matavimas (Workers Observability + GraphQL): **800 pilnų skenų/sav.**, `GET /api/servers` CPU p99 **1 194 ms**; senasis `limit=5000` grąžindavo iki ~25 MB JSON. Worker'io p99 574 ms priklauso `/api/servers` **ir** `/api/mods/*` (1 069 ms) — abu ilgos uodegos, ne vienas endpointas.
+- **Kas pakeista:**
+  - `web/src/hooks/useServers.ts` — paieškos užklausa debounce'inama **400 ms**. Anksčiau `useUrlListState` atidėliojo tik URL įrašą, o `searchInput` keitėsi kiekvienu simboliu → kiekviena raidė siuntė shard'ų skeną. Pirmas užkrovimas lieka be delay'aus (LCP).
+  - Paieškos `limit` 5000 → **500**, tiek kliente (`SEARCH_FETCH_LIMIT`), tiek serveryje.
+  - **Naujas** `web/functions/lib/servers-query.ts`: `resolveServersLimit` (`full=1` → 5000, paieška/default → 500, NaN → 100, min 1) ir `serversCacheControl` (paieška **900 s**, sąrašas 300 s, abu + `stale-while-revalidate=3600`). `web/worker.ts` `/servers` naudoja abu; API atsakymo struktūra (`{ data, meta }`) nepakito.
+- **Patikra:** `npm test` **339/339** (+4 nauji `test/servers-query.test.ts`, registruoti `package.json` ir `ci.yml`), `npm --prefix web test` **45/45**, root + scripts `tsc` PASS, `npm --prefix web run build` PASS, `wrangler deploy --dry-run` PASS (255.23 KiB, gzip 59.25 KiB). ESLint: pakeistuose failuose 0; pre-existing `usePinnedFavoriteMods.ts:38` klaida nepaliesta.
+- **Vartai:** `Heavy CI: required because API limit kontraktas + paieškos skaitymo kelias`. Pilni testai atlikti lokaliai. Merge/deploy neatliktas; po deploy matuoti `[KV] Scanning` ≤250/sav. ir `GET /api/servers` CPU p99 <800 ms.
+- **Komunikacija:** vartotojui matomas pokytis (paieška po 400 ms pauzės, ≤500 rezultatų) — `DISCORD_RELEASES.md` atnaujintas.
+
 ## [1.23.55] - 2026-10-16 (unreleased)
 
 ### ARM-CPU-CACHE-1 — scenarijų serverių skaitymai ir Cache API politika

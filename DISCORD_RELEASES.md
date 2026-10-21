@@ -3,6 +3,11 @@
 Each entry is what gets posted to #announcements. Written for players and server
 owners — no internal/technical jargon, no monetization or affiliate details.
 
+## [1.23.56] - 2026-10-21
+
+- Server search now waits until you pause typing instead of querying on every keystroke, and it moves far less data per search — results show up noticeably faster, especially on mobile.
+- Very broad searches return the 500 highest-ranked matching servers instead of a huge download, so the list stays responsive.
+
 ## [1.23.45] - 2026-09-28
 
 - Workshop images (mod thumbnails and screenshot galleries) now load straight from the official CDN. The first visit to a page may take slightly more data, while repeat views stay cached in your browser.

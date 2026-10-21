@@ -83,6 +83,10 @@ import { loadListIdsFromKv } from './functions/lib/sitemap-kv';
 import { cached } from './functions/lib/module-cache';
 import { collectChunkedMatches, loadChunkedData } from './functions/lib/chunked-scan';
 import {
+  resolveServersLimit,
+  serversCacheControl,
+} from './functions/lib/servers-query';
+import {
   entityHistoryObjectKey,
   readMaterializedEntityHistory,
   writeMaterializedEntityHistory,
@@ -1199,9 +1203,7 @@ app.get('/servers', async (c) => {
   const full = c.req.query('full') === '1';
   const search = c.req.query('search') || '';
   const requestedLimit = parseInt(c.req.query('limit') || '100', 10);
-  const limit = full || search
-    ? Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 5000)
-    : Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 100, 500);
+  const limit = resolveServersLimit({ full, search, requestedLimit });
   const offset = parseInt(c.req.query('offset') || '0', 10);
 
   // Precomputed default 200 — serversApi.getList(200, 0) (reforger, be paieškos/full).
@@ -1270,8 +1272,8 @@ app.get('/servers', async (c) => {
     meta: { total: filtered.length, limit, offset } 
   });
 
-  // Cache for 5 minutes to ensure fresh SQE data after collector runs
-  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  // Paieška — brangiausias kelias, todėl ilgesnis TTL (žr. functions/lib/servers-query.ts).
+  response.headers.set('Cache-Control', serversCacheControl(search));
   c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
 
   const finished = Date.now() - start;
