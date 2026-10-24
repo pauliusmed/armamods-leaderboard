@@ -2,6 +2,23 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.58] - 2026-10-24 (unreleased)
+
+### ARM-CPU-CACHE-4 — kanoninis `/server/:id` puslapis (vienas URL = vienas kūnas)
+
+- **Problema (korektiškumas, ne tik CPU):** tas pats `/server/:id` URL grąžindavo **du skirtingus kūnus** pagal `User-Agent` — crawler'iui 2,4 KB share HTML, žmogui 18 KB SPA su embedded duomenimis. Abu turėjo `public` politiką ir **jokio `Vary`**, o Workers Caching variantų be `Vary` neatskiria → 5 min. langę vienas galėjo būti patiektas kitam (žmogus — crawler puslapį arba atvirkščiai). Cloudflare docs šiam atvejui siūlo „produce a canonical response per URL".
+- **Antra problema:** `SOCIAL_CRAWLER_UA` turi platų `/bot/`, todėl **AhrefsBot** (44 % viso Worker'io CPU, 14,2 tūkst. invokacijų/sav.) patekdavo į „social" kelią ir gaudavo `<meta http-equiv="refresh">` — SEO crawler'iui neteisingas signalas. Be to, share kelias naudoja `findByIdWithScan`, todėl pasenęs ID kainuodavo visų shard'ų skeną (213–507 ms).
+- **Kas pakeista:**
+  - `/server/:id` — **vienas kanoninis kūnas visiems** (žmonėms ir indeksuotojams): SPA shell + `<title>`/description/canonical/OG/Twitter + JSON-LD + embedded serverio JSON. Meta statoma iš **to paties** jau perskaityto įrašo (`buildServerShareMeta`), be antro `lookupServer`.
+  - Socialinių tinklų botai (Discord/Twitter/FB/…) tebegauna share HTML su `meta refresh`, bet su `Cache-Control: private, max-age=0` (išorinis kešas — BYPASS) ir atskiru Cache API raktu (`?__share=<mode>`) — botų HTML niekada neužima bendro URL įrašo.
+  - Modų puslapiuose indeksuotojams share HTML lieka (ten serverinės meta nėra), tačiau irgi `private` + atskiras Cache API raktas.
+  - `INDEXER_CRAWLER_UA` papildytas `ahrefsbot|semrushbot|bytespider|mj12bot|dotbot|petalbot|serpstatbot`; indeksuotojai tikrinami prieš socialinius.
+  - `web/src/main.tsx` — po React boot'o pašalina `[data-ssr]` žymėtus `<title>`/`<meta>`/`<link>`, kad neliktų dublikatų su React Helmet (JSON-LD lieka).
+  - `web/functions/lib/embedded-data.ts` — `replaceStaticHeadSeo`: pašalina globalų `index.html` SEO bloką (tik žinomus vienos eilutės tag'us; favicon/viewport/theme-color lieka), kad puslapyje neliktų dviejų `<title>`.
+- **Patikra:** `npm test` **353/353** (+6: `server-page-cache` 3 → 4, `embedded-data` +3), `npm --prefix web test` **45/45**, root + scripts `tsc` PASS, `npm --prefix web run build` PASS, `wrangler deploy --cwd web --dry-run` PASS (257,78 KiB, gzip 59,91 KiB). ESLint: 0 naujų; liko 3 pre-existing warning `worker.ts`.
+- **Vartai:** `Heavy CI: required because kešo kontraktai + SEO žymėjimas`. Po deploy patikrinti: (1) `Googlebot` ir `Chrome` UA `/server/:id` grąžina identišką HTML; (2) Discord/Twitter preview veikia (OG iš share kūno); (3) `/mod/:id` indeksuotojui `private`; (4) 7 d. CPU.
+- **Komunikacija:** vartotojui matomas pokytis — `/server/:id` puslapyje meta tag'ai (SEO/link preview) dabar ateina iš serverio, ne tik po JS; `Discord release: skipped` (elgesys žaidėjui nepasikeitė). `docs/` prerender aprašymai gali būti pasenę — atnaujinimas atskirai, su savininko patvirtinimu.
+
 ## [1.23.57] - 2026-10-24 (unreleased)
 
 ### ARM-CPU-CACHE-3 — cache-buster normalizavimas + neigiamo `/server/:id` kešavimas
