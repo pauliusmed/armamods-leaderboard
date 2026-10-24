@@ -2,6 +2,17 @@
 
 Release notes nuo v1.18.0. Pilna istorija žemiau.
 
+## [1.23.57] - 2026-10-24 (unreleased)
+
+### ARM-CPU-CACHE-3 — cache-buster normalizavimas + neigiamo `/server/:id` kešavimas
+
+- **Kontekstas (matuota 2026-10-17→24, Workers Observability + GraphQL):** Worker'is **6,70 mln. ms/sav.** (~29,1 mln. ms/30 d., 59,8 ms/req), 112 tūkst. invokacijų. Didžiausi šaltiniai: `/server/:id` puslapis **59,5 %** (32,6 tūkst. invokacijų, 134 ms avg), `/api/mods/:id` 16,2 %, `/api/servers` 8,6 % (349 ms/req), `/mod/:id` 8,4 %.
+- **Pataisyta 1 — launcher cache-buster:** `Arma-Reforger-Launcher` kviečia `/api/servers?...&_=<ts>` (jQuery `cache: false`). Cache API raktas — pilnas URL, todėl kiekviena užklausa buvo MISS ir kartodavo pilną shard'ų skenavimą: **1 210 užklausų, 401 ms CPU/req, 485 tūkst. ms/sav.** (7,1 %). Naujas `web/functions/lib/cache-key.ts` (`cacheKeyUrl` / `cacheKeyRequest`) šalina tik `_`; `/servers` naudoja jį `match` ir `put` (įskaitant precomputed kelią). Kiti parametrai neliečiami — jie keičia atsakymą.
+- **Pataisyta 2 — neigiamas `/server/:id`:** neradus serverio, atsakymas krisdavo į `env.ASSETS.fetch` su `max-age=0, must-revalidate` → Workers Caching revaliduodavo kas kartą, t. y. Worker'is kiekvieną bot'o pasikartojimą vėl ėjo per indeksą/shards (matuota 213–507 ms/hit; AhrefsBot vien tik 44 % viso CPU). Dabar tas pats SPA shell grąžinamas su ta pačia politika kaip teigiamas atsakymas (`SERVER_PAGE_CACHE_CONTROL`, 300 s + SWR) ir įrašomas į Cache API. Turinys nepasikeitė.
+- **Patikra:** `npm test` **347/347** (+7 `test/cache-key.test.ts` ir +1 regresinis `test/server-page-cache.test.ts`, abu registruoti `package.json` ir `ci.yml`), `npm --prefix web test` **45/45**, root + scripts `tsc` PASS, `npm --prefix web run build` PASS, `wrangler deploy --cwd web --dry-run` PASS (256,07 KiB, gzip 59,49 KiB). ESLint: 0 naujų; liko pre-existing 1 klaida (`usePinnedFavoriteMods.ts:38`) ir 3 warning `worker.ts` (640, 1665, 2448) — neliesti.
+- **Vartai:** `Heavy CI: required because kešo raktų kontraktas + `/server/:id` atsakymo politika`. Po deploy matuoti: `[CACHE HIT] Servers data` log'ų dalis (tikimasi >80 % launcher'io srauto), `GET /api/servers` CPU avg <50 ms, savaitinis CPU <5,5 mln. ms.
+- **Komunikacija:** vidinė našumo pataisa, puslapių elgesys nesikeičia; `Discord release: skipped`. `docs/COST_GUARDRAILS.md` skaičiai (09-30: 24,3 mln. ms/mėn) pasenę — atnaujinimas atskirai, su savininko patvirtinimu.
+
 ## [1.23.56] - 2026-10-21 (unreleased)
 
 ### ARM-CPU-CACHE-2 — serverių paieška: debounce, limit cap, ilgesnis kešas

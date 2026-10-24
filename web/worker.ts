@@ -59,6 +59,7 @@ import { buildServerStoragePack } from './functions/lib/storage-service';
 import { matchesModSearch, matchesModSearchByNameOrId, matchesServerSearch } from './functions/lib/search-match';
 import { buildScenarioRanking } from './functions/lib/scenario-ranking';
 import { loadScenarioServers, scenarioCacheRequest } from './functions/lib/scenario-servers';
+import { cacheKeyRequest } from './functions/lib/cache-key';
 import { openResponseCache, responseCache } from './functions/lib/response-cache';
 import { parseServerHistoryFields } from './functions/lib/server-uptime-history';
 import { extractModFromChunks } from './functions/lib/mod-lookup';
@@ -1191,7 +1192,11 @@ app.get('/mods/:modId/history', async (c) => {
 
 app.get('/servers', async (c) => {
   const cache = await openResponseCache('armamods:servers');
-  const cacheResponse = await cache.match(c.req.raw);
+  // Launcher'is siunčia jQuery cache-buster'į `_=<ts>` — normalizuojame raktą,
+  // kitaip kiekviena užklausa yra MISS ir kartoja pilną shard'ų skenavimą
+  // (matuota: 401 ms CPU/req, žr. `functions/lib/cache-key.ts`).
+  const cacheKey = cacheKeyRequest(c.req.raw);
+  const cacheResponse = await cache.match(cacheKey);
   if (cacheResponse) {
       console.log(`[CACHE HIT] Servers data for ${c.req.url}`);
       return cacheResponse;
@@ -1219,7 +1224,7 @@ app.get('/servers', async (c) => {
       });
       response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
       response.headers.set('X-Precomputed', '1');
-      c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+      c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
       console.log(`[SERVERS] served precomputed ${raw.servers.length} rows`);
       return response;
     }
@@ -1274,7 +1279,7 @@ app.get('/servers', async (c) => {
 
   // Paieška — brangiausias kelias, todėl ilgesnis TTL (žr. functions/lib/servers-query.ts).
   response.headers.set('Cache-Control', serversCacheControl(search));
-  c.executionCtx.waitUntil(cache.put(c.req.raw, response.clone()));
+  c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
 
   const finished = Date.now() - start;
   console.log(`[SERVERS] Prepared in ${finished}ms`);
@@ -2485,6 +2490,14 @@ async function buildSitemapPart(kv: KVNamespace, part: string): Promise<string |
 const RATE_LIMITED_PREFIXES = ['/api/', '/mod/', '/server/', '/arma3/'];
 const RATE_LIMIT_RETRY_AFTER = '10';
 
+/**
+ * `/server/:id` HTML politika: ta pati teigiamam (embedded duomenys) ir
+ * neigiamam (SPA shell) atsakymui. Skirtingos politikos reikštų, kad
+ * neigiamas atsakymas krenta į ASSETS `max-age=0, must-revalidate` ir
+ * Worker'is būna kviečiamas kiekvieną bot'o pasikartojimą.
+ */
+const SERVER_PAGE_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600';
+
 function rateLimit429(): Response {
   return new Response('Too Many Requests', {
     status: 429,
@@ -2612,12 +2625,26 @@ export default {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             // Tas pats freshness kaip /api/servers/:id — duomenys keičiasi kas ~2h collectorio run metu
-            'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+            'Cache-Control': SERVER_PAGE_CACHE_CONTROL,
           },
         });
         ctx.waitUntil(cache.put(request, response.clone()));
         return response;
       }
+
+      // Nerastas (ištrintas arba pasenęs ID). Nekeičiam turinio — tas pats SPA
+      // shell, kurį anksčiau grąžindavo `env.ASSETS.fetch` fallback'as, bet
+      // su aiškia politika: ASSETS atsakymas turi `max-age=0, must-revalidate`,
+      // todėl Workers Caching revaliduodavo kas kartą ir Worker'is kiekvieną
+      // bot'o hit'ą vėl ėjo per indeksą/shards (matuota 2026-10: 213–507 ms).
+      const shell = new Response(htmlRes.body, {
+        status: htmlRes.status,
+        statusText: htmlRes.statusText,
+        headers: new Headers(htmlRes.headers),
+      });
+      shell.headers.set('Cache-Control', SERVER_PAGE_CACHE_CONTROL);
+      ctx.waitUntil(cache.put(request, shell.clone()));
+      return shell;
     }
 
     // /mod/:id — preconnect į Bohemia CDN prieš bet kokį JS: galerijos herojus yra LCP,
