@@ -29,6 +29,7 @@ import {
   lookupModsByIds,
   parseShareRoute,
   renderHeadTags,
+  renderNoscriptFallback,
   renderShareHtml,
   type ShareGame,
 } from './functions/lib/share-meta';
@@ -54,7 +55,7 @@ import {
 } from './functions/lib/mods-search-index';
 import { applyModFieldsToRows, loadModFieldsBundle } from './functions/lib/mod-fields-bundle';
 import { findServerById, ServerLookup } from './functions/lib/server-lookup';
-import { buildEmbeddedServerScript, injectEmbeddedData, injectHeadTag, replaceStaticHeadSeo } from './functions/lib/embedded-data';
+import { buildEmbeddedServerScript, injectEmbeddedData, injectHeadTag, injectNoscriptFallback, replaceStaticHeadSeo } from './functions/lib/embedded-data';
 import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
 import { analyzeStoragePlan } from './functions/lib/storage-calc';
 import { buildServerStoragePack } from './functions/lib/storage-service';
@@ -2650,10 +2651,11 @@ export default {
           id: embeddedServerId,
         });
         const html = replaceStaticHeadSeo(await htmlRes.text());
-        const body = injectEmbeddedData(
-          injectHeadTag(html, renderHeadTags(meta)),
-          buildEmbeddedServerScript(server)
-        );
+        // `<noscript>` — matomas turinys JS nevykdantiems crawler'iams (Bing/Yandex/AI),
+        // kūnas visiems išlieka tas pats.
+        const withHead = injectHeadTag(html, renderHeadTags(meta));
+        const withFallback = injectNoscriptFallback(withHead, renderNoscriptFallback(meta));
+        const body = injectEmbeddedData(withFallback, buildEmbeddedServerScript(server));
         const response = new Response(body, {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',

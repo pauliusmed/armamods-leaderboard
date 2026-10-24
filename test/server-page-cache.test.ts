@@ -110,6 +110,8 @@ describe('/server/:id — kanoninis kūnas', () => {
       assert.ok(body.includes('<title data-ssr>Test &quot;Server&quot; &lt;1> | Arma Reforger Server</title>'));
       assert.ok(body.includes('application/ld+json'), 'JSON-LD');
       assert.ok(body.includes('rel="canonical" href="https://reforgermods.com/server/srv-1"'));
+      // JS nevykdantys crawler'iai turi matyti tekstą — ne tik tuščią <div id="root">
+      assert.ok(body.includes('<noscript><h1>Test &quot;Server&quot; &lt;1> | Arma Reforger Server</h1>'));
       // Globalus statinio shell meta pakeistas, ne pridėtas
       assert.equal(body.includes('content="global"'), false);
       assert.equal(body.match(/<title/g)?.length, 1, 'tik vienas <title>');

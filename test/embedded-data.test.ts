@@ -4,6 +4,7 @@ import {
   escapeJsonForScript,
   injectEmbeddedData,
   injectHeadTag,
+  injectNoscriptFallback,
   buildEmbeddedServerScript,
   replaceStaticHeadSeo,
   EMBEDDED_SERVER_ELEMENT_ID,
@@ -60,6 +61,19 @@ describe('buildEmbeddedServerScript', () => {
     // Grąžinamas JSON turi dekodavus duoti tą patį objektą
     const inner = tag.slice(tag.indexOf('>') + 1, -'</script>'.length);
     assert.deepEqual(JSON.parse(inner), { id: '42', name: '<b>Server</b>' });
+  });
+});
+
+describe('injectNoscriptFallback', () => {
+  it('įterpia turinį prieš SPA šaknį', () => {
+    const html = '<html><body><div id="root"></div></body></html>';
+    const out = injectNoscriptFallback(html, '<noscript><h1>Server</h1></noscript>');
+    assert.ok(out.includes('<noscript><h1>Server</h1></noscript><div id="root">'));
+  });
+
+  it('append\'ina, jei šaknies žymeklio nėra', () => {
+    const out = injectNoscriptFallback('<div></div>', '<noscript>x</noscript>');
+    assert.ok(out.startsWith('<noscript>x</noscript>'));
   });
 });
 

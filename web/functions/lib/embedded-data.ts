@@ -25,6 +25,16 @@ export function injectHeadTag(html: string, tag: string): string {
 }
 
 /**
+ * Įterpia `<noscript>` turinį prieš SPA šaknį (`<div id="root">`), kad
+ * JS nevykdantys crawler'iai matytų tekstą. Jei žymeklio nėra — append'ina.
+ */
+export function injectNoscriptFallback(html: string, markup: string): string {
+  const marker = '<div id="root">';
+  const idx = html.indexOf(marker);
+  return idx === -1 ? markup + html : html.slice(0, idx) + markup + html.slice(idx);
+}
+
+/**
  * Pašalina statinio `index.html` SEO bloką prieš įterpiant puslapio meta.
  *
  * KODĖL: `web/index.html` turi globalų `<title>`, `description`, `og:*` ir

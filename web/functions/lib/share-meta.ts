@@ -347,6 +347,17 @@ ${refresh}  <script type="application/ld+json">${jsonLd}</script>
 `;
 }
 
+/**
+ * `<noscript>` turinys kanoniniam `/server/:id` puslapiui.
+ *
+ * KODĖL: suvienodinus kūną, JS nevykdantys crawler'iai (Bing, Yandex, AI botai)
+ * mato tik `<div id="root">` — anksčiau jie gaudavo atskirą share HTML su
+ * matomu `<h1>`. `<noscript>` grąžina matomą turinį NEPAKEITUS kūno kitiems.
+ */
+export function renderNoscriptFallback(meta: ShareMetaPayload): string {
+  return `<noscript><h1>${escapeHtml(meta.title)}</h1><p>${escapeHtml(meta.description)}</p><p><a href="${escapeHtml(meta.url)}">Open full page on reforgermods.com</a></p></noscript>`;
+}
+
 export function renderShareHtml(
   meta: ShareMetaPayload,
   options: { mode?: 'social' | 'indexer' } = {}
