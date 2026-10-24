@@ -4,7 +4,9 @@ import {
   escapeJsonForScript,
   injectEmbeddedData,
   injectHeadTag,
+  injectNoscriptFallback,
   buildEmbeddedServerScript,
+  replaceStaticHeadSeo,
   EMBEDDED_SERVER_ELEMENT_ID,
 } from '../web/functions/lib/embedded-data.ts';
 
@@ -59,5 +61,61 @@ describe('buildEmbeddedServerScript', () => {
     // Grąžinamas JSON turi dekodavus duoti tą patį objektą
     const inner = tag.slice(tag.indexOf('>') + 1, -'</script>'.length);
     assert.deepEqual(JSON.parse(inner), { id: '42', name: '<b>Server</b>' });
+  });
+});
+
+describe('injectNoscriptFallback', () => {
+  it('įterpia turinį prieš SPA šaknį', () => {
+    const html = '<html><body><div id="root"></div></body></html>';
+    const out = injectNoscriptFallback(html, '<noscript><h1>Server</h1></noscript>');
+    assert.ok(out.includes('<noscript><h1>Server</h1></noscript><div id="root">'));
+  });
+
+  it('append\'ina, jei šaknies žymeklio nėra', () => {
+    const out = injectNoscriptFallback('<div></div>', '<noscript>x</noscript>');
+    assert.ok(out.startsWith('<noscript>x</noscript>'));
+  });
+});
+
+describe('replaceStaticHeadSeo', () => {
+  const SHELL = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101923" />
+    <title>Arma Mods - Real-time Analytics & Trends</title>
+    <meta name="description" content="Discover and track the most popular Arma mods." />
+    <meta name="keywords" content="Arma Reforger, Arma 3" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://reforgermods.com/" />
+    <meta property="og:title" content="Arma Mods - Real-time Analytics & Trends" />
+    <meta property="og:image" content="https://reforgermods.com/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Arma Mods - Real-time Analytics & Trends" />
+  </head>
+  <body><div id="root"></div></body>
+</html>`;
+
+  it('pašalina globalų title, description, og ir twitter bloką', () => {
+    const out = replaceStaticHeadSeo(SHELL);
+    assert.equal(out.includes('<title>'), false);
+    assert.equal(out.includes('name="description"'), false);
+    assert.equal(out.includes('name="keywords"'), false);
+    assert.equal(out.includes('property="og:'), false);
+    assert.equal(out.includes('name="twitter:'), false);
+  });
+
+  it('palieka techninius head tag\'us (charset, viewport, favicon)', () => {
+    const out = replaceStaticHeadSeo(SHELL);
+    assert.ok(out.includes('charset="UTF-8"'));
+    assert.ok(out.includes('name="viewport"'));
+    assert.ok(out.includes('rel="icon"'));
+  });
+
+  it('nekeičia HTML be SEO bloko', () => {
+    const html = '<html><head><meta name="viewport" content="width=device-width" /></head><body></body></html>';
+    assert.equal(replaceStaticHeadSeo(html), html);
   });
 });

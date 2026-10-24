@@ -24,6 +24,34 @@ export function injectHeadTag(html: string, tag: string): string {
   return idx === -1 ? html + tag : html.slice(0, idx) + tag + html.slice(idx);
 }
 
+/**
+ * Įterpia `<noscript>` turinį prieš SPA šaknį (`<div id="root">`), kad
+ * JS nevykdantys crawler'iai matytų tekstą. Jei žymeklio nėra — append'ina.
+ */
+export function injectNoscriptFallback(html: string, markup: string): string {
+  const marker = '<div id="root">';
+  const idx = html.indexOf(marker);
+  return idx === -1 ? markup + html : html.slice(0, idx) + markup + html.slice(idx);
+}
+
+/**
+ * Pašalina statinio `index.html` SEO bloką prieš įterpiant puslapio meta.
+ *
+ * KODĖL: `web/index.html` turi globalų `<title>`, `description`, `og:*` ir
+ * `twitter:*`. Jei jų nepašalintume, `/server/:id` HTML turėtų DVI skirtingas
+ * reikšmes tą pačią dieną (globalią ir serverio), o crawler'is ima pirmą.
+ * Liečiami tik žinomi vienos eilutės tag'ai; favicon/viewport/theme-color lieka.
+ */
+export function replaceStaticHeadSeo(html: string): string {
+  return html
+    .replace(/<title>[^<]*<\/title>\s*/i, '')
+    .replace(
+      /<meta\s+(?:name="(?:description|keywords)"|property="og:[^"]*"|name="twitter:[^"]*")[^>]*>\s*/gi,
+      ''
+    )
+    .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, '');
+}
+
 export function buildEmbeddedServerScript(server: unknown): string {
   const json = escapeJsonForScript(JSON.stringify(server));
   return `<script type="application/json" id="${EMBEDDED_SERVER_ELEMENT_ID}">${json}</script>`;

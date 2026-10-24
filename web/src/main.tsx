@@ -10,6 +10,11 @@ import '@fontsource/jetbrains-mono/latin-700.css'
 import './index.css'
 import App from './App.tsx'
 
+// `/server/:id` HTML atsiunčia kanoninius <title>/<meta>/JSON-LD (SEO be JS).
+// Po React boot'o juos valdo React Helmet, todėl statinius žymėtus `data-ssr`
+// pašaliname — kitaip `<head>` liktų po dvi tas pačias reikšmes.
+document.head.querySelectorAll('[data-ssr]').forEach((el) => el.remove())
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>

@@ -21,12 +21,15 @@ import {
 } from './functions/api/audit-config';
 import { resolveHistoryQuery, historyCutoffPrefix, firstPointTime, type GameType as HistoryGameType } from './functions/api/history-query';
 import {
+  buildServerShareMeta,
   buildShareMeta,
   defaultOgImage,
   isIndexerCrawler,
-  isShareCrawler,
+  isSocialCrawler,
   lookupModsByIds,
   parseShareRoute,
+  renderHeadTags,
+  renderNoscriptFallback,
   renderShareHtml,
   type ShareGame,
 } from './functions/lib/share-meta';
@@ -52,7 +55,7 @@ import {
 } from './functions/lib/mods-search-index';
 import { applyModFieldsToRows, loadModFieldsBundle } from './functions/lib/mod-fields-bundle';
 import { findServerById, ServerLookup } from './functions/lib/server-lookup';
-import { buildEmbeddedServerScript, injectEmbeddedData, injectHeadTag } from './functions/lib/embedded-data';
+import { buildEmbeddedServerScript, injectEmbeddedData, injectHeadTag, injectNoscriptFallback, replaceStaticHeadSeo } from './functions/lib/embedded-data';
 import { findReverseDependentsOnServer } from './functions/lib/reverse-deps';
 import { analyzeStoragePlan } from './functions/lib/storage-calc';
 import { buildServerStoragePack } from './functions/lib/storage-service';
@@ -2589,20 +2592,42 @@ export default {
       }
 
       const userAgent = request.headers.get('user-agent') || '';
-      if (route && isShareCrawler(userAgent)) {
+      // Vienas URL — vienas kešuojamas kūnas. `Workers Caching` neatskiria
+      // variantų be `Vary`, todėl crawler'iui skirtas HTML negali dalintis
+      // kešo įrašu su SPA. Serverių puslapiai meta gauna kanoniniame HTML'e,
+      // tad indeksuotojams share variantas nebereikalingas; modų puslapiuose
+      // serverinės meta nėra, todėl ten share HTML lieka (ir kešuojamas atskirai).
+      const indexer = isIndexerCrawler(userAgent);
+      const social = isSocialCrawler(userAgent);
+      const wantsShareHtml = route !== null && (indexer ? route.kind === 'mod' : social);
+      if (wantsShareHtml && route) {
+        const mode = indexer ? 'indexer' : 'social';
+        // Atskiras Cache API raktas: botų HTML niekada neužima bendro URL įrašo.
+        // `private` — išorinis Workers Caching šio kūno nesaugo (BYPASS).
+        const shareUrl = new URL(request.url);
+        shareUrl.searchParams.set('__share', mode);
+        const shareKey = new Request(shareUrl.toString(), { method: 'GET' });
+        const shareCache = responseCache(caches.default as Cache);
+        const cachedShare = await shareCache.match(shareKey);
+        if (cachedShare) return cachedShare;
+
         const meta = await buildShareMeta(env.TRENDING_KV as KVNamespace, route);
         if (meta) {
-          const mode = isIndexerCrawler(userAgent) ? 'indexer' : 'social';
-          return new Response(renderShareHtml(meta, { mode }), {
-            headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+          const response = new Response(renderShareHtml(meta, { mode }), {
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'private, max-age=0',
+            },
           });
+          ctx.waitUntil(shareCache.put(shareKey, response.clone()));
+          return response;
         }
       }
     }
 
-    // /server/:id — embedded serverio duomenys HTML'e paprastiems lankytojams (LCP fix):
-    // h1 + sekcijos render'inasi iškart po React boot, be API round-trip critical path'e.
-    // Botams share prerender'is jau grąžintas aukščiau; serverio neradus — plain SPA shell.
+    // /server/:id — kanoninis puslapis VISIEMS (žmonėms ir indeksuotojams):
+    // SPA shell + embedded serverio JSON (LCP) + `<head>` meta/JSON-LD (SEO be JS).
+    // Skirtingų kūnų tam pačiam URL nebeliko, todėl kešo variantai nesilieja.
     const serverPageMatch = /^\/(arma3\/)?server\/([^/]+)\/?$/.exec(pathname);
     if (serverPageMatch) {
       const cache = responseCache(caches.default as Cache);
@@ -2619,8 +2644,18 @@ export default {
       if (rawServer) {
         const sqeIndex = await loadSqeIndex(env.TRENDING_KV as KVNamespace, embeddedGame as GameType);
         const server = enrichServerWithSqe(rawServer, sqeIndex);
-        const html = await htmlRes.text();
-        const body = injectEmbeddedData(html, buildEmbeddedServerScript(server));
+        // Meta statoma iš to paties įrašo — be antro `lookupServer` (5 MB shard'o).
+        const meta = buildServerShareMeta(server, {
+          game: embeddedGame,
+          kind: 'server',
+          id: embeddedServerId,
+        });
+        const html = replaceStaticHeadSeo(await htmlRes.text());
+        // `<noscript>` — matomas turinys JS nevykdantiems crawler'iams (Bing/Yandex/AI),
+        // kūnas visiems išlieka tas pats.
+        const withHead = injectHeadTag(html, renderHeadTags(meta));
+        const withFallback = injectNoscriptFallback(withHead, renderNoscriptFallback(meta));
+        const body = injectEmbeddedData(withFallback, buildEmbeddedServerScript(server));
         const response = new Response(body, {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',

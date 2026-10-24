@@ -29,8 +29,14 @@ export interface ShareMetaPayload {
 const SOCIAL_CRAWLER_UA =
   /bot|crawl|spider|facebookexternalhit|twitterbot|discordbot|slackbot|linkedinbot|whatsapp|telegrambot|embedly|preview|vkshare|redditbot|pinterest/i;
 
+/**
+ * Paieškos indeksuotojai. `SOCIAL_CRAWLER_UA` turi platų `bot`, todėl
+ * AhrefsBot/SemrushBot irgi patekdavo į „social" kelią ir gaudavo
+ * `<meta http-equiv="refresh">` — SEO crawler'iui tai neteisingas signalas.
+ * Todėl indeksuotojai tikrinami PIRMI ir gauna `indexer` režimą.
+ */
 const INDEXER_CRAWLER_UA =
-  /googlebot|bingbot|yandex(bot)?|duckduckbot|baiduspider|applebot|slurp|gptbot|chatgpt-user|claudebot|perplexitybot/i;
+  /googlebot|bingbot|yandex(bot)?|duckduckbot|baiduspider|applebot|slurp|gptbot|chatgpt-user|claudebot|perplexitybot|ahrefsbot|semrushbot|bytespider|mj12bot|dotbot|petalbot|serpstatbot/i;
 
 /** Discord / Facebook / link-preview bots. */
 export function isSocialCrawler(userAgent: string): boolean {
@@ -252,14 +258,21 @@ export async function buildShareMeta(
   const server = await lookupServer(kv, route.game, route.id);
   if (!server) return null;
 
+  return buildServerShareMeta(server, route);
+}
+
+/**
+ * Serverio meta iš jau perskaityto įrašo. Išskirta, kad `/server/:id`
+ * puslapis nenaudotų antro `lookupServer` (5 MB shard'o) vien meta tag'ams.
+ */
+export function buildServerShareMeta(server: any, route: ShareRoute): ShareMetaPayload {
+  const gameLabel = route.game === 'arma3' ? 'Arma 3' : 'Arma Reforger';
   const sqe = server.sqeRank ? `#${server.sqeRank}` : 'N/A';
-  const title = `${server.name} | ${gameLabel} Server`;
-  const description = `${server.players}/${server.maxPlayers} players · Server Rank ${sqe} · reforgermods.com`;
 
   return {
-    title,
-    description,
-    url,
+    title: `${server.name} | ${gameLabel} Server`,
+    description: `${server.players}/${server.maxPlayers} players · Server Rank ${sqe} · reforgermods.com`,
+    url: pageUrl(route),
     image: serverPreviewImageUrl(route.id, route.game),
     kind: 'server',
     name: String(server.name ?? route.id),
@@ -295,57 +308,81 @@ function shareJsonLd(meta: ShareMetaPayload): Record<string, unknown> {
   };
 }
 
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Kanoninis `<head>` civilinis blokas: tinka ir share prerender'iui, ir
+ * `/server/:id` puslapiui (SPA shell + meta). `data-ssr` žymi tag'us, kuriuos
+ * klientas po React boot'o pašalina — taip nelieka dublikatų su React Helmet.
+ */
+export function renderHeadTags(
+  meta: ShareMetaPayload,
+  options: { refresh?: boolean } = {}
+): string {
+  const jsonLd = JSON.stringify(shareJsonLd(meta)).replace(/</g, '\\u003c');
+  const refresh = options.refresh
+    ? `  <meta data-ssr http-equiv="refresh" content="0;url=${escapeHtml(meta.url)}" />\n`
+    : '';
+
+  return `  <title data-ssr>${escapeHtml(meta.title)}</title>
+  <meta data-ssr name="description" content="${escapeHtml(meta.description)}" />
+  <link data-ssr rel="canonical" href="${escapeHtml(meta.url)}" />
+  <meta data-ssr name="robots" content="index, follow" />
+  <meta data-ssr property="og:type" content="website" />
+  <meta data-ssr property="og:site_name" content="reforgermods.com" />
+  <meta data-ssr property="og:url" content="${escapeHtml(meta.url)}" />
+  <meta data-ssr property="og:title" content="${escapeHtml(meta.title)}" />
+  <meta data-ssr property="og:description" content="${escapeHtml(meta.description)}" />
+  <meta data-ssr property="og:image" content="${escapeHtml(meta.image)}" />
+  <meta data-ssr name="twitter:card" content="summary_large_image" />
+  <meta data-ssr name="twitter:title" content="${escapeHtml(meta.title)}" />
+  <meta data-ssr name="twitter:description" content="${escapeHtml(meta.description)}" />
+  <meta data-ssr name="twitter:image" content="${escapeHtml(meta.image)}" />
+${refresh}  <script type="application/ld+json">${jsonLd}</script>
+`;
+}
+
+/**
+ * `<noscript>` turinys kanoniniam `/server/:id` puslapiui.
+ *
+ * KODĖL: suvienodinus kūną, JS nevykdantys crawler'iai (Bing, Yandex, AI botai)
+ * mato tik `<div id="root">` — anksčiau jie gaudavo atskirą share HTML su
+ * matomu `<h1>`. `<noscript>` grąžina matomą turinį NEPAKEITUS kūno kitiems.
+ */
+export function renderNoscriptFallback(meta: ShareMetaPayload): string {
+  return `<noscript><h1>${escapeHtml(meta.title)}</h1><p>${escapeHtml(meta.description)}</p><p><a href="${escapeHtml(meta.url)}">Open full page on reforgermods.com</a></p></noscript>`;
+}
+
 export function renderShareHtml(
   meta: ShareMetaPayload,
   options: { mode?: 'social' | 'indexer' } = {}
 ): string {
   const mode = options.mode ?? 'social';
-  const esc = (value: string) =>
-    value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/"/g, '&quot;');
-
-  const jsonLd = JSON.stringify(shareJsonLd(meta)).replace(/</g, '\\u003c');
-  const refresh =
-    mode === 'social'
-      ? `  <meta http-equiv="refresh" content="0;url=${esc(meta.url)}" />\n`
-      : '';
 
   const related =
     meta.kind === 'mod'
-      ? `<li><a href="${esc(SITE_ORIGIN)}/">Mod leaderboard</a></li>
-  <li><a href="${esc(SITE_ORIGIN)}/trending">Trending mods</a></li>
-  <li><a href="${esc(SITE_ORIGIN)}/servers">Server list</a></li>`
-      : `<li><a href="${esc(SITE_ORIGIN)}/servers">Server list</a></li>
-  <li><a href="${esc(SITE_ORIGIN)}/">Mod leaderboard</a></li>
-  <li><a href="${esc(SITE_ORIGIN)}/arma-server-browser">Server browser guide</a></li>`;
+      ? `<li><a href="${escapeHtml(SITE_ORIGIN)}/">Mod leaderboard</a></li>
+  <li><a href="${escapeHtml(SITE_ORIGIN)}/trending">Trending mods</a></li>
+  <li><a href="${escapeHtml(SITE_ORIGIN)}/servers">Server list</a></li>`
+      : `<li><a href="${escapeHtml(SITE_ORIGIN)}/servers">Server list</a></li>
+  <li><a href="${escapeHtml(SITE_ORIGIN)}/">Mod leaderboard</a></li>
+  <li><a href="${escapeHtml(SITE_ORIGIN)}/arma-server-browser">Server browser guide</a></li>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>${esc(meta.title)}</title>
-  <meta name="description" content="${esc(meta.description)}" />
-  <link rel="canonical" href="${esc(meta.url)}" />
-  <meta name="robots" content="index, follow" />
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="reforgermods.com" />
-  <meta property="og:url" content="${esc(meta.url)}" />
-  <meta property="og:title" content="${esc(meta.title)}" />
-  <meta property="og:description" content="${esc(meta.description)}" />
-  <meta property="og:image" content="${esc(meta.image)}" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="${esc(meta.title)}" />
-  <meta name="twitter:description" content="${esc(meta.description)}" />
-  <meta name="twitter:image" content="${esc(meta.image)}" />
-${refresh}  <script type="application/ld+json">${jsonLd}</script>
-</head>
+${renderHeadTags(meta, { refresh: mode === 'social' })}</head>
 <body>
   <main>
-    <h1>${esc(meta.title)}</h1>
-    <p>${esc(meta.description)}</p>
-    <p><a href="${esc(meta.url)}">Open full page on reforgermods.com</a></p>
+    <h1>${escapeHtml(meta.title)}</h1>
+    <p>${escapeHtml(meta.description)}</p>
+    <p><a href="${escapeHtml(meta.url)}">Open full page on reforgermods.com</a></p>
     <nav aria-label="Related">
       <ul>
   ${related}
