@@ -1,5 +1,8 @@
 # Architecture decision: KV-based time-series history
 
+Why history lives in Cloudflare KV instead of D1: the shard layout, the point
+format and the read strategies built on top of it.
+
 ## Problem
 
 Using standard SQL (D1) for historical data in the Arma Reforger Leaderboard runs

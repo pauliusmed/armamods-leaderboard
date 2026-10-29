@@ -24,6 +24,9 @@ wording, so the full history stays available.
 - `PLAN.md`, `web/README.md` and `scripts/steam-auth-probe/README.md` translated.
   Every tracked Markdown file is now English except the release archive and the
   author's name in the licence line.
+- README: a `Documentation` section with the five entry-point documents, a docs
+  badge, and the 14-link line at the bottom replaced by a short pointer. Four
+  documents gained a one-sentence intro under the title.
 
 ### Tooling
 
