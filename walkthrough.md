@@ -107,11 +107,11 @@ Two phases:
    by total players. Written to `cache:ranking:scenarios:{game}` (one KV write).
 8. **Mod sizes & server modpack** (`attachModSizesFromBundle`, `warmTopModSizesFromWorkshop`,
    `persistModSizesBundle`, `attachServerModpackSizes`): attaches workshop version sizes from the
-   aggregated `cache:bundle:modsizes:{game}` (1 KV read/run nuo v1.23.40 — anksčiau `attachModSizesFromKvCache`
-   skaitė po raktą vienam modui, ~22k reads/run), scrapes missing top mods into
-   `cache:mod-size:{game}:{id}` (per-mod raktai rašomi toliau — worker'io fallback'ui) ir po warm
-   šviežius dydžius sujungia atgal į bundle; computes `modpackEstimatedBytes` per server for
-   the leaderboard and Storage Planner.
+   aggregated `cache:bundle:modsizes:{game}` (1 KV read per run since v1.23.40 — before that
+   `attachModSizesFromKvCache` read one key per mod, ~22k reads/run), scrapes missing top mods into
+   `cache:mod-size:{game}:{id}` (per-mod keys are still written for the Worker fallback) and
+   merges the fresh sizes back into the bundle after the warm pass; computes `modpackEstimatedBytes`
+   per server for the leaderboard and Storage Planner.
 9. **Server uptime samples** — each history point records per-server `online` (hourly)
    or merged `on`/`n` (daily/weekly) for availability charts; `bmLastSeenAt` on
    server shards for “last seen online” hints. See [docs/SERVER_UPTIME.md](./docs/SERVER_UPTIME.md).
@@ -131,7 +131,7 @@ suffix, Arma 3 uses `:arma3`):
 |---|---|
 | `cache:mods:{i}` + `:meta` | sharded mod list (rank, players, coDeployed) |
 | `cache:servers:{i}` + `:meta` | sharded server list (with SQE fields + `scenarioName`) |
-| `cache:servers-index:{game}` | `serverId → shard` mapa (~110 KB); edge single-server lookup krauna tik 1 shardą |
+| `cache:servers-index:{game}` | `serverId → shard` map (~110 KB); an edge single-server lookup loads one shard only |
 | `cache:page:mods:reforger:default` | **precomputed** Reforger mod leaderboard default pages (4×24) with embedded fields (global, compute-at-write; TTL 7200) |
 | `cache:page:servers:reforger:default` | **precomputed** Reforger server list default 200 (TTL 7200) |
 | `cache:page:stats:reforger` | **precomputed** Reforger stats snapshot (TTL 7200) |
@@ -141,9 +141,9 @@ suffix, Arma 3 uses `:arma3`):
 | `cache:mods_search_index:{game}` | description search index (name+author+summary+desc snippet; Reforger, built by collector warm) |
 | `cache:stats`, `cache:lastUpdate` | global counts |
 | `cache:trending:{daily\|weekly\|monthly}` | precomputed trending |
-| `cache:bundle:modfields:reforger` | aggregated author/thumbnail/workshopStatus for all mods (v1.23.32; worker skaito 1 raktą) |
-| `cache:bundle:modsizes:{game}` | aggregated sizeBytes for all mods (v1.23.40; collector skaito 1 raktą/run) |
-| `cache:mod-size:{game}:{MODID}` | workshop version download size (7d; per-mod fallback'as worker'io resolveModSizeBytes) |
+| `cache:bundle:modfields:reforger` | aggregated author/thumbnail/workshopStatus for all mods (v1.23.32; the Worker reads one key) |
+| `cache:bundle:modsizes:{game}` | aggregated sizeBytes for all mods (v1.23.40; the collector reads one key per run) |
+| `cache:mod-size:{game}:{MODID}` | workshop version download size (7d; per-mod fallback for the Worker's `resolveModSizeBytes`) |
 | `cache:server_bm_last_seen:{game}` | last collector scan when each server was online |
 | `history:{hourly\|daily\|weekly\|monthly\|yearly}:{game}:{i}` | sharded time series (mods + servers incl. uptime samples) |
 
@@ -153,7 +153,7 @@ reads well within Worker CPU/memory limits.
 ### 4.3 Serving — `web/worker.ts` (unified Worker — SPA + API)
 Hono app exported as a Worker (`worker.ts`). Read paths:
 
-- **Default views = precomputed (compute-at-write):** `GET /api/mods` (`sort=overall&dir=asc`, 4×24) and `GET /api/servers` (`limit=200` default) on Reforger hit `cache:page:*:default` — 1 KV read, global. Miss → documented fallback `console.warn('[PRECOMPUTE] miss …')` į dabartinį surinkimą (be tylaus spėjimo).
+- **Default views = precomputed (compute-at-write):** `GET /api/mods` (`sort=overall&dir=asc`, 4×24) and `GET /api/servers` (`limit=200` default) on Reforger hit `cache:page:*:default` — 1 KV read, global. Miss → documented fallback `console.warn('[PRECOMPUTE] miss …')` to the live collection path (no silent guessing).
 - **Non-default API:** Cache API → KV shards `Promise.all` → `Cache-Control` + `waitUntil(cache.put(...))`.
 - **Single-record lookups** (server by id) read the collector-written `cache:servers-index:{game}`
   map and load **one shard** (~5 MB), then `findMatchingBrace` slices the object (`server-lookup.ts`).
@@ -161,7 +161,7 @@ Hono app exported as a Worker (`worker.ts`). Read paths:
   documented batched full-scan fallback (4 shards at a time, `console.warn` +
   `meta.indexFallback:true`). Mod detail scans server shards in batches of 4 to list servers
   running the mod (reverse id→shard index doesn't apply there).
-- `GET /api/stats` → collector-written `cache:stats` (su `cache:page:stats:reforger` precompute).
+- `GET /api/stats` → collector-written `cache:stats` (with `cache:page:stats:reforger` precompute).
 
 ### 4.4 Presentation — `web/src`
 React 19 SPA. `src/api/client.ts` wraps axios with a 2-minute in-memory cache and
@@ -172,7 +172,7 @@ Recharts.
 
 **UI** (`src/lib/workshop.ts`, `src/components/ui/ModThumbnail.tsx`):
 - `workshopPageUrl()` — outbound link to Reforger workshop or Steam (Arma 3).
-- `modThumbnailUrl()` — `/api/og/preview/mod/:id` 302 į originalą; list rows krauna CDN URL iš duomenų (`IntersectionObserver` lazy load). Image transformations pašalintos v1.23.45.
+- `modThumbnailUrl()` — `/api/og/preview/mod/:id` 302 to the original; list rows load the CDN URL from the data (`IntersectionObserver` lazy load). Image transformations removed in v1.23.45.
 - `GET /api/mods` page slice includes cached `author`, `thumbnail`, `workshopStatus` — no per-row metadata JSON on leaderboard/trending.
 - Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302).
 - Letter fallback when no workshop preview exists.
@@ -277,19 +277,19 @@ All under `/api`. Game is selected with `?game=reforger|arma3`.
 ## 7. Infrastructure & automation
 
 - **Hosting**: Cloudflare Workers (Static Assets + API) and KV — migrated from Pages 2026-08-24 (`web/worker.ts`, `web/wrangler.toml` with `assets` + `run_worker_first`).
-- **Deploy**: `.github/workflows/deploy.yml` — **GitHub Actions**, ne Cloudflare
-  Workers Builds. Trigger: `push` į `main`, jei pasikeitė `web/**` arba pats
-  workflow. Žingsniai: `npm ci --prefix web` → `npm run build --prefix web`
+- **Deploy**: `.github/workflows/deploy.yml` — **GitHub Actions**, not Cloudflare
+  Workers Builds. Trigger: `push` to `main` when `web/**` or the workflow itself
+  changes. Steps: `npm ci --prefix web` → `npm run build --prefix web`
   (`tsc -b && vite build` → `web/dist`) → `cloudflare/wrangler-action@v3`.
-  Slapti: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. Release žinutė į
-  Discord — atskiras `.github/workflows/discord-release.yml` (jei pasikeitė
-  `DISCORD_RELEASES.md`; slaptas `DISCORD_WEBHOOK_URL`).
+  Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. The Discord release
+  message is a separate workflow, `.github/workflows/discord-release.yml` (runs
+  when `DISCORD_RELEASES.md` changes; secret `DISCORD_WEBHOOK_URL`).
 - **CI gate**: `.github/workflows/ci.yml` — `npx tsc --noEmit` (root config),
   `test/utils.test.ts`, `npm ci --prefix web`, `npm run build --prefix web`,
   `npm --prefix web test`.
 - **Collector cron**: `.github/workflows/collector.yml`, `0 * * * *` (hourly). Runs
   Reforger collect → Arma 3 collect → Reforger trending → Arma 3 trending, with
-  dependencies so Arma 3 reuses leftover BM quota. (Lieka GitHub — KV writes via API token).
+  dependencies so Arma 3 reuses leftover BM quota. (Stays on GitHub — KV writes go through an API token.)
 - **BattleMetrics API**: since ~2026-07-20 all BM requests require a paid
   subscription PAT (`BATTLEMETRICS_API_KEY` in GitHub Actions secrets). Without
   it the collector fails; the UI keeps serving the last KV snapshot and shows a
@@ -371,4 +371,4 @@ share-meta, and search matching.
   from the Reforger workshop on first request per mod (KV 7d), not by the collector.
   One HTML fetch fills both caches; the UI resolves CDN URLs via JSON and loads images
   directly — see [`docs/WORKSHOP_METADATA.md`](./docs/WORKSHOP_METADATA.md).
-- **Chart rendering (CLS/perf).** `Recharts` kraunamas tiesiogiai kritiniams grafikams (`ModDetail` `Performance Timeline`) — `lazy` sukėlė tuščius grafikus visiems dėl hash mismatch (`ChunkLoadError`) ir `width(-1) height(-1)` klaidą. `ServerDetail` chartas paliktas `lazy` (veikia). `ResponsiveContainer` tėvas privalo turėti fiksuotą `h-[340px]` + `minWidth/minHeight={0}`, kitaip matuoja `-1`. Fontai: `latin-ext` pašalinti (14→6), `font-display: optional` per Vite pluginą — CLS 0.167→0.007.
+- **Chart rendering (CLS/perf).** `Recharts` is imported directly for the critical charts (`ModDetail` performance timeline) — `lazy` produced empty charts for everyone after a hash mismatch (`ChunkLoadError`) and a `width(-1) height(-1)` error. The `ServerDetail` chart stays `lazy` (it works). The `ResponsiveContainer` parent must have a fixed `h-[340px]` plus `minWidth/minHeight={0}`, otherwise it measures `-1`. Fonts: `latin-ext` removed (14→6) and `font-display: optional` applied through a Vite plugin — CLS 0.167→0.007.

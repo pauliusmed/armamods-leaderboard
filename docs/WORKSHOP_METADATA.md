@@ -55,17 +55,18 @@ v2 removed the redirect hop but still issued **one JSON request per visible row*
 ```
 GET /api/mods?limit=&offset=   → page slice includes author, thumbnail URL, workshopStatus (KV only)
 ModThumbnail (list)
-    → <img src="{CDN URL from data}">  (originalas; jokio resize)
-    → IntersectionObserver — image fetch only when row nears viewport
+    → <img src="{CDN URL from data}">  (original; no resize)
+    → IntersectionObserver — image fetch only when the row nears the viewport
 ```
 
 **Detail / OG** use the same full URL or `/api/og/preview/mod/:id` (302).
 
-**Image transformations (2026-09-28):** CF Images transformacijos pašalintos —
-`/api/mods/:id/thumbnail/img` ir `/api/img/proxy` ištrinti, zonoje
-`image_resizing=off`. Kaina (8 655 unikalių/mėn > 5k free) viršijo vertę.
-Grąžinimas — tik su aiškiu savininko patvirtinimu ir be CF Images.
-Detaliai — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md).
+**Image transformations (2026-09-28):** CF Images transformations were removed —
+`/api/mods/:id/thumbnail/img` and `/api/img/proxy` are deleted, and the zone has
+`image_resizing=off`. The cost (8,655 unique transformations per month, above the
+5k free tier) exceeded the value. Reintroducing them requires explicit owner
+approval and must not use CF Images. Details:
+[COST_GUARDRAILS.md](./COST_GUARDRAILS.md).
 
 **We store the CDN URL in KV, not the image bytes.** This avoids R2 storage, copyright re-hosting, and extra bandwidth on our origin.
 
@@ -173,7 +174,7 @@ All support `?game=reforger|arma3` (Reforger is fully supported; Arma 3 thumbnai
 - **Store image files** in R2/KV (only URL strings) — keeps cost and ToS risk low
 - **Scrape all mods** on each collector run — would hit rate limits and KV write caps
 - **Replace co-deploy with dependencies** — they answer different questions
-- **Optimize/serve image bytes through CF Images** — pašalinta 2026-09-28; list krauna originalą lazy, full URL tik detail/OG
+- **Optimise or serve image bytes through CF Images** — removed 2026-09-28; lists lazy-load the original, full URLs only on detail/OG
 
 ### List metadata embedding (v1.21+)
 
@@ -198,49 +199,50 @@ Mods deleted from Reforger Workshop still appear in BattleMetrics telemetry unti
 - KV key: `cache:workshop-status:{game}:{MODID}` → `{ status, checkedAt }`
 - API: `GET /api/mods/:id/workshop-status`
 - Mod detail also includes `workshopStatus` + `workshopStatusCheckedAt`
-- UI: **Nebe Workshop** badge on leaderboard/trending rows; banner on mod detail; Workshop CTA disabled when unavailable
+- UI: **"No longer on Workshop"** badge on leaderboard/trending rows; banner on mod detail; Workshop CTA disabled when unavailable
 - List API embeds `workshopStatus` when cached — `useWorkshopStatus` skips fetch when prop is present
 - Shorter TTL on `unavailable` so mods that return to Workshop are re-checked within ~2 days
 
 ---
 
-## Thumbnail sourcing — SUPERSEDED sprendimas (2026-08-20 → atšauktas 2026-09-28)
+## Thumbnail sourcing — superseded decision (2026-08-20, reversed 2026-09-28)
 
-> ⛔ **Ši sekcija istorinė. Jos sprendimas BEVEIK SUVERSIANAS.**
-> 2026-08-20 buvo priimta „laikyti Worker `cf.image` resize proxy".
-> **2026-09-28 savininko sprendimu visos CF Images transformacijos pašalintos**
-> (žr. [`COST_GUARDRAILS.md`](./COST_GUARDRAILS.md) § „Images transformations —
-> pašalintos"). Šiame faile tai pat patvirtinta 64–68 eilutėse.
-> **Dabartinė architektūra:** `GET /api/mods/:id/thumbnail/img` ir
-> `GET /api/img/proxy` **ištrinti**, zonoje `image_resizing = off`, kodo nebeliko
-> nė vieno `cf.image` / `/cdn-cgi/image` taško. Frontendas krauna originalus
-> **tiesiogiai iš Bohemia CDN**. Gyvas sprendimas — žemiau.
+> ⛔ **This section is historical. Its decision was largely reversed.**
+> On 2026-08-20 the decision was to "keep the Worker `cf.image` resize proxy".
+> **On 2026-09-28 the owner removed all CF Images transformations**
+> (see [`COST_GUARDRAILS.md`](./COST_GUARDRAILS.md) § "Images transformations —
+> removed"). This file confirms it in lines 64–68 as well.
+> **Current architecture:** `GET /api/mods/:id/thumbnail/img` and
+> `GET /api/img/proxy` are **deleted**, the zone has `image_resizing = off`, and
+> no `cf.image` / `/cdn-cgi/image` call remains in the code. The frontend loads
+> originals **directly from the Bohemia CDN**. The live decision is below.
 
-**Tada (2026-08-20) — kodėl buvo pasirinkta proxy:** source of truth — kiekvieno
-thumbnail source'as yra Bohemia CDN (`ar-gcp-cdn.bistudio.com`); KV saugome tik
-**URL eilutę**, niekada ne paveikslų baitus. Du argumentai:
+**Then (2026-08-20) — why the proxy was chosen:** the source of truth for every
+thumbnail is the Bohemia CDN (`ar-gcp-cdn.bistudio.com`); KV stores only the
+**URL string**, never image bytes. Two arguments:
 
-1. **Plaidumas.** Originalai dideli (~1280×1280, 14–84 KB), o eilutės rodo
-   32–48 px avatarus. Proxy per `cf.image` sumažindavo iki ~1.7 KB — ~20×
-   kliento payload sutaupoma.
-2. **Stabilumas.** Worker sluoksnis pridėdavo edge-kašį (7 d.) kopiją + raidės
-   fallback, jei Bohemia pakeitų arba blokotų URL.
+1. **Weight.** Originals are large (~1280×1280, 14–84 KB) while rows render
+   32–48 px avatars. The proxy through `cf.image` cut that to ~1.7 KB — roughly a
+   20× saving in client payload.
+2. **Stability.** The Worker layer added an edge-cached copy (7 d) plus a letter
+   fallback if Bohemia changed or blocked the URL.
 
-**Tada atmesta:** tiesioginis Bohemia CDN hotlink (`ModThumbnail` → raw
-`thumbnailUrl`) — atmesta dėl ~700–840 KB pirmo krovimo. **Šis atmetimas
-apsiverstė 2026-09-28** ir dabar yra **priimta architektūra** (~2.4 MB mobilioji
-regresija, priimta sąmoningai — `CHANGELOG.md` v1.23.45, `PLAN.md` v1.23.33
-analizė). Thumbnailai lazy per `IntersectionObserver`; krovimo klaida → raidės
-placeholder.
+**Rejected at the time:** direct Bohemia CDN hotlinking (`ModThumbnail` → raw
+`thumbnailUrl`) — rejected because of the ~700–840 KB first load. **That rejection
+was reversed on 2026-09-28** and is now the **accepted architecture** (~2.4 MB
+mobile regression, accepted deliberately — `CHANGELOG.md` v1.23.45, `PLAN.md`
+v1.23.33 analysis). Thumbnails lazy-load through `IntersectionObserver`; a load
+error falls back to a letter placeholder.
 
-**Kas liko gyvas iš šios sekcijos:** „KV saugome tik URL, niekada ne baitus" —
-tai dar galioja ir yra pagrindinis „What we deliberately do NOT do" argumentas.
+**What survives from this section:** "store only the URL in KV, never bytes" —
+still true, and it is the main argument under "What we deliberately do not do".
 
-**Kodėl transformacijos pašalintos:** 2026-09-28 account-wide mėnesio kaupiklis
-rodė **8 655 unikalias** transformacijas (virš 5k free ribos), skaičius
-struktūriškai augo su katalogu × pločiais. Tai buvo vienintelis realiai
-mokamas resursų taškas projekte. Jei kada grįžtama — **tik su aiškiu savininko
-patvirtinimu** ir be CF Images (dydžiai iš anksto R2, tiekiama iš edge cache).
+**Why the transformations were removed:** on 2026-09-28 the account-wide monthly
+counter showed **8,655 unique** transformations (above the 5k free limit), and the
+number grew structurally with catalogue size × widths. It was the only genuinely
+billed resource in the project. If it ever returns — only with **explicit owner
+approval** and without CF Images (pre-generated sizes in R2, served from edge
+cache).
 
 ---
 

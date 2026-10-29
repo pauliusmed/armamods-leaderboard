@@ -8,6 +8,14 @@ Releases before 1.23.58 are archived in
 [docs/CHANGELOG_ARCHIVE.md](docs/CHANGELOG_ARCHIVE.md) with their original
 wording, so the full history stays available.
 
+## [Unreleased]
+
+### Documentation
+
+- `walkthrough.md`, `WORKSHOP_METADATA.md`, `STORAGE_PLANNER.md` and `MOBILE_UX.md`
+  translated to English. The historical CF Images section keeps its dates,
+  measurements and the record of what was reversed.
+
 ## [1.23.59] - 2026-10-29
 
 ### Documentation

@@ -39,8 +39,8 @@ Parser reads Reforger workshop HTML (`Version size` in `<dt>/<dd>`, `VersionSize
 Each run:
 
 1. `attachModSizesFromBundle` — attaches sizes from the aggregated `cache:bundle:modsizes:{game}`
-   (1 KV read/run nuo v1.23.40; vienkartinis bootstrap pirmame run'e perskaito `cache:mod-size:*`),
-   o po warm `persistModSizesBundle` šviežius dydžius sujungia atgal į bundle
+   (1 KV read per run since v1.23.40; a one-off bootstrap on the first run re-reads `cache:mod-size:*`),
+   and after the warm pass `persistModSizesBundle` merges the fresh sizes back into the bundle
 2. `warmTopModSizesFromWorkshop` — scrapes workshop for **top 300** ranked mods missing cache
 3. `warmServerModpackModSizes` — scrapes workshop for up to **500** mods on **active servers** (players > 0) still missing cache (niche server stacks beyond global top-300)
 4. `attachServerModpackSizes` — per server:
