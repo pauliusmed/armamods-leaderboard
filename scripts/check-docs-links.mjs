@@ -8,11 +8,6 @@ import { dirname, resolve } from 'node:path'
 const ROOT = process.cwd()
 const SKIP_SCHEMES = /^(https?:|mailto:|tel:|data:|ftp:)/i
 
-// Historical archive: moved here from the repository root. Its links are a
-// snapshot of the tree at the time of writing (some targets were renamed or
-// deleted since) and are deliberately not maintained.
-const SKIP_FILES = new Set(['docs/CHANGELOG_ARCHIVE.md'])
-
 const files = execSync('git ls-files "*.md"', { encoding: 'utf8' })
   .split('\n')
   .filter(Boolean)
@@ -67,7 +62,6 @@ function lineOf(text, index) {
 const problems = []
 
 for (const file of files) {
-  if (SKIP_FILES.has(file)) continue
   const raw = readFileSync(file, 'utf8')
   const text = stripCode(raw)
   const ownAnchors = headingsOf(raw)

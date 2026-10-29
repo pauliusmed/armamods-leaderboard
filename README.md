@@ -205,7 +205,7 @@ npm test
 
 Coverage includes surgical JSON extract, `mod-lookup`, EMA/SQE ranking, scenario aggregation, storage planner, server uptime history, audit-config, history-query, share-meta, search-match.
 
-**Docs:** [index](docs/README.md) · [walkthrough](walkthrough.md) · [changelog](CHANGELOG.md) · [archive](docs/CHANGELOG_ARCHIVE.md) (pre-1.23.58) · [roadmap](PLAN.md).
+**Docs:** [index](docs/README.md) · [walkthrough](walkthrough.md) · [changelog](CHANGELOG.md) · [roadmap](PLAN.md).
 
 ## Contributing
 

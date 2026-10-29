@@ -1,7 +1,6 @@
 # Documentation index
 
 Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.59**).
-Earlier releases: [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 ## Start here
 
@@ -43,7 +42,6 @@ Earlier releases: [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 | Doc | Topic |
 |-----|--------|
 | [ENGINEERING_CASE_STUDY.md](./ENGINEERING_CASE_STUDY.md) | Long-form architecture narrative |
-| [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) | Release history before 1.23.58 (original wording) |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | PR workflow, tests, conventions |
 | [../scripts/steam-auth-probe/README.md](../scripts/steam-auth-probe/README.md) | Steam/WS auth probe (research tool) |
 
@@ -59,11 +57,10 @@ quietly wrong, and the difference is worth a look.
 | [ALGORITHM.md](./ALGORITHM.md) | 2026-10-29 |
 | [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) | 2026-10-29 |
 | [BRAND_ASSETS.md](./BRAND_ASSETS.md) | 2026-07-31 |
-| [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) | 2026-10-29 |
 | [COST_GUARDRAILS.md](./COST_GUARDRAILS.md) | 2026-10-29 |
 | [DATA_SOURCES_RESEARCH.md](./DATA_SOURCES_RESEARCH.md) | 2026-10-29 |
 | [DATA_SYNC.md](./DATA_SYNC.md) | 2026-10-29 |
-| [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) | 2026-07-31 |
+| [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) | 2026-10-29 |
 | [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) | 2026-10-29 |
 | [DISCORD.md](./DISCORD.md) | 2026-10-29 |
 | [ENGINEERING_CASE_STUDY.md](./ENGINEERING_CASE_STUDY.md) | 2026-05-18 |
