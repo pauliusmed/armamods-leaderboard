@@ -81,13 +81,14 @@ To reward server owners who:
 
 Points are calculated every collector run (hourly):
 
-> ✅ **Cadence-constantos suderintos (v1.23.54).** `scripts/collector.ts` naudoja
+> ✅ **Cadence constants aligned (v1.23.54).** `scripts/collector.ts` uses
 > `RUNS_PER_DAY = 24` (`HALF_LIFE_DAYS * RUNS_PER_DAY`, `RAMP_RUNS = 14 *
-> RUNS_PER_DAY`), todėl efektyvios reikšmės atitinka deklaruotas: EMA half-life
-> **10 dienų**, tenure ramp **14 dienų** (Pareto: H=10 τ0.8 noise 11.6%,
-> response 17.5d). **2026-08-26 → 2026-09-30** laikotarpiu galiojo 2h-eros
-> `* 12` su hourly cron — efektyviai 5d/7d. Keičiant cron, keisti
-> `RUNS_PER_DAY` kolektoriuje, ne konstantas (žr. komentarą kode).
+> RUNS_PER_DAY`), so the effective values match the declared ones: EMA half-life
+> **10 days**, tenure ramp **14 days** (Pareto: H=10, τ=0.8 → 11.6 % noise,
+> 17.5 d response). Between **2026-08-26 and 2026-09-30** the 2 h era `* 12`
+> applied with an hourly cron — effectively 5 d/7 d. When the cron changes, change
+> `RUNS_PER_DAY` in the collector rather than the constants (see the comment in
+> code).
 
 ```
 SnapshotScore = (Players × 5) - (ModCount × 1) + UniquenessBonus
@@ -141,20 +142,19 @@ Swap i↔j only if P > τ,  τ = 0.80
 - **Why τ=0.80 with H=10:** Pareto sweep (H×τ) showed knee at H=10 τ=0.8 → noise 11.6% response 17.5d (vs 48.9%/1.6d at old H=0.55 τ=0.5). The previous `ELITE_INERTIA_TIERS` + `applyEliteInertiaCushion` is deprecated — hysteresis is now top-200, age-weighted via σ.
 - A genuine challenger still breaks through: a raw-SQE lead larger than the cushion margin (~8% over the champion) overtakes regardless.
 
-Implementation: `scripts/collector.ts:1583-1625` — top-200 servery, kiekvienai
-skaičiuojamas `probBetter(band[i], band[i+1])`; kai `P > τ` (τ = 0.80) — swap.
+Implementation: `scripts/collector.ts:1583-1625` — for each adjacent pair in the
+top-200, `probBetter(band[i], band[i+1])` is computed; when `P > τ` (τ = 0.80)
+the two swap places.
 
 `scripts/server-elite-inertia.ts` (`ELITE_INERTIA_TIERS`,
-`applyEliteInertiaCushion`) yra **nebenaudojamas gamybiniame kode** — kolektorius
-jo neimportuoja (`collector.ts:1579`: `displayedScores[id] = weighted; //
+`applyEliteInertiaCushion`) is **no longer used in production** — the collector
+does not import it (`collector.ts:1579`: `displayedScores[id] = weighted; //
 shown points = quality x tenure (no elite cushion)`).
 
-⚠️ **`scripts/server-elite-inertia.ts` IŠTRINTAS (v1.23.53).** Jis buvo
-nebenaudojamas gamybiniame kode (kolektorius jo neimportavo), bet vis dar
-buvo kviečiamas 9 kartus `test/server-elite-inertia.test.ts` — „testas dengė
-neegzistuojantį kelią". Modulis ir testas ištrinti (`git` istorijoje išliko);
-`package.json` test sąrašas atnaujintas.
-savaime yra klaida.
+⚠️ **`scripts/server-elite-inertia.ts` was deleted (v1.23.53).** It was unused in
+production, yet still called 9 times from `test/server-elite-inertia.test.ts` — a
+test covering a path that no longer existed. The module and its test were removed
+(still available in git history) and the `package.json` test list was updated.
 
 ### Uniqueness Bonus/Penalty Calculation
 

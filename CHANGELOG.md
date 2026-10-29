@@ -8,6 +8,16 @@ Releases before 1.23.58 are archived in
 [docs/CHANGELOG_ARCHIVE.md](docs/CHANGELOG_ARCHIVE.md) with their original
 wording, so the full history stays available.
 
+## [1.23.59] - 2026-10-29
+
+### Documentation
+
+- `ARCHITECTURE_DECISION.md`, `COST_GUARDRAILS.md`, `ALGORITHM.md` and
+  `DATA_SYNC.md` translated to English. Measurements, key names, dates and code
+  paths are unchanged.
+- Documentation index descriptions translated; the stale version reference now
+  points at the current release instead of v1.23.53.
+
 ## [1.23.58] - 2026-10-29
 
 ### Added

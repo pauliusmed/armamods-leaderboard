@@ -1,6 +1,6 @@
 {
   "name": "armamods-leaderboard",
-  "version": "1.23.58",
+  "version": "1.23.59",
   "description": "Edge-native Arma Reforger and Arma 3 mod and server leaderboard on Cloudflare Workers, KV and React.",
   "private": true,
   "type": "module",
