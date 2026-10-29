@@ -25,6 +25,7 @@
     "collect:arma3": "tsx scripts/collector.ts collect --game=arma3",
     "collect:push": "tsx scripts/collector.ts collect",
     "discord:template": "node scripts/discord-template.mjs",
+    "docs:check": "node scripts/check-docs-links.mjs",
     "trending": "tsx scripts/collector.ts trending",
     "trending:arma3": "tsx scripts/collector.ts trending --game=arma3",
     "trending:push": "tsx scripts/collector.ts trending",

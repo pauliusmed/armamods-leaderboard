@@ -24,6 +24,11 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm ci
 
+      # Documentation is code-adjacent: a link to a renamed file or heading is a
+      # defect the reviewer would otherwise find after merge.
+      - name: 📚 Documentation Links
+        run: npm run docs:check
+
       # Root config neturi `web/**` — `npx tsc --noEmit` NEMAČO nei `web/tsconfig.*`,
       # nei failų, kuriuos jie traukia į programą per importo grafą.
       - name: 🔍 Type Check (root tsconfig → src/**)

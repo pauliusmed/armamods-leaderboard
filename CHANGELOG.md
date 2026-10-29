@@ -25,6 +25,14 @@ wording, so the full history stays available.
   Every tracked Markdown file is now English except the release archive and the
   author's name in the licence line.
 
+### Tooling
+
+- `npm run docs:check` — a dependency-free link checker over every tracked
+  Markdown file: missing files and missing heading anchors fail the build. The
+  CI workflow runs it on every push and pull request. `docs/CHANGELOG_ARCHIVE.md`
+  is excluded on purpose: it is a snapshot and its links point at files that were
+  renamed or deleted since.
+
 ## [1.23.59] - 2026-10-29
 
 ### Documentation
