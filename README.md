@@ -4,6 +4,8 @@ Edge-native popularity rankings from live multiplayer servers — Cloudflare Wor
 
 **Live site:** [reforgermods.com](https://reforgermods.com/)
 
+[![CI](https://github.com/pauliusmed/armamods-leaderboard/actions/workflows/ci.yml/badge.svg)](https://github.com/pauliusmed/armamods-leaderboard/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/pauliusmed/armamods-leaderboard?sort=semver)](https://github.com/pauliusmed/armamods-leaderboard/releases)
 [![Live Site](https://img.shields.io/badge/Live-reforgermods.com-blue.svg)](https://reforgermods.com/)
 [![Tech Stack](https://img.shields.io/badge/Architecture-Edge--Native-orange.svg)](https://reforgermods.com/)
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-100_(desktop)_%7C_98_(mobile)-brightgreen.svg)](docs/LIGHTHOUSE.md)
@@ -11,6 +13,8 @@ Edge-native popularity rankings from live multiplayer servers — Cloudflare Wor
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Supplements the official Arma Workshop with engagement telemetry from active multiplayer servers: popularity index, retention signals, and community trends — not a workshop replacement.
+
+![Mod popularity leaderboard](docs/assets/home.jpg)
 
 ---
 
@@ -183,7 +187,13 @@ npm test
 
 Coverage includes surgical JSON extract, `mod-lookup`, EMA/SQE ranking, scenario aggregation, storage planner, server uptime history, audit-config, history-query, share-meta, search-match.
 
-**Docs:** [walkthrough.md](walkthrough.md) · [docs/DATA_SYNC.md](docs/DATA_SYNC.md) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) · [docs/ALGORITHM.md](docs/ALGORITHM.md) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) · [CHANGELOG.md](CHANGELOG.md) (through **v1.22.13**) · [PLAN.md](PLAN.md) (Current / Next).
+**Docs:** [walkthrough.md](walkthrough.md) · [docs/DATA_SYNC.md](docs/DATA_SYNC.md) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) · [docs/ALGORITHM.md](docs/ALGORITHM.md) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) · [CHANGELOG.md](CHANGELOG.md) · [docs/CHANGELOG_ARCHIVE.md](docs/CHANGELOG_ARCHIVE.md) (pre-1.23.58) · [PLAN.md](PLAN.md) (Current / Next).
+
+## Contributing
+
+Setup, checks, changelog requirements and pull request expectations are in
+[CONTRIBUTING.md](CONTRIBUTING.md). Security problems go through the private
+channel described in [SECURITY.md](SECURITY.md), never a public issue.
 
 ## License & contact
 Copyright © 2026 Paulius Medžiukevičius. [MIT License](LICENSE).
