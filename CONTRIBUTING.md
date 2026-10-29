@@ -63,6 +63,9 @@ Every change that ships updates the docs in the same pull request:
 - Date format is `YYYY-MM-DD`.
 - A new root test file must be added to the explicit list in `package.json` →
   `"test"`; CI does not glob.
+- Before a release, run `npm run docs:freshness`. It rewrites the freshness table
+  in [docs/README.md](docs/README.md) from git history; a document untouched for
+  months is either stable or wrong, and that table makes the difference visible.
 
 ## Coding standards
 

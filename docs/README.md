@@ -46,3 +46,37 @@ Earlier releases: [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 | [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) | Release history before 1.23.58 (original wording) |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | PR workflow, tests, conventions |
 | [../scripts/steam-auth-probe/README.md](../scripts/steam-auth-probe/README.md) | Steam/WS auth probe (research tool) |
+
+## Doc freshness
+
+Last commit date per document. Regenerate with `npm run docs:freshness` before a
+release: a document that has not changed in months is either genuinely stable or
+quietly wrong, and the difference is worth a look.
+
+<!-- freshness:start -->
+| Document | Last updated |
+|---|---|
+| [ALGORITHM.md](./ALGORITHM.md) | 2026-10-29 |
+| [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) | 2026-10-29 |
+| [BRAND_ASSETS.md](./BRAND_ASSETS.md) | 2026-07-31 |
+| [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) | 2026-10-29 |
+| [COST_GUARDRAILS.md](./COST_GUARDRAILS.md) | 2026-10-29 |
+| [DATA_SOURCES_RESEARCH.md](./DATA_SOURCES_RESEARCH.md) | 2026-10-29 |
+| [DATA_SYNC.md](./DATA_SYNC.md) | 2026-10-29 |
+| [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) | 2026-07-31 |
+| [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) | 2026-10-29 |
+| [DISCORD.md](./DISCORD.md) | 2026-10-29 |
+| [ENGINEERING_CASE_STUDY.md](./ENGINEERING_CASE_STUDY.md) | 2026-05-18 |
+| [INCIDENTS.md](./INCIDENTS.md) | 2026-10-29 |
+| [LIGHTHOUSE.md](./LIGHTHOUSE.md) | 2026-10-29 |
+| [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md) | 2026-10-29 |
+| [MOBILE_UX.md](./MOBILE_UX.md) | 2026-10-29 |
+| [MODPACK_DIFF.md](./MODPACK_DIFF.md) | 2026-09-30 |
+| [P0_GATES.md](./P0_GATES.md) | 2026-10-29 |
+| [PERFORMANCE.md](./PERFORMANCE.md) | 2026-10-29 |
+| [SEO.md](./SEO.md) | 2026-09-30 |
+| [SERVER_UPTIME.md](./SERVER_UPTIME.md) | 2026-09-30 |
+| [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) | 2026-10-29 |
+| [UI_FILTERS.md](./UI_FILTERS.md) | 2026-08-26 |
+| [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) | 2026-10-29 |
+<!-- freshness:end -->
