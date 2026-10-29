@@ -32,6 +32,9 @@ wording, so the full history stays available.
   CI workflow runs it on every push and pull request. `docs/CHANGELOG_ARCHIVE.md`
   is excluded on purpose: it is a snapshot and its links point at files that were
   renamed or deleted since.
+- `npm run docs:freshness` — regenerates the freshness table in `docs/README.md`
+  from the last commit date of each document, so stale docs are visible instead
+  of assumed current. Run it before a release.
 
 ## [1.23.59] - 2026-10-29
 
