@@ -15,6 +15,9 @@ wording, so the full history stays available.
 - `walkthrough.md`, `WORKSHOP_METADATA.md`, `STORAGE_PLANNER.md` and `MOBILE_UX.md`
   translated to English. The historical CF Images section keeps its dates,
   measurements and the record of what was reversed.
+- `DESIGN_SYSTEM.md`, `MOBILE_STANDARDS.md`, `LIGHTHOUSE.md` and `PERFORMANCE.md`
+  translated to English; the two broken internal anchor links in the design
+  document now point at existing headings.
 
 ## [1.23.59] - 2026-10-29
 

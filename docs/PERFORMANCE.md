@@ -8,9 +8,9 @@ See also: [ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) (KV sharding), 
 
 ## PageSpeed summary (production)
 
-**2026-09-06 — server detail puslapiai** (`/server/:id`, po INC-2026-09-06 + v1.23.25–26): mobile **71** (TBT 250 ms, LCP 6.3 s — SPA + API round-trip), desktop **59–60** (TBT ~2,4 s). LCP duomenų inline'as — planuojamas. Details: [LIGHTHOUSE.md](./LIGHTHOUSE.md) (2026-09-06 sekcija).
+**2026-09-06 — server detail pages** (`/server/:id`, after INC-2026-09-06 and v1.23.25–26): mobile **71** (TBT 250 ms, LCP 6.3 s — SPA plus API round-trip), desktop **59–60** (TBT ~2.4 s). Inlining the LCP data is planned. Details: [LIGHTHOUSE.md](./LIGHTHOUSE.md) (2026-09-06 section).
 
-**Istorinis** — `https://reforgermods.com/` mod leaderboard, lab scores **2026-07-09** after v1.21:
+**Historical** — `https://reforgermods.com/` mod leaderboard, lab scores **2026-07-09** after v1.21:
 
 | | Desktop | Mobile |
 |--|---------|--------|
@@ -43,9 +43,9 @@ see [DATA_SYNC.md](./DATA_SYNC.md).
 Documented in [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md):
 
 - **List metadata** — `author`, `thumbnail`, `workshopStatus` embedded in `GET /api/mods` page slice (KV only); rows skip per-item API when present.
-- **Lazy thumbnail bytes** — list rows load the CDN original only when the row nears the viewport (`IntersectionObserver`); image transformations pašalintos 2026-09-28 (didesni baitai, $0 transformacijų) — žr. `COST_GUARDRAILS.md`.
+- **Lazy thumbnail bytes** — list rows load the CDN original only when the row nears the viewport (`IntersectionObserver`); image transformations were removed on 2026-09-28 (larger bytes, $0 transformations) — see `COST_GUARDRAILS.md`.
 - **On-demand author** — `cache:mod-author:*` filled on scrape/detail; list uses embedded author when cached.
-- **Default mod list** — **precomputed** kolektoriaus run metu (`cache:page:mods:reforger:default`, `web/functions/lib/precomputed-pages.ts`; 1 KV read, globalus visiems PoP). Fallback — chunk 0 + 75 workshop field read'ų.
+- **Default mod list** — **precomputed** during the collector run (`cache:page:mods:reforger:default`, `web/functions/lib/precomputed-pages.ts`; 1 KV read, global to every PoP). Fallback — chunk 0 plus 75 workshop field reads.
 - **Full mod shards** — loaded when search, activity filter, or non-default sort is active ([ARCHITECTURE_DECISION.md](./ARCHITECTURE_DECISION.md) § Lazy Chunk Loading).
 
 ---
@@ -78,43 +78,43 @@ Author-only queries still cost O(mods) KV reads; name/id queries avoid that path
 
 See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 servers bulk, `localStorage` name cache, failed ID handling.
 
-### Mod list — embedded metadata (v1.21+, bundle nuo v1.23.32)
+### Mod list — embedded metadata (v1.21+, bundle since v1.23.32)
 
 `attachCachedListFields()` in `web/worker.ts`:
 
-- Nuo **v1.23.32** laukai skaitomi iš **vieno agreguoto rakto** `cache:bundle:modfields:reforger` (~1 KV read/requestą, kolektorius perrašo kas run'ą) — anksčiau buvo 2–3 per-mod raktai modui (`cache:mod-author`, `cache:og-image`, `cache:workshop-status`), kas duodavo ~50–200 reads/requestą ne-default kelyje.
-- Per-mod raktai liko tik kaip **fallback** (cold bundle / prieš pirmą kolektoriaus run'ą po deploy).
+- Since **v1.23.32** the fields are read from **one aggregated key**, `cache:bundle:modfields:reforger` (~1 KV read per request; the collector rewrites it every run) — previously there were 2–3 per-mod keys per mod (`cache:mod-author`, `cache:og-image`, `cache:workshop-status`), which cost ~50–200 reads per request on the non-default path.
+- Per-mod keys remain only as a **fallback** (cold bundle, or before the first collector run after a deploy).
 - Response includes `author`, `thumbnail`, `workshopStatus` — **one** `GET /api/mods` replaces ~72 row-level JSON calls (24 rows × 3).
-- Politika ir ribos — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md): naujos per-mod `kv.get` „ventiliacijos" sąrašuose draudžiamos.
+- Policy and limits — [COST_GUARDRAILS.md](./COST_GUARDRAILS.md): new per-mod `kv.get` "ventilation" over lists is forbidden.
 
-### Mod list — precomputed pages (v1.23.24, bendras šildymas)
+### Mod list — precomputed pages (v1.23.24, shared warm-up)
 
 `web/functions/lib/precomputed-pages.ts` — `cache:page:*:*`.
 
-- `GET /api/mods` default view (`sort=overall&dir=asc`) — kolektoriaus precompute (pirmi 4×24 su `author/thumbnail/workshopStatus`; 1 KV read, global). Fallback — dabartinis surinkimas + `[PRECOMPUTE] miss` logas.
-- `GET /api/servers` default view (`limit=200`) — vienas raktas.
-- `PRECOMPUTED_TTL_SECONDS = 7200`; Cache API liko ne-default keliui.
+- `GET /api/mods` default view (`sort=overall&dir=asc`) — collector precompute (first 4×24 with `author/thumbnail/workshopStatus`; 1 KV read, global). Fallback — the live collection path plus a `[PRECOMPUTE] miss` log.
+- `GET /api/servers` default view (`limit=200`) — a single key.
+- `PRECOMPUTED_TTL_SECONDS = 7200`; the Cache API remains for the non-default path.
 
 ---
 
 ### Thumbnail bytes (no resize since v1.23.45)
 
-`/api/mods/:id/thumbnail/img` ir `/api/img/proxy` ištrinti (2026-09-28) — CF
-Images transformacijos kainavo daugiau, nei davė. `ModThumbnail` krauna CDN
-originalą (URL iš list payload) arba 302 per `/api/og/preview/mod/:id`;
-krovimo klaida → raidės placeholder. Galerija/lightbox — `image.url`
-tiesiogiai. Regresija: didesni baitai pirmo krovimo metu (žr.
+`/api/mods/:id/thumbnail/img` and `/api/img/proxy` were deleted (2026-09-28) — CF
+Images transformations cost more than they delivered. `ModThumbnail` loads the CDN
+original (URL from the list payload) or 302s through `/api/og/preview/mod/:id`;
+a load error falls back to a letter placeholder. Gallery/lightbox use
+`image.url` directly. Regression: larger bytes on first load (see
 [COST_GUARDRAILS.md](./COST_GUARDRAILS.md)).
 
-### Route code-splitting (v1.23.26 — visi puslapiai)
+### Route code-splitting (v1.23.26 — all pages)
 
-**Visi 21 puslapis** yra `React.lazy()` atskirais chunk'ais `App.tsx` (tik `Layout` + `StatusState` lieka index bundle). Iki v1.23.26 dideli sąrašų puslapiai (`ModList`, `ServerList`, `TrendingPage`, hosting'ai, `StatusPage`, `ScenarioList`, `SupportPage`, `PrivacyPolicyPage`) buvo tiesioginiais importais — kiekvienas puslapis parsisiunčia ir vykdo visų kitų puslapių kodą (PSI „Reduce unused JavaScript" ~99 KiB).
+**All 21 pages** are `React.lazy()` chunks in `App.tsx` (only `Layout` and `StatusState` stay in the index bundle). Before v1.23.26 the large list pages (`ModList`, `ServerList`, `TrendingPage`, hosting pages, `StatusPage`, `ScenarioList`, `SupportPage`, `PrivacyPolicyPage`) were direct imports — every page downloaded and executed the code of every other page (PSI "Reduce unused JavaScript" ~99 KiB).
 
 ### Below-fold mounting (`DeferredSection`, v1.23.26)
 
-`ui/DeferredSection.tsx` — `IntersectionObserver` (rootMargin 400px) + `minHeight` placeholder (CLS apsauga). `ServerDetail` below-fold sekcijos (Similar Deployed Servers, Mod Changes, Installed Mod Stack lentelė) mount'inamos tik artėjant prie viewport — boot metu nekuria tūkstančio DOM elementų. Naudojimas: sąlyginį turinį spręsti prieš kvietimą (`length > 0 ? <DeferredSection> : null`), kitaip placeholder'is lieka tuščias.
+`ui/DeferredSection.tsx` — `IntersectionObserver` (rootMargin 400px) plus a `minHeight` placeholder (CLS protection). `ServerDetail` below-fold sections (Similar Deployed Servers, Mod Changes, the Installed Mod Stack table) mount only when the viewport approaches them — boot does not create a thousand DOM elements. Usage: decide on conditional content before calling it (`length > 0 ? <DeferredSection> : null`), otherwise the placeholder stays empty.
 
-**Žinoma riba:** desktop PSI (beveik be CPU slowdown) vis dar rodo ~2,4 s TBT — didžiausias likęs React render commit'as (~820 ms) + Recharts piešimas above-fold. LCP sprendimas — serverio duomenų inline'as HTML'e (planuojama, žr. [LIGHTHOUSE.md](./LIGHTHOUSE.md) 2026-09-06 sekciją).
+**Known limit:** desktop PSI (almost no CPU slowdown) still reports ~2.4 s TBT — the largest remaining React render commit (~820 ms) plus above-fold Recharts drawing. The LCP fix is inlining server data into the HTML (planned; see the 2026-09-06 section of [LIGHTHOUSE.md](./LIGHTHOUSE.md)).
 
 ### Charts (Recharts) — direct import for critical path
 
