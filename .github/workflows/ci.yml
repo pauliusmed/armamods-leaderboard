@@ -57,5 +57,5 @@ jobs:
       # ⚠️ `npm --prefix web run lint` DAR NEPRIDĖTAS: jis dabar krenta dėl
       # pre-existing klaidos (`web/src/hooks/usePinnedFavoriteMods.ts:38`,
       # react-hooks/set-state-in-effect) — pridėjus jį, CI būtų raudonas. Kai
-      # klaida bus sutvarkyta, langą čia reikia atidaryti. `AGENTS.md`:
-      # pre-existing lint klaidų neatlysime čia.
+      # klaida bus sutvarkyta, langą čia reikia atidaryti. Pre-existing lint
+      # klaidų čia netaisome — tai atskira užduotis.

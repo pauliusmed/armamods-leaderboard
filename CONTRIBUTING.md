@@ -32,7 +32,7 @@ Thank you for your interest in improving the project! This document provides gui
    komanda dabar krenta dėl **pre-existing** klaidos
    (`web/src/hooks/usePinnedFavoriteMods.ts:38`, `react-hooks/set-state-in-effect`).
    **Nefiksuok jos** — tai užregistuota užduotis, ne tavo pakeitimas
-   (`AGENTS.md`: pre-existing lint klaidų neatlysime).
+   (pre-existing lint klaidų neatlysime).
 6. **Tests**: `npm test` (root, **36** failų) ir `npm --prefix web test` (vitest)
    prieš atidarant PR. CI dabar paleidžia tik `test/utils.test.ts` iš root — **tai
    nėra pakankama**, visus testus paleidžiate lokaliai. Key suites:
@@ -66,7 +66,6 @@ Every PR or commit with user-visible changes **must** update docs in the same ch
 - Versions are sequential patch bumps (`v1.23.49` → `v1.23.50`); bump minor only for features.
 - Date format: `YYYY-MM-DD` in the entry heading.
 - New root test files **must** be registered in the explicit list in `package.json` → `"test"` — CI does not glob.
-- Agent rule: [.cursor/rules/changelog-and-docs.mdc](.cursor/rules/changelog-and-docs.mdc).
 
 ## 📜 Coding Standards
 

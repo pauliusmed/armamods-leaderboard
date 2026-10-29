@@ -8,6 +8,8 @@ dist
 .gemini
 .claude
 .qwen
+.cursor
+AGENTS.md
 tmp
 web/dist
 web/node_modules

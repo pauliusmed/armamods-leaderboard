@@ -4,6 +4,18 @@ Release notes nuo v1.18.0. Pilna istorija žemiau.
 
 ## [1.23.58] - 2026-10-24 (unreleased)
 
+### 🧹 Repo higiena — agento instrukcijos nebėra sekamos
+
+- **`AGENTS.md`** ir **`.cursor/rules/changelog-and-docs.mdc`** pašalinti iš git
+  sekimo (`git rm --cached`), o `.gitignore` juos ignoruoja. Failai lieka
+  lokaliai, todėl agento darbo taisyklės veikia toliau, bet viešame repo nebeliko
+  vidinio darbo proceso.
+- Nuorodos sutvarkytos: `CONTRIBUTING.md` (agent rule eilutė, lint pastaba),
+  `.github/workflows/ci.yml` (lint komentaras). Taisyklė „pre-existing lint klaidų
+  netaisome" lieka savarankiška formuluote.
+- Failai lieka git istorijoje — sąmoningas sprendimas, kad nereikėtų perrašinėti
+  istorijos ir laužyti clone'ų.
+
 ### ARM-CPU-CACHE-4 — kanoninis `/server/:id` puslapis (vienas URL = vienas kūnas)
 
 - **Problema (korektiškumas, ne tik CPU):** tas pats `/server/:id` URL grąžindavo **du skirtingus kūnus** pagal `User-Agent` — crawler'iui 2,4 KB share HTML, žmogui 18 KB SPA su embedded duomenimis. Abu turėjo `public` politiką ir **jokio `Vary`**, o Workers Caching variantų be `Vary` neatskiria → 5 min. langę vienas galėjo būti patiektas kitam (žmogus — crawler puslapį arba atvirkščiai). Cloudflare docs šiam atvejui siūlo „produce a canonical response per URL".
