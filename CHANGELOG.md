@@ -18,6 +18,9 @@ wording, so the full history stays available.
 - `DESIGN_SYSTEM.md`, `MOBILE_STANDARDS.md`, `LIGHTHOUSE.md` and `PERFORMANCE.md`
   translated to English; the two broken internal anchor links in the design
   document now point at existing headings.
+- `INCIDENTS.md`, `DISCORD.md`, `P0_GATES.md` and `DATA_SOURCES_RESEARCH.md`
+  translated to English. Incident timelines, measurements, dates and statuses are
+  preserved; the Discord #information template is now English.
 
 ## [1.23.59] - 2026-10-29
 
