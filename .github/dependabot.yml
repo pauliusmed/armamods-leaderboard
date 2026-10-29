@@ -10,6 +10,10 @@ updates:
       root-minor-patch:
         patterns: ["*"]
         update-types: [minor, patch]
+    ignore:
+      # Major upgrades need a migration, not an auto-PR. Handle them deliberately.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /web
@@ -21,9 +25,16 @@ updates:
       web-minor-patch:
         patterns: ["*"]
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
     open-pull-requests-limit: 2
+    ignore:
+      # Action majors change behaviour (node runtime, inputs); bump them by hand.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
