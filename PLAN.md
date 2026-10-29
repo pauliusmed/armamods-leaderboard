@@ -9,35 +9,35 @@
 ## Current
 
 - Multi-game collector (Reforger / Arma 3) via BattleMetrics → GitHub Actions cron hourly (`0 * * * *`) → Cloudflare KV shards
-- Unified Hono edge Worker (`web/worker.ts`) + KV: serverId→shard indeksas (v1.23.25, INC-2026-09-06), precomputed default pages, surgical JSON extract
+- Unified Hono edge Worker (`web/worker.ts`) + KV: serverId→shard index (v1.23.25, INC-2026-09-06), precomputed default pages, surgical JSON extract
 - React 19 UI: mod/server leaderboards, trending, scenarios, storage planner, favorites, uptime history, modpack diffs
-- Frontend: visi 21 puslapis `React.lazy` + `DeferredSection` below-fold mounting (v1.23.26)
+- Frontend: all 21 pages are `React.lazy` plus `DeferredSection` below-fold mounting (v1.23.26)
 - CI + unit tests for ranking, lookup, storage planner, uptime, share meta, server index
 
-Perf būsena ir matavimai: [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (2026-09-06 sekcija), incidentai: [docs/INCIDENTS.md](docs/INCIDENTS.md).
+Performance status and measurements: [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (2026-09-06 section), incidents: [docs/INCIDENTS.md](docs/INCIDENTS.md).
 
 ---
 
-## Next (prioritetas pagal poveikį)
+## Next (prioritised by impact)
 
-### Performance — server detail (PSI 2026-09-07: desktop 89, a11y 98 — buvo 59 / 94)
-- [x] **LCP duomenų inline'as** — `/server/:id` HTML atsakyme `<script>` su serverio JSON; React'as skaito iškart be API round-trip. DONE v1.23.27 (`7b9b590`) — **permatuota: desktop TBT 2 380→220 ms, LCP 1,2 s, SI 1,3 s, balas 89**
-- [x] **A11y** — kontrastas + glossary heading tvarka. DONE v1.23.27 — **94→98**; liko 1 auditas
-- [ ] **A11y 98→100** — liko „heading elements not in sequential order" (surasti likusias vietas kituose komponentuose)
-- [ ] **Mobile PSI matavimas** — savininko paleidžiamas (tikimasi >90)
-- [ ] Desktop TBT likutis (220 ms) — nebe blokuoja balo; neaktualu
-- [x] **Proceso taisyklė:** kiekviena nauja above-fold sekcija — PSI patikra prieš merge (2026-08-24 → 08-27 funkcijų banga suvalgė /server/* 97 → 62–71; žr. LIGHTHOUSE.md)
+### Performance — server detail (PSI 2026-09-07: desktop 89, a11y 98 — was 59 / 94)
+- [x] **LCP data inlining** — a `<script>` with the server JSON in the `/server/:id` HTML response; React reads it immediately without an API round-trip. DONE v1.23.27 (`7b9b590`) — **re-measured: desktop TBT 2 380→220 ms, LCP 1.2 s, SI 1.3 s, score 89**
+- [x] **A11y** — contrast plus glossary heading order. DONE v1.23.27 — **94→98**; 1 audit item left
+- [ ] **A11y 98→100** — one item left: "heading elements not in sequential order" (find the remaining spots in other components)
+- [ ] **Mobile PSI measurement** — owner to run (expected >90)
+- [ ] Desktop TBT remainder (220 ms) — no longer blocks the score; not relevant
+- [x] **Process rule:** every new above-fold section ships with a PSI check before merge (the 2026-08-24 → 08-27 feature wave took /server/* from 97 to 62–71; see LIGHTHOUSE.md)
 
 ### Workshop / metadata
-- [ ] **Fazė 2:** mod→serverių reverse indeksas `/mods/:id` pilnam efektyvumui (dabar batching po 4; KV schema + collector — grill būtinas)
+- [ ] **Phase 2:** mod→server reverse index for `/mods/:id` (currently batched by 4; KV schema plus collector — design review required)
 - [ ] R2 self-host thumbnails only if Bohemia CDN hotlink fails
 - [ ] Recursive / transitive dependency tree (depth > 1)
 - [ ] Batch author / size / last-update warm for Arma 3 (Steam)
 - [ ] Mod categorization (Survival, Roleplay, PvP, MilSim)
 
 ### Ops
-- [ ] `cron-job.org` jobas saugo laikiną `gho_...` GitHub token'ą — pakeisti į ilgalaikį fine-grained PAT (INC-2026-08-27 TODO)
-- [ ] Rankinis collector dispatch prieš paleidžiant — patikrinti `gh run list` (dubliai rašo į tuos pačius KV raktus lygiagrečiai; žr. INC-2026-09-06)
+- [ ] The `cron-job.org` job stores a temporary `gho_...` GitHub token — replace it with a long-lived fine-grained PAT (INC-2026-08-27 TODO)
+- [ ] Manual collector dispatch before a run — check `gh run list` (duplicates write to the same KV keys in parallel; see INC-2026-09-06)
 
 ### Storage planner
 - [ ] SEO: Search Console `noindex` for `/storage-planner` vs landing
@@ -56,5 +56,5 @@ Perf būsena ir matavimai: [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) (2026-09-06 
 
 ## Notes
 
-- TypeScript end-to-end; Cloudflare Workers + KV (Pages pašalintas 2026-08-24)
+- TypeScript end-to-end; Cloudflare Workers + KV (Pages removed 2026-08-24)
 - Collector respects BattleMetrics rate limits; paid PAT required — [docs/DATA_SYNC.md](docs/DATA_SYNC.md)
