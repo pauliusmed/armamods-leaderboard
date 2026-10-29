@@ -1,260 +1,268 @@
 # Data Sources Research — BattleMetrics Alternatives
 
-Status: **P0b įgyvendintas** · Date: 2026-08-30 · Owner: collector/research
-**Atnaujinta 2026-09-30:** kolektoriaus **warm pass’ai** naudoja oficialų
+Status: **P0b implemented** · Date: 2026-08-30 · Owner: collector/research
+
+**Updated 2026-09-30:** the collector's **warm passes** now use the official
 Workshop API (`api-ar-workshop.bistudio.com/workshop-api/api/v3.0/`,
-`web/functions/lib/workshop-api.ts`, ~50× mažiau užklausų). Žr.
+`web/functions/lib/workshop-api.ts`, ~50× fewer requests). See
 [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md).
 
-**Kadangi dar ne viskas:** `workshop-fetch.ts` **išlieka gyvas** — jame liko HTML
-parseriai ir tikras `fetch()` į `reforger.armaplatform.com/workshop/{id}` (Bohemia
-*puslapiai*, ne image CDN); `storage-service.ts` → `resolveModSizesBatch` dar
-dar **naudoja tą patį `workshop-fetch.ts` scraper’ą**, kai dydis dar nežinomas (Worker-side). Taigi
-teisingas statusas: **kolektoriaus top-mod ir server-modpack warm’ai perkelti į
-oficialų API; Worker-side scraper kelias dar gyvas.**
+**What is not finished yet:** `workshop-fetch.ts` **is still alive** — it keeps the
+HTML parsers and a real `fetch()` to `reforger.armaplatform.com/workshop/{id}`
+(Bohemia *pages*, not the image CDN); `storage-service.ts` →
+`resolveModSizesBatch` **still uses the same `workshop-fetch.ts` scraper** when a
+size is not known yet (Worker side). The accurate status is therefore:
+**collector top-mod and server-modpack warm passes moved to the official API; the
+Worker-side scraper path is still alive.**
 
-Tyrimas, ar egzistuoja BattleMetrics alternatyvų Reforger / Arma 3 telemetrijai.
-Aukšto lygio išvados ir rekomendacijos. **Techninė analizė (endpoint'ai, auth flow,
-konkurento tyrimas) laikoma konfidencialia — nekomitinama, žr. `docs-private/`.**
+Research into whether BattleMetrics alternatives exist for Reforger / Arma 3
+telemetry. High-level conclusions and recommendations. **The technical analysis
+(endpoints, auth flow, competitor research) is kept confidential — not committed,
+see `docs-private/`.**
 
 ---
 
 ## Background
 
-- Kolektorius šiuo metu ima serverius tik iš BattleMetrics
+- The collector currently takes servers only from BattleMetrics
   (`src/services/battlemetrics.ts:52` — `api.battlemetrics.com/servers?filter[game]=…`).
-- BM nuo ~2026-07-20 reikalauja **paid subscription rakto** (žr. [DATA_SYNC.md](./DATA_SYNC.md)).
-- Klausimas — ar galima sumažinti priklausomybę nuo BM, atskiriant modų metadata
-  ir serverių telemetriją.
+- Since ~2026-07-20 BattleMetrics requires a **paid subscription key** (see [DATA_SYNC.md](./DATA_SYNC.md)).
+- The question: can the dependency on BM be reduced by separating mod metadata
+  from server telemetry.
 
 ---
 
-## Santrauka
+## Summary
 
-| Duomenų grupė | Šaltiniai | Verdiktas |
-|---------------|-----------|-----------|
-| **Modų metadata** (dydis, autorius, deps, versijos, galerija, dates) | Oficialus Bohemia Workshop duomenų sluoksnis (be auth) | ✅ **Veikia, verta naudoti vietoj HTML scrape** |
-| **Serverių telemetrija** (žaidėjų skaičiai, modai ant serverių, rankinimas) | BM (pagrindinis) + Bohemia lobby runtime (ateitis) | ⚠️ BM fallback; runtime reikalauja prototipo |
-| **Serverių lobby** (pilna: region, queue, modai) | Bohemia žaidimo runtime API | ⚠️ Reikia prototipo + Bohemia leidimo |
-| **Žaidėjų nikai (player names)** | Serverio bendradarbiavimas (opt-in modas / RCON) | ❌ Globaliai nepasiekiama be-auth |
+| Data group | Sources | Verdict |
+|------------|---------|---------|
+| **Mod metadata** (size, author, dependencies, versions, gallery, dates) | Official Bohemia Workshop data layer (no auth) | ✅ **Works, worth using instead of HTML scraping** |
+| **Server telemetry** (player counts, mods on servers, ranking) | BM (primary) + Bohemia lobby runtime (future) | ⚠️ BM fallback; runtime needs a prototype |
+| **Server lobby** (full: region, queue, mods) | Bohemia game runtime API | ⚠️ Needs a prototype plus Bohemia permission |
+| **Player names** | Server collaboration (opt-in mod / RCON) | ❌ Not globally available without auth |
 
-**BM vaidmuo po tyrimo:** ne vienintelis šaltinis, o **fallback** + palyginimo
-šaltinis + istorija, kol neįrodytas 24/7 runtime kolektorius.
+**BM's role after the research:** not the only source, but a **fallback**, a
+comparison source and the history, until a 24/7 runtime collector is proven.
 
 ---
 
-## 1. Modų metadata — oficialus Workshop duomenų sluoksnis (P0b)
+## 1. Mod metadata — official Workshop data layer (P0b)
 
-Oficialus Bohemia Workshop duomenų sluoksnis (be rakto) duoda pilną modų katalogą
-ir detail objektus su versijomis, dependencies, scenarijais, licencijomis, autoriais,
-galerija ir datomis. **Batch lookup** leidžia vienu requestu gauti iki 50 modų pagal id.
+The official Bohemia Workshop data layer (no key) returns the full mod catalogue
+and detail objects with versions, dependencies, scenarios, licences, authors,
+gallery and dates. **Batch lookup** returns up to 50 mods by id in one request.
 
-Dabartinis `web/functions/lib/workshop-fetch.ts` scrape'ina
+The current `web/functions/lib/workshop-fetch.ts` scrapes
 `reforger.armaplatform.com/workshop/<id>` HTML (Next.js `__NEXT_DATA__` + regex).
-Oficialus sluoksnis duoda **tą patį + daugiau**, struktūrizuotai ir patikimiau:
+The official layer gives **the same plus more**, structured and more reliably:
 
-| Funkcija | HTML scrape (dabar) | Oficialus sluoksnis |
-|----------|---------------------|---------------------|
-| Dydis | regex iš HTML | tiesioginis laukas ✓ |
-| Autorius | `__NEXT_DATA__` parse | `author` ✓ |
-| Aprašymas | `summary`/`description` | `summary`/`description`/`license` ✓ |
-| Galerija | `previews`/`screenshots` parse | `previews`+`screenshots` ✓ |
+| Feature | HTML scrape (now) | Official layer |
+|---------|-------------------|----------------|
+| Size | regex from HTML | direct field ✓ |
+| Author | `__NEXT_DATA__` parse | `author` ✓ |
+| Description | `summary`/`description` | `summary`/`description`/`license` ✓ |
+| Gallery | `previews`/`screenshots` parse | `previews` + `screenshots` ✓ |
 | Dates | parse | `createdAt`/`updatedAt` ✓ |
 | Dependencies | `__NEXT_DATA__` parse | `dependencies[]` ✓ |
-| Statusas (available) | 404 / HTML sniff | HTTP 404 / `blocked`/`unlisted` ✓ |
-| Versijų istorija | ✗ | `versions[]` ✓ |
+| Status (available) | 404 / HTML sniff | HTTP 404 / `blocked`/`unlisted` ✓ |
+| Version history | ✗ | `versions[]` ✓ |
 | Scenarios | ✗ | `scenarios[]` ✓ |
-| Batch lookup | ✗ (1 HTML per modą) | `ids[]` iki 50 ✓ |
+| Batch lookup | ✗ (one HTML per mod) | `ids[]` up to 50 ✓ |
 
-Kolektoriaus `warmTopModSizesFromWorkshop` + `warmServerModpackModSizes`
-(`scripts/collector.ts`) daro po 1 HTTP request per modą; su batch — iki 50× mažiau.
+The collector's `warmTopModSizesFromWorkshop` and `warmServerModpackModSizes`
+(`scripts/collector.ts`) make one HTTP request per mod; with batching that is up to
+50× fewer.
 
 ---
 
-## 2. Serverių telemetrija — BM fallback + ateities runtime
+## 2. Server telemetry — BM fallback plus a future runtime
 
-### Dabartis
+### Today
 
-- **BM** — vienintelis veikiantis serverių telemetrijos šaltinis (žaidėjų skaičiai,
-  modai ant serverių, rankinimas). Moka už paid raktą.
+- **BM** — the only working server telemetry source (player counts, mods on
+  servers, ranking). It costs a paid key.
 
-### Ateitis (P2 tyrimas, ne dabar)
+### Future (P2 research, not now)
 
-- Bohemia žaidimo runtime API (lobby) duoda turtingesnius duomenis (region, queue,
-  modai, cross-platform), bet reikalauja:
-  - **nuolatinio ar periodiško rinktuvo** Enfusion runtime aplinkoje (nebūtinai
-    visas grafinis žaidimas meniu lange — prototipas tai turi įrodyti),
-  - **stabilumo įrodymo** (auth sesijos trukmė nedokumentuota),
-  - **rašytinio Bohemia leidimo** komercinei paslaugai.
-- Kol neįrodyta — BM lieka pagrindinis.
+- The Bohemia game runtime API (lobby) returns richer data (region, queue, mods,
+  cross-platform), but requires:
+  - a **continuous or periodic collector** in an Enfusion runtime environment
+    (not necessarily the full graphical game in a menu window — a prototype has
+    to prove that),
+  - **proof of stability** (auth session lifetime is undocumented),
+  - **written Bohemia permission** for a commercial service.
+- Until that is proven, BM remains primary.
 
 ### A2S (Steam server query)
 
-- **Enrichment sluoksnis** jau žinomiems hostams, ne pagrindinis šaltinis.
-- Praktinis testas (8 serveriai): A2S_INFO atsakė 1/8 (ir tik ant kito porto);
-  A2S_PLAYER — 0/8 nikų. Likę timeout (uždari/NAT).
-- Reforger nenaudoja Steam master server discovery.
+- An **enrichment layer** for already-known hosts, not a primary source.
+- Practical test (8 servers): A2S_INFO answered for 1/8 (and only on a different
+  port); A2S_PLAYER — 0/8 names. The rest timed out (closed/NAT).
+- Reforger does not use Steam master server discovery.
 
 ---
 
-## 2b. Ko mes NEGAUNAME (duomenų spraga vs Bohemia lobby)
+## 2b. What we do NOT get (data gap vs the Bohemia lobby)
 
-Mūsų dabartinis šaltinis (BM) + A2S **neduoda** šių Bohemia lobby laukų, kuriuos
-turi trečiosios šalies kolektorius. Spraga egzistuoja tol, kol neturime Bohemia
-runtime prieigos.
+Our current source (BM) plus A2S **does not provide** these Bohemia lobby fields
+that a third-party collector has. The gap exists until we have Bohemia runtime
+access.
 
-| Duomuo | BM | A2S | Bohemia lobby (jų kolektorius) | Pasekmė mums |
-|--------|----|-----|-------------------------------|--------------|
-| Serverio **FPS** | ❌ | ⚠️ kartais | ✅ | Neturime; nerikiuoja modų — žema vertė |
-| Žaidėjų **nikai** (names) | ❌ | ❌ (0/12) | ✅ | Neturime; ne produkto vertė |
-| **Queue** dydis | ❌ (tik total) | ❌ | ✅ | Neturime atskirai |
-| **Region / ping site** | ⚠️ regionas? | ❌ | ✅ `pingSiteId` | Dalinai |
-| **Cross-platform** (PC/XBL/PSN) | ❌ | ❌ | ✅ `supportedClients` | Neturime |
-| **Direct join code** | ❌ | ❌ | ✅ `directJoinCode` | Neturime |
-| **Host type** (CommunityDs) | ❌ | ❌ | ✅ `hostType` | Neturime |
-| **lastChanged** (pokyčio laikas) | ❌ | ❌ | ✅ | Neturime |
-| Modai ant serverio | ✅ | ❌ | ✅ | **Turime** (BM) ✓ |
-| Žaidėjų skaičius | ✅ | ⚠️ | ✅ | **Turime** (BM) ✓ |
-| Serverio pavadinimas / map | ✅ | ⚠️ | ✅ | **Turime** (BM) ✓ |
+| Data | BM | A2S | Bohemia lobby (their collector) | Consequence for us |
+|------|----|-----|-------------------------------|--------------------|
+| Server **FPS** | ❌ | ⚠️ sometimes | ✅ | We lack it; does not rank mods — low value |
+| Player **names** | ❌ | ❌ (0/12) | ✅ | We lack them; not product value |
+| **Queue** size | ❌ (total only) | ❌ | ✅ | We lack it separately |
+| **Region / ping site** | ⚠️ region? | ❌ | ✅ `pingSiteId` | Partial |
+| **Cross-platform** (PC/XBL/PSN) | ❌ | ❌ | ✅ `supportedClients` | We lack it |
+| **Direct join code** | ❌ | ❌ | ✅ `directJoinCode` | We lack it |
+| **Host type** (CommunityDs) | ❌ | ❌ | ✅ `hostType` | We lack it |
+| **lastChanged** | ❌ | ❌ | ✅ | We lack it |
+| Mods on the server | ✅ | ❌ | ✅ | **We have it** (BM) ✓ |
+| Player count | ✅ | ⚠️ | ✅ | **We have it** (BM) ✓ |
+| Server name / map | ✅ | ⚠️ | ✅ | **We have it** (BM) ✓ |
 
-**Svarbu:** spragos laukai (FPS, nikai, queue, cross-platform, direct join, host type)
-yra **Bohemia lobby raw duomenys**, pasiekiami tik per tą patį auth kelią kaip nikai
-(§3, §Rekomendacijos). Jų **negauti**:
-- per BM (neduoda šių laukų),
-- per A2S (nepatikima — FPS tik kartais, nikai 0/12),
-- per Workshop API (tik modų metadata).
+**Important:** the missing fields (FPS, names, queue, cross-platform, direct join,
+host type) are **Bohemia lobby raw data**, reachable only through the same auth
+path as names (§3, §Recommendations). They **cannot** be obtained:
+- through BM (it does not expose these fields),
+- through A2S (unreliable — FPS only sometimes, names 0/12),
+- through the Workshop API (mod metadata only).
 
-**Ar tai blokuoja produktą? Ne.** Modų statistika (kurios vertė — rankinimas, modų
-populiarumas) remiasi **modais, žaidėjų skaičiais, serverių skaičiumi** — viską
-turime iš BM. FPS/nikai/queue yra serverio-puslapio smulkmenos, ne modų signalas.
+**Does this block the product? No.** Mod statistics (whose value is ranking and
+mod popularity) rest on **mods, player counts and server counts** — all of which
+we have from BM. FPS/names/queue are server-page niceties, not the mod signal.
 
-**Kaip spraga užsidarytų (ateitis):**
-- Bohemia runtime prototipas (garantuotų lobby laukus; nikai — neaišku),
-- Bohemia leidimas (roster + visi laukai),
-- opt-in serverio modas (FPS, nikai — tik savo/partnerių serveriams).
+**How the gap would close (future):**
+- a Bohemia runtime prototype (would guarantee lobby fields; names unclear),
+- Bohemia permission (roster plus all fields),
+- an opt-in server mod (FPS, names — only for our own or partner servers).
 
 ---
 
-## 3. Žaidėjų nikai (player names)
+## 3. Player names
 
-| Būdas | Svetimi serveriai | Reikia leidimo | Patikimumas |
-|-------|-------------------|----------------|-------------|
-| Bohemia lobby / Room | ✅ | — | Rodo tik žaidėjų **skaičių**, ne nikus |
-| A2S_PLAYER | Kai kuriems | ❌ | Nepatikima: dažnai neatsako / be vardų |
-| RCON `#players` | ❌ | ✅ RCON raktas | Aukštas |
-| **Serverio Enfusion modas** | ❌ | Serveris įdiegia modą | **Aukščiausias** |
+| Method | Third-party servers | Needs permission | Reliability |
+|--------|---------------------|------------------|-------------|
+| Bohemia lobby / Room | ✅ | — | Shows only the player **count**, not names |
+| A2S_PLAYER | For some | ❌ | Unreliable: often no response / no names |
+| RCON `#players` | ❌ | ✅ RCON key | High |
+| **Server Enfusion mod** | ❌ | Server installs the mod | **Highest** |
 
-**Optimalus variantas:**
-1. A2S_PLAYER bandyti viešiems (best-effort, žemas prioritetas).
-2. Jei neveikia → rodyti tik žaidėjų skaičių.
-3. Siūlyti serverių savininkams opt-in **"verified server" modą** arba read-only RCON.
-   Oficialus PlayerManager suteikia `GetPlayers()`, `GetPlayerName()`, `GetPlatformKind()`.
-4. **Nikus rodyti tik gyvai, ilgai nekaupti** — asmens duomenys (privatumo politika).
+**The optimal combination:**
+1. Try A2S_PLAYER for public servers (best effort, low priority).
+2. If that fails → show the player count only.
+3. Offer server owners an opt-in **"verified server" mod** or read-only RCON.
+   The official PlayerManager provides `GetPlayers()`, `GetPlayerName()`, `GetPlatformKind()`.
+4. **Show names live only, never store them long** — personal data (privacy policy).
 
-Nikai nėra pagrindinio modų statistikos produkto vertė — **atidėti**.
+Names are not the core value of the mod statistics product — **deferred**.
 
-### Vieši įrodymai iš trečios šalies puslapio (2026-08-30, be jokio auth)
+### Public evidence from a third-party site (2026-08-30, no auth)
 
-Jų viešas puslapis/JS atskleidžia šiuos faktus (tai jų pačių publikuotas turinys):
+Their public page/JS reveals these facts (their own published content):
 
-- **Detail puslapio tekstas:** *"Server discovery data is retrieved from the backend
+- **Detail page text:** *"Server discovery data is retrieved from the backend
   used by Arma Reforger and cached briefly; player counts are near-live."* → discovery
-  ateina iš Bohemia backend per jų kolektorių; cache trumpalaikis.
-- **`server-detail.js` komentaras:** *"the browser never calls Bohemia directly"* →
-  visi upstream kvietimai vyksta jų backend'e, ne naršyklėje.
-- **Nikų sekcija (`/players`):** *"Live player names are fetched on demand and are not
-  stored"* + `fetchedAt` rodomas vartotojui + `available:false` → "Live player data is
-  unavailable". Tai rodo **gyvą, on-demand** roster iš jų kolektoriaus.
-- Praktinis testas: `/players` grąžino **pilnus 128+9** (limitas iki 10 — ankstesnė
-  klaidinga išvada, buvome mes patys `slice(0,10)`).
+  comes from the Bohemia backend through their collector; the cache is short-lived.
+- **`server-detail.js` comment:** *"the browser never calls Bohemia directly"* →
+  every upstream call happens in their backend, not in the browser.
+- **Names section (`/players`):** *"Live player names are fetched on demand and are not
+  stored"* plus `fetchedAt` shown to the user and `available:false` → "Live player data is
+  unavailable". That indicates a **live, on-demand** roster from their collector.
+- Practical test: `/players` returned **a full 128+9** (a limit of 10 was an earlier
+  wrong conclusion — it came from our own `slice(0,10)`).
 
-**Ką įrodo:** jų nikai ateina per jų paties backend→Bohemia kolektorių; duomenys gyvi.
-**Ko neįrodo:** tikslaus jų kolektoriaus auth mechanizmo (runtime žaidimas / privatus
-HTTP klientas / Bohemia leidimas) — jų viešas turinys to neatskleidžia. Jų "not
-affiliated" teiginys nereiškia, kad leidimo nėra.
+**What it proves:** their names come through their own backend→Bohemia collector; the
+data is live. **What it does not prove:** the exact auth mechanism of their collector
+(runtime game / private HTTP client / Bohemia permission) — their public content does
+not reveal it. Their "not affiliated" statement does not mean permission is absent.
 
-### Papildomi įrodymai — jų laukai ir gyvumas (2026-08-30)
+### Additional evidence — their fields and liveness (2026-08-30)
 
-**Bohemia-specifiniai laukai jų serverio duomenyse:**
+**Bohemia-specific fields in their server data:**
 `pingSiteId` (london), `directJoinCode`, `hostType` (CommunityDs), `supportedClients`
 (PC/XBL/PSN), `present`, `visible`, `lastChanged`, `queueMax`, `fps` (40).
-Šie laukai yra Bohemia lobby `Room` objekto dalis — jų **neduoda** nei A2S, nei BM.
-Tai stiprus ženklas, kad jie ima iš Bohemia lobby per kliento-kontekso užklausą.
+These fields are part of the Bohemia lobby `Room` object — neither A2S nor BM
+provides them. That is a strong signal that they read the Bohemia lobby through a
+client-context request.
 
-**Kolekcijos dažnumas (iš `activity`):**
-`samples24h: 939` ≈ **~92 sek. intervalas**; `samples7d: 3014` ≈ ~3.3 min vidurkis.
-Tai rodo nuolatinį snapshot'ų kaupimą iš Bohemia.
+**Collection frequency (from `activity`):**
+`samples24h: 939` ≈ a **~92 s interval**; `samples7d: 3014` ≈ ~3.3 min on average.
+That indicates continuous snapshot collection from Bohemia.
 
-**Gyvo roster įrodymas (26 s testas):**
-Dviejų `/players` kvietimų palyginimas per 26 s: `queue` 6→4, o nikų rinkinys
-pasikeitė — `hillnut`/`Louie2024` išėjo, `mivaniec`/`Oliminator_99` prisijungė.
-`fetchedAt` buvo "dabar" (0–13 s delta). Tai on-demand, **gyvas** roster iš jų
-kolektoriaus→Bohemia — ne cache, ne A2S (A2S_PLAYER mūsų teste buvo 0/12).
+**Proof of a live roster (26 s test):**
+Comparing two `/players` calls 26 s apart: `queue` 6→4 and the set of names
+changed — `hillnut`/`Louie2024` left, `mivaniec`/`Oliminator_99` joined.
+`fetchedAt` was "now" (0–13 s delta). That is an on-demand, **live** roster from
+their collector→Bohemia — not a cache, not A2S (A2S_PLAYER was 0/12 in our test).
 
-**Ką tai reiškia mums:** jų metodas patvirtintas kaip Bohemia lobby per jų kolektorių,
-bet tikslus auth mechanizmas lieka jų paslaptis. Mes negalime jo atkartoti be EULA
-rizikos ar Bohemia leidimo.
-
----
-
-## Rekomendacijos
-
-**BM vaidmuo:** fallback + palyginimas + istorija. Nekurti svarbiausių funkcijų
-vien ant BM.
-
-### Prioritetas: P0b (Workshop API) padarytas; istorija jau veikia
-
-**BM snapshot istorija JAU kaupiama** (hourly/daily/weekly per valandini ciklą) — tai
-duoda firstSeen, trend, activity. Dažnesnis snapshot neprioritetas (žr. P0a žemiau).
-
-### P0a — BM serverių snapshot istorija (ATIDĖTA — dažnesnis snapshot nereikalingas)
-
-Dabartinė KV istorija (hourly/daily/weekly/monthly/yearly, kolektorius kas valandą) jau
-teikia firstSeen, trend, activity. **Dažnesnis snapshot (kas 5–15 min) NEREIKALINGAS**
-— sprendimas 2026-08-30. R2 tyrimas parodytas kaip ateities pasiūlymas:
-
-**R2 kaip istorijos saugykla (tyrimo išvada, neatlikta):**
-- R2 free: 10 GB, 1M Class A / mėn (rašymas), 10M Class B (skaitymas).
-- **Per-server objektai kas valandą viršytų limitą** (120k/day ≈ 3.6M/mėn) — NEdaryti.
-- **Agreguotas objektas per snapshot** (visas momentas ~220KB) — tik 24/day, niekada
-  neviršys; atvertų kas-5-min snapshot'us be limitų.
-- Migracija reiškia Edge skaitymo logikos perrašymą — daryti tik kai atsiras realus
-  poreikis (smulki 24h kreivė / tikslesnis trend).
-
-### P0b — ✅ ATLIKTA (2026-08-30, šaltinis patvirtintas 09-30)
-
-2. ✅ **HTML scrape pakeistas oficialiu Workshop sluoksniu** — `web/functions/lib/workshop-api.ts`
-   (catalog + detail + batch by ids), naudojamas `warmTopModSizesFromWorkshop` ir
-   `warmServerModpackModSizes` vietoj per-mod HTML (`~50×` mažiau užklausų).
-3. ⬜ **Likęs:** API: pridėti `source`, `observedAt`, `stale` — šaltinių atskiriamumui.
-
-### Atidėta
-
-4. **Nikai** — ne produkto vertė.
-5. **Bohemia lobby runtime prototipas** — eksperimentas, ne verslo prielaida.
-
-### P4 — ilgalaikis pranašumas
-
-6. **Opt-in serverio telemetrijos modas/agentas** (Enfusion REST event batch'ai) —
-   verified server analytics. Duomenys, kurių konkurentas negali lengvai turėti be
-   serverių bendruomenės sutikimo.
-
-### Teisinė riba
-
-- Arma Reforger EULA draudžia reverse engineering tinklo paslaugoms ir komercinį
-  žaidimo naudojimą be leidimo. Laikytis: **ne** kopijuoti auth tokenų, **ne** kartoti
-  nepublikuotų backend endpoint'ų, **ne** perskirstyti modų failų.
-- Metadata indeksavimas + nuorodos — mažesnės rizikos, bet komercinei API verta
-  gauti rašytinį Bohemia patvirtinimą (Business & Licensing).
-- Žaidėjų ID/vardų istorija gali būti asmens duomenys — agreguoti arba trumpai saugoti.
-- Tai ne teisinė konsultacija.
+**What it means for us:** their method is confirmed to be the Bohemia lobby through
+their collector, but the exact auth mechanism remains their secret. We cannot
+replicate it without EULA risk or Bohemia permission.
 
 ---
 
-## Susiję dokumentai
+## Recommendations
 
-- [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) — dabartinis scrape sluoksnis
+**BM's role:** fallback, comparison and history. Do not build the most important
+features on BM alone.
+
+### Priority: P0b (Workshop API) is done; history already works
+
+**BM snapshot history is ALREADY being collected** (hourly/daily/weekly on the
+hourly cycle) — that yields firstSeen, trend and activity. A more frequent snapshot
+is not a priority (see P0a below).
+
+### P0a — BM server snapshot history (DEFERRED — a more frequent snapshot is not needed)
+
+The existing KV history (hourly/daily/weekly/monthly/yearly, collector hourly)
+already provides firstSeen, trend and activity. **A more frequent snapshot (every
+5–15 min) is NOT NEEDED** — decision of 2026-08-30. The R2 research is recorded as a
+future proposal:
+
+**R2 as history storage (research conclusion, not implemented):**
+- R2 free tier: 10 GB, 1M Class A / month (writes), 10M Class B (reads).
+- **Per-server objects every hour would exceed the limit** (120k/day ≈ 3.6M/month) — do NOT do it.
+- **One aggregated object per snapshot** (the whole moment, ~220 KB) — only 24/day, never
+  exceeds the limit; it would unlock 5-minute snapshots without limits.
+- Migration means rewriting the edge read logic — only when a real need appears
+  (a finer 24 h curve, or a more precise trend).
+
+### P0b — ✅ DONE (2026-08-30, source confirmed 2026-09-30)
+
+2. ✅ **HTML scraping replaced by the official Workshop layer** — `web/functions/lib/workshop-api.ts`
+   (catalog + detail + batch by ids), used by `warmTopModSizesFromWorkshop` and
+   `warmServerModpackModSizes` instead of per-mod HTML (`~50×` fewer requests).
+3. ⬜ **Remaining:** API: add `source`, `observedAt`, `stale` to distinguish sources.
+
+### Deferred
+
+4. **Names** — not product value.
+5. **Bohemia lobby runtime prototype** — an experiment, not a business assumption.
+
+### P4 — long-term advantage
+
+6. **Opt-in server telemetry mod/agent** (Enfusion REST event batches) —
+   verified server analytics. Data a competitor cannot easily have without the
+   server community's consent.
+
+### Legal boundary
+
+- The Arma Reforger EULA forbids reverse engineering network services and commercial
+  use of the game without permission. Comply: **do not** copy auth tokens, **do not**
+  replicate unpublished backend endpoints, **do not** redistribute mod files.
+- Metadata indexing plus links is lower risk, but for a commercial API it is worth
+  obtaining written Bohemia approval (Business & Licensing).
+- Player ID/name history can be personal data — aggregate it or store it briefly.
+- This is not legal advice.
+
+---
+
+## Related documents
+
+- [WORKSHOP_METADATA.md](./WORKSHOP_METADATA.md) — the current scrape layer
 - [DATA_SYNC.md](./DATA_SYNC.md) — BM paid API, collector
-- [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) — "Direct Enfusion Telemetry" vizija (eilutė 94)
-- [ALGORITHM.md](./ALGORITHM.md) — rankinimo logika
-- `docs-private/` — konfidenciali techninė analizė (nekomitinama)
+- [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) — the "Direct Enfusion Telemetry" vision (line 94)
+- [ALGORITHM.md](./ALGORITHM.md) — ranking logic
+- `docs-private/` — confidential technical analysis (not committed)

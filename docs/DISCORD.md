@@ -1,118 +1,118 @@
-# Discord — kanalų šablonas ir tikslai
+# Discord — channel template and goals
 
-Pradedame nuo mažo: vienas serveris, minimalus kanalų rinkinys, aiškios taisyklės.
-Tuščias kanalų chaosas žudo bendruomenę — kiekvienas kanalas turi turėti vieną paskirtį
-ir nuorodą į dokumentaciją.
+Start small: one server, a minimal set of channels, clear rules. An empty chaos of
+channels kills a community — every channel has one purpose and a link to the
+documentation.
 
-## Paruošti tekstai
+## Prepared copy
 
-### #information (pirmas įrašas, pininkite kanalą)
+### #information (first post, pin the channel)
 
 ```text
-Sveiki atvykę į reforgermods.com bendruomenės Discord!
+Welcome to the reforgermods.com community Discord!
 
-Šis serveris yra Arma Reforger & Arma 3 modų ir serverių leaderboard bendruomenė.
-Čia:
-- Sekite atnaujinimus #announcements
-- Teikite idėjas ir atsiliepimus #feature-requests / #feedback
-- Praneškite apie klaidas #bug-reports
-- Bendraukite #general
+This server is the community for the Arma Reforger & Arma 3 mod and server leaderboard.
+Here:
+- Follow updates in #announcements
+- Share ideas and feedback in #feature-requests / #feedback
+- Report bugs in #bug-reports
+- Talk in #general
 
-Nuorodos:
-- Svetainė: https://reforgermods.com
+Links:
+- Site: https://reforgermods.com
 - GitHub: https://github.com/pauliusmed/armamods-leaderboard
-- Duomenys sinchronizuojami kas valandą iš BattleMetrics.
+- Data syncs hourly from BattleMetrics.
 
-Kaip gauti pagalbą: klauskite #support. Serverių savininkams — #server-owners.
+Getting help: ask in #support. Server owners: #server-owners.
 ```
 
-### #announcements (automatinis skelbimas)
+### #announcements (automatic post)
 
-`#announcements` gauna automatinį pranešimą per webhook kiekvieną kartą, kai
-pasikeičia **`DISCORD_RELEASES.md`** (ne `CHANGELOG.md` — žr. „Automatinis release
-pranešimas" žemiau). Rankiniu būdu rašyti nereikia — tik dideliems pranešimams
-(pav. serverio perkėlimas, reitingų politikos pakeitimai).
+`#announcements` receives an automatic webhook message every time
+**`DISCORD_RELEASES.md`** changes (not `CHANGELOG.md` — see "Automatic release
+post" below). Nothing needs to be written by hand except for major notices
+(e.g. a server migration or ranking policy changes).
 
-## Tikslai (kodėl egzistuoja serveris)
+## Goals (why the server exists)
 
-1. **Atsiliepimų kanalas** — vartotojai ir serverių savininkai praneša apie klaidas,
-   netikslius duomenis ir idėjas be GitHub account'o.
-2. **Feature request ciklas** — aiškus kelias nuo idėjos iki sprendimo:
-   `#feature-requests` → GitHub issue → changelog (žr. `docs/` + `CHANGELOG.md`).
-3. **Serverių savininkų ryšys** — FEATURED vieta, hosting rekomendacijos, duomenų
-   teisingumo pranešimai (privati monetizacijos politika — `docs-private/MONETIZATION.md`).
-4. **Skaidrumas ir atnaujinimai** — release notes, statuso pokyčiai, donacijų etapai.
+1. **A feedback channel** — users and server owners report bugs, inaccurate data
+   and ideas without a GitHub account.
+2. **Feature request loop** — a clear path from idea to decision:
+   `#feature-requests` → GitHub issue → changelog (see `docs/` and `CHANGELOG.md`).
+3. **Server owner contact** — FEATURED placement, hosting recommendations, data
+   accuracy reports (private monetization policy — `docs-private/MONETIZATION.md`).
+4. **Transparency and updates** — release notes, status changes, donation stages.
 
-## Kanalų struktūra
+## Channel structure
 
-### Prieigos / svarbūs
+### Access / important
 
-| Kanalas | Paskirtis |
+| Channel | Purpose |
 |---|---|
-| `#welcome` | Pasisveikinimas, taisyklės, nuorodos (GitHub, svetainė, šis dokumentas) |
-| `#rules` | Trumpa taisyklių santrauka: pagarba, jokio spam'o, jokio reitingų manipuliavimo |
-| `#announcements` | Tik admin postina: release notes, statuso pokyčiai, donacijų etapai |
-| `#status` (privatus) | Mato tik adminai: automatiniai stale/system alertai su diagnostika (webhook `DISCORD_ALERT_WEBHOOK_URL`) |
+| `#welcome` | Greeting, rules, links (GitHub, site, this document) |
+| `#rules` | Short rule summary: respect, no spam, no ranking manipulation |
+| `#announcements` | Admin posts only: release notes, status changes, donation stages |
+| `#status` (private) | Visible to admins only: automatic stale/system alerts with diagnostics (webhook `DISCORD_ALERT_WEBHOOK_URL`) |
 
-### Bendruomenė
+### Community
 
-| Kanalas | Paskirtis |
+| Channel | Purpose |
 |---|---|
-| `#general` | Laisvi pokalbiai apie Arma Reforger / Arma 3, modus, serverius |
-| `#showcase` | Vartotojai dalijasi modpack'ais, serveriais, screenshot'ais |
-| `#introductions` | Naujokai prisistato (nebūtina, bet kuria ryšį) |
+| `#general` | Free discussion about Arma Reforger / Arma 3, mods and servers |
+| `#showcase` | Users share modpacks, servers and screenshots |
+| `#introductions` | Newcomers introduce themselves (optional, but builds connection) |
 
-### Atsiliepimai / darbas
+### Feedback / work
 
-| Kanalas | Paskirtis |
+| Channel | Purpose |
 |---|---|
-| `#feedback` | Atsiliepimai apie svetainę: kas neveikia, kas neaišku, kas trūksta |
-| `#feature-requests` | Idėjos; adminas žymi emoji (👍 reiškia "priimta/apsvarstyta") ir kuria GitHub issues |
-| `#bug-reports` | Klaidos su aiškiu aprašymu: URL, ką darei, ką gavai |
-| `#server-owners` | Serverių savininkams: FEATURED vieta, duomenų teisingumas, hosting klausimai |
+| `#feedback` | Feedback about the site: what is broken, unclear or missing |
+| `#feature-requests` | Ideas; an admin reacts with emoji (👍 means "accepted/considered") and opens GitHub issues |
+| `#bug-reports` | Bugs with a clear description: the URL, what you did, what you got |
+| `#server-owners` | For server owners: FEATURED placement, data accuracy, hosting questions |
 
-## Moderavimo taisyklės (trumpai)
+## Moderation rules (short)
 
-- Adminai: reikia bent 2 (kad nebūtų vieno žmogaus bottleneck).
-- `#announcements` ir `#status` — tik adminai gali rašyti.
-- Feature request'as be aiškaus aprašymo → paprašyti patikslinimo, ne iškart uždaryti.
-- Spam/reklama → įspėjimas; pakartotinis — nuošalė.
-- Reitingų manipuliavimo aptarimas → nukreipti į GitHub issue, ne į tiesioginius veiksmus.
+- Admins: at least 2 (so there is no single-person bottleneck).
+- `#announcements` and `#status` — admins can post, nobody else.
+- A feature request without a clear description → ask for clarification, do not close it immediately.
+- Spam/advertising → warning; repeated → timeout.
+- Discussion of ranking manipulation → redirect to a GitHub issue, not to direct action.
 
-## Release taisyklė (#announcements)
+## Release rule (#announcements)
 
-Vienintelė turinio taisyklė, sauganti kanalą nuo spam'o ir žargono:
+The one content rule that keeps the channel free of spam and jargon:
 
-> Kiekvienam release'ui paruošiamas atskiras, **angliškas, vartotojui suprantamas**
-> aprašas (1–5 eilutės). **Jokių techninių detalių** (failų pavadinimai, KV,
-> worker'iai) ir **jokios monetizacijos / affiliate** temų. Kalbame apie naudą
-> žaidėjui, ne vidaus mechaniką.
+> Every release gets a separate, **English, user-facing** description (1–5 lines).
+> **No technical details** (file names, KV, workers) and **no monetization /
+> affiliate** topics. We talk about the player's benefit, not internal mechanics.
 
-Aprašas rašomas `DISCORD_RELEASES.md` viršuje (ne CHANGELOG!). CHANGELOG lieka
-techninis ir lietuviškas (dev auditorija), `DISCORD_RELEASES.md` — user-facing ir
-angliškas. Automatika siunčia tik pastarąjį.
+The description is written at the top of `DISCORD_RELEASES.md` (not the
+CHANGELOG). `CHANGELOG.md` stays technical (developer audience);
+`DISCORD_RELEASES.md` is user-facing and English. The automation sends only the
+latter.
 
-## Nuoroda į kodą
+## Code reference
 
-- Mygtukas puslapyje: `web/src/components/ui/DiscordButton.tsx` (naudojama `PROJECT_DISCORD_URL` iš `web/src/lib/siteLinks.ts` — pakeisk nuorodą vienoje vietoje).
-- Šabloną laikyk atvirai: įdėk nuorodą į `#welcome` ir `docs/README.md`.
+- Button on the site: `web/src/components/ui/DiscordButton.tsx` (uses `PROJECT_DISCORD_URL` from `web/src/lib/siteLinks.ts` — change the link in one place).
+- Keep the template public: link it from `#welcome` and `docs/README.md`.
 
-## Automatinis release pranešimas (#announcements)
+## Automatic release post (#announcements)
 
-1. Discord: Channel Settings → Integrations → Webhooks → New Webhook, nustatyk kanalą `#announcements`, nukopijuok URL.
+1. Discord: Channel Settings → Integrations → Webhooks → New Webhook, set the channel to `#announcements`, copy the URL.
 2. GitHub: repo Settings → Secrets → `DISCORD_WEBHOOK_URL`.
-3. Kiekvienam push'ui į `main`, kuriame pasikeitė `DISCORD_RELEASES.md`, workflowas
-   **`.github/workflows/discord-release.yml`** (žingsnis `Post release to Discord`)
-   pats išsiunčia embed su naujausiu įrašu per `scripts/post-discord-release.mjs`.
-   **`deploy.yml` neturi Discord žingsnio** — tai atskiras workflow.
+3. On every push to `main` that changes `DISCORD_RELEASES.md`, the workflow
+   **`.github/workflows/discord-release.yml`** (step `Post release to Discord`)
+   sends an embed with the newest entry through `scripts/post-discord-release.mjs`.
+   **`deploy.yml` has no Discord step** — it is a separate workflow.
 
-Be `DISCORD_RELEASES.md` pakeitimo pranešimas nesiunčiamas — taip išvengiama spam'o
-kiekvienam push'ui. CHANGELOG.md pakeitimai pranešimo nebeišsiunčia.
+Without a change to `DISCORD_RELEASES.md` nothing is sent, which avoids spamming
+on every push. Changes to `CHANGELOG.md` no longer trigger a post.
 
-## Automatiniai system alertai (privatus kanalas)
+## Automatic system alerts (private channel)
 
-`stale-alert.yml` kas valandą tikrina `/api/health`; kai duomenys pasenę (>3h),
-alert'as siunčiamas į privatų admin kanalą su diagnostika (per-game
-mods/servers/KV totals, nuorodos į Actions run'us ir health). Tam naudojamas
-atskiras webhook `DISCORD_ALERT_WEBHOOK_URL` — `#announcements` lieka tik
-release'ams.
+`stale-alert.yml` checks `/api/health` every hour; when the data is stale (>3h),
+an alert with diagnostics goes to the private admin channel (per-game
+mods/servers/KV totals, links to Actions runs and health). It uses a separate
+webhook, `DISCORD_ALERT_WEBHOOK_URL`, so `#announcements` stays reserved for
+releases.
