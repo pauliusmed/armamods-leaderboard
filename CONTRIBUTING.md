@@ -1,96 +1,87 @@
-# Contributing to Arma Mods Leaderboard
+# Contributing
 
-Thank you for your interest in improving the project! This document provides guidelines for contributing to the repository.
+Thanks for taking the time to improve the project. This guide covers the parts a
+change is expected to respect.
 
-## 🛠️ Development Workflow
+## Development setup
 
-1. **Fork the repository** and create your branch from `main`.
-2. **Install dependencies**:
-   - Root: `npm install`
-   - Web: `cd web && npm install`
-3. **Type check + build** — **visos** konfigos, kiekviena dengia kitą plotį:
+1. Fork the repository and branch from `main`.
+2. Install dependencies:
 
    ```bash
-   npx tsc --noEmit                 # root: include: ["src/**/*"] → tik src/
-   npm run build --prefix web       # tsc -b && vite build → web/src/** + web/functions/**
+   npm install
+   npm --prefix web install
    ```
 
-   ⚠️ **Nė viena iš jų dengia `scripts/` ir `test/`.** Root `tsconfig.json` turi
-   `include: ["src/**/*"]`; `web/tsconfig.app.json` — `["src",
-   "functions/api/audit-config.ts"]` **+ visas importo grafas iš `web/src/`**.
-   Rezultatas: `scripts/collector.ts` (1693 eilutės) ir visi `test/*.test.ts`
-   **netikrinami nė viena konfiga** — tik vykdomi kaip `tsx --test`.
-   Failas, kurio niekas neimportuoja iš `src/`, yra **ne tikrinamas niekada**
-   (2026-09-30 incidentas: `erasableSyntaxOnly` TS1294 praėjo pro žalią PR su
-   vien `npx tsc --noEmit` ir numetė auto-deploy'ą — `CHANGELOG.md` v1.23.48/49).
-   **Trūkstamos ribos žymimos** — atskiras follow-up.
+3. Create `.env` in the repository root (see `.env.example`). `BATTLEMETRICS_API_KEY`
+   is a paid BattleMetrics token; without it the collector cannot refresh KV. It
+   is not needed for UI work.
+4. Run the app:
+   - Full Worker, production parity: `npx wrangler dev --cwd web --local`
+     (build `web` first with `npm --prefix web run build`).
+   - Frontend only: `npm --prefix web run dev`.
 
-4. **Local dev**: `npm --prefix web run dev` (Vite, `web/vite.config.ts` jau
-   proxy'ina `/api` → `reforgermods.com`). Root `npm run dev` yra **deprecated**
-   Express proxy (`src/index.ts`) — nenaudoti.
-5. **Lint** (jei keiti `web/`): `npm --prefix web run lint`. **Žinojimas:** ši
-   komanda dabar krenta dėl **pre-existing** klaidos
-   (`web/src/hooks/usePinnedFavoriteMods.ts:38`, `react-hooks/set-state-in-effect`).
-   **Nefiksuok jos** — tai užregistuota užduotis, ne tavo pakeitimas
-   (pre-existing lint klaidų neatlysime).
-6. **Tests**: `npm test` (root, **36** failų) ir `npm --prefix web test` (vitest)
-   prieš atidarant PR. CI dabar paleidžia tik `test/utils.test.ts` iš root — **tai
-   nėra pakankama**, visus testus paleidžiate lokaliai. Key suites:
+Node 22 is pinned in `.nvmrc` and matches CI.
 
-| Area | Module | Test file |
-|------|--------|-----------|
-| Mod lookup | `web/functions/lib/mod-lookup.ts` | `test/mod-lookup.test.ts` |
-| Server uptime | `server-uptime-history.ts` | `test/server-uptime-history.test.ts` |
-| Storage planner | `storage-calc.ts`, `server-set-analysis.ts` | `test/storage-*.test.ts`, `test/server-modpack.test.ts` |
-| Scenarios | `scenario-ranking.ts` | `test/scenario-ranking.test.ts` |
-| Config copy | `mod-config.ts` | `test/mod-config.test.ts` |
-| History API | `history-query.ts` | `test/history-query.test.ts` |
-| Mod search index | `mods-search-index.ts` | `test/mods-search-index.test.ts` |
+## Checks before a pull request
 
-Full list: `package.json` → `"test"` script.
+Each check covers a different part of the tree. None of them covers everything,
+so run all applicable ones:
 
-## 📝 Changelog & documentation (required)
+| Check | Command | Covers |
+| --- | --- | --- |
+| Root types | `npx tsc --noEmit` | `src/**` only |
+| Scripts and tests | `npx tsc --noEmit -p tsconfig.scripts.json` | `scripts/**`, `test/**` |
+| Web types and build | `npm --prefix web run build` | `web/src/**`, `web/functions/**` |
+| Root tests | `npm test` | all 41 suites |
+| Web tests | `npm --prefix web test` | Vitest suites |
+| Lint | `npm --prefix web run lint` | `web/`, currently red |
 
-Every PR or commit with user-visible changes **must** update docs in the same change set:
+CI runs both type checks, the web build, the web tests and **7 of the 41 root
+suites**. A green check therefore does not mean the root suite passed — run
+`npm test` locally.
 
-| Change type | Update |
-|-------------|--------|
-| Feature, fix, perf, UX | New `###` entry at top of the current section in [CHANGELOG.md](CHANGELOG.md), with the version in the heading (`(v1.23.50) - YYYY-MM-DD`) |
-| **User-facing** (new page, visible behaviour) | **Also** a top entry in [DISCORD_RELEASES.md](DISCORD_RELEASES.md) — 1–5 lines, English, user value only. Deploy ships it to `#announcements`. Technical fixes do **not** need it. |
-| Architecture / API / cron | [README.md](README.md), [walkthrough.md](walkthrough.md) |
+Lint currently fails on a pre-existing `react-hooks/set-state-in-effect` error in
+`web/src/hooks/usePinnedFavoriteMods.ts`. Fixing it is a separate task; do not
+bundle it into an unrelated change.
+
+## Changelog and documentation
+
+Every change that ships updates the docs in the same pull request:
+
+| Change | Update |
+| --- | --- |
+| Feature, fix, performance, UX | Entry in [CHANGELOG.md](CHANGELOG.md) under the current version |
+| **User-facing** (new page, visible behaviour) | A top entry in [DISCORD_RELEASES.md](DISCORD_RELEASES.md) — English, 1–5 lines, user value only |
+| Architecture, API, cron | [README.md](README.md), [walkthrough.md](walkthrough.md) |
 | UI patterns, filters, tables | [docs/UI_FILTERS.md](docs/UI_FILTERS.md) |
-| KV, cache, PageSpeed | [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) if scores change |
-| **Cloudflare resource use** (CPU, KV, requests) | [docs/COST_GUARDRAILS.md](docs/COST_GUARDRAILS.md) |
-| New doc file | [docs/README.md](docs/README.md) index |
+| KV, cache, PageSpeed | [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) |
+| Cloudflare resource use | [docs/COST_GUARDRAILS.md](docs/COST_GUARDRAILS.md) |
+| New document | [docs/README.md](docs/README.md) index |
 
-- Versions are sequential patch bumps (`v1.23.49` → `v1.23.50`); bump minor only for features.
-- Date format: `YYYY-MM-DD` in the entry heading.
-- New root test files **must** be registered in the explicit list in `package.json` → `"test"` — CI does not glob.
+- Versions are sequential patch bumps, minor only for features.
+- Date format is `YYYY-MM-DD`.
+- A new root test file must be added to the explicit list in `package.json` →
+  `"test"`; CI does not glob.
 
-## 📜 Coding Standards
+## Coding standards
 
-- **TypeScript**: All new code must be fully typed. Avoid using `any`.
-- **Modularity**: One function = one responsibility. Keep files under 250 lines where possible.
-- **Documentation**: Use JSDoc for complex logic and explain *why* something is done, not just *what*.
-- **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat: add arma workshop scraper`, `fix: handle KV rate limits`).
+- TypeScript, fully typed. Avoid `any`.
+- One function, one responsibility. Keep files under ~200 lines where possible.
+- Comments explain *why*, not *what*.
+- [Conventional Commits](https://www.conventionalcommits.org/) for commit
+  messages (`feat:`, `fix:`, `docs:`, `perf:`).
 
-## 🚀 Deployment
+## Pull requests
 
-- PR'ams GitHub Actions paleidžia **CI gate**: `npx tsc --noEmit`,
-  `test/utils.test.ts`, `npm ci --prefix web`, **`npm run build --prefix web`**,
-  `npm --prefix web test`. (Pridėta v1.23.49 po 2026-09-30 incidento.)
-- **Deploy** — `.github/workflows/deploy.yml`, GitHub Actions, **ne** Cloudflare
-  Workers Builds. Trigger: `push` į `main`, jei pasikeitė `web/**` arba pats
-  `deploy.yml`. Žingsniai: `npm ci --prefix web` → `npm run build --prefix web`
-  → `cloudflare/wrangler-action@v3`. Slapti: `CLOUDFLARE_API_TOKEN`,
-  `CLOUDFLARE_ACCOUNT_ID`.
-- Release žinutė į Discord: `.github/workflows/discord-release.yml` (jei pasikeitė
-  `DISCORD_RELEASES.md`, slaptas `DISCORD_WEBHOOK_URL`).
-- Produkcija — `reforgermods.com` per Cloudflare Workers (`web/worker.ts`).
-  `workers_dev = false`; senasis Pages projektas sunaikintas 2026-09-09.
+- One topic per pull request. Keep it under roughly 15 files and 400 changed
+  lines; split larger work.
+- State in the description whether full CI coverage is required, using the
+  `Heavy CI: required/skipped because …` line from the template.
+- Deployment is automatic: a push to `main` touching `web/**` builds and deploys
+  the Worker through GitHub Actions. Docs-only changes do not deploy.
 
----
+## License
 
-## 🛡️ License
-
-By contributing, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
+By contributing, you agree that your contributions are licensed under the
+project's [MIT License](LICENSE).

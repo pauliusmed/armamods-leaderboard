@@ -1,7 +1,22 @@
 {
-  "name": "reforger-mods-api",
-  "version": "1.0.0",
+  "name": "armamods-leaderboard",
+  "version": "1.23.58",
+  "description": "Edge-native Arma Reforger and Arma 3 mod and server leaderboard on Cloudflare Workers, KV and React.",
+  "private": true,
   "type": "module",
+  "license": "MIT",
+  "author": "Paulius Medžiukevičius",
+  "homepage": "https://reforgermods.com/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pauliusmed/armamods-leaderboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pauliusmed/armamods-leaderboard/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "cd web && npm install && npm run build && cd .. && cp -r web/dist ./dist",

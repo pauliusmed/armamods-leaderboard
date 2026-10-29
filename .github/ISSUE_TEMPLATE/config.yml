@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/pauliusmed/armamods-leaderboard/security/advisories/new
+    about: Report privately. Do not open a public issue for security problems.
+  - name: Documentation
+    url: https://github.com/pauliusmed/armamods-leaderboard/blob/main/docs/README.md
+    about: Architecture, data flow, ranking algorithm and ops guides.

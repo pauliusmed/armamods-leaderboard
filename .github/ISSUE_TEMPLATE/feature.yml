@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a capability or a data source
+title: "[feat]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you unable to do today, and who runs into it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should it work? Sketches, API shapes and example URLs help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you try or rule out, and why?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Web UI
+        - Worker API
+        - Collector / ranking data
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: cost
+    attributes:
+      label: Cost awareness
+      options:
+        - label: This stays within Cloudflare Workers CPU and KV read budgets described in docs/COST_GUARDRAILS.md

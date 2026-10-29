@@ -1,6 +1,7 @@
 # Documentation index
 
-Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.53**).
+Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.58**).
+Earlier releases: [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 ## Start here
 
@@ -42,5 +43,6 @@ Release notes: [CHANGELOG.md](../CHANGELOG.md) (current: **v1.23.53**).
 | Doc | Topic |
 |-----|--------|
 | [ENGINEERING_CASE_STUDY.md](./ENGINEERING_CASE_STUDY.md) | Long-form architecture narrative |
+| [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md) | Release history before 1.23.58 (original wording) |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | PR workflow, tests, conventions |
 | [../scripts/steam-auth-probe/README.md](../scripts/steam-auth-probe/README.md) | Steam/WS auth probe (research tool) |

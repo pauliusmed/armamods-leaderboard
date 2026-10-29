@@ -1,0 +1,20 @@
+# Normalize line endings on commit; check out LF everywhere except Windows scripts.
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never diff or normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.gif binary
+*.woff binary
+*.woff2 binary
+
+# Generated lockfiles stay untouched by merge tooling.
+package-lock.json text eol=lf
+web/package-lock.json text eol=lf
