@@ -1,5 +1,8 @@
 # Design System
 
+The visual contract: colour, typography, spacing, components and the mobile
+density rules the interface has to follow.
+
 ## Brand Identity
 
 The site positions itself as a **tactical intelligence dashboard** — a deliberate departure from generic gaming leaderboards. Every visual choice reinforces the fiction of a mission-command center monitoring live battlefield telemetry, drawing from real-world C2 (Command & Control) systems, aerospace UX (Astro UXDS), and MIL-STD-1472H ergonomic standards.

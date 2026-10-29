@@ -1,5 +1,8 @@
 # Trending Algorithm
 
+Trending momentum, server quality (SQE) and co-deployment scoring: the maths,
+the thresholds and the calibration behind them.
+
 ## Overall Rank-Based Weighted Velocity Model
 
 The trending system uses a weighted rank delta model to calculate mod popularity trends. This approach evaluates the position change (`rankDelta`) in the overall mod leaderboard rather than absolute server counts, heavily weighting movements at the top of the rankings where competition is fiercer.

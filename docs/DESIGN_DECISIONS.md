@@ -1,5 +1,8 @@
 # Design Decisions
 
+Why the interface looks the way it does: the colour, type and layout choices,
+each with the reasoning and the alternative that was rejected.
+
 ## Why Deep Navy (#101923) Instead of Pure Black (#000000)
 
 Pure black (`#000000`) creates eye strain in low-light environments and eliminates any ability to create depth through luminance shifts. MIL-STD-1472H and aerospace UX research (Astro UXDS) recommend dark navy/gray tones as base surfaces because:

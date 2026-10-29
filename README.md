@@ -11,6 +11,7 @@ Edge-native popularity rankings from live multiplayer servers — Cloudflare Wor
 [![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-100_(desktop)_%7C_98_(mobile)-brightgreen.svg)](docs/LIGHTHOUSE.md)
 [![Lighthouse SEO](https://img.shields.io/badge/Lighthouse_SEO-100-brightgreen.svg)](docs/LIGHTHOUSE.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/Docs-index-blue.svg)](docs/README.md)
 
 Supplements the official Arma Workshop with engagement telemetry from active multiplayer servers: popularity index, retention signals, and community trends — not a workshop replacement.
 
@@ -113,6 +114,23 @@ Collector schedule: `.github/workflows/collector.yml` (`0 * * * *`, hourly; the 
 
 ---
 
+## Documentation
+
+Design and operations notes live in [`docs/`](docs/README.md):
+
+| Topic | Document |
+|---|---|
+| Why KV instead of SQL, and the shard layout | [ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) |
+| Ranking maths: trending, SQE, co-deployment | [ALGORITHM.md](docs/ALGORITHM.md) |
+| Cloudflare CPU and KV budgets | [COST_GUARDRAILS.md](docs/COST_GUARDRAILS.md) |
+| BattleMetrics pipeline and stale-data handling | [DATA_SYNC.md](docs/DATA_SYNC.md) |
+| Incident register: what broke and what changed | [INCIDENTS.md](docs/INCIDENTS.md) |
+
+Full index, including the design system, mobile standards and ops guides:
+[docs/README.md](docs/README.md).
+
+---
+
 ## Performance notes
 
 ### Edge + browser caching
@@ -187,7 +205,7 @@ npm test
 
 Coverage includes surgical JSON extract, `mod-lookup`, EMA/SQE ranking, scenario aggregation, storage planner, server uptime history, audit-config, history-query, share-meta, search-match.
 
-**Docs:** [walkthrough.md](walkthrough.md) · [docs/DATA_SYNC.md](docs/DATA_SYNC.md) · [docs/LIGHTHOUSE.md](docs/LIGHTHOUSE.md) · [docs/ALGORITHM.md](docs/ALGORITHM.md) · [docs/STORAGE_PLANNER.md](docs/STORAGE_PLANNER.md) · [docs/SERVER_UPTIME.md](docs/SERVER_UPTIME.md) · [docs/UI_FILTERS.md](docs/UI_FILTERS.md) · [docs/WORKSHOP_METADATA.md](docs/WORKSHOP_METADATA.md) · [docs/PERFORMANCE.md](docs/PERFORMANCE.md) · [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) · [docs/README.md](docs/README.md) · [CHANGELOG.md](CHANGELOG.md) · [docs/CHANGELOG_ARCHIVE.md](docs/CHANGELOG_ARCHIVE.md) (pre-1.23.58) · [PLAN.md](PLAN.md) (Current / Next).
+**Docs:** [index](docs/README.md) · [walkthrough](walkthrough.md) · [changelog](CHANGELOG.md) · [archive](docs/CHANGELOG_ARCHIVE.md) (pre-1.23.58) · [roadmap](PLAN.md).
 
 ## Contributing
 
