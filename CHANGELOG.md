@@ -21,6 +21,9 @@ wording, so the full history stays available.
 - `INCIDENTS.md`, `DISCORD.md`, `P0_GATES.md` and `DATA_SOURCES_RESEARCH.md`
   translated to English. Incident timelines, measurements, dates and statuses are
   preserved; the Discord #information template is now English.
+- `PLAN.md`, `web/README.md` and `scripts/steam-auth-probe/README.md` translated.
+  Every tracked Markdown file is now English except the release archive and the
+  author's name in the licence line.
 
 ## [1.23.59] - 2026-10-29
 

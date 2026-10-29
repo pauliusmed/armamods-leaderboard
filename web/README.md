@@ -24,9 +24,9 @@ src/
   lib/              favorites, siteCopy, modConfig, serverUptimeChart, …
   api/client.ts     axios + in-memory TTL cache
 functions/
-  api/              tik 2 moduliai: audit-config.ts, history-query.ts
+  api/              only 2 modules: audit-config.ts, history-query.ts
   lib/              mod-lookup, server-lookup, storage-calc, share-meta, …
-worker.ts           Hono edge API (production) + ASSETS — visas /api/* maršrutai
+worker.ts           Hono edge API (production) + ASSETS — every /api/* route
 ```
 
 ## Key UI patterns (v1.22.8)
