@@ -4,9 +4,8 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-Releases before 1.23.58 are archived in
-[docs/CHANGELOG_ARCHIVE.md](docs/CHANGELOG_ARCHIVE.md) with their original
-wording, so the full history stays available.
+Release history before 1.23.58 is preserved in git:
+`git log --follow CHANGELOG.md`.
 
 ## [Unreleased]
 
@@ -27,14 +26,16 @@ wording, so the full history stays available.
 - README: a `Documentation` section with the five entry-point documents, a docs
   badge, and the 14-link line at the bottom replaced by a short pointer. Four
   documents gained a one-sentence intro under the title.
+- `docs/CHANGELOG_ARCHIVE.md` removed: 2,139 lines of Lithuanian release history
+  in an otherwise English repository, with 26 links to files renamed since. The
+  content stays in git (`git log --follow CHANGELOG.md`) and the link checker no
+  longer needs a hardcoded exception.
 
 ### Tooling
 
 - `npm run docs:check` — a dependency-free link checker over every tracked
   Markdown file: missing files and missing heading anchors fail the build. The
-  CI workflow runs it on every push and pull request. `docs/CHANGELOG_ARCHIVE.md`
-  is excluded on purpose: it is a snapshot and its links point at files that were
-  renamed or deleted since.
+  CI workflow runs it on every push and pull request.
 - `npm run docs:freshness` — regenerates the freshness table in `docs/README.md`
   from the last commit date of each document, so stale docs are visible instead
   of assumed current. Run it before a release.
@@ -68,9 +69,8 @@ wording, so the full history stays available.
 - **`SOCIAL_CRAWLER_UA` narrowed** to actual social crawlers. AhrefsBot (44 % of
   Worker CPU at the time) now receives the canonical page instead of the
   meta-refresh share path.
-- **Release notes moved to English** and to the Keep a Changelog format. The 146
-  previous entries are archived unchanged in
-  [docs/CHANGELOG_ARCHIVE.md](docs/CHANGELOG_ARCHIVE.md).
+- **Release notes moved to English** and to the Keep a Changelog format; the 146
+  previous entries remain in git history (`git log --follow CHANGELOG.md`).
 - **Community health files added:** `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue
   forms, a pull request template and Dependabot configuration.
 - **Repository hygiene:** line endings normalized through `.gitattributes`, Node
