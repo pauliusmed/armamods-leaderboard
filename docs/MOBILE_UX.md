@@ -1,6 +1,6 @@
 # Mobile UX audit
 
-**Standartas:** [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md). Šis dokumentas = audit log (ar kodas atitinka standartą).
+**Standard:** [MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md). This document is an audit log (whether the code meets the standard).
 
 Last reviewed: **2026-07-29** (v1.22.21). Test at 320–430px width (iPhone SE / standard phones).
 
