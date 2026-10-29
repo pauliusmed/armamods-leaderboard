@@ -114,7 +114,7 @@ A clear functional two-font-family system distinguishes structure from data.
 
 Fonts are self-hosted via `@fontsource` (WOFF2, `font-display: swap`) — no third-party font CDN (privacy/GDPR precedent LG München 3 O 17493/20, no external connection setup).
 
-> **Mono yra tik duomenims.** `JetBrains Mono` naudojamas skaitinėms reikšmėms, ID, timestamp'ams ir kodui — **niekada** kaip UI chrome (nav, antraštės, mygtukai, etiketės, sekcijų pavadinimai). Tai vienas svarbiausių anti-"tasteful terminal" skirtumų (žr. [Diferenciacija](#diferenciacija-pries-tasteful-terminal)).
+> **Mono is for data only.** `JetBrains Mono` is used for numeric values, IDs, timestamps and code — **never** as UI chrome (nav, headings, buttons, labels, section titles). This is one of the most important anti-"tasteful terminal" differences (see [Differentiation](#differentiation-anti-tasteful-terminal)).
 
 ### Size & Weight Scale
 
@@ -184,27 +184,27 @@ The interface follows a **dense, information-rich** layout inspired by Signal/Fo
 
 ### Mobile Data Density Tiers
 
-Praktinė [Nimbus vs Focus](#cognitive-model-focus--nimbus) specifikacija. Mobiliam ekranui (<1024px) lentelių stulpeliai skirstomi į tris lygmenis. **Niekada nėra "viskas vienoje kortelėje"** – tai sulėtina skanavimą. **Niekada nereikalaujama pasukti ekraną** – tai disruptivyu ir prieštarauja Apple HOG / Material gairėms.
+The practical [Nimbus vs Focus](#cognitive-model-focus--nimbus) specification. On mobile (<1024px) table columns are split into three tiers. **Never "everything in one card"** — that slows scanning down. **Never ask the user to rotate the screen** — it is disruptive and contradicts the Apple HIG / Material guidelines.
 
-| Lygmuo | Kur matomas | Taisyklė |
-|--------|------------|----------|
-| **Pirminis** | Visada matomas mobile kortelėje | Identifikuoja eilutę (rank, name) + 1 svarbiausias metrikas |
-| **Antrinis** | Kompaktiškai po pirminiu | 1–2 papildomi metrikai, mažu šriftu |
-| **Tretinis** | Tik detail puslapyje arba išskleidus | Likę stulpeliai + visi veiksmai (Copy, Stats, Workshop) |
+| Tier | Where it appears | Rule |
+|------|------------------|------|
+| **Primary** | Always visible on the mobile card | Identifies the row (rank, name) plus one key metric |
+| **Secondary** | Compact, below the primary | 1–2 additional metrics, small type |
+| **Tertiary** | Detail page only, or after expanding | Remaining columns plus every action (Copy, Stats, Workshop) |
 
-Konkretūs paskirstymai (naudojami card komponentuose):
+Concrete splits (used by the card components):
 
-| List'as | Pirminis | Antrinis | Tretinis (ne mobiliame) |
-|---------|----------|----------|------------------------|
-| Mod leaderboard | Rank, Name, Personnel | Deploy, Share % | Author, Size, visi veiksmai |
-| Server leaderboard | Rank, Name, Players (current/max) | Mod count, Modpack size | Tier, Console fit, ★ veiksmai |
-| Trending | Rank, Name, Change | Personnel | Deploy, Author, veiksmai |
-| Server detail mod stack | Name, Size | Rank | Author, veiksmai |
-| Mod detail co-deploy | Server count, % of deploys | Network rank | Visi veiksmai |
+| List | Primary | Secondary | Tertiary (not on mobile) |
+|------|---------|-----------|--------------------------|
+| Mod leaderboard | Rank, Name, Personnel | Deploy, Share % | Author, Size, all actions |
+| Server leaderboard | Rank, Name, Players (current/max) | Mod count, Modpack size | Tier, Console fit, ★ actions |
+| Trending | Rank, Name, Change | Personnel | Deploy, Author, actions |
+| Server detail mod stack | Name, Size | Rank | Author, actions |
+| Mod detail co-deploy | Server count, % of deploys | Network rank | All actions |
 
-**Veiksmų eilutė (★ Copy Stats Workshop)** mobiliame slepiama po "⋯" mygtuku arba perkeliama į detail puslapį. Rodoma inline tik Pirminio_SHORT kortelėse (pinned favorites).
+**The action row (★ Copy Stats Workshop)** is hidden behind a "⋯" button on mobile, or moved to the detail page. It appears inline only on pinned-favourite cards.
 
-**Horizontal scroll** leistinas TIK kai nėra card varianto (laikina) – su `overscroll-behavior-x: contain` ir vizualiu gradient indikatoriumi dešinėje. Tikslas – pašalinti visiškai.
+**Horizontal scroll** is allowed ONLY where no card variant exists yet (temporary) — with `overscroll-behavior-x: contain` and a visual gradient indicator on the right. The goal is to remove it entirely.
 
 ---
 
@@ -269,13 +269,13 @@ When an Enfusion mod fails to install (e.g., RHS at 46%), the interface shows:
 
 ## Mobile
 
-Mobile yra first-class patirtis. **Pilnas standartas** (dabartinė kodo realybė + planuojami pagerinimai) gyvena atskirame dokumente, kad išvengtume dubliavimo ir prieštaravimų:
+Mobile is a first-class experience. **The full standard** (current code reality plus planned improvements) lives in a separate document to avoid duplication and contradictions:
 
-➡️ **[MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md)** — header/nav, touch targets (44px), lentelės, filter bar, charts, offline, anti-patterns, roadmap.
+➡️ **[MOBILE_STANDARDS.md](./MOBILE_STANDARDS.md)** — header/nav, touch targets (44px), tables, filter bar, charts, offline, anti-patterns, roadmap.
 
-Ten pat — **audito rezultatai ir re-test checklist'as**: [MOBILE_UX.md](./MOBILE_UX.md).
+Audit results and the re-test checklist: [MOBILE_UX.md](./MOBILE_UX.md).
 
-> **Pastaba:** anksčiau ši sekcija aprašė bottom nav, bottom sheets, "Load More" ir Service Worker offline cache kaip faktą. Dabar visi (išskyrus Load More) yra įgyvendinti – bottom nav (`BottomNav.tsx`), bottom sheets (`BottomSheet.tsx`), SW + IndexedDB offline cache. Load More reverted (žr. [MOBILE_STANDARDS.md §4](./MOBILE_STANDARDS.md#4-puslapiavimas)).
+> **Note:** this section used to describe bottom nav, bottom sheets, "Load More" and the Service Worker offline cache as if they existed. All of them except Load More are now implemented — bottom nav (`BottomNav.tsx`), bottom sheets (`BottomSheet.tsx`), SW plus IndexedDB offline cache. Load More was reverted (see [MOBILE_STANDARDS.md §4](./MOBILE_STANDARDS.md#4-pagination)).
 
 ---
 
@@ -295,9 +295,9 @@ Based on analysis of AI-generated "vibe code" patterns and failed gaming UIs.
 | Fake status dots (no live data) | Misleads users into thinking processes are active | Status dots only for live-monitored servers |
 | Uniform fade-up scroll animation | AI signature — all sections identical | Motion varies by component type; no decorative animation |
 | 3-column card grids everywhere | AI default pattern | Asymmetric grids, data-driven layouts |
-| "Pasukti ekraną" užuomina | Disruptive, priverčia keisti įprastą laikyseną; prieštarauja Apple HOG / Material | Mobile Data Density Tiers – Pirminis/Antrinis/Tretinis stulpeliai |
-| Visi duomenys vienoje mobile kortelėje | Sulėtina skanavimą; mažiau eilučių ekrane | Kortelė rodo tik Pirminius + 1–2 Antrinius; Tretiniai per detail |
-| "Tasteful terminal" / Bloomberg klonas | Antroji AI slop banga (žr. [Diferenciacija](#diferenciacija-pries-tasteful-terminal)): mono kaip UI chrome, `//` prefiksai, `▸`/`$` glyph'ai, emoji-brackets nav — "hacker terminal" tapo vieno kliko šablonu | Mono **tik** duomenims (skaičiai/ID/timestamps); jokių CLI glyph'ų; terminalo metaforos tik kur servuoja produktą; nav be emoji |
+| "Rotate your screen" prompt | Disruptive; forces an unnatural posture and contradicts the Apple HIG / Material | Mobile Data Density Tiers — primary/secondary/tertiary columns |
+| All data in one mobile card | Slows scanning; fewer rows per screen | The card shows only primary plus 1–2 secondary; tertiary lives on detail |
+| "Tasteful terminal" / Bloomberg clone | The second AI slop wave (see [Differentiation](#differentiation-anti-tasteful-terminal)): mono as UI chrome, `//` prefixes, `▸`/`$` glyphs, emoji-bracket nav — "hacker terminal" became a one-click template | Mono **only** for data (numbers/IDs/timestamps); no CLI glyphs; terminal metaphors only where they serve the product; nav without emoji |
 
 ### Architecture Anti-Patterns
 
@@ -312,27 +312,27 @@ Based on analysis of AI-generated "vibe code" patterns and failed gaming UIs.
 
 ## Differentiation: Anti-"Tasteful Terminal"
 
-2026-07-31 auditas (interneto validacija: [killaislop.com](https://killaislop.com) "The 'tasteful terminal'", [thecrit.co vibe-coding guide](https://www.thecrit.co/resources/vibe-coding-design-guide)) parodė, kad mūsų estetika konvergavo į **antrąją AI slop bangą** — "Bloomberg terminalo" kloną:
+The 2026-07-31 audit (validated online: [killaislop.com](https://killaislop.com) "The 'tasteful terminal'", the [thecrit.co vibe-coding guide](https://www.thecrit.co/resources/vibe-coding-design-guide)) showed that our aesthetic had converged on the **second AI slop wave** — a "Bloomberg terminal" clone:
 
 > "Mono everywhere, near-black background, one warm accent, ASCII art: the look of 'an AI that read one Vercel blog post'. It isn't ugly, that's the trap; it's polished enough to have become the new default."
 
-Tai ypač smelkianti problema, nes atrodo "ne bjauriai" — bet nebeišskiria. **Vienintelė mūsų branduolinė tapatybė lieka** (taktinio vadavietės dashboard'o fikcija, karinė terminija, navy + mineralinė balta + varis, data density), o keičiamas **terminalo pateikimas**.
+That is an insidious problem: it does not look bad, but it no longer stands out. **Our core identity stays** (the tactical command-post fiction, military terminology, navy + mineral white + copper, data density) while the **terminal presentation** is what changes.
 
-### Privalomos taisyklės
+### Mandatory rules
 
-| Taisyklė | Ką reiškia | Pavyzdys |
-|----------|-----------|----------|
-| **Mono tik duomenims** | `JetBrains Mono` naudojamas TIK skaitinėms reikšmėms, ID, timestamp'ams, kodui. NIEKADA UI chrome: nav, header'iai, mygtukai, etiketės | ✅ `{mod.serverCount}` mono; ❌ `font-mono` ant app shell / nav / sekcijų antraščių |
-| **Jokių CLI glyph'ų** | `//`, `$`, `▸`, `>`, `[ ... ]` kaip dekoratyvūs prefiksai draudžiami | ❌ `// SERVER_NODE`; ✅ `SERVER NODE` |
-| **Jokio emoji funkciniame UI** | Header nav, status indikatoriai, mygtukai — tik lucide-react ikonai arba tekstas | ❌ `[ 📦 Mods Database ]`; ✅ `Mods Database` + lucide |
-| **Terminalo metaforos tik kur servuoja** | Karinė terminija (UPLINK, INTEL, DEPLOY) lieka — tai brandas. CLI pateikimas (ASCII, prompt'ai) šalinamas | ✅ "ESTABLISHING UPLINK"; ❌ `// ESTABLISHING_UPLINK` |
-| **Jokios 01/02/03 numeracijos** sekcijoms | AI slop ženklas (#30 killaislop) | ❌ `01 · Principle`; ✅ `Principle` |
+| Rule | What it means | Example |
+|------|---------------|---------|
+| **Mono for data only** | `JetBrains Mono` is used ONLY for numeric values, IDs, timestamps and code. NEVER for UI chrome: nav, headers, buttons, labels | ✅ `{mod.serverCount}` in mono; ❌ `font-mono` on the app shell / nav / section headings |
+| **No CLI glyphs** | `//`, `$`, `▸`, `>`, `[ ... ]` as decorative prefixes are forbidden | ❌ `// SERVER_NODE`; ✅ `SERVER NODE` |
+| **No emoji in functional UI** | Header nav, status indicators, buttons — lucide-react icons or text only | ❌ `[ 📦 Mods Database ]`; ✅ `Mods Database` + lucide |
+| **Terminal metaphors only where they serve** | Military terminology (UPLINK, INTEL, DEPLOY) stays — that is the brand. CLI presentation (ASCII, prompts) goes | ✅ "ESTABLISHING UPLINK"; ❌ `// ESTABLISHING_UPLINK` |
+| **No 01/02/03 numbering** on sections | An AI slop marker (#30 on killaislop) | ❌ `01 · Principle`; ✅ `Principle` |
 
-### Patvirtinti šaltiniai
+### Sources
 
-- [killaislop.com](https://killaislop.com) — "The 'tasteful terminal'" (#34) ir "editorial dashboard" (#35) kaip antroji AI default banga; code signal'ų sąrašas.
-- [thecrit.co](https://www.thecrit.co/resources/vibe-coding-design-guide) — "The Generic Vibe-Coded UI Recipe" (Inter + Lucide + gradientai) ir kodėl modeliai renkasi tikimybinius šablonus.
-- [Shuffle.dev](https://shuffle.dev/blog/2026/01/why-do-most-ai-generated-websites-look-the-same/) — AI prognozuoja šablonus, ne originalumą; konstrainčai veda prie diferenciacijos.
+- [killaislop.com](https://killaislop.com) — "The 'tasteful terminal'" (#34) and "editorial dashboard" (#35) as the second AI default wave; the list of code signals.
+- [thecrit.co](https://www.thecrit.co/resources/vibe-coding-design-guide) — "The Generic Vibe-Coded UI Recipe" (Inter + Lucide + gradients) and why models pick probabilistic patterns.
+- [Shuffle.dev](https://shuffle.dev/blog/2026/01/why-do-most-ai-generated-websites-look-the-same/) — AI predicts patterns, not originality; constraints lead to differentiation.
 
 ---
 

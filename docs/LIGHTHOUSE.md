@@ -6,31 +6,32 @@ See also: [PERFORMANCE.md](./PERFORMANCE.md) (what we optimized), [INCIDENTS.md]
 
 ---
 
-## 2026-09-07 — Server detail PO v1.23.25–27 (desktop permatuotas)
+## 2026-09-07 — Server detail after v1.23.25–27 (desktop re-measured)
 
-PSI desktop `/server/40538887` (2026-09-07 00:00) po visų trijų etapų (edge indeksas, route split, LCP inline'as + a11y):
+PSI desktop `/server/40538887` (2026-09-07 00:00) after all three stages (edge index, route split, LCP inline plus a11y):
 
 | Category | Desktop |
 |----------|---------|
-| **Performance** | **89** (buvo 58–60) |
-| **Accessibility** | **98** (buvo 94 — liko tik heading order) |
+| **Performance** | **89** (was 58–60) |
+| **Accessibility** | **98** (was 94 — only heading order left) |
 | Best Practices / SEO | 100 / 100 |
 
-| Metric | Desktop (09-06 prieš) | Desktop (09-07 po) |
+| Metric | Desktop (09-06 before) | Desktop (09-07 after) |
 |--------|----------------------|--------------------|
 | FCP | 0.5 s | **0.4 s** |
 | LCP | 1.6 s | **1.2 s** |
 | **TBT** | 2 380 ms (18 long tasks, max 819 ms) | **220 ms** (4 long tasks, max 137 ms) |
 | CLS | 0.009 | 0.017 |
 | Speed Index | 2.5 s | **1.3 s** |
-| HTML | 1.5 KiB (SPA shell) | 7.1 KiB (embedded serverio JSON) |
+| HTML | 1.5 KiB (SPA shell) | 7.1 KiB (embedded server JSON) |
 
-**Kas veikia:** inline'as pašalino API round-trip iš critical path → React render'as vienas ir ankstesnis (nebe 5 lygiagrečių fetch'ų state bangos) — TBT nukrito ~11×, ilgiausia long task 819→137 ms. A11y kontrastas išgydytas.
+**What worked:** inlining removed the API round-trip from the critical path → a single, earlier React render (no more state waves from five parallel fetches) — TBT dropped ~11× and the longest long task went from 819 to 137 ms. The a11y contrast is fixed.
 
-**Liko:**
-1. **A11y 98→100** — vienas auditas: „heading elements not in sequentially-descending order" (h4→h3 ServerDetail glossary uždengė ne visur — surasti likusias vietas).
-2. **Mobile matavimas** — laukia savininko PSI paleidimo (desktop 89 rodo, kad mobile tikėtinai >90; mobile LCP buvo didžiausias pralaimėjimas).
-3. Smulkmenos ne balui: unused JS 74 KiB (es6 Recharts vendor + index), CLS 0.017 (footer shift), forced reflow ~140 ms (Recharts matavimas).
+**Remaining:**
+
+1. **A11y 98→100** — one audit item: "heading elements not in sequentially-descending order" (the h4→h3 ServerDetail glossary fix was not applied everywhere — find the remaining spots).
+2. **Mobile measurement** — waiting for the owner to run PSI (desktop 89 suggests mobile is likely above 90; mobile LCP was the biggest loss).
+3. Not score-critical: 74 KiB unused JS (es6 Recharts vendor + index), CLS 0.017 (footer shift), ~140 ms forced reflow (Recharts measurement).
 
 ---
 
@@ -38,39 +39,41 @@ PSI desktop `/server/40538887` (2026-09-07 00:00) po visų trijų etapų (edge i
 
 Measured after INC-2026-09-06 (edge `exceededMemory` 503) and the v1.23.25–26 fixes (serverId→shard index, full route-level code splitting, `DeferredSection` below-fold mounting). The same URL measured in **both** PSI tabs the same minute (`/server/39348345`):
 
-| Metric | Desktop (beveik be CPU slowdown) | Mobile (Moto G Power, Slow 4G) |
+| Metric | Desktop (almost no CPU slowdown) | Mobile (Moto G Power, Slow 4G) |
 |--------|----------------------------------|-------------------------------|
 | **Performance** | **59–60** | **71** |
 | FCP | 0.5 s | 1.7 s |
 | **LCP** | 1.6 s (render delay 3 450–3 880 ms) | **6.3 s** (render delay 3 450 ms — score 9/100) |
-| **TBT** | **2 380 ms** (18 long tasks) | **250 ms** (3 long tasks — buvo 1 730–1 850) |
+| **TBT** | **2 380 ms** (18 long tasks) | **250 ms** (3 long tasks — was 1 730–1 850) |
 | CLS | 0.009 | 0.035 |
 | Speed Index | 2.5 s | 3.2 s |
 | JS execution | 3.9 s (index chunk ~2.7 s eval) | 1.3 s |
 
-**Kas išgydyta šiandien (v1.23.25–26):**
-- Edge 503 audros (`Worker exceededMemory` — 75 err/h) — serverId→shard indeksas, 1 shardas (~5 MB) vietoj visų 16 (~80 MB). Žr. INC-2026-09-06.
-- Mobile TBT 1 730→**250 ms**: visi 21 puslapis `React.lazy` (index −~44 kB raw), below-fold sekcijos mount'inamos per `DeferredSection` (IntersectionObserver 400px + `minHeight` CLS apsaugai).
+**What was fixed that day (v1.23.25–26):**
 
-**Kas liko (prioritetinė tvarka):**
-1. **LCP — didžiausias pralaimėjimas (mobile score 9/100).** h1 su serverio pavadinimu neegzistuoja kol JS boot + API round-trip nesuveikia (SPA esmė). Planuotas sprendimas: serverio duomenų inline'as į `/server/:id` HTML atsakymą (`<script>` + JSON) — **niekada anksčiau nebandyta** (prerender'is egzistuoja tik botams/SEO). Vidutinis darbas, ~0,5–1,5 s LCP laimėjimas abiejose plokštumose.
-2. **Desktop TBT (2 380 ms)** — vienas 819 ms React render commit'as + Recharts (303 ms + reflow 207 ms). Desktop PSI naudoja beveik be CPU slowdown, tad atspindi sinchroninio render kiekį, ne atsiuntimą. Sprendimai (jei reikės): sekcijų mount'as dalimis per `requestIdleCallback` arba lengvesnė chart biblioteka — abu vidutini/dideli.
-3. **A11y 94→100** — kontrastas (`text-gray-500/600` ant `#101923`) + heading tvarka. Mechaniška.
+- The edge 503 storm (`Worker exceededMemory` — 75 errors/hour): a serverId→shard index loads one shard (~5 MB) instead of all 16 (~80 MB). See INC-2026-09-06.
+- Mobile TBT 1 730→**250 ms**: every one of the 21 pages is `React.lazy` (index −~44 kB raw), and below-fold sections mount through `DeferredSection` (IntersectionObserver at 400px plus `minHeight` to protect CLS).
 
-**Proceso pamoka (regresijos kilmė):** 2026-08-24 (v1.23.4–9) `/server/*` mobile pasiekė **97** (font CLS, Recharts atsiskyrimas, skeleton'ai). Per kitas 3 dienas (v1.23.10–26) į puslapį prisidėjo Similar Deployed Servers, Storage pack, Mod Changes, BmLastSeenHint — balas sugrižo į 62–71 zoną be vieno „klaidingo" commit'o. **Taisyklė: kiekviena nauja above-fold sekcija — su PSI patikra prieš merge** (žr. § Re-run).
+**Remaining (in priority order):**
 
-### Audit ribos (Lighthouse)
+1. **LCP — the biggest loss (mobile score 9/100).** The h1 with the server name does not exist until JS boots and the API round-trip completes — the essence of an SPA. The planned fix is to inline the server data into the `/server/:id` HTML response (`<script>` + JSON) — **never tried before** (prerendering exists only for bots/SEO). Medium effort, roughly 0.5–1.5 s LCP gain on both platforms.
+2. **Desktop TBT (2 380 ms)** — one 819 ms React render commit plus Recharts (303 ms + 207 ms reflow). Desktop PSI runs with almost no CPU slowdown, so it reflects the amount of synchronous rendering, not download. Fixes if needed: mount sections in slices via `requestIdleCallback`, or a lighter chart library — both medium to large.
+3. **A11y 94→100** — contrast (`text-gray-500/600` on `#101923`) plus heading order. Mechanical.
 
-- **Reduce JavaScript execution time** — įspėjimas kai JS vykdymas > **2 s**, fail kai > **3,5 s**. Lighthouse rodo eval/parse/execute laikus pagal fail'us.
-- **TTI pašalintas iš Lighthouse 10** (per daug jautrus outlier'iams) — vietoj jo **LCP, TBT, INP**. Naudoti TTI kaip target'ą nebereikia.
+**Process lesson (where the regression came from):** on 2026-08-24 (v1.23.4–9) `/server/*` mobile reached **97** (font CLS, Recharts split, skeletons). Over the next three days (v1.23.10–26) Similar Deployed Servers, Storage pack, Mod Changes and BmLastSeenHint were added to the page, and the score fell back to 62–71 without a single "wrong" commit. **Rule: every new above-fold section ships with a PSI check before merge** (see § Re-run).
+
+### Lighthouse audit thresholds
+
+- **Reduce JavaScript execution time** — a warning when JS execution exceeds **2 s**, a failure above **3.5 s**. Lighthouse reports eval/parse/execute times per file.
+- **TTI was removed in Lighthouse 10** (too sensitive to outliers) — **LCP, TBT, INP** replace it. TTI is no longer a target.
 
 ---
 
-## Current scores — homepage leaderboard (istorinis, 2026-07-09)
+## Current scores — homepage leaderboard (historical, 2026-07-09)
 
 Captured **2026-07-09** after `attachCachedListFields`, thumbnail resize proxy, route code-splitting, and lazy row images shipped.
 
-> **Re-measured 2026-08-24:** v1.22.23 self-hosted fonts (`@fontsource`), v1.23.4–6 pašalino latin-ext + `font-display: optional` (CLS 0.17→0.008) — homepage mobile **98**, desktop 99. Žr. CHANGELOG v1.23.4–6.
+> **Re-measured 2026-08-24:** v1.22.23 self-hosted fonts (`@fontsource`), v1.23.4–6 removed latin-ext plus `font-display: optional` (CLS 0.17→0.008) — homepage mobile **98**, desktop 99. See CHANGELOG v1.23.4–6.
 
 | Category | Desktop | Mobile (Moto G Power, Slow 4G) |
 |----------|---------|--------------------------------|
@@ -121,7 +124,7 @@ Captured **2026-07-09 23:02 GMT+3** before list-metadata and thumbnail optimizat
 | Change | Lighthouse impact |
 |--------|-------------------|
 | `attachCachedListFields` on `GET /api/mods` | −~72 API round-trips → TBT → 0 |
-| `IntersectionObserver` lazy thumbnails (resize removed v1.23.45) | Deferred off-screen loads → LCP/FCP; transformuotų baitų nebeliko dėl kainos (žr. `COST_GUARDRAILS.md`) |
+| `IntersectionObserver` lazy thumbnails (resize removed v1.23.45) | Deferred off-screen loads → LCP/FCP; transformed bytes are gone because of cost (see `COST_GUARDRAILS.md`) |
 | `React.lazy()` for detail/planner/audit routes | Smaller initial JS on `/` |
 | `preconnect` to `ar-gcp-cdn.bistudio.com` | Faster CDN handshakes on image paths |
 | `aria-sort` on `<th scope="col">` (v1.21) | Accessibility baseline |
