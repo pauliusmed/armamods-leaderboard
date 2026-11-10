@@ -40,6 +40,18 @@ Release history before 1.23.58 is preserved in git:
   from the last commit date of each document, so stale docs are visible instead
   of assumed current. Run it before a release.
 
+### Performance
+
+- **Workshop images are cached in the service worker.** The Bohemia CDN sends no
+  `Cache-Control`, so repeat visits revalidated every thumbnail and gallery image.
+  A `CacheFirst` runtime route now keeps `ar-gcp-cdn.bistudio.com/image/*`
+  responses for 90 days (150 entries); `/api/*` stays network-only.
+- **Smaller gallery previews and cached redirects.** The mod-detail gallery grid
+  now loads the CDN `thumb` variant (falling back to the original), while the
+  lightbox keeps the full-size image. The `/api/og/preview` 302s set
+  `Cache-Control: public, max-age=3600`, so browsers stop re-asking the Worker
+  for fallback thumbnails.
+
 ## [1.23.59] - 2026-10-29
 
 ### Documentation

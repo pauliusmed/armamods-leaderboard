@@ -97,8 +97,9 @@ Every history point has this shape:
    leaderboard.
 3. **Text scanning.** History endpoints scan raw text with `indexOf` and skip the
    full parse, keeping CPU below 5 ms.
-4. **Edge caching (Cache API).** Used on every endpoint with per-route TTLs
-   (5 min to 1 h).
+4. **Edge caching (Workers Caching + Cache API).** Workers Caching runs before
+   the Worker and serves HITs without CPU; the Cache API is a per-data-center
+   second layer. Used on every endpoint with per-route TTLs (5 min to 1 h).
 5. **Lazy chunk loading.** List endpoints load only the first block for the
    default view; the full payload is used for search only.
 

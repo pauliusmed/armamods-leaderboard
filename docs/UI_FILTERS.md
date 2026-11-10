@@ -79,7 +79,7 @@ Pagination sits **inside** the table card (`Pagination` + `sliceLabel="Module Sl
 
 When sync is stale (`useDataFreshness`), list heroes show an amber “Snapshot as of … · not live” note; global banner: `DataStaleBanner`. Details: [DATA_SYNC.md](./DATA_SYNC.md).
 
-Mod detail **gallery**: `ModWorkshopGallery` + `GalleryLightbox` — click screenshot for in-page preview (v1.21).
+Mod detail **gallery**: `ModWorkshopGallery` + `GalleryLightbox` — the grid loads `image.thumb ?? image.url`; click a screenshot for the full-size in-page preview (v1.21).
 
 ## Label convention
 

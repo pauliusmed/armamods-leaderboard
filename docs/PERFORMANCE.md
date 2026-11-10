@@ -97,14 +97,19 @@ See [STORAGE_PLANNER.md](./STORAGE_PLANNER.md) § Server list loading — 5000 s
 
 ---
 
-### Thumbnail bytes (no resize since v1.23.45)
+### Thumbnail and gallery bytes (no resize since v1.23.45)
 
 `/api/mods/:id/thumbnail/img` and `/api/img/proxy` were deleted (2026-09-28) — CF
 Images transformations cost more than they delivered. `ModThumbnail` loads the CDN
 original (URL from the list payload) or 302s through `/api/og/preview/mod/:id`;
-a load error falls back to a letter placeholder. Gallery/lightbox use
-`image.url` directly. Regression: larger bytes on first load (see
-[COST_GUARDRAILS.md](./COST_GUARDRAILS.md)).
+a load error falls back to a letter placeholder. The `/api/og/preview` 302s now set
+`Cache-Control: public, max-age=3600`, so browsers stop re-asking the Worker on
+every fallback load. The detail gallery grid uses `image.thumb ?? image.url` and
+keeps the full-size `image.url` for the lightbox. The service worker caches
+`ar-gcp-cdn.bistudio.com/image/*` with `CacheFirst` (90 days, 150 entries) because
+the CDN sends no `Cache-Control`; `/api/*` remains network-only. First load still
+uses originals — see [COST_GUARDRAILS.md](./COST_GUARDRAILS.md); R2 pre-generation
+is the only compliant way to reduce those bytes.
 
 ### Route code-splitting (v1.23.26 — all pages)
 
@@ -147,6 +152,15 @@ Collector adds `online` / `on` / `n` per server in `history:*` without extra KV 
 ### Browser hints
 
 `index.html` includes `preconnect` to `ar-gcp-cdn.bistudio.com` for faster CDN handshakes on detail/OG paths.
+
+### Cache references
+
+- [Workers Cache](https://developers.cloudflare.com/workers/cache/) — HIT before the Worker, tiered by default, request collapsing; HITs are billed as requests but consume no CPU.
+- [Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache/) — per-data-center, no request collapsing, and `cache.put` does not support `stale-while-revalidate`.
+- [Origin Cache Control](https://developers.cloudflare.com/cache/concepts/cache-control/) — directive behaviour; `s-maxage` disables SWR, `immutable` affects browsers only.
+- [Default cache behavior](https://developers.cloudflare.com/cache/concepts/default-cache-behavior/) — default edge TTLs and the file-extension/HTML/JSON rules.
+- [How KV works](https://developers.cloudflare.com/kv/concepts/how-kv-works/) — eventual consistency (up to ~60 s); KV is not an HTTP cache.
+- [MDN HTTP caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching) and [web.dev HTTP cache](https://web.dev/articles/http-cache) — heuristic freshness, `immutable`, and `no-cache`/`private` patterns.
 
 ---
 

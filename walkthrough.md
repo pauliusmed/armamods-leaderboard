@@ -172,14 +172,14 @@ Recharts.
 
 **UI** (`src/lib/workshop.ts`, `src/components/ui/ModThumbnail.tsx`):
 - `workshopPageUrl()` — outbound link to Reforger workshop or Steam (Arma 3).
-- `modThumbnailUrl()` — `/api/og/preview/mod/:id` 302 to the original; list rows load the CDN URL from the data (`IntersectionObserver` lazy load). Image transformations removed in v1.23.45.
+- `modThumbnailUrl()` — `/api/og/preview/mod/:id` 302 to the original; list rows load the CDN URL from the data (`IntersectionObserver` lazy load). The service worker caches `ar-gcp-cdn.bistudio.com/image/*` with `CacheFirst` (90 days). Image transformations removed in v1.23.45.
 - `GET /api/mods` page slice includes cached `author`, `thumbnail`, `workshopStatus` — no per-row metadata JSON on leaderboard/trending.
-- Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302).
+- Detail/OG still resolve full CDN URL via `/api/mods/:id/thumbnail` or `/api/og/preview/mod/:id` (302; `Cache-Control: public, max-age=3600`).
 - Letter fallback when no workshop preview exists.
 - **`CopyModConfigButton`** — one-click `game.mods[]` snippet on leaderboard, trending, and mod/server detail.
 - **`FavoriteModButton` / `FavoriteServerButton`** — ★ bookmarks (up to 20/game each, `localStorage`); pinned rows on leaderboard, trending, and `/servers`.
 - **`ModLeaderboardHead`** — shared `<thead>` + `table-fixed` column widths; favorites and main list share one table (v1.22.1 alignment fix).
-- **`GalleryLightbox`** — in-page workshop screenshot preview on mod detail (v1.21).
+- **`GalleryLightbox`** — in-page workshop screenshot preview on mod detail (v1.21); the grid loads `image.thumb ?? image.url`, the lightbox opens the full-size `image.url`.
 - **`CoDeployTable`** — mod detail co-deploy shows **shared server count**, not global leaderboard stats.
 - **`siteCopy.ts`** — centralized user-facing strings (“network scan”, “live network data”) instead of vendor names in UI.
 - **Server detail** — rank/players chart with rose offline bands (`ReferenceArea`); `BmLastSeenHint` on list/detail.

@@ -28,6 +28,14 @@ not use CF Images: pre-generate sizes into R2 from the collector and serve them
 from edge cache. Cloudflare Images "variants" do not fit, because originals live
 in the Workshop CDN rather than in CF Images storage.
 
+**Browser caching (2026-11-10).** The CDN sends no `Cache-Control`, so repeat
+visits relied on heuristic freshness and conditional requests. The service worker
+now caches `ar-gcp-cdn.bistudio.com/image/*` with `CacheFirst` (90 days, 150
+entries), and the gallery grid uses the CDN `thumb` variant. `/api/*` stays
+network-only. No server-side image proxy was added: Workers Caching already runs
+before the Worker, and a second proxy would add requests and a CDN hop without
+reducing the bytes a new client must download.
+
 Remaining rules:
 
 - **`workers_dev = false`** (`web/wrangler.toml`, 2026-09-09) — the workers.dev

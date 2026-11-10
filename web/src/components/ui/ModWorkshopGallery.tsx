@@ -142,7 +142,9 @@ export function ModWorkshopGallery({
             aria-label={`View screenshot ${index + 1} of ${images.length}`}
           >
             <img
-              src={image.url}
+              // Grid is a preview: use the smaller CDN variant when the API
+              // provides one; the lightbox still opens the full-size original.
+              src={image.thumb ?? image.url}
               alt={`${label} screenshot ${index + 1} of ${images.length}`}
               loading={index === 0 ? 'eager' : 'lazy'}
               // Pirmas (eager) dažniausiai būna LCP — leidžiam naršyklei teikti jam prioritetą

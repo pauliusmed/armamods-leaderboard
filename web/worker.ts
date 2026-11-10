@@ -1558,11 +1558,17 @@ app.get('/og/preview/mod/:modId', async (c) => {
   const game = getGameFromQuery(c) as ShareGame;
   const modId = c.req.param('modId');
   const image = await resolveModThumbnailUrl(c.env.TRENDING_KV, game, modId);
-  return c.redirect(image, 302);
+  const response = c.redirect(image, 302);
+  // The thumbnail URL changes with the workshop image; one hour is short enough
+  // to stay fresh and long enough to stop browsers re-asking the Worker.
+  response.headers.set('Cache-Control', 'public, max-age=3600');
+  return response;
 });
 
 app.get('/og/preview/server/:serverId', async (c) => {
-  return c.redirect(defaultOgImage(), 302);
+  const response = c.redirect(defaultOgImage(), 302);
+  response.headers.set('Cache-Control', 'public, max-age=3600');
+  return response;
 });
 
 /** XML-escape for embedding user-controlled strings (server names) in SVG. */

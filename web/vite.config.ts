@@ -72,6 +72,27 @@ export default defineConfig({
         // answered from the SW cache (10s network timeout used to serve stale/empty
         // payloads for slow endpoints — phantom "No matches found" states). Freshness
         // is handled by edge Cache-Control + the client's in-memory cache.
+        //
+        // Workshop images are different: the CDN sends no Cache-Control and the
+        // URLs are content-addressed (hash in the path), so CacheFirst is safe.
+        // This keeps repeat visits from revalidating every thumbnail/gallery image.
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/ar-gcp-cdn\.bistudio\.com\/image\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'workshop-images',
+              expiration: {
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 90,
+              },
+              // Opaque cross-origin responses have status 0.
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
       },
       manifest: {
         name: 'Arma Mods Intelligence',

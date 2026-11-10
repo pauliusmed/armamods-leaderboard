@@ -76,6 +76,7 @@ approval and must not use CF Images. Details:
 |-------|-----------|----------|
 | KV | `cache:og-image:{game}:{MODID}` · 7 days | Bohemia/Steam CDN URL string |
 | Edge Cache API | `armamods:mod_thumbnails` · `max-age=86400` | JSON thumbnail response |
+| Service Worker (`workshop-images`) | `CacheFirst` · 90 days / 150 entries | CDN image bytes (thumbnails + gallery; browser only) |
 | Browser (`modsApi.getThumbnailUrl`) | in-memory · 7 days | Resolved CDN URL |
 | CF fetch (scrape) | `cacheEverything` · 24h | Workshop HTML (during scrape only) |
 
@@ -85,7 +86,7 @@ If no `og:image` is found, the API returns the site default `og-image.png`. `Mod
 
 ### OG / Discord
 
-`/api/og/preview/mod/:id` still returns **302** for social crawlers. It uses the same KV URL via `resolveModThumbnailUrl()`.
+`/api/og/preview/mod/:id` still returns **302** for social crawlers. It uses the same KV URL via `resolveModThumbnailUrl()`; the redirect carries `Cache-Control: public, max-age=3600` so browsers and crawlers do not re-ask on every load.
 
 ---
 

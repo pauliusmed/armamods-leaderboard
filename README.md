@@ -134,7 +134,7 @@ Full index, including the design system, mobile standards and ops guides:
 ## Performance notes
 
 ### Edge + browser caching
-Static assets and expensive API routes use Cloudflare Cache API and Cache-Control (browser TTL 1–60m) so repeat navigation avoids redundant Worker work.
+Static assets and expensive API routes use Workers Caching (Cloudflare edge, before the Worker) plus Cache API and `Cache-Control` (browser TTL 1–60m) so repeat navigation avoids redundant Worker work. Workshop CDN images are cached in the service worker (`CacheFirst`, 90 days) because the origin CDN sends no `Cache-Control`.
 
 ### Parallel KV batching (`Promise.all`)
 Mod shards load concurrently instead of sequentially (sequential loads previously caused gateway timeouts under load).
