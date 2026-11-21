@@ -12,15 +12,17 @@ Release history before 1.23.58 is preserved in git:
 ### Documentation
 
 - `docs/COST_GUARDRAILS.md`: the Workers CPU section was stale (09-30 figure,
-  61 ms/request). Refreshed with the 2026-11-20 measurement (21.1 ms/request,
+  61 ms/request). Refreshed with the 2026-11-21 measurement (21.1 ms/request,
   p99 394 ms) and the number that actually matters — **26.58M of the 30M ms
   monthly quota in 19.5 days (~138 % projected)**. Added a
-  "Reading analytics: two traps that faked a crisis" section: Cache API `504` is
-  an instrumentation marker for a cache miss, not a visitor timeout (`eyeball`
-  504 = 0 of 21,580), and SEO/AI crawler storms are 94 % cache HIT therefore
-  CPU-free — so widening the WAF bot guard to static assets is not justified.
-  Recorded the one real finding, `cache.put` 413 (2,824/day, zero user impact,
-  root cause undetermined).
+  "Reading analytics: three traps that faked a crisis" section: Cache API `504`
+  is an instrumentation marker for a cache miss, not a visitor timeout
+  (`eyeball` 504 = 0 of 23,966); SEO/AI crawler storms are ~93 % cache HIT
+  therefore CPU-free, so widening the WAF bot guard to static assets is not
+  justified; and a GraphQL `limit` silently truncates dimension **groups**, which
+  made the first drafts understate totals (504: 21,580 → 23,966; requests:
+  244,280 → 480,796). Recorded the one real finding, `cache.put` 413 (2,934/day,
+  1:1 with `cacheStatus=dynamic`, zero user impact, root cause undetermined).
 - `walkthrough.md`, `WORKSHOP_METADATA.md`, `STORAGE_PLANNER.md` and `MOBILE_UX.md`
   translated to English. The historical CF Images section keeps its dates,
   measurements and the record of what was reversed.

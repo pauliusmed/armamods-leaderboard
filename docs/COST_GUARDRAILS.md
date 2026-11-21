@@ -187,55 +187,107 @@ Armamods does not use D1 today (`armamdos` database, 0 rows read). If it is used
 in the future, `EXPLAIN QUERY PLAN` is mandatory before deploy to confirm index
 usage — a lesson from the basketballmanager incident of 37B rows read.
 
-## Reading analytics: two traps that faked a crisis
+## Reading analytics: three traps that faked a crisis
 
-Both were hit during the 2026-11-20 audit and each one, if trusted, would have
-sent work in the wrong direction. **Always split by `requestSource` before
-believing a status-code table.**
+All three were hit during the 2026-11-20/21 audit. Each one, if trusted, would
+have sent work in the wrong direction. **Always split by `requestSource` before
+believing a status-code table, and never let a query `limit` decide the totals.**
+
+All numbers below come from one clean 24 h window
+(2026-11-20T12:44Z → 2026-11-21T12:44Z) on `reforgermods.com`: **480,796**
+requests total.
 
 ### Trap 1 — Cache API `504` is not a user-facing timeout
 
-Account-level `httpRequestsAdaptiveGroups` showed **21,580 × 504** on
-`reforgermods.com` in 24 h — 8.8 % of all responses. That looks like an outage.
+The status table showed **23,966 × 504** — **4.98 %** of all responses. That
+looks like an outage.
 
 It is not. Splitting by `requestSource`:
 
-| `requestSource`       | 504  | meaning                                    |
-| --------------------- | ---- | ------------------------------------------ |
-| `eyeball`             | **0** | real visitors — never saw a timeout       |
-| `edgeWorkerCacheAPI`  | 21,580 | Cloudflare's own `caches.default.match()` record |
+| `requestSource`       | 504    | meaning                                          |
+| --------------------- | ------ | ------------------------------------------------ |
+| `eyeball`             | **0**  | real visitors — never saw a timeout              |
+| `edgeWorkerCacheAPI`  | 23,966 | Cloudflare's own `caches.default.match()` record |
 
-Every 21,580 of them carried `cacheStatus = miss` (15,495) or `stale` (4,578).
-The 504 is an **instrumentation marker for a cache lookup miss**, not an HTTP
-response handed to anyone. Real eye-observation is the only column that describes
-the user experience: `eyeball` had 0 × 504, 10 × 503 (`exceededMemory`), and
-**88 % cache HIT**.
+The split adds up exactly: `miss` **18,723** + `stale` **5,243** = 23,966, with no
+third bucket. The 504 is an **instrumentation marker for a cache lookup miss**,
+not an HTTP response handed to anyone.
+
+Real visitors are described only by the `eyeball` slice — **417,766** requests:
+
+| `cacheStatus` | requests | share |
+| ------------- | -------- | ----- |
+| `hit`         | 389,628  | 93.3 % |
+| `none`        | 27,693   | 6.6 %  |
+| `miss`        | 445      | 0.1 %  |
+
+Visitor-facing 5xx in that window: **36** total — 35 × `503` (`exceededMemory`)
+and 1 × `500`. **Zero 504.**
 
 The same miss-marker pattern means **do not read Cache API 200/204 as success
 rates either** — a `204` there is a miss on a route that answered no-content.
+The whole Cache API slice (63,023 records) splits as 38.0 % `504` (miss), 29.8 %
+`204`, 27.5 % `200`, 4.7 % `413`.
 
 ### Trap 2 — bot traffic is mostly free
 
-`docs/COST_GUARDRAILS.md` used to fear SEO/AI crawlers, and 2026-11-13 looked
-alarming: **355,971 AhrefsBot requests** in one day, `/assets/*` hammered.
+`docs/COST_GUARDRAILS.md` used to fear SEO/AI crawlers, and crawler storms look
+alarming: **355,971 AhrefsBot requests on 2026-11-13** (whole UTC day), `/assets/*`
+hammered.
 
-The CPU is not there. AhrefsBot across 24 h: 66,341 requests, of which
-**62,199 (94 %) were cache `hit`**. Cache HITs are billed as requests but cost
-**no CPU**, so a crawl storm raises the zone request counter without touching the
-metric that is actually near its limit. 2026-11-01 (161k AhrefsBot) and 11-13
-were both storms that ran through HIT.
+The CPU is not there. AhrefsBot cache `hit` share, measured per full UTC day and
+over the trailing 24 h:
+
+| Window                    | AhrefsBot requests | cache `hit` | share  |
+| ------------------------- | ------------------ | ----------- | ------ |
+| 2026-11-01 (UTC day)      | 161,034            | 150,582     | 93.5 % |
+| 2026-11-13 (UTC day)      | 355,971            | 330,150     | 92.7 % |
+| trailing 24 h (11-21)     | 177,568            | 166,928     | 94.0 % |
+
+Cache HITs are billed as requests but cost **no CPU**, so a crawl storm raises
+the zone request counter without touching the metric that is actually near its
+limit. Both the 11-01 and 11-13 storms ran through HIT and never reached the
+Worker.
 
 **Consequence: widening the WAF bot guard to static assets is not justified by
 CPU.** It stays as it is (`docs/SEO.md` protects the Googlebot/Bingbot render
 path). The WAF rule `armamods-api-bot-guard` blocking crawlers on `/api/*` is the
 correct and sufficient scope.
 
+### Trap 3 — a query `limit` silently truncates totals
+
+This one produced the first two drafts of this very section, and it is the most
+dangerous of the three because nothing looks wrong: the numbers are simply
+smaller than reality.
+
+`httpRequestsAdaptiveGroups` rows are **dimension groups**. A query like
+`dimensions { cacheStatus }` with `limit: 100` returns at most 100 *groups*, and
+when a filter such as `clientRequestHTTPHost` is applied the returned rows are a
+slice — so `sum(rows)` is not the total. Measured error in the first draft:
+
+| Figure             | First draft (truncated) | Correct           |
+| ------------------ | ----------------------- | ----------------- |
+| 504 total          | 21,580                  | **23,966**        |
+| total requests     | 244,280                 | **480,796**       |
+| AhrefsBot 24 h     | 66,341                  | **177,568**       |
+
+Two habits prevent this: for a bare total use `limit: 1` **without** dimensions
+(one aggregate row), and for a per-bucket breakdown always verify that the
+buckets sum to the stated total. The correct figures above differ from the
+aggregate by 1 request (480,795 vs 480,796) — Cloudflare's own sampling rounding,
+recorded here rather than hidden.
+
 ### The one real finding — `cache.put` 413
 
-2,824 Cache API responses returned **413** with `cacheStatus = dynamic`, on
-`/server/:id` and `/mod/:id` pages. Per the [Cache API docs](https://developers.cloudflare.com/workers/runtime-apis/cache/),
+**2,934** Cache API responses returned **413**, i.e. **0.61 %** of traffic, all
+with `requestSource = edgeWorkerCacheAPI` and `cacheStatus = dynamic`. Across
+every status, `cacheStatus = dynamic` occurs **exactly** 2,934 times — a 1:1
+correlation, so these are unambiguously `cache.put` rejections rather than
+requests that merely failed.
+
+Per the [Cache API docs](https://developers.cloudflare.com/workers/runtime-apis/cache/),
 `cache.put` returns 413 when `Cache-Control` forbids caching **or** the response
-is too large. The affected pages still serve `200` with 16 KB to the visitor, so
+is too large. The affected pages still serve `200` with ~16 KB to the visitor, so
 impact is zero; the cost is that those pages are never cacheable and re-enter the
 cold path. The exact cause (size vs. a header such as `Vary`) was **not**
 determined — do not guess it. Priority: low.
@@ -252,6 +304,10 @@ determined — do not guess it. Priority: low.
 - **Always add `requestSource` to a `dimensions` list** when reading HTTP
   analytics. Without it, Cache API miss markers and worker subrequests are
   indistinguishable from visitor traffic (see the traps above).
+- **Never trust `sum(rows)` from a dimension query.** A `limit` truncates
+  *groups*, not just rows, so the sum silently comes out low. For a bare total
+  use `limit: 1` with no dimensions; for a breakdown, check that the buckets add
+  up to the aggregate (see Trap 3 above — it cost two wrong drafts).
 - Workers Observability telemetry API
   (`/accounts/:id/workers/observability/telemetry/query`) needs a token with the
   observability scope; a token that only reads GraphQL analytics gets **403**.
