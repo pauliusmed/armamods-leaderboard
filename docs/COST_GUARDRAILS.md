@@ -50,10 +50,18 @@ Remaining rules:
 **Policy: average < 10 ms CPU per request; total < ~500k ms/day.**
 
 > ⚠️ **The limit has been unrealistic since 09-28.** Latest measurement
-> (09-30, after the v1.23.45–46 deploy): **~810k ms/day, 61 ms/request average**,
-> p50 13–15 ms, p90 ~216 ms, p99 ~540 ms, max 1,092 ms. Compared with the 09-28
-> baseline (1.29M ms/day, 41 ms/request) that is **−37 % total CPU** but **+50 %
-> CPU per invocation**.
+> (2026-11-20, current deploy `046dc30f`): **~880k ms/day, 21.1 ms/request average**,
+> p50 2.4 ms, p90 36.8 ms, p99 394 ms, p99.9 1,073 ms, 41.7k invocations/24 h.
+> Per-request CPU is **down** from the 09-30 figure (61 ms) because Workers Caching
+> kept routing cheap repeats to the edge and only misses reach the Worker.
+>
+> **The monthly quota is the number that matters.** Workers Paid includes
+> **30M ms CPU/month**. November 2026 usage reached **26.58M ms in 19.5 days**
+> (957k invocations, 113 errors), which projects to **~41M ms = 138 % of quota**
+> at the current rate. Rolling windows disagree by design — 1 d → 90 %,
+> 7 d → 77 %, 14 d → 98 % — because of early-month crawl storms. **Overage costs
+> $0.02 per extra 1M ms, so ~$0.20/month: this is a resilience signal (the 128 MB
+> RAM wall, `exceededMemory`), not a money problem.**
 >
 > **Why, and why it matters for interpretation:** the 09-28 deploy (Workers
 > Caching) cut Worker invocations by ~3.9× (50k → 17k per 24 h). Only cache misses
@@ -89,8 +97,11 @@ Remaining rules:
 > **Concrete unclaimed candidate:** CPU is burned not by KV reads but by scanning
 > the *text* of a 5 MB shard — `findMatchingBrace` (`server-lookup.ts`) is a
 > character-by-character JS loop over 5 MB, plus `chunkText.includes()` and a
-> `JSON.parse` per shard. This shows up as the ~900–1,092 ms p99/max. No tickets
-> opened yet.
+> `JSON.parse` per shard. This shows up as the ~900–1,092 ms p99/max — the
+> 2026-11-20 measurement still lands there (p99 394 ms, p99.9 1,073 ms). No
+> tickets opened yet: replacing the loop with indexed `indexOf` needs a dedicated
+> PR and full tests (brace matching is sensitive to braces inside strings and
+> escapes), so it is deliberately **not** bundled with unrelated work.
 
 - Largest sources (09-30, p95 per path): `/server/:id` **376 ms**,
   `/api/servers/:id/mod-changes` **181 ms**, `/api/servers/:id/storage` 114 ms,
@@ -101,10 +112,16 @@ Remaining rules:
 - Before 09-28 the largest sources were `mod-changes` (~36 %; the cold path
   parsed all 12 modpack ring chunks per request) and `history` (~12 %; it read
   every shard). ~56 % of those requests came from SEO/AI crawlers (Bytespider,
-  AhrefsBot, Reflectionbot) rendering the SPA.
+  AhrefsBot, Reflectionbot) rendering the SPA. **That 56 % was harmful only
+  because Workers Caching did not exist yet — every crawler request reached the
+  Worker.** After 09-28 the same crawlers are served from edge cache (94 % HIT)
+  and cost no CPU, so the old figure must not be reused to justify new bot rules.
 - Guardrails: `robots.txt` with `Disallow: /api/`; the WAF rule
   `armamods-api-bot-guard` blocks SEO/AI crawlers on `/api/*` before the Worker
-  (Googlebot and Bingbot are exempt and receive prerendered HTML).
+  (Googlebot and Bingbot are exempt and receive prerendered HTML). **Verified
+  2026-11-20: this scope is correct and sufficient** — crawler storms on static
+  assets are 94 % cache HIT and cost no CPU, so extending the rule to `/assets/*`
+  would not reduce CPU (see the traps section below).
 - In code: the modpack ring is cached per isolate version
   (`loadModpackDiffRing`); mod/server history reads from the tail with
   `historyCutoffPrefix` instead of every chunk; `mod-changes` responses have a 6 h
@@ -170,9 +187,128 @@ Armamods does not use D1 today (`armamdos` database, 0 rows read). If it is used
 in the future, `EXPLAIN QUERY PLAN` is mandatory before deploy to confirm index
 usage — a lesson from the basketballmanager incident of 37B rows read.
 
+## Reading analytics: three traps that faked a crisis
+
+All three were hit during the 2026-11-20/21 audit. Each one, if trusted, would
+have sent work in the wrong direction. **Always split by `requestSource` before
+believing a status-code table, and never let a query `limit` decide the totals.**
+
+All numbers below come from one clean 24 h window
+(2026-11-20T12:44Z → 2026-11-21T12:44Z) on `reforgermods.com`: **480,796**
+requests total.
+
+### Trap 1 — Cache API `504` is not a user-facing timeout
+
+The status table showed **23,966 × 504** — **4.98 %** of all responses. That
+looks like an outage.
+
+It is not. Splitting by `requestSource`:
+
+| `requestSource`       | 504    | meaning                                          |
+| --------------------- | ------ | ------------------------------------------------ |
+| `eyeball`             | **0**  | real visitors — never saw a timeout              |
+| `edgeWorkerCacheAPI`  | 23,966 | Cloudflare's own `caches.default.match()` record |
+
+The split adds up exactly: `miss` **18,723** + `stale` **5,243** = 23,966, with no
+third bucket. The 504 is an **instrumentation marker for a cache lookup miss**,
+not an HTTP response handed to anyone.
+
+Real visitors are described only by the `eyeball` slice — **417,766** requests:
+
+| `cacheStatus` | requests | share |
+| ------------- | -------- | ----- |
+| `hit`         | 389,628  | 93.3 % |
+| `none`        | 27,693   | 6.6 %  |
+| `miss`        | 445      | 0.1 %  |
+
+Visitor-facing 5xx in that window: **36** total — 35 × `503` (`exceededMemory`)
+and 1 × `500`. **Zero 504.**
+
+The same miss-marker pattern means **do not read Cache API 200/204 as success
+rates either** — a `204` there is a miss on a route that answered no-content.
+The whole Cache API slice (63,023 records) splits as 38.0 % `504` (miss), 29.8 %
+`204`, 27.5 % `200`, 4.7 % `413`.
+
+### Trap 2 — bot traffic is mostly free
+
+`docs/COST_GUARDRAILS.md` used to fear SEO/AI crawlers, and crawler storms look
+alarming: **355,971 AhrefsBot requests on 2026-11-13** (whole UTC day), `/assets/*`
+hammered.
+
+The CPU is not there. AhrefsBot cache `hit` share, measured per full UTC day and
+over the trailing 24 h:
+
+| Window                    | AhrefsBot requests | cache `hit` | share  |
+| ------------------------- | ------------------ | ----------- | ------ |
+| 2026-11-01 (UTC day)      | 161,034            | 150,582     | 93.5 % |
+| 2026-11-13 (UTC day)      | 355,971            | 330,150     | 92.7 % |
+| trailing 24 h (11-21)     | 177,568            | 166,928     | 94.0 % |
+
+Cache HITs are billed as requests but cost **no CPU**, so a crawl storm raises
+the zone request counter without touching the metric that is actually near its
+limit. Both the 11-01 and 11-13 storms ran through HIT and never reached the
+Worker.
+
+**Consequence: widening the WAF bot guard to static assets is not justified by
+CPU.** It stays as it is (`docs/SEO.md` protects the Googlebot/Bingbot render
+path). The WAF rule `armamods-api-bot-guard` blocking crawlers on `/api/*` is the
+correct and sufficient scope.
+
+### Trap 3 — a query `limit` silently truncates totals
+
+This one produced the first two drafts of this very section, and it is the most
+dangerous of the three because nothing looks wrong: the numbers are simply
+smaller than reality.
+
+`httpRequestsAdaptiveGroups` rows are **dimension groups**. A query like
+`dimensions { cacheStatus }` with `limit: 100` returns at most 100 *groups*, and
+when a filter such as `clientRequestHTTPHost` is applied the returned rows are a
+slice — so `sum(rows)` is not the total. Measured error in the first draft:
+
+| Figure             | First draft (truncated) | Correct           |
+| ------------------ | ----------------------- | ----------------- |
+| 504 total          | 21,580                  | **23,966**        |
+| total requests     | 244,280                 | **480,796**       |
+| AhrefsBot 24 h     | 66,341                  | **177,568**       |
+
+Two habits prevent this: for a bare total use `limit: 1` **without** dimensions
+(one aggregate row), and for a per-bucket breakdown always verify that the
+buckets sum to the stated total. The correct figures above differ from the
+aggregate by 1 request (480,795 vs 480,796) — Cloudflare's own sampling rounding,
+recorded here rather than hidden.
+
+### The one real finding — `cache.put` 413
+
+**2,934** Cache API responses returned **413**, i.e. **0.61 %** of traffic, all
+with `requestSource = edgeWorkerCacheAPI` and `cacheStatus = dynamic`. Across
+every status, `cacheStatus = dynamic` occurs **exactly** 2,934 times — a 1:1
+correlation, so these are unambiguously `cache.put` rejections rather than
+requests that merely failed.
+
+Per the [Cache API docs](https://developers.cloudflare.com/workers/runtime-apis/cache/),
+`cache.put` returns 413 when `Cache-Control` forbids caching **or** the response
+is too large. The affected pages still serve `200` with ~16 KB to the visitor, so
+impact is zero; the cost is that those pages are never cacheable and re-enter the
+cold path. The exact cause (size vs. a header such as `Vary`) was **not**
+determined — do not guess it. Priority: low.
+
 ## Monitoring
 
 - Daily KV/Workers/D1 usage: GraphQL `kvOperationsAdaptiveGroups`,
   `workersInvocationsAdaptive`, `d1AnalyticsAdaptiveGroups` (token in `.env`).
 - Monthly unique Images transformations (to confirm it stays at 0): GraphQL
   `imagesUniqueTransformations`.
+- **Monthly CPU against the 30M ms quota** — the only metric near a free limit.
+  GraphQL `workersInvocationsAdaptive` filtered by `scriptName`, window from the
+  first of the month; project the rate to 30.4 days.
+- **Always add `requestSource` to a `dimensions` list** when reading HTTP
+  analytics. Without it, Cache API miss markers and worker subrequests are
+  indistinguishable from visitor traffic (see the traps above).
+- **Never trust `sum(rows)` from a dimension query.** A `limit` truncates
+  *groups*, not just rows, so the sum silently comes out low. For a bare total
+  use `limit: 1` with no dimensions; for a breakdown, check that the buckets add
+  up to the aggregate (see Trap 3 above — it cost two wrong drafts).
+- Workers Observability telemetry API
+  (`/accounts/:id/workers/observability/telemetry/query`) needs a token with the
+  observability scope; a token that only reads GraphQL analytics gets **403**.
+  Use GraphQL for the numbers and the dashboard for event-level inspection.
